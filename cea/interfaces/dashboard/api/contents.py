@@ -170,19 +170,19 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
                           limit_settings: CEAServerLimits) -> UploadScenarioResult:
     # Validate file is a zip
     if form.file.filename is None or not form.file.filename.endswith('.zip'):
-        raise HTTPException(status_code=400, detail="File must be a ZIP archive")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File must be a ZIP archive")
     # Check file size
     if form.file.size is None:
-        raise HTTPException(status_code=400, detail="Unable to determine file size")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unable to determine file size")
     elif form.file.size > MAX_FILE_SIZE:
-        raise HTTPException(status_code=400, detail="File too large")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File too large")
 
     # TODO: Catch HTTPException(s) at app level to logger errors
     # Ensure project root
     if project_root is None or project_root == "":
         logger.error("Unable to determine project path")
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Project root not defined",
         )
 
@@ -209,17 +209,17 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
         project_choices = await get_project_choices(project_root)
         if project_name not in project_choices:
             logger.error("Project not found")
-            raise HTTPException(status_code=400, detail="Project not found")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Project not found")
 
     # Create new project
     elif form.type == "new":
         if project_path.exists():
             logger.error("Project already exists")
-            raise HTTPException(status_code=400, detail="Project already exists")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Project already exists")
         os.makedirs(project_path, exist_ok=True)
     else:
         logger.error("Unable to determine operation")
-        raise HTTPException(status_code=400, detail="Unknown operation type")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unknown operation type")
 
     upload_result = UploadScenarioResult(project=project_name, scenarios=[])
     temp_file_path = None
@@ -258,7 +258,7 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
                 # Check if scenario names already exist and rename
                 if os.path.exists(os.path.join(project_path, scenario_name)):
                     # TODO: Find way to rename new scenario and extract
-                    raise HTTPException(status_code=400, detail=f"Scenario `{scenario_name}` already exists in project")
+                    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Scenario `{scenario_name}` already exists in project")
                 # Create scenario directory
                 new_scenario_path = os.path.join(project_path, scenario_name)
                 os.makedirs(new_scenario_path, exist_ok=True)
@@ -295,7 +295,7 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
             logger.info(f"Scenario found: {scenario_names}")
             if len(existing_scenario_names):
                 # TODO: Find way to rename new scenario and extract
-                raise HTTPException(status_code=400,
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                     detail=f"Scenarios {existing_scenario_names} already exists in project")
             
             # Recheck number of scenarios after extraction
@@ -380,7 +380,7 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
 
     except Exception as e:
         logger.error(e)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     finally:
         # Explicitly close file buffer
         await form.file.close()

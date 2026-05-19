@@ -18,9 +18,10 @@ This guide is designed for end users who want to learn how to use the CEA-4 App 
 New to CEA-4? Start with these resources:
 
 1. **Create New Scenario Wizard** - Use this in CEA-4 App to automate initial data setup
-2. **[Quick Reference Guide](00-quick-reference.md)** - A single-page overview of all 39 features
-3. **[Data Management](08-data-management.md)** - Understanding the automated data preparation
-4. **[Energy Demand Forecasting](04-demand-forecasting.md)** - Core functionality for building energy analysis
+2. **[Quick Reference Guide](00-quick-reference.md)** - A single-page overview of all 41 features
+3. **[Variable & File Glossary](../glossary/index.md)** - Reference of all 179 input/intermediate/output files, grouped by feature
+4. **[Data Management](08-data-management.md)** - Understanding the automated data preparation
+5. **[Energy Demand Forecasting](04-demand-forecasting.md)** - Core functionality for building energy analysis
 
 ## Feature Categories
 
@@ -57,11 +58,11 @@ Design and analyse district heating and cooling networks.
 - Thermal Hydraulic Flow & Sizing
 
 ### 6. [Life Cycle Analysis](06-0-life-cycle-analysis.md)
-Assess environmental impacts and costs of building energy systems using what-if supply scenarios.
-- [Final Energy](06-1-final-energy.md) - Carrier consumption by buildings and plants
-- [Emissions](06-2-emissions.md) - Lifecycle and operational GHG emissions
-- [System Costs](06-3-system-costs.md) - CAPEX and OPEX analysis
-- [Heat Rejection](06-4-heat-rejection.md) - Waste heat to environment
+Assess environmental impacts and costs of building energy systems using what-if supply scenarios. All four features run on a shared what-if scenario; **Final Energy must run first** and produces the `configuration.json` consumed by the other three.
+- [Final Energy / Energy by Carrier](06-1-final-energy.md) (BETA) - Carrier consumption by buildings and plants; includes hourly SC/PVT-primary DHW tank dispatch
+- [Emissions / GHG Emissions](06-2-emissions.md) (BETA) - Lifecycle and operational GHG emissions, with optional grid-decarbonisation trajectory
+- [System Costs / Costs](06-3-system-costs.md) (BETA) - CAPEX, OPEX, and total annualised cost (TAC) at building, component, and plant level
+- [Heat Rejection](06-4-heat-rejection.md) (BETA) - Anthropogenic waste heat to the environment, with map-layer visualisation
 
 ### 7. [Energy Supply System Optimisation](07-supply-optimisation.md)
 Optimise energy supply systems for buildings and districts.
@@ -131,8 +132,9 @@ A standard CEA-4 analysis typically follows this sequence:
 6. **Optimisation** (Optional)
    - Optimise building-scale or district-scale supply systems
 
-7. **Impact Assessment** (Life Cycle Analysis)
-   - Calculate emissions and system costs
+7. **Impact Assessment** (Life Cycle Analysis - 4 BETA features)
+   - Run **Final Energy** first (carrier consumption per what-if scenario)
+   - Then **Emissions**, **System Costs**, and **Heat Rejection** for the same what-if
 
 8. **Results & Reporting** (Visualisation & Export)
    - Generate plots and charts
@@ -155,6 +157,5 @@ If you encounter issues:
 
 ---
 
-**Last Updated**: October 2025
-**CEA Version**: 4.0+
-**Guide Version**: 1.0
+**Last Updated**: May 2026
+**CEA Version**: 4.0.0-beta.7

@@ -136,7 +136,7 @@ async def process_job_parameters(parameters: Dict[str, Any], job_id: str) -> Dic
                 if temp_dir and os.path.exists(temp_dir):
                     shutil.rmtree(temp_dir)
                 logger.error(f"Failed to write uploaded file for parameter '{key}': {e}")
-                raise HTTPException(status_code=500, detail=f"Failed to process uploaded file: {key}")
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to process uploaded file: {key}")
     
     return processed_params
 
@@ -183,7 +183,7 @@ async def get_jobs(
             job_state = JobState(state)
             query = query.where(JobInfo.state == job_state)
         except ValueError:
-            raise HTTPException(status_code=400, detail="Invalid state value. Must be between 0 and 5.")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid state value. Must be between 0 and 5.")
 
     # Exclude deleted jobs by default based on deleted_at field
     if exclude_deleted:
@@ -204,7 +204,7 @@ async def get_job_info(session: SessionDep, job_id: str) -> JobInfoResponse:
     """Return a JobInfo by id"""
     job = await session.get(JobInfo, job_id, options=[undefer_group('logs')])
     if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
     return JobInfoResponse.from_job_info(job, stdout=job.stdout, stderr=job.stderr)
 
 
@@ -243,10 +243,10 @@ async def create_new_job(request: Request, session: SessionDep, project_id: CEAP
                     except Exception:
                         parameters[param_name] = value
     else:
-        raise HTTPException(status_code=400, detail="Unsupported content type.")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported content type.")
 
     if script is None:
-        raise HTTPException(status_code=422, detail="Missing required field: 'script'.")
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Missing required field: 'script'.")
 
     # Create job first with empty parameters to get job ID for temp file handling
     job = JobInfo(script=script, parameters={}, project_id=project_id, created_by=user_id)
@@ -281,7 +281,7 @@ async def create_new_job(request: Request, session: SessionDep, project_id: CEAP
 async def set_job_started(session: SessionDep, job_id: str) -> JobInfoResponse:
     job = await session.get(JobInfo, job_id)
     if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
 
     try:
         job.state = JobState.STARTED
@@ -291,7 +291,7 @@ async def set_job_started(session: SessionDep, job_id: str) -> JobInfoResponse:
     except Exception as e:
         logger.error(e)
         await session.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
     # Emit event outside try-except so emit failures don't cause rollback
     job_payload = JobInfoResponse.from_job_info(job)
@@ -305,7 +305,7 @@ async def set_job_success(session: SessionDep, job_id: str, streams: CEAStreams,
                           worker_processes: CEAWorkerProcesses, output: JobOutput) -> JobInfoResponse:
     job = await session.get(JobInfo, job_id)
     if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
 
     try:
         job.state = JobState.SUCCESS
@@ -326,7 +326,7 @@ async def set_job_success(session: SessionDep, job_id: str, streams: CEAStreams,
     except Exception as e:
         logger.error(e)
         await session.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
     # Emit event outside try-except so emit failures don't cause rollback
     job_payload = JobInfoResponse.from_job_info(job, stdout=stdout_text)
@@ -344,7 +344,7 @@ async def set_job_error(session: SessionDep, job_id: str, error: JobError, strea
 
     job = await session.get(JobInfo, job_id)
     if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
 
     try:
         job.state = JobState.ERROR
@@ -366,7 +366,7 @@ async def set_job_error(session: SessionDep, job_id: str, error: JobError, strea
     except Exception as e:
         logger.error(e)
         await session.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
     # Emit event outside try-except so emit failures don't cause rollback
     job_payload = JobInfoResponse.from_job_info(job, stdout=stdout_text, stderr=stacktrace)
@@ -387,17 +387,17 @@ async def start_job(session: SessionDep, worker_processes: CEAWorkerProcesses, s
     try:
         uuid.UUID(job_id)
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid job_id format. Must be a valid UUID.")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid job_id format. Must be a valid UUID.")
 
     # Validate server_url is a valid HTTP/HTTPS URL
     try:
         parsed_url = urlparse(str(server_url))
         if not parsed_url.scheme or parsed_url.scheme not in ['http', 'https']:
-            raise HTTPException(status_code=400, detail="Invalid server_url. Must be a valid HTTP or HTTPS URL.")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid server_url. Must be a valid HTTP or HTTPS URL.")
         if not parsed_url.netloc:
-            raise HTTPException(status_code=400, detail="Invalid server_url. Missing hostname.")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid server_url. Missing hostname.")
     except Exception:
-        raise HTTPException(status_code=400, detail="Invalid server_url format.")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid server_url format.")
 
     # Lock the row to prevent concurrent modifications (TOCTOU protection)
     result = await session.execute(
@@ -406,7 +406,7 @@ async def start_job(session: SessionDep, worker_processes: CEAWorkerProcesses, s
     job = result.scalar_one_or_none()
 
     if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
 
     # Authorization check: only job creator can start
     if job.created_by != user_id:
@@ -448,7 +448,7 @@ async def cancel_job(session: SessionDep, job_id: str, user_id: CEAUserID,
     job = result.scalar_one_or_none()
 
     if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
 
     # Authorization check: only job creator can cancel
     if job.created_by != user_id:
@@ -493,7 +493,7 @@ async def cancel_job(session: SessionDep, job_id: str, user_id: CEAUserID,
     except Exception as e:
         logger.error(e)
         await session.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
     # Emit event outside try-except so emit failures don't cause rollback
     job_payload = JobInfoResponse.from_job_info(job, stdout=stdout_text)
@@ -518,7 +518,7 @@ async def kill_job(session, job_id: str, worker_processes, streams) -> JobInfoRe
     """
     job = await session.get(JobInfo, job_id)
     if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
 
     try:
         job.state = JobState.KILLED
@@ -541,7 +541,7 @@ async def kill_job(session, job_id: str, worker_processes, streams) -> JobInfoRe
     except Exception as e:
         logger.error(e)
         await session.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
     # Emit event outside try-except so emit failures don't cause rollback
     job_payload = JobInfoResponse.from_job_info(job, stdout=stdout_text)

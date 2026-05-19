@@ -16,15 +16,21 @@ These are a collection of tutorials we consider essential for any new developer 
 
 #. :doc:`/developer/how-to-contribute`
 #. :doc:`/agile-with-CEA/how-to-create-user-stories`
-#. :doc:`how-to-report-bugs`
-#. :doc:`how-to-use-github`
-#. :doc:`how-to-name-variables`
-#. :doc:`how-to-add-a-new-script-to-the-cea`
-#. :doc:`how-to-test-the-cea`
-#. :doc:`how-to-set-up-nsis`
-#. :doc:`how-to-publish-cea`
-#. :doc:`how-trace-inputlocator-works`
-#. :doc:`how-to-document-cea`
+
+The remaining developer how-tos have been migrated to Markdown and live under ``docs/tutorials/how-tos/``. See the **`tutorials README <README.md>`__** for the full list, or jump directly to:
+
+- `How to report a bug <how-tos/how-to-report-bugs.md>`__
+- `Variable naming in CEA <how-tos/how-to-name-variables.md>`__
+- `How to add a new script <how-tos/how-to-add-a-new-script-to-the-cea.md>`__
+- `How to test CEA <how-tos/how-to-test-the-cea.md>`__
+- `How to set up NSIS <how-tos/how-to-set-up-nsis.md>`__
+- `How to publish CEA to Zenodo <how-tos/how-to-publish-cea.md>`__
+- `How to document CEA <how-tos/how-to-document-cea.md>`__
+
+User-facing tutorials:
+
+- `CEA-4 App Training Guide <cea4-app-training/index.md>`__
+- `Variable & File Glossary <glossary/index.md>`__
 
 Legacy
 ------

@@ -20,12 +20,12 @@ router = APIRouter()
 async def fetch_buildings(generate: bool = False, polygon: str = None, path: str = None):
     if generate:
         if polygon is None:
-            return HTTPException(status_code=400, detail="Missing polygon")
+            return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing polygon")
         try:
             site_polygon = gpd.read_file(polygon, crs="epsg:4326")
 
             if site_polygon.empty:
-                raise HTTPException(status_code=400, detail="Empty polygon")
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty polygon")
 
             buildings = osmnx.features_from_polygon(polygon=site_polygon['geometry'].values[0], tags={"building": True})
 
@@ -36,7 +36,7 @@ async def fetch_buildings(generate: bool = False, polygon: str = None, path: str
 
         except Exception as e:
             print(e)
-            return HTTPException(status_code=500, detail=str(e))
+            return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
     elif path is not None:
         try:
@@ -46,7 +46,7 @@ async def fetch_buildings(generate: bool = False, polygon: str = None, path: str
             return json.loads(buildings.to_json())
         except Exception as e:
             print(e)
-            return HTTPException(status_code=500, detail=str(e))
+            return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 class ValidateGeometry(BaseModel):
@@ -60,7 +60,7 @@ async def validate_building_geometry(data: ValidateGeometry):
     """Validate the given building geometry"""
     if data.type == 'path':
         if data.path is None:
-            raise HTTPException(status_code=400, detail="Missing path")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing path")
 
         try:
             building_df = gpd.read_file(data.path)
@@ -96,7 +96,7 @@ async def validate_typology(data: ValidateTypology):
     """Validate the given typology"""
     if data.type == 'path':
         if data.path is None:
-            raise HTTPException(status_code=400, detail="Missing path")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing path")
 
         _, extension = os.path.splitext(data.path)
         try:

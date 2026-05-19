@@ -419,7 +419,8 @@ class Parameter:
 
     @property
     def default(self) -> Any:
-        return self.decode(self.config.default_config.get(self.section.name, self.name))
+        raw = self.config.default_config.get(self.section.name, self.name)
+        return self.decode(self.replace_references(raw))
 
     def __repr__(self) -> str:
         return f"<Parameter {self.section.name}:{self.name}={self.get()}>"
@@ -513,16 +514,18 @@ class FileParameter(Parameter):
                 return ''
             else:
                 raise ValueError(f"Can't encode None for non-nullable FileParameter {self.name}.")
-        return str(value)
+        if not isinstance(value, str):
+            raise ValueError(
+                f"FileParameter {self.name} expects a string path, got {type(value).__name__}."
+            )
+        return value
 
     def decode(self, value):
-        _KEYCRE = re.compile(r"\{([^}]+)\}")
         if not value and not self.nullable:
             raise ValueError(f"Can't decode value for non-nullable FileParameter {self.name}.")
-        elif _KEYCRE.match(value):
-            return _KEYCRE.sub(lambda match: str(self.config.get(match.group(1))), value)
-        else:
-            return value
+        
+        # Always replace references and return a canonical path
+        return self.replace_references(value)
 
 
 class ResumeFileParameter(FileParameter):

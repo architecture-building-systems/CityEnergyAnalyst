@@ -53,6 +53,7 @@ All transitions are auth-checked and row-locked (TOCTOU protection).
 - Commit DB **before** emitting SocketIO (emit outside try-except to prevent rollback)
 - Serialise SocketIO payloads with captured strings, not `job.model_dump()` on expired ORM state
 - Keep FastAPI responses as Python objects; JSON-safe conversion too early breaks computed fields like `duration`
+- Prefer FastAPI `status.HTTP_*` constants over numeric status codes in `HTTPException` and response constructors
 
 ## Caching (`dependencies.py`)
 
