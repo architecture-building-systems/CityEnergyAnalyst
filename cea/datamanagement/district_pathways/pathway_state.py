@@ -359,6 +359,21 @@ class DistrictEvolutionPathway:
                 return True
         return False
 
+    def buildings_standing_entering_year(self, year: int) -> set[str]:
+        """Return buildings that exist at the *start* of `year`.
+
+        Evaluated as "active in year - 1", which is independent of any construct/demolish events
+        authored in `year` itself. Used to filter the building-event pickers: only standing
+        buildings can be demolished in `year`, and only non-standing ones can be (re)constructed.
+        """
+        intervals = self.get_building_lifecycle_intervals()
+        probe = int(year) - 1
+        return {
+            name
+            for name in intervals
+            if self._is_building_active(name, probe, intervals)
+        }
+
     def get_manual_new_building_years(self) -> dict[str, int]:
         """Return the latest manual construction year per building."""
         out: dict[str, int] = {}
