@@ -10,6 +10,7 @@ from pydantic import BaseModel
 import cea.inputlocator
 from cea.datamanagement.district_pathways.intervention_templates import (
     delete_intervention_template,
+    find_template_usage,
     get_intervention_template_names,
     load_intervention_templates,
 )
@@ -176,6 +177,17 @@ async def get_template(config: CEAConfig, template_name: str) -> dict[str, Any]:
             detail=f"Intervention template '{template_name}' not found.",
         )
     return result
+
+
+@router.get("/templates/{template_name}/usage")
+async def get_template_usage(config: CEAConfig, template_name: str) -> dict[str, Any]:
+    """Best-effort list of pathway-years whose saved changes contain this template's changes.
+
+    Used to warn the user before deleting a template. This is a structural match (templates are
+    not linked to states), so it can miss usage if the template or year was edited after applying.
+    """
+    usage = await run_in_threadpool(find_template_usage, config, template_name)
+    return {"usage": usage}
 
 
 @router.delete("/templates/{template_name}", dependencies=[CEASeverDemoAuthCheck])
