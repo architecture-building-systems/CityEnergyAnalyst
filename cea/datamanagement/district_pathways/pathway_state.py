@@ -15,6 +15,7 @@ from cea.datamanagement.databases_verification import verify_input_geometry_zone
 from cea.datamanagement.district_pathways.pathway_integrity import (
     check_district_pathway_log_yaml_integrity,
     merge_modify_recipes,
+    scan_state_year_folders,
 )
 from cea.datamanagement.district_pathways.envelope_topology import (
     ALL_MATERIAL_FIELDS,
@@ -751,6 +752,25 @@ class DistrictEvolutionPathway:
             "Each built state folder contains simulation status metadata in '.district_pathway_signature.json'.",
             flush=True,
         )
+
+        # Remove orphaned state folders: state_<year> directories whose year is no longer in the
+        # pathway definition (e.g. left behind after a year/intervention was deleted). These are
+        # regenerable bake outputs, so deleting them is safe and keeps re-bakes from failing the
+        # integrity check below. Non-year folders (e.g. 'state_status') are left untouched.
+        required_years = set(years)
+        district_pathway_folder = self.main_locator.get_district_pathway_folder(
+            pathway_name=self.pathway_name
+        )
+        year_to_folder, _ = scan_state_year_folders(district_pathway_folder)
+        for year, folder_name in year_to_folder.items():
+            if year in required_years:
+                continue
+            shutil.rmtree(os.path.join(district_pathway_folder, folder_name), ignore_errors=True)
+            print(
+                f"Removed orphaned state folder '{folder_name}' "
+                f"(year {year} is no longer in the pathway definition).",
+                flush=True,
+            )
 
         check_district_pathway_log_yaml_integrity(self.config, self.pathway_name)
 

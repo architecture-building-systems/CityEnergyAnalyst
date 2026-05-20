@@ -16,6 +16,38 @@ from cea.datamanagement.district_pathways.pathway_log import (
 
 ModifyRecipe = dict[str, dict[str, dict[str, Any]]]
 
+# Sidecar folders that legitimately live alongside the state_<year> folders and must not be
+# treated as (mis-named) state folders.
+_NON_STATE_FOLDERS = {"state_status"}
+
+
+def scan_state_year_folders(
+    district_pathway_folder: str,
+) -> tuple[dict[int, str], list[str]]:
+    """Scan a district pathway folder for ``state_<year>`` folders.
+
+    Single source of truth shared by the bake step (orphan cleanup) and the integrity check,
+    so they always agree on what counts as a state-year folder.
+
+    Returns ``(year_to_folder, invalid_names)``:
+      - ``year_to_folder`` maps each year that has a ``state_<digits>`` folder to its folder name.
+      - ``invalid_names`` lists folders that look like state folders (start with ``state_``) but
+        are neither a recognised sidecar nor a ``state_<digits>`` folder.
+    """
+    year_to_folder: dict[int, str] = {}
+    invalid_names: list[str] = []
+    if not os.path.exists(district_pathway_folder):
+        return year_to_folder, invalid_names
+    for folder_name in os.listdir(district_pathway_folder):
+        if folder_name in _NON_STATE_FOLDERS or not folder_name.startswith("state_"):
+            continue
+        year_str = folder_name[len("state_"):]
+        if year_str.isdigit():
+            year_to_folder[int(year_str)] = folder_name
+        else:
+            invalid_names.append(folder_name)
+    return year_to_folder, invalid_names
+
 
 def check_district_pathway_log_yaml_integrity(
     main_config: Configuration,
@@ -36,19 +68,13 @@ def check_district_pathway_log_yaml_integrity(
     pathway = DistrictEvolutionPathway(main_config, pathway_name=pathway_name)
     expected_state_years = set(pathway.required_state_years())
 
-    existing_years_in_folders = set()
     district_pathway_folder = main_locator.get_district_pathway_folder(pathway_name)
-    if os.path.exists(district_pathway_folder):
-        for folder_name in os.listdir(district_pathway_folder):
-            if folder_name.startswith("state_"):
-                year_str = folder_name.replace("state_", "")
-                try:
-                    year = int(year_str)
-                    existing_years_in_folders.add(year)
-                except ValueError:
-                    print(
-                        f"Warning: Invalid pathway-state folder name '{folder_name}' in district pathway folder."
-                    )
+    year_to_folder, invalid_names = scan_state_year_folders(district_pathway_folder)
+    for folder_name in invalid_names:
+        print(
+            f"Warning: Invalid pathway-state folder name '{folder_name}' in district pathway folder."
+        )
+    existing_years_in_folders = set(year_to_folder.keys())
 
     unexpected_folders = existing_years_in_folders - expected_state_years
     missing_folders = expected_state_years - existing_years_in_folders
