@@ -1386,6 +1386,70 @@ def create_modify_recipe(
     return modify_recipe
 
 
+# Inverse mapping for recipe_to_define_config: (component, recipe field) -> the kebab-case
+# config parameter used by the `pathway-intervention-templates-define` script.
+# Keep in sync with create_modify_recipe above.
+_ENVELOPE_FIELD_TO_PARAM_SUFFIX: dict[str, str] = {
+    "material_name_1": "material-name-1",
+    "thickness_1_m": "thickness-1-m",
+    "material_name_2": "material-name-2",
+    "thickness_2_m": "thickness-2-m",
+    "material_name_3": "material-name-3",
+    "thickness_3_m": "thickness-3-m",
+    "Service_Life": "lifetime",
+}
+_CONSTRUCTION_TYPE_FIELD_TO_PARAM: dict[str, str] = {
+    "type_win": "type-win",
+    "supply_type_hs": "supply-type-hs",
+    "supply_type_cs": "supply-type-cs",
+    "supply_type_dhw": "supply-type-dhw",
+    "supply_type_el": "supply-type-el",
+    "hvac_type_hs": "hvac-type-hs",
+    "hvac_type_cs": "hvac-type-cs",
+    "hvac_type_dhw": "hvac-type-dhw",
+    "hvac_type_ctrl": "hvac-type-ctrl",
+    "hvac_type_vent": "hvac-type-vent",
+}
+_ENVELOPE_COMPONENTS = ("wall", "roof", "base", "floor")
+
+
+def recipe_to_define_config(
+    modifications: dict[str, dict[str, dict[str, Any]]],
+) -> tuple[dict[str, Any], bool]:
+    """Inverse of create_modify_recipe: flatten a nested per-archetype recipe back into the
+    flat kebab-case parameters of the `pathway-intervention-templates-define` script, so an
+    existing template can be re-opened in the define form for editing.
+
+    Returns (payload, diverged):
+      - payload maps kebab-case parameter names -> values (ready to POST to save-config),
+        plus 'archetypes' (the list of archetype names the template targets).
+      - diverged is True if the archetypes do not all share identical modifications. The flat
+        form cannot represent per-archetype variation, so the first archetype's values are used
+        and the caller should warn the user.
+    """
+    archetypes = list(modifications.keys())
+    payload: dict[str, Any] = {"archetypes": archetypes}
+    if not archetypes:
+        return payload, False
+
+    first = modifications[archetypes[0]]
+    diverged = any(modifications[a] != first for a in archetypes[1:])
+
+    for component, fields in first.items():
+        if component == "construction_type":
+            for field, value in (fields or {}).items():
+                param = _CONSTRUCTION_TYPE_FIELD_TO_PARAM.get(field)
+                if param is not None:
+                    payload[param] = value
+        elif component in _ENVELOPE_COMPONENTS:
+            for field, value in (fields or {}).items():
+                suffix = _ENVELOPE_FIELD_TO_PARAM_SUFFIX.get(field)
+                if suffix is not None:
+                    payload[f"{component}-{suffix}"] = value
+
+    return payload, diverged
+
+
 def validate_pathway_name(pathway_name: str) -> str:
     """
     Validate pathway name to ensure it can be used as a folder name.

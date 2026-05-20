@@ -11,6 +11,7 @@ import cea.inputlocator
 from cea.datamanagement.district_pathways.intervention_templates import (
     delete_intervention_template,
     get_intervention_template_names,
+    load_intervention_templates,
 )
 from cea.datamanagement.district_pathways.pathway_timeline import (
     StockOnlyStateError,
@@ -135,6 +136,46 @@ async def get_templates(config: CEAConfig) -> dict[str, list[str]]:
     locator = cea.inputlocator.InputLocator(config.scenario)
     names = await run_in_threadpool(get_intervention_template_names, locator)
     return {"templates": names}
+
+
+@router.get("/templates/{template_name}")
+async def get_template(config: CEAConfig, template_name: str) -> dict[str, Any]:
+    """Return one template's definition plus a flat config payload for the define form.
+
+    `config` is the kebab-case parameter payload ready to POST to the tool's save-config
+    endpoint so the define form re-opens pre-filled. `diverged` is True when the template's
+    archetypes don't all share identical modifications (the flat form can't represent that;
+    the first archetype's values are used).
+    """
+    from cea.datamanagement.district_pathways.pathway_state import recipe_to_define_config
+
+    locator = cea.inputlocator.InputLocator(config.scenario)
+
+    def fn() -> dict[str, Any] | None:
+        templates = load_intervention_templates(locator, allow_missing=True)
+        if template_name not in templates:
+            return None
+        entry = templates[template_name] or {}
+        description = entry.get("description", "") or ""
+        modifications = entry.get("modifications", {}) or {}
+        payload, diverged = recipe_to_define_config(modifications)
+        payload["intervention-template-name"] = template_name
+        payload["intervention-template-description"] = description
+        return {
+            "name": template_name,
+            "description": description,
+            "modifications": modifications,
+            "config": payload,
+            "diverged": diverged,
+        }
+
+    result = await run_in_threadpool(fn)
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Intervention template '{template_name}' not found.",
+        )
+    return result
 
 
 @router.delete("/templates/{template_name}", dependencies=[CEASeverDemoAuthCheck])
