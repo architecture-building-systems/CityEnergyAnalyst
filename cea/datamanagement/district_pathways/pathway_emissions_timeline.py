@@ -935,25 +935,30 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
         (per archetype / construction standard) and turns those changes into *building-level* emission events.
         The resulting events are written directly into `self.timeline`.
 
-        Behaviour (high level):
-        - **Initial construction**: at `construction_year` we add production (+ biogenic uptake) for the
-            archetype's layer snapshot effective at/before construction.
-        - **Modification events**: in any year where the log defines layer edits for this building's
-            `const_type`, we apply deltas (add = production, remove = demolition) for the affected component.
+        Interval-aware: the building's `lifecycle_intervals` are processed one at a time, each as a
+        fresh construct -> demolish cycle (see `_build_embodied_for_interval`). A building that is
+        demolished and later rebuilt therefore restarts construction, service-life clocks, and the
+        replacement schedule at each rebuild, and emits a demolition at each interval end. A building
+        with a single interval reproduces the original single-construction/single-demolition behaviour.
+
+        Behaviour (high level), per interval:
+        - **Initial construction**: at the interval start we add production (+ biogenic uptake) for the
+            archetype's layer snapshot effective at/before that year.
+        - **Modification events**: in any year *within the interval* where the log defines layer edits for
+            this `const_type`, we apply deltas (add = production, remove = demolition) for that component.
         - **Service-life replacements (mandatory)**: for each envelope component with non-zero area, a full
-            replacement is scheduled every `Service_Life` years, starting from construction.
-            If a modification affects a component, the replacement "clock" for that component resets to
-            `year + Service_Life`.
-        - **Demolition**: if `demolition_year` lies within `[start_year, end_year]`, all components will be 
-            demolished at the end of that year.
+            replacement is scheduled every `Service_Life` years, starting from the interval's construction.
+            A modification resets that component's clock to `year + Service_Life`.
+        - **Demolition**: at each interval end (if within `[start_year, end_year]`) all components are
+            demolished. Demolished gaps between intervals receive no emissions.
 
         Notes:
         - Service life values are taken from `service_life_by_src_component` and are required (missing or
             non-positive values raise).
         - The layer snapshots are sourced from `archetype_layers_at_year` and are assumed to already reflect
             the cumulative log edits up to that year.
-        - Years outside the building's existence window (before construction, or from demolition onward) are
-            not populated.
+        - Years outside the building's existence windows (before construction, or during/after a demolition
+            until a rebuild) are not populated.
 
         Args:
             const_type: Construction standard / archetype key for this building (e.g., `STANDARD1`).
@@ -965,9 +970,53 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
             archetype_timeline: Precomputed archetype snapshots + delta events (layers + construction types).
             service_life_by_src_component: Mapping `src_component -> Service_Life (years)`.
         """
-        if self.construction_year is None:
-            return
-        construction_year = self.construction_year
+        # Each lifecycle interval is treated as a fresh building (construct -> demolish cycle):
+        # construction at the interval start using the snapshot effective then, service-life clocks
+        # restarted from the interval start, replacements only within the interval, and a demolition
+        # at the interval end. For a building with a single interval this reproduces the original
+        # single-construction/single-demolition behaviour exactly.
+        # `lifecycle_intervals` is always populated before this runs (set by set_lifecycle_intervals
+        # / set_existence); an empty list means the building never exists, so nothing is emitted.
+        for interval_start, interval_end in self.lifecycle_intervals:
+            if interval_start is None:
+                continue
+            self._build_embodied_for_interval(
+                const_type=const_type,
+                area_dict=area_dict,
+                materials=materials,
+                years_sorted=years_sorted,
+                start_year=start_year,
+                end_year=end_year,
+                archetype_timeline=archetype_timeline,
+                service_life_by_src_component=service_life_by_src_component,
+                interval_start=int(interval_start),
+                interval_end=None if interval_end is None else int(interval_end),
+            )
+
+    def _build_embodied_for_interval(
+        self,
+        *,
+        const_type: str,
+        area_dict: dict[str, float],
+        materials: pd.DataFrame,
+        years_sorted: list[int],
+        start_year: int,
+        end_year: int,
+        archetype_timeline: ArchetypeChangesTimeline,
+        service_life_by_src_component: Mapping[str, int | None],
+        interval_start: int,
+        interval_end: int | None,
+    ) -> None:
+        """Populate embodied emissions for ONE lifecycle interval (one construct -> demolish cycle).
+
+        Treats the interval as a fresh building: production at `interval_start` from the snapshot
+        effective then, service-life clocks restarted from `interval_start`, authored edits and
+        scheduled replacements only within `[interval_start, end_active_year]`, and a demolition
+        emitted at `interval_end` when it falls within the horizon.
+        """
+        construction_year = int(interval_start)
+        if construction_year > end_year:
+            return  # interval starts beyond the simulation horizon
 
         tech_system_keys, emission_per_tech, has_layer_snapshot_at_construction = (
             self._init_codes_and_initial_construction(
@@ -982,94 +1031,100 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
             return
 
         # --- Mandatory service-life replacements ---------------------------------
-        # Behaviour:
         # - Each envelope component has a service life (years) from the envelope DB.
-        # - Starting from construction, a full replacement is scheduled every service_life years.
-        # - Any modification event to that component resets its replacement clock (but does not force a full
-        #   replacement in that year; only the logged delta is applied).
-        end_active_year = self._compute_end_active_year(end_year)
-        if end_active_year < construction_year:
-            return
-
-        (
-            lifetimes,
-            tech_lifetime,
-            win_lifetime_default,
-            tech_next_due,
-            window_next_due,
-            envelope_next_due,
-        ) = self._prepare_replacement_clocks(
-            const_type=const_type,
-            area_dict=area_dict,
-            service_life_by_src_component=service_life_by_src_component,
-            construction_year=construction_year,
+        # - Starting from this interval's construction, a full replacement is scheduled every
+        #   service_life years (the clock restarts at each rebuild).
+        # - Any modification event resets that component's clock.
+        end_active_year = (
+            int(end_year) if interval_end is None else min(int(end_year), int(interval_end) - 1)
         )
 
-        (
-            modification_years,
-            code_change_years,
-            mod_by_year,
-        ) = self._collect_events(
-            years_sorted=years_sorted,
-            const_type=const_type,
-            archetype_timeline=archetype_timeline,
-        )
-
-        schedule = _BuildingEventCursor(
-            modification_years=modification_years,
-            code_change_years=code_change_years,
-            envelope_next_due=envelope_next_due,
-            window_next_due=window_next_due,
-            tech_next_due=tech_next_due,
-            end_active_year=end_active_year,
-        )
-
-        while (year := schedule.next_year()) is not None:
-            self._apply_modifications_at_year(
-                year=year,
-                mod_by_year=mod_by_year,
-                lifetimes=lifetimes,
-                schedule=schedule,
+        if end_active_year >= construction_year:
+            (
+                lifetimes,
+                tech_lifetime,
+                win_lifetime_default,
+                tech_next_due,
+                window_next_due,
+                envelope_next_due,
+            ) = self._prepare_replacement_clocks(
+                const_type=const_type,
                 area_dict=area_dict,
-                materials=materials,
+                service_life_by_src_component=service_life_by_src_component,
+                construction_year=construction_year,
             )
 
-            self._apply_code_changes_at_year(
-                year=year,
+            (
+                modification_years,
+                code_change_years,
+                mod_by_year,
+            ) = self._collect_events(
+                years_sorted=years_sorted,
                 const_type=const_type,
                 archetype_timeline=archetype_timeline,
-                area_dict=area_dict,
-                tech_system_keys=tech_system_keys,
-                emission_per_tech=emission_per_tech,
-                tech_lifetime=tech_lifetime,
-                win_lifetime_default=win_lifetime_default,
-                schedule=schedule,
             )
 
-            self._apply_due_replacements_at_year(
-                year=year,
-                const_type=const_type,
-                archetype_timeline=archetype_timeline,
-                area_dict=area_dict,
-                materials=materials,
-                lifetimes=lifetimes,
-                win_lifetime_default=win_lifetime_default,
-                emission_per_tech=emission_per_tech,
-                tech_lifetime=tech_lifetime,
-                schedule=schedule,
+            # Restrict authored events to this interval's window so a later interval (rebuild) never
+            # replays an earlier interval's edits.
+            modification_years = [y for y in modification_years if construction_year <= y <= end_active_year]
+            code_change_years = [y for y in code_change_years if construction_year <= y <= end_active_year]
+            mod_by_year = {y: v for y, v in mod_by_year.items() if construction_year <= y <= end_active_year}
+
+            schedule = _BuildingEventCursor(
+                modification_years=modification_years,
+                code_change_years=code_change_years,
+                envelope_next_due=envelope_next_due,
+                window_next_due=window_next_due,
+                tech_next_due=tech_next_due,
+                end_active_year=end_active_year,
             )
 
-        if self.demolition_year is not None and start_year <= self.demolition_year <= end_year:
-            layers_snapshot = archetype_timeline.layers_snapshot_at_or_before(self.demolition_year)
+            while (year := schedule.next_year()) is not None:
+                self._apply_modifications_at_year(
+                    year=year,
+                    mod_by_year=mod_by_year,
+                    lifetimes=lifetimes,
+                    schedule=schedule,
+                    area_dict=area_dict,
+                    materials=materials,
+                )
+
+                self._apply_code_changes_at_year(
+                    year=year,
+                    const_type=const_type,
+                    archetype_timeline=archetype_timeline,
+                    area_dict=area_dict,
+                    tech_system_keys=tech_system_keys,
+                    emission_per_tech=emission_per_tech,
+                    tech_lifetime=tech_lifetime,
+                    win_lifetime_default=win_lifetime_default,
+                    schedule=schedule,
+                )
+
+                self._apply_due_replacements_at_year(
+                    year=year,
+                    const_type=const_type,
+                    archetype_timeline=archetype_timeline,
+                    area_dict=area_dict,
+                    materials=materials,
+                    lifetimes=lifetimes,
+                    win_lifetime_default=win_lifetime_default,
+                    emission_per_tech=emission_per_tech,
+                    tech_lifetime=tech_lifetime,
+                    schedule=schedule,
+                )
+
+        if interval_end is not None and start_year <= int(interval_end) <= end_year:
+            layers_snapshot = archetype_timeline.layers_snapshot_at_or_before(int(interval_end))
             self.demolish(
-                year=self.demolition_year,
+                year=int(interval_end),
                 const_type=const_type,
                 area_dict=area_dict,
                 materials=materials,
                 layers_snapshot=layers_snapshot,
                 comp_area_map=_COMP_AREA_MAP,
             )
-            self.add_note(year=int(self.demolition_year), message="Demolished")
+            self.add_note(year=int(interval_end), message="Demolished")
 
     def _init_codes_and_initial_construction(
         self,
@@ -1137,17 +1192,6 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
                     value_kgco2e=emission_per_tech * area_tech,
                 )
         return tech_system_keys, emission_per_tech, True
-
-    def _compute_end_active_year(self, end_year: int) -> int:
-        """Return the last year in which the building is active.
-
-        If `self.demolition_year` is set, the last active year is `demolition_year - 1`.
-        Otherwise, it is `end_year`.
-        """
-        end_active_year = end_year
-        if self.demolition_year is not None:
-            end_active_year = min(end_active_year, self.demolition_year - 1)
-        return int(end_active_year)
 
     def _prepare_replacement_clocks(
         self,
