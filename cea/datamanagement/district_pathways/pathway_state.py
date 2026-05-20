@@ -258,34 +258,51 @@ class DistrictEvolutionPathway:
         but nothing changes are excluded.
         """
         intervals = self.get_building_lifecycle_intervals()
-
-        # Collect years where a lifecycle event occurs
-        event_years: set[int] = set()
-        for ivs in intervals.values():
-            for start, end in ivs:
-                event_years.add(start)
-                if end is not None:
-                    event_years.add(end)
-
-        # Also include log years with actual content (modifications or building events)
-        for year in self.log_data.keys():
-            entry = self.log_data.get(int(year), {}) or {}
-            events = entry.get("building_events", {}) or {}
-            has_content = (
-                bool(entry.get("modifications"))
-                or bool(events.get("new_buildings"))
-                or bool(events.get("demolished_buildings"))
-            )
-            if has_content:
-                event_years.add(int(year))
-
-        # Filter out years with no active buildings
+        # Years where a lifecycle event occurs or the log authors content, minus those with no
+        # active buildings (an empty state is never baked).
         return sorted(
-            year for year in event_years
+            year for year in self._candidate_event_years(intervals)
             if any(
                 self._is_building_active(name, year, intervals)
                 for name in intervals
             )
+        )
+
+    def _candidate_event_years(self, intervals: dict[str, list[tuple[int, int | None]]]) -> set[int]:
+        """Years where a lifecycle event occurs or the log authors content.
+
+        This is the unfiltered set behind `required_state_years` (which then drops years with no
+        active buildings). Used both to pick which states to bake and to detect empty states.
+        """
+        years: set[int] = set()
+        for ivs in intervals.values():
+            for start, end in ivs:
+                years.add(start)
+                if end is not None:
+                    years.add(end)
+        for year in self.log_data.keys():
+            entry = self.log_data.get(int(year), {}) or {}
+            events = entry.get("building_events", {}) or {}
+            if (
+                entry.get("modifications")
+                or events.get("new_buildings")
+                or events.get("demolished_buildings")
+            ):
+                years.add(int(year))
+        return years
+
+    def years_without_active_buildings(self) -> list[int]:
+        """Candidate state years that would contain zero buildings.
+
+        Every pathway state must contain at least one building (an empty state has nothing to
+        simulate), so any year returned here is invalid. Note `required_state_years` silently
+        drops these; this method surfaces them for validation.
+        """
+        intervals = self.get_building_lifecycle_intervals()
+        return sorted(
+            year
+            for year in self._candidate_event_years(intervals)
+            if not any(self._is_building_active(name, year, intervals) for name in intervals)
         )
 
     def get_explicit_building_events(self, year: int) -> dict[str, list[str]]:

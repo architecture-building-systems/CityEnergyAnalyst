@@ -45,16 +45,23 @@ def validate_pathway_log_data(
         )
         return _validation_payload(pathway_name, global_issues, issues_by_year)
 
-    base_construction_years = DistrictEvolutionPathway(
-        config,
-        pathway_name=pathway_name,
-    ).get_building_construction_years()
+    pathway = DistrictEvolutionPathway(config, pathway_name=pathway_name)
+    # Validate the *prospective* log being saved, not the on-disk one.
+    pathway.log_data = log_data
+    base_construction_years = pathway.get_building_construction_years()
     valid_buildings = set(base_construction_years.keys())
 
     # Cross-year check: each building's construct/demolish events must form a feasible chain.
     global_issues.extend(
         _validate_building_event_feasibility(base_construction_years, log_data)
     )
+
+    # Every pathway state must contain at least one building.
+    for year in pathway.years_without_active_buildings():
+        global_issues.append(
+            f"Year {year} would have no buildings. At least one building must exist in "
+            "every pathway state — adjust the construct/demolish events for this year."
+        )
 
     for year in sorted(int(y) for y in log_data.keys()):
         entry = log_data.get(year, {}) or {}
