@@ -71,19 +71,20 @@ def hash_folder(path: str) -> str:
     return digest.hexdigest()
 
 
-def hash_state_inputs(
+def _state_inputs_folder_exists(
     locator: InputLocator,
     *,
     pathway_name: str,
     year: int,
-) -> str | None:
+) -> bool:
+    """True if the state's inputs/ folder exists.
+
+    Used as a guard before recording a baked/validated state. Freshness no longer hashes this
+    folder's contents — see the comment in `collect_state_phase_status`.
+    """
     state_folder = locator.get_state_in_time_scenario_folder(pathway_name, int(year))
-    # The state folder is itself a scenario; a state-scoped locator owns
-    # the canonical inputs-folder path.
-    inputs_folder = InputLocator(state_folder).get_input_folder()
-    if not os.path.isdir(inputs_folder):
-        return None
-    return hash_folder(inputs_folder)
+    # The state folder is itself a scenario; a state-scoped locator owns the canonical path.
+    return os.path.isdir(InputLocator(state_folder).get_input_folder())
 
 
 def hash_state_folder(
@@ -114,8 +115,7 @@ def record_baked_state(
     built_at: str,
     source_log_hash: str,
 ) -> dict[str, Any]:
-    inputs_hash = hash_state_inputs(locator, pathway_name=pathway_name, year=year)
-    if inputs_hash is None:
+    if not _state_inputs_folder_exists(locator, pathway_name=pathway_name, year=year):
         raise FileNotFoundError(
             f"Cannot record baked state for missing inputs folder: {pathway_name} state_{int(year)}"
         )
@@ -124,7 +124,6 @@ def record_baked_state(
         pathway_name=pathway_name,
         year=year,
         payload={
-            "baked_inputs_hash": inputs_hash,
             "baked_source_log_hash": source_log_hash,
             "built_at": built_at,
             # Clear simulation status so the state returns to "baked" (not stale)
@@ -144,8 +143,7 @@ def record_validated_state(
     validated_at: str,
     source_log_hash: str,
 ) -> dict[str, Any]:
-    inputs_hash = hash_state_inputs(locator, pathway_name=pathway_name, year=year)
-    if inputs_hash is None:
+    if not _state_inputs_folder_exists(locator, pathway_name=pathway_name, year=year):
         raise FileNotFoundError(
             f"Cannot record validation for missing inputs folder: {pathway_name} state_{int(year)}"
         )
@@ -154,7 +152,6 @@ def record_validated_state(
         pathway_name=pathway_name,
         year=year,
         payload={
-            "validated_inputs_hash": inputs_hash,
             "validated_source_log_hash": source_log_hash,
             "validated_at": validated_at,
         },
@@ -175,22 +172,18 @@ def record_simulated_state(
         raise FileNotFoundError(
             f"Cannot record simulation for missing state folder: {pathway_name} state_{int(year)}"
         )
-    inputs_hash = hash_state_inputs(locator, pathway_name=pathway_name, year=year)
+    # A simulated state is, by definition, baked and validated against the same log, so re-stamp
+    # the bake/validation source-log hashes too — this keeps it from showing stale after sim.
     payload = {
         "simulated_state_hash": state_hash,
         "simulated_source_log_hash": source_log_hash,
         "simulated_at": simulated_at,
         "simulated_workflow": workflow or [],
         "custom": False,
+        "baked_source_log_hash": source_log_hash,
+        "validated_source_log_hash": source_log_hash,
+        "validated_at": simulated_at,
     }
-    # Re-fingerprint baked/validated hashes to the current inputs so
-    # custom-edited states don't appear stale after simulation.
-    if inputs_hash is not None:
-        payload["baked_inputs_hash"] = inputs_hash
-        payload["baked_source_log_hash"] = source_log_hash
-        payload["validated_inputs_hash"] = inputs_hash
-        payload["validated_source_log_hash"] = source_log_hash
-        payload["validated_at"] = simulated_at
     return write_state_status(
         locator,
         pathway_name=pathway_name,
@@ -262,17 +255,18 @@ def collect_state_phase_status(
             "has_stale_phase": False,
         }
 
-    inputs_hash = hash_state_inputs(locator, pathway_name=pathway_name, year=year)
-
+    # Validation/bake freshness is judged purely on the semantic source-log hash, NOT on a
+    # content hash of the state's inputs/ folder. The folder hash is brittle: cloud sync
+    # (Dropbox/iCloud/OneDrive) rewriting blobs and input regeneration drift the bytes without a
+    # real pathway change, falsely flagging fresh states as stale. The simulation phase already
+    # abandoned folder hashing for this reason; the bake/validation phases now do the same.
     validation = _collect_validation_phase(
         status_record=status_record,
-        inputs_hash=inputs_hash,
         source_log_hash=source_log_hash,
     )
     bake = _collect_bake_phase(
         status_record=status_record,
         signature=signature,
-        inputs_hash=inputs_hash,
         source_log_hash=source_log_hash,
     )
     simulation = _collect_simulation_phase(
@@ -322,17 +316,15 @@ def collect_state_phase_status(
 def _collect_validation_phase(
     *,
     status_record: dict[str, Any],
-    inputs_hash: str | None,
     source_log_hash: str,
 ) -> dict[str, Any]:
-    validated_hash = status_record.get("validated_inputs_hash")
     validated_log_hash = status_record.get("validated_source_log_hash")
     validated_at = status_record.get("validated_at")
 
-    if not validated_hash or not validated_at or inputs_hash is None:
+    if not validated_log_hash or not validated_at:
         return _phase_payload("not_validated", "Not validated", validated_at)
 
-    if validated_hash != inputs_hash or validated_log_hash != source_log_hash:
+    if validated_log_hash != source_log_hash:
         return _phase_payload(
             "changed_after_validation",
             "Changed after validation",
@@ -346,31 +338,18 @@ def _collect_bake_phase(
     *,
     status_record: dict[str, Any],
     signature: dict[str, Any],
-    inputs_hash: str | None,
     source_log_hash: str,
 ) -> dict[str, Any]:
-    baked_hash = status_record.get("baked_inputs_hash")
     baked_log_hash = status_record.get("baked_source_log_hash")
     built_at = status_record.get("built_at") or signature.get("built_at")
 
-    if inputs_hash is None:
+    if not built_at:
         return _phase_payload("not_baked", "Not baked", built_at)
 
-    if baked_hash and built_at:
-        if baked_hash != inputs_hash or baked_log_hash != source_log_hash:
-            return _phase_payload(
-                "changed_after_bake",
-                "Changed after bake",
-                built_at,
-            )
-        return _phase_payload("baked", "Baked", built_at)
+    if baked_log_hash and baked_log_hash != source_log_hash:
+        return _phase_payload("changed_after_bake", "Changed after bake", built_at)
 
-    if built_at:
-        if baked_log_hash and baked_log_hash != source_log_hash:
-            return _phase_payload("changed_after_bake", "Changed after bake", built_at)
-        return _phase_payload("baked", "Baked", built_at)
-
-    return _phase_payload("not_baked", "Not baked", built_at)
+    return _phase_payload("baked", "Baked", built_at)
 
 
 def _collect_simulation_phase(
