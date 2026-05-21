@@ -11,6 +11,9 @@ from cea.datamanagement.district_pathways.pathway_state import DistrictEvolution
 from cea.datamanagement.district_pathways.pathway_timeline import (
     validate_all_baked_states,
 )
+from cea.datamanagement.district_pathways.pathway_validation import (
+    raise_if_invalid_pathway_log,
+)
 
 
 def main(config: Configuration) -> None:
@@ -31,6 +34,11 @@ def main(config: Configuration) -> None:
     )
     print("=" * 80, flush=True)
     pathway = DistrictEvolutionPathway(config, pathway_name=pathway_name)
+    # Fail loudly on an infeasible or empty-state pathway log (e.g. data authored before these
+    # checks existed) instead of silently dropping years during the bake.
+    raise_if_invalid_pathway_log(
+        config=config, pathway_name=pathway_name, log_data=pathway.log_data
+    )
     pathway.bake_states_from_log()
 
     # Refresh validation fingerprints for every baked state so the pathway

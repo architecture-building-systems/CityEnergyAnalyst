@@ -47,6 +47,9 @@ from cea.datamanagement.district_pathways.pathway_status import (
 from cea.datamanagement.district_pathways.pathway_timeline import (
     validate_all_baked_states,
 )
+from cea.datamanagement.district_pathways.pathway_validation import (
+    raise_if_invalid_pathway_log,
+)
 
 
 def _cleanup_state_outputs(state_locator: InputLocator, year: int) -> None:
@@ -305,6 +308,11 @@ def main(config: Configuration) -> None:
         flush=True,
     )
     print("=" * 80, flush=True)
+    # Fail loudly on an infeasible or empty-state pathway log before running any simulation.
+    pathway = DistrictEvolutionPathway(config, pathway_name=pathway_name)
+    raise_if_invalid_pathway_log(
+        config=config, pathway_name=pathway_name, log_data=pathway.log_data
+    )
     simulate_all_states(config, pathway_name=pathway_name)
     print("All pathway states have been simulated.", flush=True)
     try:
