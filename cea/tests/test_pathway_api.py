@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import shutil
 from pathlib import Path
 from uuid import uuid4
@@ -22,7 +21,6 @@ from cea.datamanagement.district_pathways.pathway_state import (
 from cea.datamanagement.district_pathways.pathway_status import (
     record_baked_state,
     record_simulated_state,
-    record_validated_state,
 )
 from cea.inputlocator import InputLocator
 from cea.interfaces.dashboard.api.pathways import router as pathways_router

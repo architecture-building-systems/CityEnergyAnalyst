@@ -250,12 +250,6 @@ def verify_file_against_schema_4_db(scenario, item, sheet_name=None):
     #         print(f"! CEA was not able to verify {os.path.basename(file_path)} "
     #               f"as a unique row identifier column such as (building) name or (component) code is not present.")
 
-    # Columns that are nullable in the schema may be absent from the file (and the
-    # `required_one_of` clause governs which combinations of nullable columns are still required).
-    nullable_columns = {
-        col for col, specs in schema_columns.items() if specs.get('nullable')
-    }
-
     # Validation process
     for col_name, col_specs in schema_columns.items():
         if col_name not in df.columns:

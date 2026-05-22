@@ -234,7 +234,7 @@ def total_yearly(config: Configuration) -> None:
     building_properties = BuildingProperties(locator, weather_data, buildings)
     results: list[tuple[str, pd.DataFrame]] = []
     for building in buildings:
-        timeline = BuildingYearlyEmissionTimeline(
+        timeline = BuildingEmissionTimeline(
             building_properties=building_properties,
             building_name=building,
             locator=locator,

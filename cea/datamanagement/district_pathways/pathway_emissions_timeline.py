@@ -1865,18 +1865,6 @@ def _load_building_const_types(locator: InputLocator) -> dict[str, str]:
     return out
 
 
-def _building_demolition_years(log_data: dict[int, dict[str, Any]]) -> dict[str, int]:
-    """Return {building_name: latest_demolition_year} from YAML building_events."""
-    out: dict[str, int] = {}
-    for year in sorted(int(y) for y in log_data.keys()):
-        entry = log_data.get(year, {}) or {}
-        events = entry.get("building_events", {}) or {}
-        demolished = events.get("demolished_buildings", []) or []
-        for b in demolished:
-            out[str(b)] = int(year)
-    return out
-
-
 def _building_manual_construction_years(log_data: dict[int, dict[str, Any]]) -> dict[str, int]:
     """Return {building_name: latest_construction_year} overrides from YAML building_events."""
     out: dict[str, int] = {}
@@ -2279,7 +2267,6 @@ def create_district_pathway_emissions_timeline(
     building_construction_years = get_building_construction_years(main_locator)
     building_construction_years.update(_building_manual_construction_years(log_data))
     building_const_types = _load_building_const_types(main_locator)
-    demolition_years = _building_demolition_years(log_data)
     lifecycle_intervals = _building_lifecycle_intervals(
         get_building_construction_years(main_locator), log_data,
     )
