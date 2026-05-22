@@ -11,7 +11,6 @@ import cea.inputlocator
 from cea.datamanagement.district_pathways.intervention_templates import (
     delete_intervention_template,
     find_template_usage,
-    get_intervention_template_names,
     load_intervention_templates,
 )
 from cea.datamanagement.district_pathways.pathway_timeline import (
@@ -133,10 +132,18 @@ async def duplicate_pathway(
 
 
 @router.get("/templates")
-async def get_templates(config: CEAConfig) -> dict[str, list[str]]:
+async def get_templates(config: CEAConfig) -> dict[str, Any]:
     locator = cea.inputlocator.InputLocator(config.scenario)
-    names = await run_in_threadpool(get_intervention_template_names, locator)
-    return {"templates": names}
+
+    def fn() -> dict[str, Any]:
+        templates = load_intervention_templates(locator, allow_missing=True)
+        names = sorted(templates.keys())
+        descriptions = {
+            name: (templates[name].get("description") or "") for name in names
+        }
+        return {"templates": names, "descriptions": descriptions}
+
+    return await run_in_threadpool(fn)
 
 
 @router.get("/templates/{template_name}")
