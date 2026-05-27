@@ -234,9 +234,13 @@ class Envelope(BaseAssemblyDatabase):
             return non_zero_count >= 1
 
         def _row_has_complete_direct_set(row: pd.Series, kind: str) -> bool:
-            return all(
-                col in row.index and _to_float(row.get(col)) is not None
-                for col in DERIVED_COLS_BY_KIND[kind]
+            # Biogenic carbon was added after the rest of the legacy schema; v3 datasets
+            # (e.g. the migrated reference-case-open) ship without it. Require only U and
+            # GHG total; biogenic defaults to 0 below when missing.
+            u_col, ghg_col, _bio_col = DERIVED_COLS_BY_KIND[kind]
+            return (
+                _to_float(row.get(u_col)) is not None
+                and _to_float(row.get(ghg_col)) is not None
             )
 
         def _gather_materials_for_row(row: pd.Series) -> list[dict[str, Any]] | None:
@@ -311,7 +315,11 @@ class Envelope(BaseAssemblyDatabase):
                     continue
 
                 if not has_materials:
-                    # Direct-property only — values already on disk, nothing to do.
+                    # Direct-property only. Fill in a missing biogenic value (legacy schema)
+                    # with 0 so downstream readers always get a defined number.
+                    bio_col = derived_cols[2]
+                    if _to_float(row.get(bio_col)) is None:
+                        df.loc[code_str, bio_col] = 0.0
                     continue
 
                 mats = _gather_materials_for_row(row)

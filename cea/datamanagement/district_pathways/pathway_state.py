@@ -280,15 +280,11 @@ class DistrictEvolutionPathway:
                 years.add(start)
                 if end is not None:
                     years.add(end)
+        # Any explicit log entry — including an empty-modifications placeholder authored via the
+        # YAML editor — counts as an authored state. The downstream active-buildings filter
+        # still drops years that would have zero buildings.
         for year in self.log_data.keys():
-            entry = self.log_data.get(int(year), {}) or {}
-            events = entry.get("building_events", {}) or {}
-            if (
-                entry.get("modifications")
-                or events.get("new_buildings")
-                or events.get("demolished_buildings")
-            ):
-                years.add(int(year))
+            years.add(int(year))
         return years
 
     def years_without_active_buildings(self) -> list[int]:
@@ -602,14 +598,12 @@ class DistrictEvolutionPathway:
             cleaned_entry.pop("manual_state", None)
             self.log_data[year] = cleaned_entry
 
-        # Remove empty entries (no modifications, no building events)
+        # Strip only truly empty entries. An entry with metadata (e.g. created_at) but
+        # empty modifications is a valid manual-state placeholder authored via the YAML
+        # editor, and must persist (matches `_candidate_event_years` treating any explicit
+        # log entry as a candidate state year).
         for year in list(self.log_data.keys()):
-            entry = self.log_data.get(year, {}) or {}
-            events = entry.get("building_events", {}) or {}
-            has_new = bool(events.get("new_buildings"))
-            has_demolished = bool(events.get("demolished_buildings"))
-            has_modifications = bool(entry.get("modifications"))
-            if not has_new and not has_demolished and not has_modifications:
+            if not (self.log_data.get(year) or {}):
                 del self.log_data[year]
 
         save_pathway_log_yaml(self.main_locator, self.log_data, pathway_name=self.pathway_name)
