@@ -2,7 +2,7 @@
 name = "cityenergyanalyst"
 description = "City Energy Analyst"
 readme = "README.rst"
-requires-python = ">=3.11"
+requires-python = ">=3.12" # Held back by pythonocc-core
 license = { file = "LICENSE" }
 authors = [
     { name = "Architecture and Building Systems", email = "cea@arch.ethz.ch" }
@@ -16,7 +16,7 @@ dynamic = ["version"]
 dependencies = [
     # Scientific/geospatial packages (optimized conda builds available in conda-forge)
     # Duplicated below in [tool.pixi.dependencies] to fetch from conda-forge using pixi - update both when needed
-    "numpy>=1.24.0,<2", # held back by wntr
+    "numpy",
     "scipy",
     "matplotlib",
     "geopandas>=1.0.0",
@@ -152,7 +152,7 @@ export-conda = {cmd = "pixi workspace export conda-environment environment.yml"}
 [tool.pixi.dependencies]
 # Scientific/geospatial packages (also in main dependencies - conda-forge preferred)
 # Duplicate of above in [project.dependencies] - update both when needed
-numpy = ">=1.24.0,<2" # held back by wntr
+numpy = "*"
 scipy = "*"
 matplotlib = "*"
 geopandas = ">=1.0.0"
@@ -179,3 +179,9 @@ notebook = "*"
 pixi-pycharm = ">=0.0.8,<0.0.9" # for pycharm support
 uv = "*"
 timezonefinder = ">=8.1.0,<9" # to fix Windows installation due to pyepwmorpher
+
+# Workaround: pixi/uv on macOS 26 arm64 incorrectly uses 'aarch64' platform tags instead of 'arm64'
+# when checking build-from-source wheel compatibility, causing wntr to fail (no osx aarch64 PyPI wheel).
+# Using a direct URL bypasses the broken build-from-source code path. Remove when pixi/uv is fixed.
+[tool.pixi.target.osx-arm64.pypi-dependencies]
+wntr = {url = "https://files.pythonhosted.org/packages/fe/10/cb13cc8c02774a8c8c2b3ff12eb7dd266a77093302ce10aef531f7e5ef0b/wntr-1.4.0-cp312-cp312-macosx_14_0_arm64.whl"}
