@@ -910,10 +910,9 @@ def calc_optimal_mass_flow(q1, q2, q3, q4, E1, E2, E3, E4, m1, m2, m3, m4, dP1, 
     balances = [abs(q1) - E1 * 2, q2 - E2 * 2, q3 - E3 * 2, q4 - E4 * 2]  # energy generation function eq.(63)
     for t in range(HOURS_IN_YEAR):
         balances_time = [balances[0][t], balances[1][t], balances[2][t], balances[3][t]]
-        max_heat_production = np.max(balances_time)
-        ix_max_heat_production = np.where(balances_time == max_heat_production)
-        mass_flow_opt[t] = mass_flow_all_kgpers[ix_max_heat_production[0][0]]
-        dP_opt[t] = dP_all_Pa[ix_max_heat_production[0][0]]
+        ix_max = np.argmax(balances_time)
+        mass_flow_opt[t] = mass_flow_all_kgpers[ix_max]
+        dP_opt[t] = dP_all_Pa[ix_max]
     return mass_flow_opt, dP_opt
 
 
