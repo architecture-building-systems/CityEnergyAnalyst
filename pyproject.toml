@@ -16,7 +16,7 @@ dynamic = ["version"]
 dependencies = [
     # Scientific/geospatial packages (optimized conda builds available in conda-forge)
     # Duplicated below in [tool.pixi.dependencies] to fetch from conda-forge using pixi - update both when needed
-    "numpy",
+    "numpy>=2.0,<3",
     "scipy",
     "matplotlib",
     "geopandas>=1.0.0",
@@ -152,7 +152,7 @@ export-conda = {cmd = "pixi workspace export conda-environment environment.yml"}
 [tool.pixi.dependencies]
 # Scientific/geospatial packages (also in main dependencies - conda-forge preferred)
 # Duplicate of above in [project.dependencies] - update both when needed
-numpy = "*"
+numpy = ">=2.0,<3"
 scipy = "*"
 matplotlib = "*"
 geopandas = ">=1.0.0"
