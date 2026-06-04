@@ -503,8 +503,7 @@ def breed_new_generation(selected_individuals, network_info):
 
             if network_info.optimize_building_connections:
                 # we are optimizing which buildings to connect
-                random_choice = np.random.random_integers(low=0,
-                                                          high=1)  # either remove a plant or disconnect the building completely
+                random_choice = np.random.randint(0, 2)  # either remove a plant or disconnect the building completely
             else:
                 random_choice = 0  # we are not disconnecting buildings, so always remove a plant, never disconnect
             if random_choice == 0:  # remove a plant
@@ -517,8 +516,7 @@ def breed_new_generation(selected_individuals, network_info):
             # Add one plant
             # find all non plant indices
             if network_info.optimize_building_connections:
-                random_choice = np.random.random_integers(low=0,
-                                                          high=1)  # either we put a plant at a previously disconnected building or at a building already in the network
+                random_choice = np.random.randint(0, 2)  # either we put a plant at a previously disconnected building or at a building already in the network
             else:
                 random_choice = 0
             if random_choice == 0:
@@ -612,14 +610,14 @@ def disconnect_buildings(network_info):
     # initialize storage of plants and disconnected buildings
     new_buildings = [INDIVIDUAL_PLANT] * network_info.number_of_buildings_in_district
     # choose random amount, choose random locations, start disconnecting buildings
-    random_amount = np.random.random_integers(low=0, high=(network_info.number_of_buildings_in_district - 1))
+    random_amount = np.random.randint(0, network_info.number_of_buildings_in_district)
     # disconnect a random amount of buildings
     for i in range(random_amount):
         # chose a random location / index to disconnect
-        random_index = np.random.random_integers(low=0, high=(network_info.number_of_buildings_in_district - 1))
+        random_index = np.random.randint(0, network_info.number_of_buildings_in_district)
         while new_buildings[random_index] == INDIVIDUAL_DISCONNECTED:
             # if this building is already disconnected, chose a different index
-            random_index = np.random.random_integers(low=0, high=(network_info.number_of_buildings_in_district - 1))
+            random_index = np.random.randint(0, network_info.number_of_buildings_in_district)
         new_buildings[random_index] = INDIVIDUAL_DISCONNECTED
     # return list of disconnected buildings
     return list(new_buildings)
@@ -814,10 +812,9 @@ def mutate_load(individual, network_info):
     individual = list(individual)
     # invert one random byte
     if network_info.network_type == 'DH':
-        random_choice = np.random.random_integers(low=0, high=0)  # no disconnected cost information available
+        random_choice = 0  # no disconnected cost information available
     else:
-        random_choice = np.random.random_integers(low=0,
-                                                  high=2)  # once disconnected cost information for data and re available increase to 4
+        random_choice = np.random.randint(0, 3)  # once disconnected cost information for data and re available increase to 4
     if individual[random_choice] == LOAD_CONNECTED:
         individual[random_choice] = LOAD_DISCONNECTED
     else:
@@ -837,7 +834,7 @@ def mutateLoop(individual):
     # make sure we have a list type
     individual = list(individual)
     # keep our loop or not
-    keep_or_remove = np.random.random_integers(low=0, high=1)
+    keep_or_remove = np.random.randint(0, 2)
     if keep_or_remove == 1:  # switch value
         if individual[LOOPS_INDEX] == NETWORK_HAS_LOOPS:  # loops are activated
             individual[LOOPS_INDEX] = NETWORK_HAS_NO_LOOPS  # turn off

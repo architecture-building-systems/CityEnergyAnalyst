@@ -7,6 +7,7 @@ from enum import StrEnum
 import numpy as np
 import numpy.typing as npt
 from cea.constants import HOURS_IN_YEAR
+from numpy.char import chararray
 
 
 class AHUStatus(StrEnum):
@@ -55,7 +56,7 @@ def empty_char_array():
     Memory usage: ~175KB per array (itemsize=20 * 8760 hours), which is acceptable
     for the performance benefits of vectorized operations.
     """
-    arr = np.chararray(HOURS_IN_YEAR, itemsize=20)
+    arr = chararray(HOURS_IN_YEAR, itemsize=20)
     arr[:] = AHUStatus.UNKNOWN  # Using enum default value
     return arr
 
@@ -645,13 +646,13 @@ class SystemStatus:
     Data related to system status.
     """
 
-    sys_status_ahu: np.chararray = field(default_factory=empty_char_array)
+    sys_status_ahu: chararray = field(default_factory=empty_char_array)
     """Status of the AHU (AHUStatus values)"""
 
-    sys_status_aru: np.chararray = field(default_factory=empty_char_array)
+    sys_status_aru: chararray = field(default_factory=empty_char_array)
     """Status of the ARU (ARUStatus values)"""
 
-    sys_status_sen: np.chararray = field(default_factory=empty_char_array)
+    sys_status_sen: chararray = field(default_factory=empty_char_array)
     """Status of the sensible heat recovery (SENStatus values)"""
 
 
