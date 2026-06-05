@@ -112,8 +112,8 @@ class EnergyFlow(object):
 
             if new_profile.isna().any():
                 warnings.warn(
-                    f"Energy flow profile contained NaN values; replacing with 0. "
-                    f"This indicates an upstream calculation issue (e.g. in a solar potential file).",
+                    "Energy flow profile contained NaN values; replacing with 0. "
+                    "This indicates an upstream calculation issue (e.g. in a solar potential file).",
                     UserWarning,
                     stacklevel=3,
                 )
