@@ -902,17 +902,13 @@ def calc_optimal_mass_flow(q1, q2, q3, q4, E1, E2, E3, E4, m1, m2, m3, m4, dP1, 
     Energy and Buildings, 2016.
     """
 
-    mass_flow_opt = np.empty(HOURS_IN_YEAR)
-    dP_opt = np.empty(HOURS_IN_YEAR)
     const = Area_a / 3600
-    mass_flow_all_kgpers = [m1 * const, m2 * const, m3 * const, m4 * const]  # [kg/s]
-    dP_all_Pa = [dP1 * Area_a, dP2 * Area_a, dP3 * Area_a, dP4 * Area_a]  # [Pa]
-    balances = [abs(q1) - E1 * 2, q2 - E2 * 2, q3 - E3 * 2, q4 - E4 * 2]  # energy generation function eq.(63)
-    for t in range(HOURS_IN_YEAR):
-        balances_time = [balances[0][t], balances[1][t], balances[2][t], balances[3][t]]
-        ix_max = np.argmax(balances_time)
-        mass_flow_opt[t] = mass_flow_all_kgpers[ix_max]
-        dP_opt[t] = dP_all_Pa[ix_max]
+    mass_flow_all_kgpers = np.array([m1 * const, m2 * const, m3 * const, m4 * const])  # [kg/s]
+    dP_all_Pa = np.array([dP1 * Area_a, dP2 * Area_a, dP3 * Area_a, dP4 * Area_a])  # [Pa]
+    balances = np.array([abs(q1) - E1 * 2, q2 - E2 * 2, q3 - E3 * 2, q4 - E4 * 2])  # energy generation function eq.(63)
+    ix_max = np.argmax(balances, axis=0)  # shape (HOURS_IN_YEAR,)
+    mass_flow_opt = mass_flow_all_kgpers[ix_max]
+    dP_opt = dP_all_Pa[ix_max]
     return mass_flow_opt, dP_opt
 
 
