@@ -40,7 +40,8 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_PVT(locator, config, type_pvpanel, type_scpanel,latitude, longitude, weather_data, date_local, building_name):
+def calc_PVT(locator, config, type_pvpanel, type_scpanel, latitude, longitude, weather_data, date_local,
+             solar_properties, building_name):
     """
     This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
     tilt angles of panels at each surface location. The panels are categorized into groups by their surface azimuths,
@@ -68,10 +69,6 @@ def calc_PVT(locator, config, type_pvpanel, type_scpanel,latitude, longitude, we
 
     radiation_path = locator.get_radiation_building_sensors(building_name)
     metadata_csv_path = locator.get_radiation_metadata(building_name)
-
-    # solar properties
-    solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, date_local, config)
-    # print('calculating solar properties done for building %s' % building_name)
 
     # get properties of the panel to evaluate # TODO: find a PVT module reference
     panel_properties_PV = get_properties_PV_db(locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'), type_pvpanel)
@@ -809,7 +806,7 @@ def main(config: cea.config.Configuration):
     # weather hourly_results_per_building
     weather_data = epwreader.epw_reader(locator.get_weather_file())
     date_local = solar_equations.calc_datetime_local_from_weather_file(weather_data, latitude, longitude)
-
+    solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, date_local, config)
 
     n = len(building_names)
     for type_pvpanel in types_pvpanel:
@@ -823,6 +820,7 @@ def main(config: cea.config.Configuration):
                                                                                          repeat(longitude, n),
                                                                                          repeat(weather_data, n),
                                                                                          repeat(date_local, n),
+                                                                                         repeat(solar_properties, n),
                                                                                          building_names)
 
 
