@@ -491,7 +491,7 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
     return result
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True)
 def do_multi_segment_calculation(A_seg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT, Mfl_kgpers, Nseg, STORED,
                                  Tabs, TabsA, Tamb_C, Tfl, TflA, TflB, Tin_C, Tout_C, c1, c2, delts,
                                  mode_seg, q_gain_Seg, q_gain_Wperm2, q_rad_Wperm2):
@@ -536,7 +536,7 @@ def do_multi_segment_calculation(A_seg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT, 
     return Tout_Seg_C
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True)
 def calc_Tout_C(Cp_fluid_JperkgK, DT, Nseg, STORED, Tabs, Tamb_C, Tfl, Tin_C, aperture_area_m2, c1,
                 q_rad_Wperm2, Mfl_kgpers):
     # calculate mean fluid temperature and average absorber temperature at the beginning of the time-step
@@ -558,7 +558,7 @@ def calc_Tout_C(Cp_fluid_JperkgK, DT, Nseg, STORED, Tabs, Tamb_C, Tfl, Tin_C, ap
     return Tout_C
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True)
 def calc_Mfl_kgpers(C_eff_Jperm2K, Cp_fluid_JperkgK, DELT, Nseg, STORED, TIME0, Tin_C, aperture_area_m2,
                     specific_flows_kgpers, time):
     Mfl_kgpers = specific_flows_kgpers[time]  # [kg/s]
@@ -634,7 +634,7 @@ def calc_q_rad(n0, IAM_b, IAM_d, I_direct_Wperm2, I_diffuse_Wperm2, tilt):
     return q_rad_Wperm2
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True)
 def calc_q_gain(Tfl, q_rad_Whperm2, DT, Tin, aperture_area_m2, c1, c2, Mfl, delts, Cp_waterglycol, C_eff,
                 Te):
     """
