@@ -438,7 +438,7 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
             # OUT[11] = q_mtherm
             # OUT[12] = q_balance_error
         if flow < 4:
-            auxiliary_electricity_kW[flow] = vectorize_calc_Eaux_SC(specific_flows_kgpers[flow],
+            auxiliary_electricity_kW[flow] = calc_Eaux_SC(specific_flows_kgpers[flow],
                                                                     specific_pressure_losses_Pa[flow], pipe_lengths,
                                                                     aperture_area_m2)  # in kW
         if flow == 3:
@@ -459,7 +459,7 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
                                                                                               aperture_area_m2)
         if flow == 4:
             # calculate pumping electricity when operates at optimal mass flow
-            auxiliary_electricity_kW[flow] = vectorize_calc_Eaux_SC(specific_flows_kgpers[flow],
+            auxiliary_electricity_kW[flow] = calc_Eaux_SC(specific_flows_kgpers[flow],
                                                                     specific_pressure_losses_Pa[flow], pipe_lengths,
                                                                     aperture_area_m2)  # in kW
             dp5 = specific_pressure_losses_Pa[flow]
@@ -474,7 +474,7 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
                                                                       aperture_area_m2,
                                                                       temperature_mean_C[flow], Tamb_vector_C,
                                                                       msc_max_kgpers)
-            auxiliary_electricity_kW[flow] = vectorize_calc_Eaux_SC(specific_flows_kgpers[flow],
+            auxiliary_electricity_kW[flow] = calc_Eaux_SC(specific_flows_kgpers[flow],
                                                                     specific_pressure_losses_Pa[flow],
                                                                     pipe_lengths, aperture_area_m2)  # in kW
             supply_out_total_kW = supply_out_kW[flow].copy() + 0.5 * auxiliary_electricity_kW[flow].copy() - \
@@ -810,39 +810,23 @@ def calc_properties_SC_db(database_path, panel_type):
     return panel_properties
 
 
-def vectorize_calc_Eaux_SC(scpecific_flow_kgpers, dP_collector_Pa, pipe_lengths, Aa_m2):
-    Leq_mperm2 = pipe_lengths['Leq_mperm2']
-    l_int_mperm2 = pipe_lengths['l_int_mperm2']
-    return np.vectorize(calc_Eaux_SC)(scpecific_flow_kgpers, dP_collector_Pa, Leq_mperm2, l_int_mperm2, Aa_m2)
-
-
-def calc_Eaux_SC(specific_flow_kgpers, dP_collector_Pa, Leq_mperm2, l_int_mperm2, Aa_m2):
+def calc_Eaux_SC(specific_flow_kgpers, dP_collector_Pa, pipe_lengths, Aa_m2):
     """
     Calculate auxiliary electricity for pumping heat transfer fluid through solar collectors to downstream equipment
     (absorption chiller, district heating network...).
     This include pressure losses from pipe friction, collector, and the building head.
-    :param specific_flow_kgpers: mass flow [kg/s]
-    :param dP_collector_Pa: pressure loss per module [Pa]
-    :param Leq_mperm2: total pipe length per aperture area [m]
+    :param specific_flow_kgpers: mass flow array [kg/s]
+    :param dP_collector_Pa: pressure loss per module array [Pa]
+    :param pipe_lengths: dict with Leq_mperm2 and l_int_mperm2 [m/m2]
     :param Aa_m2: aperture area [m2]
-    :return:
+    :return: auxiliary electricity array [kW]
     """
-
-    # read variables
-    dpl_Paperm = constants.dpl_Paperm
-    fcr = constants.fcr
-    Ro_kgperm3 = constants.Ro_kgperm3
-    eff_pumping = constants.eff_pumping
-
-    # calculate pressure drops
-    dP_friction_Pa = dpl_Paperm * Leq_mperm2 * Aa_m2 * fcr  # HANZENWILIAMSN PA
-    dP_building_head_Pa = (l_int_mperm2 / 2) * Aa_m2 * Ro_kgperm3 * 9.8  # dP = H*rho*g, g = 9.8 m/s^2
-
-    # calculate electricity requirement from pumps
-    Eaux_kW = (specific_flow_kgpers / Ro_kgperm3) * (
-            dP_collector_Pa + dP_friction_Pa + dP_building_head_Pa) / eff_pumping / 1000
-
-    return Eaux_kW
+    Leq_mperm2 = pipe_lengths['Leq_mperm2']
+    l_int_mperm2 = pipe_lengths['l_int_mperm2']
+    dP_friction_Pa = constants.dpl_Paperm * Leq_mperm2 * Aa_m2 * constants.fcr
+    dP_building_head_Pa = (l_int_mperm2 / 2) * Aa_m2 * constants.Ro_kgperm3 * 9.8
+    return (specific_flow_kgpers / constants.Ro_kgperm3) * (
+        dP_collector_Pa + dP_friction_Pa + dP_building_head_Pa) / constants.eff_pumping / 1000
 
 
 def calc_Eaux_panels(specific_flow_kgpers, dP_collector_Pa, pipe_lengths, Aa_m2):

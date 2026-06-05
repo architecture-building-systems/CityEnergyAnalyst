@@ -23,7 +23,7 @@ from cea.technologies.solar import constants
 from cea.technologies.solar.photovoltaic import (get_properties_PV_db, calc_PV_power, calc_diffuseground_comp,
                                                  calc_absorbed_radiation_PV, calc_cell_temperature)
 from cea.technologies.solar.solar_collector import (calc_properties_SC_db, calc_IAM_beam_SC, calc_q_rad, calc_q_gain,
-                                                    vectorize_calc_Eaux_SC, calc_optimal_mass_flow,
+                                                    calc_Eaux_SC, calc_optimal_mass_flow,
                                                     calc_optimal_mass_flow_2, calc_qloss_network)
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
@@ -492,7 +492,7 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
                                  temperature_out[flow], temperature_in[flow], supply_out_kW[flow],
                                  temperature_mean[flow])
         if flow < 4:
-            auxiliary_electricity_kW[flow] = vectorize_calc_Eaux_SC(specific_flows_kgpers[flow],
+            auxiliary_electricity_kW[flow] = calc_Eaux_SC(specific_flows_kgpers[flow],
                                                                     specific_pressure_losses_Pa[flow], pipe_lengths,
                                                                     aperture_area_m2)  # in kW
         if flow == 3:
@@ -510,7 +510,7 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
                                                                                               dP2, dP3, dP4,
                                                                                               aperture_area_m2)
         if flow == 4:
-            auxiliary_electricity_kW[flow] = vectorize_calc_Eaux_SC(specific_flows_kgpers[flow],
+            auxiliary_electricity_kW[flow] = calc_Eaux_SC(specific_flows_kgpers[flow],
                                                                     specific_pressure_losses_Pa[flow], pipe_lengths,
                                                                     aperture_area_m2)  # in kW
             dp5 = specific_pressure_losses_Pa[flow]
@@ -525,7 +525,7 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
                                                                       aperture_area_m2, temperature_mean[flow],
                                                                       Tamb_vector_C, msc_max_kgpers)
             # supply_out_pre = supply_out_kW[flow].copy() + supply_losses_kW[flow].copy()
-            auxiliary_electricity_kW[flow] = vectorize_calc_Eaux_SC(specific_flows_kgpers[flow],
+            auxiliary_electricity_kW[flow] = calc_Eaux_SC(specific_flows_kgpers[flow],
                                                                     specific_pressure_losses_Pa[flow], pipe_lengths,
                                                                     aperture_area_m2)  # in kW
             supply_out_total_kW = supply_out_kW + 0.5 * auxiliary_electricity_kW[flow] - supply_losses_kW[flow]
