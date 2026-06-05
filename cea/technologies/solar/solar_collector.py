@@ -376,6 +376,8 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
     tilt_rad = radians(tilt_angle_deg)
     q_rad_vector = calc_q_rad(n0, IAM_b, IAM_d, radiation_Wperm2.I_direct, radiation_Wperm2.I_diffuse,
                               tilt_rad)  # absorbed solar radiation in W/m2 is a mean of the group
+    Tamb_vector_C = np.asarray(Tamb_vector_C)
+    q_rad_vector = np.asarray(q_rad_vector)
     for flow in range(6):
         mode_seg = 1  # mode of segmented heat loss calculation. only one mode is implemented.
         TIME0 = 0
@@ -391,52 +393,12 @@ def calc_SC_module(config, radiation_Wperm2, panel_properties, Tamb_vector_C, IA
         TabsA = np.zeros(600)
         q_gain_Seg = np.zeros(101)  # maximum Iseg = maximum Nseg + 1 = 101
 
-        for t in range(HOURS_IN_YEAR):
-            Mfl_kgpers = calc_Mfl_kgpers(C_eff_Jperm2K, Cp_fluid_JperkgK, DELT, Nseg, STORED, TIME0, Tin_C,
-                                         aperture_area_m2, specific_flows_kgpers[flow], t)
-
-            Tamb_C = Tamb_vector_C[t]
-            q_rad_Wperm2 = q_rad_vector[t]
-            Tout_C = calc_Tout_C(Cp_fluid_JperkgK, DT, Nseg, STORED, Tabs, Tamb_C, Tfl, Tin_C, aperture_area_m2, c1,
-                                 q_rad_Wperm2, Mfl_kgpers)
-            # calculate q_gain with the guess for DT[1]
-            q_gain_Wperm2 = calc_q_gain(Tfl, q_rad_Wperm2, DT, Tin_C, aperture_area_m2, c1, c2,
-                                        Mfl_kgpers, delts, Cp_fluid_JperkgK, C_eff_Jperm2K, Tamb_C)
-
-            A_seg_m2 = aperture_area_m2 / Nseg  # aperture area per segment
-
-            # multi-segment calculation to avoid temperature jump at times of flow rate changes.
-            Tout_Seg_C = do_multi_segment_calculation(A_seg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT, Mfl_kgpers, Nseg,
-                                                      STORED, Tabs, TabsA, Tamb_C, Tfl, TflA, TflB, Tin_C, Tout_C, c1,
-                                                      c2, delts, mode_seg, q_gain_Seg, q_gain_Wperm2, q_rad_Wperm2)
-
-            # resulting net energy output
-            q_out_kW = (Mfl_kgpers * Cp_fluid_JperkgK * (Tout_Seg_C - Tin_C)) / 1000  # [kW]
-            Tabs[2] = 0
-            # storage of the mean temperature
-            for Iseg in range(1, Nseg + 1):
-                STORED[200 + Iseg] = TflB[Iseg]
-                STORED[400 + Iseg] = TabsB[Iseg]
-                Tabs[2] = Tabs[2] + TabsB[Iseg] / Nseg
-
-            # outputs
-            temperature_out_C[flow][t] = Tout_Seg_C
-            temperature_in_C[flow][t] = Tin_C
-            supply_out_kW[flow][t] = q_out_kW
-            temperature_mean_C[flow][t] = (Tin_C + Tout_Seg_C) / 2  # Mean absorber temperature at present
-
-            # the following lines do not perform meaningful operation, the iteration on DT are performed in calc_q_gain
-            # these lines are kept here as a reference to the original model in FORTRAN
-            # q_gain = 0
-            # TavgB = 0
-            # TavgA = 0
-            # for Iseg in range(1, Nseg + 1):
-            #     q_gain = q_gain + q_gain_Seg[Iseg] * A_seg_m2  # [W]
-            #     TavgA = TavgA + TflA[Iseg] / Nseg
-            #     TavgB = TavgB + TflB[Iseg] / Nseg
-            # # OUT[9] = q_gain/Area_a # in W/m2
-            # OUT[11] = q_mtherm
-            # OUT[12] = q_balance_error
+        _simulate_flow_timesteps(specific_flows_kgpers[flow], Tamb_vector_C, q_rad_vector,
+                                 c1, c2, Tin_C, Cp_fluid_JperkgK, C_eff_Jperm2K,
+                                 aperture_area_m2, Nseg, delts, DELT, TIME0, mode_seg,
+                                 Tfl, DT, Tabs, STORED, TflA, TflB, TabsA, TabsB, q_gain_Seg,
+                                 temperature_out_C[flow], temperature_in_C[flow],
+                                 supply_out_kW[flow], temperature_mean_C[flow])
         if flow < 4:
             auxiliary_electricity_kW[flow] = calc_Eaux_SC(specific_flows_kgpers[flow],
                                                                     specific_pressure_losses_Pa[flow], pipe_lengths,
@@ -534,6 +496,39 @@ def do_multi_segment_calculation(A_seg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT, 
             # # assert abs(q_balance_error) > 1, "q_balance_error in solar-collector calculation"
         q_gain_Seg[Iseg] = q_gain_Wperm2  # in W/m2
     return Tout_Seg_C
+
+
+@jit(nopython=True, cache=True)
+def _simulate_flow_timesteps(specific_flows_kgpers_flow, Tamb_vector_C, q_rad_vector,
+                             c1, c2, Tin_C, Cp_fluid_JperkgK, C_eff_Jperm2K,
+                             aperture_area_m2, Nseg, delts, DELT, TIME0, mode_seg,
+                             Tfl, DT, Tabs, STORED, TflA, TflB, TabsA, TabsB, q_gain_Seg,
+                             temperature_out_flow, temperature_in_flow, supply_out_kW_flow,
+                             temperature_mean_flow):
+    A_seg_m2 = aperture_area_m2 / Nseg
+    for t in range(HOURS_IN_YEAR):
+        Mfl_kgpers = calc_Mfl_kgpers(C_eff_Jperm2K, Cp_fluid_JperkgK, DELT, Nseg, STORED, TIME0, Tin_C,
+                                     aperture_area_m2, specific_flows_kgpers_flow, t)
+        Tamb_C = Tamb_vector_C[t]
+        q_rad_Wperm2 = q_rad_vector[t]
+        Tout_C = calc_Tout_C(Cp_fluid_JperkgK, DT, Nseg, STORED, Tabs, Tamb_C, Tfl, Tin_C,
+                             aperture_area_m2, c1, q_rad_Wperm2, Mfl_kgpers)
+        q_gain_Wperm2 = calc_q_gain(Tfl, q_rad_Wperm2, DT, Tin_C, aperture_area_m2, c1, c2,
+                                    Mfl_kgpers, delts, Cp_fluid_JperkgK, C_eff_Jperm2K, Tamb_C)
+        Tout_Seg_C = do_multi_segment_calculation(A_seg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT, Mfl_kgpers,
+                                                  Nseg, STORED, Tabs, TabsA, Tamb_C, Tfl, TflA, TflB, Tin_C,
+                                                  Tout_C, c1, c2, delts, mode_seg, q_gain_Seg,
+                                                  q_gain_Wperm2, q_rad_Wperm2)
+        q_out_kW = (Mfl_kgpers * Cp_fluid_JperkgK * (Tout_Seg_C - Tin_C)) / 1000
+        Tabs[2] = 0
+        for Iseg in range(1, Nseg + 1):
+            STORED[200 + Iseg] = TflB[Iseg]
+            STORED[400 + Iseg] = TabsB[Iseg]
+            Tabs[2] = Tabs[2] + TabsB[Iseg] / Nseg
+        temperature_out_flow[t] = Tout_Seg_C
+        temperature_in_flow[t] = Tin_C
+        supply_out_kW_flow[t] = q_out_kW
+        temperature_mean_flow[t] = (Tin_C + Tout_Seg_C) / 2
 
 
 @jit(nopython=True, cache=True)
