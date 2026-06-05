@@ -201,7 +201,7 @@ def output_results_of_all_individuals(config, locator, network_info):
     for individual in network_info.populations.keys():
         # read results from each individual
         individual_df = pd.read_csv(network_info.locate_individual_results(individual), index_col=None, header=0)
-        all_individuals_list.append(individual_df.as_matrix())
+        all_individuals_list.append(individual_df.to_numpy())
     all_individuals_array = np.vstack(all_individuals_list)
     all_individuals_df = pd.DataFrame(all_individuals_array).drop(columns=[0])
     all_individuals_df.columns = network_info.generation_info + network_info.cost_info
@@ -296,7 +296,7 @@ def network_cost_calculation(population, network_info, network_layout):
                 network_info.populations[str(individual)] = total_cost
 
         for column in generation_outputs_df.columns:
-            generation_outputs_df.iloc[individual_number][column] = individual_outputs_df[column][0]
+            generation_outputs_df.iloc[individual_number, generation_outputs_df.columns.get_loc(column)] = individual_outputs_df[column][0]
         # iterate to next individual
         individual_number += 1
     generation_outputs_df.to_csv(network_info.locator.get_optimization_network_generation_individuals_results_file(
