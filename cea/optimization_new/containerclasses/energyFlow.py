@@ -18,6 +18,8 @@ __maintainer__ = "NA"
 __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
+import warnings
+
 import numpy as np
 import pandas as pd
 
@@ -107,6 +109,15 @@ class EnergyFlow(object):
 
             if new_profile.min() < 0 and not EnergyFlow.allow_negative_flows:
                 new_profile[new_profile < 0] = 0.0
+
+            if new_profile.isna().any():
+                warnings.warn(
+                    f"Energy flow profile contained NaN values; replacing with 0. "
+                    f"This indicates an upstream calculation issue (e.g. in a solar potential file).",
+                    UserWarning,
+                    stacklevel=3,
+                )
+                new_profile = new_profile.fillna(0.0)
 
             self._profile = new_profile
         else:
