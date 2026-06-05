@@ -374,7 +374,7 @@ def substation_model_cooling_thermal_network(name, building, T_DC_supply_C, T_DC
     # Create output DataFrame matching DH format
     substation_activation = pd.DataFrame({
         # Timestamp
-        "date": building.date if 'date' in building.columns else pd.date_range(start='2011-01-01', periods=HOURS_IN_YEAR, freq='H'),
+        "date": building.date if 'date' in building.columns else pd.date_range(start='2011-01-01', periods=HOURS_IN_YEAR, freq='h'),
 
         # DC network parameters
         "mdot_DC_result_kgpers": mdot_DC_result_kgpers,
@@ -895,7 +895,7 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
     # save the results into a .csv file
     substation_activation = pd.DataFrame({
         # Timestamp
-        "date": building_demand_df.date if 'date' in building_demand_df.columns else pd.date_range(start='2011-01-01', periods=HOURS_IN_YEAR, freq='H'),
+        "date": building_demand_df.date if 'date' in building_demand_df.columns else pd.date_range(start='2011-01-01', periods=HOURS_IN_YEAR, freq='h'),
 
         # DH network parameters
         "mdot_DH_result_kgpers": mdot_DH_result_flat,
