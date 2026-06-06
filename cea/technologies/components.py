@@ -141,7 +141,8 @@ def _pick_efficiency(row: Dict) -> Optional[float]:
     1. ``therm_eff_design`` (cogeneration: thermal output is primary for
        heat-supply sizing)
     2. ``min_eff_rating`` (standard efficiency/COP)
-    3. ``min_eff_rating_seasonal`` (heat pumps use SCOP)
+    3. ``min_eff_rating_seasonal`` / ``rated_COP_seasonal`` (heat pumps,
+       unitary air conditioners — canonical name or legacy alias)
     4. ``elec_eff_design`` (cogeneration electrical, if no thermal)
     5. ``aux_power`` (cooling tower fan ratio)
     """
@@ -149,6 +150,7 @@ def _pick_efficiency(row: Dict) -> Optional[float]:
         'therm_eff_design',
         'min_eff_rating',
         'min_eff_rating_seasonal',
+        'rated_COP_seasonal',
         'elec_eff_design',
         'aux_power',
     ):
@@ -211,11 +213,18 @@ def load_component_info(component_code: str, locator) -> Dict:
     # correct name here.
     from cea.technologies.energy_carriers import electricity_carrier
 
-    # 2) Seasonal-COP heat pump.
-    if 'min_eff_rating_seasonal' in cols and pd.notna(row.get('min_eff_rating_seasonal')):
+    # 2) Seasonal-COP electric device (heat pump or unitary AC).
+    # Accept both the canonical column name and the legacy alias used in
+    # UNITARY_AIR_CONDITIONERS.csv so neither table needs renaming.
+    _seasonal_col = next(
+        (c for c in ('min_eff_rating_seasonal', 'rated_COP_seasonal')
+         if c in cols and pd.notna(row.get(c))),
+        None,
+    )
+    if _seasonal_col is not None:
         return {
             'carrier': electricity_carrier(locator),
-            'efficiency': float(row['min_eff_rating_seasonal']),
+            'efficiency': float(row[_seasonal_col]),
         }
 
     # 3) Absorption chiller (thermal-driven): has both min_eff_rating
