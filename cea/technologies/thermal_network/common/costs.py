@@ -492,22 +492,22 @@ def calc_Ctot_cs_district(network_info):
     Costs_total = Capex_a_netw + Capex_a_pump + Capex_a_chiller + Capex_a_CT + Capex_a_hex + \
                   Opex_fixed_pump + Opex_var_pump + Opex_var_plant + Ctot_dis_loads + Ctot_dis_buildings + \
                   Opex_fixed_plant + Opex_fixed_hex
-    cost_storage_df.loc['total'][0] = Capex_a_total + Opex_total
-    cost_storage_df.loc['opex'][0] = Opex_total
-    cost_storage_df.loc['capex'][0] = Capex_a_total
-    cost_storage_df.loc['capex_network'][0] = Capex_a_netw
-    cost_storage_df.loc['capex_pump'][0] = Capex_a_pump
-    cost_storage_df.loc['capex_hex'][0] = Capex_a_hex
-    cost_storage_df.loc['capex_dis_loads'][0] = Capex_a_dis_loads
-    cost_storage_df.loc['capex_dis_build'][0] = Capex_a_dis_buildings
-    cost_storage_df.loc['capex_chiller'][0] = Capex_a_chiller
-    cost_storage_df.loc['capex_CT'][0] = Capex_a_CT
-    cost_storage_df.loc['opex_plant'][0] = Opex_fixed_plant + Opex_var_plant
-    cost_storage_df.loc['opex_pump'][0] = Opex_fixed_pump + Opex_var_pump
-    cost_storage_df.loc['opex_hex'][0] = Opex_fixed_hex
-    cost_storage_df.loc['opex_dis_loads'][0] = Opex_tot_dis_loads
-    cost_storage_df.loc['opex_dis_build'][0] = Opex_tot_dis_buildings
-    cost_storage_df.loc['el_network_MWh'][0] = el_MWh
+    cost_storage_df.loc['total', 0] = Capex_a_total + Opex_total
+    cost_storage_df.loc['opex', 0] = Opex_total
+    cost_storage_df.loc['capex', 0] = Capex_a_total
+    cost_storage_df.loc['capex_network', 0] = Capex_a_netw
+    cost_storage_df.loc['capex_pump', 0] = Capex_a_pump
+    cost_storage_df.loc['capex_hex', 0] = Capex_a_hex
+    cost_storage_df.loc['capex_dis_loads', 0] = Capex_a_dis_loads
+    cost_storage_df.loc['capex_dis_build', 0] = Capex_a_dis_buildings
+    cost_storage_df.loc['capex_chiller', 0] = Capex_a_chiller
+    cost_storage_df.loc['capex_CT', 0] = Capex_a_CT
+    cost_storage_df.loc['opex_plant', 0] = Opex_fixed_plant + Opex_var_plant
+    cost_storage_df.loc['opex_pump', 0] = Opex_fixed_pump + Opex_var_pump
+    cost_storage_df.loc['opex_hex', 0] = Opex_fixed_hex
+    cost_storage_df.loc['opex_dis_loads', 0] = Opex_tot_dis_loads
+    cost_storage_df.loc['opex_dis_build', 0] = Opex_tot_dis_buildings
+    cost_storage_df.loc['el_network_MWh', 0] = el_MWh
 
     return Capex_a_total, Opex_total, Costs_total, cost_storage_df
 

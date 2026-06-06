@@ -544,7 +544,8 @@ class BuildingEmissionTimeline:
 
         # Convert demolition_year to string format for comparison with timeline index
         demolition_year_str = f"Y_{demolition_year}"
-        self.timeline.loc[self.timeline.index >= demolition_year_str, :] = 0.0
+        numeric_cols = self.timeline.select_dtypes(include='number').columns
+        self.timeline.loc[self.timeline.index >= demolition_year_str, numeric_cols] = 0.0
         for key, _ in _MAPPING_DICT.items():
             demolition: float = 0.0  # dummy value, not implemented yet
             area: float = self.surface_area[f"A{key}"]
