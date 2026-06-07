@@ -714,7 +714,7 @@ def calc_groups(radiation_of_sensors_clean, sensors_metadata_cat):
     sensors_metadata_cat['type_orientation'] = sensors_metadata_cat['TYPE'] + '_' + sensors_metadata_cat['orientation']
     sensors_metadata_cat['surface'] = sensors_metadata_cat.index
     # group the sensors by categories
-    sensor_groups_ob = sensors_metadata_cat.groupby(['CATB', 'CATGB', 'CATteta_z', 'type_orientation'], observed=False)
+    sensor_groups_ob = sensors_metadata_cat.groupby(['CATB', 'CATGB', 'CATteta_z', 'type_orientation'], observed=True)
     group_keys = sensor_groups_ob.groups.keys()
     number_groups = len(group_keys)
 

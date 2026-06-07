@@ -1569,7 +1569,7 @@ def create_placeholder_substation_files(phase: Dict, phase_substation_folder: st
         # Create empty DataFrame with standard substation columns
         # These are the typical columns from thermal network substation output
         placeholder_df = pd.DataFrame({
-            'DATE': pd.date_range('2010-01-01', periods=8760, freq='H'),
+            'DATE': pd.date_range('2010-01-01', periods=8760, freq='h'),
             'mdot_DH_kgpers': 0.0,
             'T_sup_DH_C': 0.0,
             'T_ret_DH_C': 0.0,
