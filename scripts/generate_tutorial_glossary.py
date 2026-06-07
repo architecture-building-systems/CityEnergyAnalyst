@@ -11,7 +11,6 @@ modifying schemas.yml to refresh the docs.
 
 from __future__ import annotations
 
-import os
 import re
 from collections import defaultdict
 from pathlib import Path
@@ -240,7 +239,7 @@ def render_category_page(
     lines.append(f"# {title}")
     lines.append("")
     lines.append(
-        f"_Generated from `cea/schemas.yml` by `scripts/generate_tutorial_glossary.py`. "
+        "_Generated from `cea/schemas.yml` by `scripts/generate_tutorial_glossary.py`. "
         "Do not hand-edit — re-run the script to refresh._"
     )
     lines.append("")
@@ -287,7 +286,7 @@ def render_stale_report(
     lines.append("# Stale Schema Entries")
     lines.append("")
     lines.append(
-        f"_Generated from `cea/schemas.yml` by `scripts/generate_tutorial_glossary.py`._"
+        "_Generated from `cea/schemas.yml` by `scripts/generate_tutorial_glossary.py`._"
     )
     lines.append("")
     lines.append(

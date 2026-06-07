@@ -48,6 +48,7 @@ jobs:
         uses: prefix-dev/setup-pixi@v0.8.14
         with:
           cache: true
+          pixi-version: v0.68.1 # pinned to avoid issues with pixi macOS ARM environments on newer pixi versions
 
       - name: Install CEA
         run: pixi run pip install . --group dev

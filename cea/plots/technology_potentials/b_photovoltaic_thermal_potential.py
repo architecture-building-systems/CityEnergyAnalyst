@@ -65,7 +65,7 @@ class PvtMonthlyPlot(cea.plots.technology_potentials.SolarTechnologyPotentialsPl
         # calculate graph
         graph = []
         data_frame = self.data_frame
-        monthly_df = (data_frame.set_index("DATE").resample("M").sum() / 1000).round(2)  # to MW
+        monthly_df = (data_frame.set_index("DATE").resample("ME").sum() / 1000).round(2)  # to MW
         monthly_df["month"] = monthly_df.index.strftime("%B")
 
 
@@ -103,7 +103,7 @@ class PvtMonthlyPlot(cea.plots.technology_potentials.SolarTechnologyPotentialsPl
         # calculate top three potentials
         E_anchors = []
         E_names = []
-        monthly_df = (data_frame.set_index("DATE").resample("M").sum() / 1000).round(2)  # to MW
+        monthly_df = (data_frame.set_index("DATE").resample("ME").sum() / 1000).round(2)  # to MW
         monthly_df["month"] = monthly_df.index.strftime("%B")
         monthly_df.set_index("month", inplace=True)
 
@@ -171,7 +171,7 @@ def pvt_district_monthly(data_frame, analysis_fields, title, output_path):
 
 
 def calc_range(data_frame, E_analysis_fields_used, Q_analysis_fields_used):
-    monthly_df = (data_frame.set_index("DATE").resample("M").sum() / 1000).round(2)  # to MW
+    monthly_df = (data_frame.set_index("DATE").resample("ME").sum() / 1000).round(2)  # to MW
     monthly_df["month"] = monthly_df.index.strftime("%B")
     E_total = monthly_df[E_analysis_fields_used].sum(axis=1)
     Q_total = monthly_df[Q_analysis_fields_used].sum(axis=1)
@@ -183,7 +183,7 @@ def calc_range(data_frame, E_analysis_fields_used, Q_analysis_fields_used):
 def calc_graph(E_analysis_fields_used, Q_analysis_fields_used, data_frame):
     # calculate graph
     graph = []
-    monthly_df = (data_frame.set_index("DATE").resample("M").sum() / 1000).round(2)  # to MW
+    monthly_df = (data_frame.set_index("DATE").resample("ME").sum() / 1000).round(2)  # to MW
     monthly_df["month"] = monthly_df.index.strftime("%B")
     E_total = monthly_df[E_analysis_fields_used].sum(axis=1)
     Q_total = monthly_df[Q_analysis_fields_used].sum(axis=1)
@@ -218,7 +218,7 @@ def calc_table(E_analysis_fields_used, Q_analysis_fields_used, data_frame):
     # calculate top three potentials
     E_anchors = []
     E_names = []
-    monthly_df = (data_frame.set_index("DATE").resample("M").sum() / 1000).round(2)  # to MW
+    monthly_df = (data_frame.set_index("DATE").resample("ME").sum() / 1000).round(2)  # to MW
     monthly_df["month"] = monthly_df.index.strftime("%B")
     monthly_df.set_index("month", inplace=True)
 
