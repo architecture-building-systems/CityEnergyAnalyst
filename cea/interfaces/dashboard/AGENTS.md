@@ -83,6 +83,12 @@ Retry: `emit_with_retry()` (3 retries, exponential backoff).
 
 Not every user action should become a background job. Keep fast synchronous API routes for lightweight, reusable domain operations. Promote an action to a native job when the user experience depends on persistent Job Info logs, streamed stdout/stderr, or parity with long-running workflow actions. In both cases, keep the business logic in shared service functions so API routes and jobs call the same implementation.
 
+## Statelessness (important for container scaling)
+
+Treat the dashboard server as stateless. Do not persist request-scoped selections (e.g. pathway child scenario) to `config` or any server-side store. Prefer passing such context per request — accept it as a query or body parameter and apply it in memory for that request only; never call `save()` on it. Persisting shared global state blocks horizontal scaling across containers and causes cross-request / cross-client staleness bugs. When you must apply per-request state to a shared config object (e.g. as a FastAPI router-level dependency), snapshot the original values and restore them in a `finally` block.
+
+**Current exception — project/scenario selection**: The active project and scenario (`general:project` + `general:scenario-name` in config) are still persisted to disk via `PUT /api/project/`. This is intentional for now; making scenario selection stateless is planned for a future refactor. Refrain from adding new server-side persistence beyond this existing exception. Warn if user insists on breaking this rule.
+
 ## Docker
 
 Server runs as PID 1 with a `SIGCHLD` handler (`setup_sigchld_handler` in `app.py`) that reaps zombie workers via `os.waitpid(-1, WNOHANG)`. Tini not required but easy to re-enable.
