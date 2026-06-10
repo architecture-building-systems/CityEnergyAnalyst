@@ -129,6 +129,9 @@ lint.ignore = [
     "E741", # ambiguous variable name (l, O, I)
 ]
 
+[tool.pixi.system-requirements]
+macos = "14.0"
+
 [tool.pixi.workspace]
 channels = ["conda-forge"]
 platforms = [
