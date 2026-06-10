@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 
+from cea.datamanagement.district_pathways.pathway_integrity import resolve_archetype_type_column
+
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
 
@@ -185,11 +187,12 @@ def validate_recipe_against_envelope(
                 continue  # not a material intervention; nothing to check here
 
             envelope_df = envelope_dfs[_COMPONENT_TO_DB[component]]
-            type_col = f"type_{component}"
-            if type_col not in archetype_df.columns:
+            try:
+                type_col = resolve_archetype_type_column(archetype_df, component)
+            except ValueError as exc:
                 errors.append(
-                    f"CONSTRUCTION_TYPES has no '{type_col}' column "
-                    f"(needed to resolve component '{component}' for archetype '{archetype}')."
+                    f"CONSTRUCTION_TYPES has no type column for component '{component}' "
+                    f"(archetype '{archetype}'): {exc}"
                 )
                 continue
 
