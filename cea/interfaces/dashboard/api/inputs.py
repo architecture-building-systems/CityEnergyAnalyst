@@ -21,6 +21,7 @@ from pydantic import BaseModel, Field
 
 import cea.config
 import cea.inputlocator
+from cea.datamanagement.district_pathways.pathway_timeline import PathwayChildScenario
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 import cea.schemas
 from cea.databases import CEADatabase, CEADatabaseException
@@ -242,26 +243,19 @@ async def save_all_inputs(project_info: CEAProjectInfo, form: InputForm):
     # the state as custom so the pathway viewer shows it in purple and
     # bake/simulate can handle it appropriately.
     scenario = project_info.scenario
-    marker = cea.inputlocator.InputLocator.pathway_child_marker()
-    idx = scenario.find(marker)
-    if idx >= 0:
+    child_scenario = PathwayChildScenario.parse(scenario)
+    if child_scenario:
         from cea.datamanagement.district_pathways.pathway_status import record_custom_state
-        parent = scenario[:idx]
-        suffix = scenario[idx + len(marker):]
-        parts = suffix.split(os.sep)
-        if len(parts) >= 2 and parts[1].startswith('state_'):
-            pathway_name = parts[0]
-            try:
-                year = int(parts[1].replace('state_', ''))
-                parent_locator = cea.inputlocator.InputLocator(parent)
-                await run_in_threadpool(
-                    record_custom_state,
-                    parent_locator,
-                    pathway_name=pathway_name,
-                    year=year,
-                )
-            except (ValueError, OSError):
-                pass
+        parent_locator = cea.inputlocator.InputLocator(child_scenario.parent)
+        try:
+            await run_in_threadpool(
+                record_custom_state,
+                parent_locator,
+                pathway_name=child_scenario.pathway_name,
+                year=child_scenario.year,
+            )
+        except OSError:
+            pass
 
     return result
 

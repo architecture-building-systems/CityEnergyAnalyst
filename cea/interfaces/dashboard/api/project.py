@@ -21,6 +21,7 @@ from typing_extensions import Annotated
 
 import cea.config
 import cea.inputlocator
+from cea.datamanagement.district_pathways.pathway_timeline import PathwayChildScenario
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
     verify_input_typology, COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY, verify_input_terrain
 from cea.datamanagement.surroundings_helper import generate_empty_surroundings
@@ -359,7 +360,8 @@ async def switch_to_child_scenario(config: CEAConfig, payload: ChildScenarioPayl
     """Switch the config scenario to a pathway state folder."""
     # Resolve parent scenario first in case we're already in a child state
     current = config.scenario
-    parent_scenario = cea.inputlocator.InputLocator.parent_scenario_for_pathway_child(current)
+    child_scenario = PathwayChildScenario.parse(current)
+    parent_scenario = child_scenario.parent if child_scenario else current
 
     locator = cea.inputlocator.InputLocator(parent_scenario)
     state_folder = locator.get_state_in_time_scenario_folder(payload.pathway_name, payload.year)
@@ -388,16 +390,10 @@ async def switch_to_child_scenario(config: CEAConfig, payload: ChildScenarioPayl
 async def switch_to_parent_scenario(config: CEAConfig):
     """Switch back from a pathway state folder to the parent scenario."""
     current = config.scenario
-    # State folders follow pattern:
-    #   .../scenario_name/outputs/pathways/{pathway}/state_{year}
-    # Parent scenario is everything before /outputs/pathways/.
-    pathways_marker = cea.inputlocator.InputLocator.pathway_child_marker()
-    idx = current.find(pathways_marker)
-    if idx < 0:
-        # Already at parent scenario
+    child_scenario = PathwayChildScenario.parse(current)
+    if not child_scenario:
         return {'scenario': current, 'was_child': False}
-
-    parent_scenario = current[:idx]
+    parent_scenario = child_scenario.parent
     if not os.path.isdir(parent_scenario):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

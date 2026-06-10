@@ -7,7 +7,6 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
 
-import cea.inputlocator
 from cea.datamanagement.district_pathways.intervention_templates import (
     delete_intervention_template,
     find_template_usage,
@@ -25,6 +24,7 @@ from cea.datamanagement.district_pathways.pathway_timeline import (
     get_pathway_timeline,
     get_year_editor_options,
     list_pathway_names,
+    PathwayChildScenario,
     update_year_building_events,
     update_year_yaml,
     validate_baked_state,
@@ -40,9 +40,9 @@ async def _use_parent_scenario(config: CEAConfig):
     the original path after the response is sent, so map-layer and tool
     endpoints that run later still see the child-scenario path."""
     original = config.scenario
-    parent = cea.inputlocator.InputLocator.parent_scenario_for_pathway_child(original)
-    if parent != original:
-        config.scenario = parent
+    child_scenario = PathwayChildScenario.parse(original)
+    if child_scenario:
+        config.scenario = child_scenario.parent
     try:
         yield
     finally:
