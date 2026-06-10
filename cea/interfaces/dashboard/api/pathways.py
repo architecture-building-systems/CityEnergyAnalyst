@@ -31,7 +31,7 @@ from cea.datamanagement.district_pathways.pathway_timeline import (
     validate_pathway_log,
 )
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEASeverDemoAuthCheck, CEAProjectRoot
-from cea.interfaces.dashboard.api.utils import ScenarioQuery, validate_scenario_name
+from cea.interfaces.dashboard.api.utils import ScenarioQuery
 
 
 async def _apply_parent_scenario(
