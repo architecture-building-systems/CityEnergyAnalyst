@@ -73,9 +73,7 @@ class PathwayChildScenario:
 
 
 def list_pathway_names(config: Configuration) -> list[str]:
-    child_scenario = PathwayChildScenario.parse(config.scenario)
-    scenario = child_scenario.parent if child_scenario else config.scenario
-    locator = InputLocator(scenario)
+    locator = InputLocator(config.scenario)
     container = locator.get_district_pathway_container_folder()
     if not os.path.isdir(container):
         return []
@@ -116,11 +114,6 @@ def delete_pathway(config: Configuration, pathway_name: str) -> dict[str, Any]:
 
 
 def get_pathway_overview(config: Configuration) -> dict[str, Any]:
-    # Auto-recover if config points to a child state folder
-    child_scenario = PathwayChildScenario.parse(config.scenario)
-    if child_scenario:
-        config.scenario = child_scenario.parent
-
     pathways: list[dict[str, Any]] = []
     all_years: list[int] = []
     for pathway_name in list_pathway_names(config):

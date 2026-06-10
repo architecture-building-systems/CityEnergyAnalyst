@@ -8,13 +8,13 @@ import traceback
 import warnings
 from collections import defaultdict
 from contextlib import redirect_stdout
-from typing import Dict, Any
+from typing import Dict, Any, Optional, Annotated
 import zipfile
 
 from fastapi.responses import StreamingResponse
 import geopandas
 import pandas as pd
-from fastapi import APIRouter, HTTPException, UploadFile, status
+from fastapi import APIRouter, HTTPException, Query, UploadFile, status
 from fastapi.concurrency import run_in_threadpool
 from fiona.errors import DriverError
 from pydantic import BaseModel, Field
@@ -26,8 +26,9 @@ from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 import cea.schemas
 from cea.databases import CEADatabase, CEADatabaseException
 from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
-from cea.interfaces.dashboard.dependencies import CEAProjectInfo, CEASeverDemoAuthCheck
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectInfo, CEAProjectRoot, CEASeverDemoAuthCheck
 from cea.interfaces.dashboard.utils import secure_path
+from cea.interfaces.dashboard.api.utils import ScenarioQuery
 from cea.plots.supply_system.a_supply_system_map import get_building_connectivity, newer_network_layout_exists
 from cea.plots.variable_naming import get_color_array
 from cea.technologies.network_layout.main import auto_layout_network, NetworkLayout
@@ -37,6 +38,7 @@ from cea.utilities.standardize_coordinates import get_geographic_coordinate_syst
 router = APIRouter()
 
 logger = getCEAServerLogger("cea-server-inputs")
+
 
 COLORS = {
     'surroundings': get_color_array('grey_light'),
@@ -127,12 +129,17 @@ async def get_building_props(project_info: CEAProjectInfo):
 
 
 @router.get('/all-inputs')
-async def get_all_inputs(project_info: CEAProjectInfo):
-    locator = cea.inputlocator.InputLocator(project_info.scenario)
+async def get_all_inputs(
+    config: CEAConfig,
+    project_root: CEAProjectRoot,
+    scenario: Annotated[ScenarioQuery, Query()],
+):
+    effective_scenario = scenario.resolve(config, project_root)
+    locator = cea.inputlocator.InputLocator(effective_scenario)
 
     # FIXME: Find a better way, current used to test for Input Editor
     def fn():
-        store = get_building_properties(project_info.scenario)
+        store = get_building_properties(effective_scenario)
         store['geojsons'] = {}
         store['connected_buildings'] = {'dc': [], 'dh': []}
         store['crs'] = {}
@@ -161,8 +168,14 @@ class InputForm(BaseModel):
 
 
 @router.put('/all-inputs', dependencies=[CEASeverDemoAuthCheck])
-async def save_all_inputs(project_info: CEAProjectInfo, form: InputForm):
-    locator = cea.inputlocator.InputLocator(project_info.scenario)
+async def save_all_inputs(
+    config: CEAConfig,
+    project_root: CEAProjectRoot,
+    scenario: Annotated[ScenarioQuery, Query()],
+    form: InputForm,
+):
+    effective_scenario = scenario.resolve(config, project_root)
+    locator = cea.inputlocator.InputLocator(effective_scenario)
 
     tables = form.tables
     geojsons = form.geojsons
@@ -242,8 +255,7 @@ async def save_all_inputs(project_info: CEAProjectInfo, form: InputForm):
     # If the save happened inside a pathway state (sub-scenario), mark
     # the state as custom so the pathway viewer shows it in purple and
     # bake/simulate can handle it appropriately.
-    scenario = project_info.scenario
-    child_scenario = PathwayChildScenario.parse(scenario)
+    child_scenario = PathwayChildScenario.parse(effective_scenario)
     if child_scenario:
         from cea.datamanagement.district_pathways.pathway_status import record_custom_state
         parent_locator = cea.inputlocator.InputLocator(child_scenario.parent)

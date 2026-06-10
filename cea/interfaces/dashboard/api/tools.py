@@ -5,40 +5,20 @@ from typing import Dict, Any, List, Optional
 import logging
 
 from fastapi import APIRouter, HTTPException, Query, status
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel
 from typing import Annotated
 
 import cea.config
 import cea.inputlocator
 import cea.scripts
 from cea.schemas import schemas
-from .utils import deconstruct_parameters, validate_scenario_name
+from .utils import deconstruct_parameters, validate_scenario_name, ScenarioQuery
 from cea.interfaces.dashboard.utils import secure_path
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEADatabaseConfig, CEASeverDemoAuthCheck, CEAProjectRoot
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-
-class ScenarioQuery(BaseModel):
-    """
-    Two mutually exclusive ways to identify a scenario:
-    - scenario_path: full path (pathway child scenario)
-    - project + scenario_name: normal scenario (must be provided together)
-    """
-    model_config = {"extra": "forbid"}
-
-    scenario_path: Optional[str] = Field(None, description="Full path to scenario (pathway mode)")
-    project: Optional[str] = Field(None, description="Project directory; must be paired with scenario_name")
-    scenario_name: Optional[str] = Field(None, description="Scenario name; must be paired with project")
-
-    @model_validator(mode='after')
-    def validate_groups(self) -> 'ScenarioQuery':
-        if self.scenario_path is not None and (self.project is not None or self.scenario_name is not None):
-            raise ValueError("scenario_path is mutually exclusive with project and scenario_name")
-        if (self.project is None) != (self.scenario_name is None):
-            raise ValueError("project and scenario_name must be provided together")
-        return self
 
 
 def _normalize_choice_value(param: cea.config.ChoiceParameterBase, value: Any, choices: list[str]) -> Any:
@@ -164,41 +144,42 @@ async def get_tool_list(config: CEAConfig) -> Dict[str, List[ToolDescription]]:
 async def get_tool_properties(config: CEAConfig, project_root: CEAProjectRoot, tool_name: str,
                               scenario: Annotated[ScenarioQuery, Query()]) -> ToolProperties:
     # TODO: Add plugin support
-
-    if scenario.scenario_path is not None:
-        config.scenario = secure_path(scenario.scenario_path)
-    else:
-        if scenario.project is not None:
-            project = scenario.project
-            if project_root is not None and not project.startswith(project_root):
-                project = os.path.join(project_root, project)
-            config.project = secure_path(project)
-        if scenario.scenario_name is not None:
-            config.scenario_name = validate_scenario_name(scenario.scenario_name)
-
-    script = cea.scripts.by_name(tool_name, plugins=config.plugins)
-
-    parameters = []
-    categories = defaultdict(list)
-    for _, parameter in config.matching_parameters(script.parameters):
-        parameter_dict = deconstruct_parameters(parameter, config)
-
-        if parameter.category:
-            categories[parameter.category].append(parameter_dict)
+    original_scenario = str(config.scenario)
+    try:
+        if scenario.scenario_path is not None:
+            config.scenario = secure_path(scenario.scenario_path)
         else:
-            parameters.append(parameter_dict)
+            if scenario.project is not None:
+                project = scenario.project
+                if project_root is not None and not project.startswith(project_root):
+                    project = os.path.join(project_root, project)
+                config.project = secure_path(project)
+            if scenario.scenario_name is not None:
+                config.scenario_name = validate_scenario_name(scenario.scenario_name)
 
-    out = ToolProperties(
-        name=tool_name,
-        label=script.label,
-        description=script.description,
-        short_description=script.short_description,
-        category=script.category,
-        categorical_parameters=categories,
-        parameters=parameters,
-    )
+        script = cea.scripts.by_name(tool_name, plugins=config.plugins)
 
-    return out
+        parameters = []
+        categories = defaultdict(list)
+        for _, parameter in config.matching_parameters(script.parameters):
+            parameter_dict = deconstruct_parameters(parameter, config)
+
+            if parameter.category:
+                categories[parameter.category].append(parameter_dict)
+            else:
+                parameters.append(parameter_dict)
+
+        return ToolProperties(
+            name=tool_name,
+            label=script.label,
+            description=script.description,
+            short_description=script.short_description,
+            category=script.category,
+            categorical_parameters=categories,
+            parameters=parameters,
+        )
+    finally:
+        config.scenario = original_scenario
 
 
 @router.post('/{tool_name}/default', dependencies=[CEASeverDemoAuthCheck])

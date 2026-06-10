@@ -10,7 +10,7 @@ from typing import Dict, Any, Optional, List, Union
 import geopandas
 import pandas as pd
 import sqlalchemy.exc
-from fastapi import APIRouter, UploadFile, Form, HTTPException, status, Request, Path, Depends
+from fastapi import APIRouter, UploadFile, Form, HTTPException, Query, status, Request, Path, Depends
 from fastapi.concurrency import run_in_threadpool
 from geopandas import GeoDataFrame
 from osgeo import gdal
@@ -21,7 +21,6 @@ from typing_extensions import Annotated
 
 import cea.config
 import cea.inputlocator
-from cea.datamanagement.district_pathways.pathway_timeline import PathwayChildScenario
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
     verify_input_typology, COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY, verify_input_terrain
 from cea.datamanagement.surroundings_helper import generate_empty_surroundings
@@ -32,7 +31,7 @@ from cea.interfaces.dashboard.lib.database.session import SessionDep
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 from cea.interfaces.dashboard.settings import get_settings
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
-from cea.interfaces.dashboard.api.utils import validate_scenario_name
+from cea.interfaces.dashboard.api.utils import ScenarioQuery, validate_scenario_name
 from cea.utilities.dbf import dbf_to_dataframe
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system, raster_to_WSG_and_UTM
 
@@ -350,63 +349,37 @@ async def update_project(project_root: CEAProjectRoot, config: CEAConfig, scenar
         )
 
 
-class ChildScenarioPayload(BaseModel):
-    pathway_name: str
-    year: int
+@router.get('/state-folder')
+async def get_state_folder(
+    config: CEAConfig,
+    project_root: CEAProjectRoot,
+    pathway_name: str = Query(...),
+    year: int = Query(...),
+    project: Optional[str] = Query(None),
+    scenario_name: Optional[str] = Query(None),
+):
+    """Return the path to a pathway state folder without mutating server state.
 
-
-@router.put('/child-scenario')
-async def switch_to_child_scenario(config: CEAConfig, payload: ChildScenarioPayload):
-    """Switch the config scenario to a pathway state folder."""
-    # Resolve parent scenario first in case we're already in a child state
-    current = config.scenario
-    child_scenario = PathwayChildScenario.parse(current)
-    parent_scenario = child_scenario.parent if child_scenario else current
+    Accepts an optional ``project`` + ``scenario_name`` pair to identify the
+    parent scenario; falls back to ``config.scenario`` when omitted.
+    """
+    parent_scenario = ScenarioQuery(project=project, scenario_name=scenario_name).resolve(config, project_root)
 
     locator = cea.inputlocator.InputLocator(parent_scenario)
-    state_folder = locator.get_state_in_time_scenario_folder(payload.pathway_name, payload.year)
+    state_folder = locator.get_state_in_time_scenario_folder(pathway_name, year)
 
     if not os.path.isdir(state_folder):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"State folder not found for pathway '{payload.pathway_name}' year {payload.year}.",
+            detail=f"State folder not found for pathway '{pathway_name}' year {year}.",
         )
-
-    config.scenario = state_folder
-    if isinstance(config, CEADatabaseConfig):
-        await config.save()
-    else:
-        config.save()
 
     return {
-        'child_scenario': state_folder,
+        'scenario_path': state_folder,
         'parent_scenario': parent_scenario,
-        'pathway_name': payload.pathway_name,
-        'year': payload.year,
+        'pathway_name': pathway_name,
+        'year': year,
     }
-
-
-@router.delete('/child-scenario')
-async def switch_to_parent_scenario(config: CEAConfig):
-    """Switch back from a pathway state folder to the parent scenario."""
-    current = config.scenario
-    child_scenario = PathwayChildScenario.parse(current)
-    if not child_scenario:
-        return {'scenario': current, 'was_child': False}
-    parent_scenario = child_scenario.parent
-    if not os.path.isdir(parent_scenario):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Parent scenario folder not found: {parent_scenario}",
-        )
-
-    config.scenario = parent_scenario
-    if isinstance(config, CEADatabaseConfig):
-        await config.save()
-    else:
-        config.save()
-
-    return {'scenario': parent_scenario, 'was_child': True}
 
 
 # TODO: Rename this endpoint once the old one is removed

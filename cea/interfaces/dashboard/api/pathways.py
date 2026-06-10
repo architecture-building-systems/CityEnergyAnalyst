@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import os
-from typing import Any
+from typing import Any, Optional, Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+import cea.inputlocator
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
 
@@ -24,32 +25,34 @@ from cea.datamanagement.district_pathways.pathway_timeline import (
     get_pathway_timeline,
     get_year_editor_options,
     list_pathway_names,
-    PathwayChildScenario,
     update_year_building_events,
     update_year_yaml,
     validate_baked_state,
     validate_pathway_log,
 )
-from cea.interfaces.dashboard.dependencies import CEAConfig, CEASeverDemoAuthCheck
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEASeverDemoAuthCheck, CEAProjectRoot
+from cea.interfaces.dashboard.api.utils import ScenarioQuery, validate_scenario_name
 
 
-async def _use_parent_scenario(config: CEAConfig):
-    """Router-level dependency: temporarily resolves config.scenario to
-    the parent scenario (stripping any ``/outputs/pathways/.../state_YYYY``
-    suffix) so pathway endpoints always see the correct folder. Restores
-    the original path after the response is sent, so map-layer and tool
-    endpoints that run later still see the child-scenario path."""
-    original = config.scenario
-    child_scenario = PathwayChildScenario.parse(original)
-    if child_scenario:
-        config.scenario = child_scenario.parent
+async def _apply_parent_scenario(
+    config: CEAConfig,
+    project_root: CEAProjectRoot,
+    project: Annotated[Optional[str], Query()] = None,
+    scenario_name: Annotated[Optional[str], Query(alias='scenario_name')] = None,
+):
+    """Router-level dependency: apply the per-request parent scenario to config
+    in memory for the duration of the request, then restore the original values.
+    Never calls save() — this is a stateless, request-scoped override.
+    Falls back to config.scenario when no params are provided."""
+    original_scenario = str(config.scenario)
+    config.scenario = ScenarioQuery(project=project, scenario_name=scenario_name).resolve(config, project_root)
     try:
         yield
     finally:
-        config.scenario = original
+        config.scenario = original_scenario
 
 
-router = APIRouter(dependencies=[Depends(_use_parent_scenario)])
+router = APIRouter(dependencies=[Depends(_apply_parent_scenario)])
 
 
 class CreatePathwayPayload(BaseModel):

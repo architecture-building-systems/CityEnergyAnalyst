@@ -1,8 +1,49 @@
 import os
+from typing import Optional
 
 import cea.config
 import cea.inputlocator
 from fastapi import HTTPException, status
+from pydantic import BaseModel, Field, model_validator
+
+from cea.interfaces.dashboard.utils import secure_path
+
+
+class ScenarioQuery(BaseModel):
+    """
+    Two mutually exclusive ways to identify a scenario for per-request override:
+    - scenario_path: full absolute path (used for pathway child states)
+    - project + scenario_name: normal scenario (must be provided together)
+    If neither is provided the endpoint falls back to config.scenario.
+    """
+    model_config = {"extra": "forbid"}
+
+    scenario_path: Optional[str] = Field(None, description="Full path to scenario (pathway mode)")
+    project: Optional[str] = Field(None, description="Project directory; must be paired with scenario_name")
+    scenario_name: Optional[str] = Field(None, description="Scenario name; must be paired with project")
+
+    @model_validator(mode='after')
+    def validate_groups(self) -> 'ScenarioQuery':
+        if self.scenario_path is not None and (self.project is not None or self.scenario_name is not None):
+            raise ValueError("scenario_path is mutually exclusive with project and scenario_name")
+        if (self.project is None) != (self.scenario_name is None):
+            raise ValueError("project and scenario_name must be provided together")
+        return self
+
+    def resolve(self, config, project_root=None) -> str:
+        """Return the effective scenario path for this request.
+
+        Priority: scenario_path > project+scenario_name > config.scenario.
+        Never mutates config.
+        """
+        if self.scenario_path is not None:
+            return secure_path(self.scenario_path)
+        if self.project is not None and self.scenario_name is not None:
+            p = self.project
+            if project_root is not None and not p.startswith(project_root):
+                p = os.path.join(project_root, p)
+            return os.path.join(secure_path(p), validate_scenario_name(self.scenario_name))
+        return str(config.scenario)
 
 
 def validate_scenario_name(scenario_name: str) -> str:
