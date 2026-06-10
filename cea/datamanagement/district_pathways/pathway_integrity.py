@@ -7,6 +7,7 @@ import pandas as pd
 from cea.config import Configuration
 from cea.inputlocator import InputLocator
 from cea.datamanagement.district_pathways.envelope_topology import (
+    resolve_archetype_type_column,
     validate_three_layer_topology,
 )
 from cea.datamanagement.district_pathways.pathway_log import (
@@ -315,21 +316,6 @@ def resolve_envelope_component(component: str) -> str:
     if component == "part":
         return "wall"
     return component
-
-
-def resolve_archetype_type_column(archetype_df: pd.DataFrame, component: str) -> str:
-    candidates = [f"type_{component}"]
-    if component in {"base", "floor"}:
-        candidates.extend(["type_base", "type_floor"])
-
-    for candidate in candidates:
-        if candidate in archetype_df.columns:
-            return candidate
-
-    raise ValueError(
-        f"Could not find construction type column for component '{component}'. "
-        f"Tried: {candidates}"
-    )
 
 
 def resolve_envelope_column_name(envelope_component: str, field: str, columns: pd.Index) -> str:

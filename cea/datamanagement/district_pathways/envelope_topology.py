@@ -4,10 +4,23 @@ from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 
-from cea.datamanagement.district_pathways.pathway_integrity import resolve_archetype_type_column
-
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
+
+
+def resolve_archetype_type_column(archetype_df: pd.DataFrame, component: str) -> str:
+    candidates = [f"type_{component}"]
+    if component in {"base", "floor"}:
+        candidates.extend(["type_base", "type_floor"])
+
+    for candidate in candidates:
+        if candidate in archetype_df.columns:
+            return candidate
+
+    raise ValueError(
+        f"Could not find construction type column for component '{component}'. "
+        f"Tried: {candidates}"
+    )
 
 
 def validate_three_layer_topology(

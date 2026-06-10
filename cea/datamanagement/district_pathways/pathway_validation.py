@@ -7,12 +7,12 @@ import pandas as pd
 
 from cea.config import Configuration
 from cea.datamanagement.district_pathways.envelope_topology import (
+    resolve_archetype_type_column,
     validate_three_layer_topology,
 )
 from cea.datamanagement.district_pathways.pathway_integrity import (
     check_state_year_comprehensive_integrity,
     get_envelope_db_path,
-    resolve_archetype_type_column,
     resolve_envelope_column_name,
     resolve_envelope_component,
 )
