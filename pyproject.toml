@@ -131,6 +131,7 @@ lint.ignore = [
 
 [tool.pixi.system-requirements]
 macos = "14.0"
+libc = {family = "glibc", version = "2.39"} # TODO: Lower to "2.17" after publishing manylinux_2_17 wheels for linux-64 and linux-aarch64
 
 [tool.pixi.workspace]
 channels = ["conda-forge"]
