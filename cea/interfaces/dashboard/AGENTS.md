@@ -1,3 +1,16 @@
+# Dashboard
+
+## Frontend Code
+
+The dashboard UI (React frontend) is in a **separate repository** — not here.
+
+- If unsure, check: `ls ../../../CityEnergyAnalyst-GUI` (relative to this repo root)
+- If not found, ask user before proceeding
+- This directory (`cea/interfaces/dashboard/`) contains only the **Python/FastAPI backend** — API routes, job system, and SocketIO server
+- For frontend changes (components, pages, API calls from the UI), work in the GUI repo instead
+
+---
+
 # Dashboard Job System
 
 ## Architecture
