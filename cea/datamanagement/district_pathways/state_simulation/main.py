@@ -101,7 +101,7 @@ def simulate_all_states(config: Configuration, pathway_name: str) -> None:
                 stale_custom.append(int(year))
     if stale_custom:
         print(
-            f"\n⚠ Warning: Custom state(s) {stale_custom} have stale or missing "
+            f"\nWarning: Custom state(s) {stale_custom} have stale or missing "
             f"simulation outputs (inputs were edited after the last simulation).\n"
             f"  These states will be re-simulated unless 'skip-custom-states' is enabled.\n"
             f"  If skipped, their outputs may not reflect the current inputs.",
