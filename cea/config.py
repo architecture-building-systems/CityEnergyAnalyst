@@ -2508,6 +2508,14 @@ class SubfolderChoiceParameter(ChoiceParameter):
             raise ValueError(f'There was an error reading subfolders for {self.name} from {location}') from e
 
     def encode(self, value):
+        if isinstance(value, (list, tuple)):
+            if len(value) == 0:
+                value = None
+            elif len(value) == 1:
+                value = value[0]
+            else:
+                raise ValueError(
+                    f"Invalid parameter value {value} for {self.fqname}: expected a single selection.")
         if value is None or value == '':
             if self.nullable or not self._choices:
                 # Allow empty string if nullable or if no subfolders exist yet
