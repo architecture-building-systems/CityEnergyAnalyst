@@ -201,7 +201,7 @@ class TestSchemas(unittest.TestCase):
                     "pathway_name": "test_pathway",
                     "plan_name": "default",
                     "phase": "timeline",
-                    "whatif_name": "basline",
+                    "whatif_name": "baseline",
                 }
                 # Get actual parameter names from function signature
                 sig = inspect.signature(method)
