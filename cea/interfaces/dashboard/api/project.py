@@ -363,6 +363,12 @@ async def get_state_folder(
     Accepts an optional ``project`` + ``scenario_name`` pair to identify the
     parent scenario; falls back to ``config.scenario`` when omitted.
     """
+    from cea.datamanagement.district_pathways.pathway_state import validate_pathway_name
+    try:
+        pathway_name = validate_pathway_name(pathway_name)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
     parent_scenario = ScenarioQuery(project=project, scenario_name=scenario_name).resolve(config, project_root)
 
     locator = cea.inputlocator.InputLocator(parent_scenario)
