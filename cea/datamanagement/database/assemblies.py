@@ -105,7 +105,7 @@ class Envelope(BaseAssemblyDatabase):
         try:
             material_db_path = locator.get_database_components_materials()
             material_db = pd.read_csv(material_db_path)
-        except Exception:
+        except (AttributeError, FileNotFoundError):
             material_db = None
 
         def _to_float(value: Any) -> float | None:
