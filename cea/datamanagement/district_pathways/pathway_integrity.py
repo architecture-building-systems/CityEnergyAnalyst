@@ -342,6 +342,8 @@ def get_envelope_db_path(locator: InputLocator, envelope_component: str) -> str:
         return locator.get_database_assemblies_envelope_roof()
     if envelope_component == "floor":
         return locator.get_database_assemblies_envelope_floor()
+    if envelope_component == "window":
+        return locator.get_database_assemblies_envelope_window()
     raise ValueError(
         f"Unsupported envelope component '{envelope_component}' for comprehensive pathway integrity check."
     )

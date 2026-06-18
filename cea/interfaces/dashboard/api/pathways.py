@@ -290,6 +290,12 @@ async def get_building_lifecycle(config: CEAConfig, pathway_name: str, building_
 @router.get("/{pathway_name}/years/{year}/geojson")
 async def get_state_geojson(config: CEAConfig, pathway_name: str, year: int) -> dict[str, Any]:
     from cea.interfaces.dashboard.api.inputs import df_to_json
+    from cea.datamanagement.district_pathways.pathway_state import validate_pathway_name
+
+    try:
+        pathway_name = validate_pathway_name(pathway_name)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
     locator = cea.inputlocator.InputLocator(config.scenario)
     state_folder = locator.get_state_in_time_scenario_folder(pathway_name, year)

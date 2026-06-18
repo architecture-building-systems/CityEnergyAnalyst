@@ -6,8 +6,13 @@ from cea.datamanagement.district_pathways.pathway_timeline import validate_baked
 
 
 def main(config: Configuration) -> dict:
-    pathway_name = config.pathway_state_edit.existing_pathway_names[0]
+    names = config.pathway_state_edit.existing_pathway_names or []
+    if not names:
+        raise ValueError("Select an existing pathway before validating state.")
+    pathway_name = names[0]
     year = config.pathway_state_edit.year_of_state
+    if year is None:
+        raise ValueError("Provide a state year before validating.")
     payload = validate_baked_state(config, pathway_name, year)
     print_pathway_action_output(payload)
     if not payload.get("is_valid", True):
