@@ -158,14 +158,15 @@ class EnvelopeLookup:
 
     def _col(self, db: str, field: str) -> str:
         # Common envelope fields (dynamic per-component suffix)
-        if field in {
+        ghg_fields = {
             "U",
             "GHG_kgCO2m2",
             "GHG_biogenic_kgCO2m2",
             "GHG_production_kgCO2m2",
             "GHG_recycling_kgCO2m2",
             "Service_Life",
-        }:
+        }
+        if field in ghg_fields:
             # Map explicitly per DB to avoid ambiguous suffix logic.
             if db not in self._SUFFIX:
                 raise ValueError(
@@ -187,7 +188,8 @@ class EnvelopeLookup:
             return f"Service_Life_{suf}"
 
         # Window-only extras
-        if field in {"G_win", "e_win", "F_F"}:
+        window_fields = {"G_win", "e_win", "F_F"}
+        if field in window_fields:
             if db != "window":
                 raise ValueError(
                     f"Field '{field}' only exists in 'window' DB; code is in '{db}'."
@@ -195,6 +197,7 @@ class EnvelopeLookup:
             return field
 
         # Other DBs
+        other_fields = {"n50", "rf_sh", "Cm_af"}
         if field == "n50":
             if db != "tightness":
                 raise ValueError("Field 'n50' only exists in 'tightness' DB.")
@@ -213,8 +216,7 @@ class EnvelopeLookup:
             return field
 
         raise KeyError(
-            f"Unsupported field '{field}'. Allowed: U, GHG_kgCO2m2, GHG_biogenic_kgCO2m2, Service_Life, "
-            "description, Reference, G_win, e_win, F_F, n50, rf_sh, Cm_af."
+            f"Unsupported field '{field}'. Allowed: {', '.join(ghg_fields)}, {', '.join(window_fields)}, {', '.join(other_fields)}"
         )
 
     def set_item_value(self, code: str, field: str, value: int | float | str | None) -> None:
