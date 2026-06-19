@@ -13,7 +13,7 @@ import cea.inputlocator
 import cea.scripts
 from cea.schemas import schemas
 from .utils import deconstruct_parameters, validate_scenario_name, ScenarioQuery
-from cea.interfaces.dashboard.utils import secure_path
+from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEADatabaseConfig, CEASeverDemoAuthCheck, CEAProjectRoot
 
 router = APIRouter()
@@ -78,9 +78,8 @@ def validate_parameter(parameter, value, parameter_name: str | None = None) -> t
         logger.error(f"Validation failed for {parameter_name or parameter.name}: {error_message}")
         return False, error_message
     except Exception as e:
-        error_message = f"Validation error: {str(e)}"
-        logger.error(f"Unexpected validation error for {parameter_name or parameter.name}: {error_message}")
-        return False, error_message
+        logger.error(f"Unexpected validation error for {parameter_name or parameter.name}: {e}", exc_info=True)
+        return False, "Unexpected validation error."
 
 
 def validate_and_apply_parameters(
@@ -417,6 +416,10 @@ def _collect_field_warnings(tool_name, parameter_name, value, config):
 
     if tool_name == 'network-layout' and parameter_name == 'network-name':
         folder = locator.get_thermal_network_folder_network_name_folder(v)
+        try:
+            folder = secure_path(folder, root=config.scenario)
+        except OutsideProjectRootError:
+            return []
         if os.path.isdir(folder):
             return [{
                 "field": "network-name",
@@ -428,6 +431,10 @@ def _collect_field_warnings(tool_name, parameter_name, value, config):
 
     if tool_name == 'final-energy' and parameter_name == 'what-if-name':
         folder = locator.get_analysis_folder(v)
+        try:
+            folder = secure_path(folder, root=config.scenario)
+        except OutsideProjectRootError:
+            return []
         if os.path.isdir(folder):
             return [{
                 "field": "what-if-name",
