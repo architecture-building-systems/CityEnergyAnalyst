@@ -1,0 +1,31 @@
+name: Notify CEA website on docs change
+
+# When the user-facing guidebook markdown changes on master, ping the
+# cea-website Cloudflare Pages deploy hook so the public site rebuilds
+# within ~2 minutes. Companion to the website's own daily-rebuild cron.
+#
+# Required secret on this repo:
+#   CEA_WEBSITE_DEPLOY_HOOK — Cloudflare Pages deploy hook URL
+#   (See https://github.com/uuen-cloud/cea-website/blob/main/docs/guidebook-auto-rebuild.md)
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "docs/tutorials/cea4-app-training/**"
+  workflow_dispatch:
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Cloudflare Pages deploy hook
+        env:
+          DEPLOY_HOOK: ${{ secrets.CEA_WEBSITE_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$DEPLOY_HOOK" ]; then
+            echo "::warning::CEA_WEBSITE_DEPLOY_HOOK secret is not set on this repo — skipping."
+            exit 0
+          fi
+          curl -X POST -fsSL "$DEPLOY_HOOK"
+          echo "Pinged cea-website deploy hook."

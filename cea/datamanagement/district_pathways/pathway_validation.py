@@ -7,12 +7,12 @@ import pandas as pd
 
 from cea.config import Configuration
 from cea.datamanagement.district_pathways.envelope_topology import (
+    resolve_archetype_type_column,
     validate_three_layer_topology,
 )
 from cea.datamanagement.district_pathways.pathway_integrity import (
     check_state_year_comprehensive_integrity,
     get_envelope_db_path,
-    resolve_archetype_type_column,
     resolve_envelope_column_name,
     resolve_envelope_component,
 )
@@ -45,12 +45,23 @@ def validate_pathway_log_data(
         )
         return _validation_payload(pathway_name, global_issues, issues_by_year)
 
-    valid_buildings = set(
-        DistrictEvolutionPathway(
-            config,
-            pathway_name=pathway_name,
-        ).get_building_construction_years().keys()
+    pathway = DistrictEvolutionPathway(config, pathway_name=pathway_name)
+    # Validate the *prospective* log being saved, not the on-disk one.
+    pathway.log_data = log_data
+    base_construction_years = pathway.get_building_construction_years()
+    valid_buildings = set(base_construction_years.keys())
+
+    # Cross-year check: each building's construct/demolish events must form a feasible chain.
+    global_issues.extend(
+        _validate_building_event_feasibility(base_construction_years, log_data)
     )
+
+    # Every pathway state must contain at least one building.
+    for year in pathway.years_without_active_buildings():
+        global_issues.append(
+            f"Year {year} would have no buildings. At least one building must exist in "
+            "every pathway state — adjust the construct/demolish events for this year."
+        )
 
     for year in sorted(int(y) for y in log_data.keys()):
         entry = log_data.get(year, {}) or {}
@@ -151,6 +162,68 @@ def validate_baked_state_issues(
             issues.append(
                 f"Unexpected buildings in baked state: {', '.join(extra)}"
             )
+
+    return issues
+
+
+def _validate_building_event_feasibility(
+    base_construction_years: dict[str, int],
+    log_data: dict[int, dict[str, Any]],
+) -> list[str]:
+    """Replay each building's construct/demolish events chronologically and flag infeasible ones.
+
+    Mirrors ``DistrictEvolutionPathway.get_building_lifecycle_intervals`` but, instead of silently
+    ignoring impossible events, returns a clear error for each. Catches:
+      - demolishing a building that is already demolished (no rebuild in between);
+      - demolishing a building before it is constructed.
+
+    Same-year demolish + rebuild is allowed (demolitions are processed before constructions).
+    """
+    issues: list[str] = []
+    # Per-building interval state: list of (start_year, end_year | None); last may be open.
+    intervals: dict[str, list[tuple[int, int | None]]] = {
+        name: [(int(year), None)] for name, year in base_construction_years.items()
+    }
+
+    for year in sorted(int(y) for y in log_data.keys()):
+        entry = log_data.get(year, {}) or {}
+        events = entry.get("building_events", {}) or {}
+        demolished = sorted({str(v) for v in (events.get("demolished_buildings", []) or [])})
+        constructed = sorted({str(v) for v in (events.get("new_buildings", []) or [])})
+
+        # Demolitions first, so a same-year rebuild is valid.
+        for name in demolished:
+            building_intervals = intervals.get(name)
+            if not building_intervals:
+                continue  # unknown building — reported separately as a structural issue
+            start, end = building_intervals[-1]
+            if end is not None:
+                issues.append(
+                    f"Building '{name}': cannot demolish in {year} — it is already demolished as of "
+                    f"{end}. Rebuild it before demolishing again."
+                )
+                continue
+            if year < start:
+                issues.append(
+                    f"Building '{name}': cannot demolish in {year} — it is not constructed until "
+                    f"{start}. Demolition must come after construction."
+                )
+                continue
+            building_intervals[-1] = (start, int(year))
+
+        # Constructions / rebuilds.
+        for name in constructed:
+            building_intervals = intervals.get(name)
+            if building_intervals is None:
+                intervals[name] = [(int(year), None)]
+                continue
+            start, end = building_intervals[-1]
+            if end is not None:
+                # Rebuild after a demolition (same-year rebuild allowed: year == end).
+                building_intervals.append((int(year), None))
+            else:
+                # Still standing — retime the current construction year.
+                building_intervals[-1] = (int(year), end)
 
     return issues
 

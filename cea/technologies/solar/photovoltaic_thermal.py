@@ -23,7 +23,7 @@ from cea.technologies.solar import constants
 from cea.technologies.solar.photovoltaic import (get_properties_PV_db, calc_PV_power, calc_diffuseground_comp,
                                                  calc_absorbed_radiation_PV, calc_cell_temperature)
 from cea.technologies.solar.solar_collector import (calc_properties_SC_db, calc_IAM_beam_SC, calc_q_rad, calc_q_gain,
-                                                    vectorize_calc_Eaux_SC, calc_optimal_mass_flow,
+                                                    calc_Eaux_SC, calc_optimal_mass_flow,
                                                     calc_optimal_mass_flow_2, calc_qloss_network)
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
@@ -40,7 +40,8 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_PVT(locator, config, type_pvpanel, type_scpanel,latitude, longitude, weather_data, date_local, building_name):
+def calc_PVT(locator, config, type_pvpanel, type_scpanel, latitude, longitude, weather_data, date_local,
+             solar_properties, building_name):
     """
     This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
     tilt angles of panels at each surface location. The panels are categorized into groups by their surface azimuths,
@@ -68,10 +69,6 @@ def calc_PVT(locator, config, type_pvpanel, type_scpanel,latitude, longitude, we
 
     radiation_path = locator.get_radiation_building_sensors(building_name)
     metadata_csv_path = locator.get_radiation_metadata(building_name)
-
-    # solar properties
-    solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, date_local, config)
-    # print('calculating solar properties done for building %s' % building_name)
 
     # get properties of the panel to evaluate # TODO: find a PVT module reference
     panel_properties_PV = get_properties_PV_db(locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'), type_pvpanel)
@@ -322,6 +319,68 @@ def get_t_in_pvt(config):
     return Tin_C
 
 
+@jit(nopython=True, cache=True)
+def _simulate_flow_timesteps(specific_flows_kgpers_flow, Tamb_vector_C, q_rad_vector,
+                             absorbed_radiation_PV_Wperm2, Bref, c1, c2, eff_nom, Tin_C,
+                             Cp_fluid_JperkgK, C_eff_Jperm2K, aperture_area_m2, Nseg, delts,
+                             DELT, TIME0, Mo_seg,
+                             Tfl, DT, Tabs, STORED, TflA, TflB, TabsA, TabsB, q_gain_Seg,
+                             temperature_out_flow, temperature_in_flow, supply_out_kW_flow,
+                             temperature_mean_flow):
+    for t in range(HOURS_IN_YEAR):
+        # c1_pvt = c1 - eff_nom * Bref * absorbed_radiation_PV_Wperm2[time] #todo: to delete
+        c1_pvt = calc_cl_pvt(Bref, absorbed_radiation_PV_Wperm2, c1, eff_nom, t)
+        Mfl_kgpers = calc_Mfl_kgpers(DELT, Nseg, STORED, TIME0, Tin_C, specific_flows_kgpers_flow, t,
+                                     Cp_fluid_JperkgK, C_eff_Jperm2K, aperture_area_m2)
+
+        # calculate average fluid temperature and average absorber temperature at the beginning of the time-step
+        Tamb_C = Tamb_vector_C[t]
+        q_rad_Wperm2 = q_rad_vector[t]
+        Tout_C = calc_Tout_C(Cp_fluid_JperkgK, DT, Mfl_kgpers, Nseg, STORED, Tabs, Tamb_C, Tfl, Tin_C,
+                             aperture_area_m2, c1_pvt, q_rad_Wperm2)
+
+        # calculate q_gain with the guess for DT[1]
+        q_gain_Wperm2 = calc_q_gain(Tfl, q_rad_Wperm2, DT, Tin_C, aperture_area_m2, c1_pvt, c2,
+                                    Mfl_kgpers, delts, Cp_fluid_JperkgK, C_eff_Jperm2K, Tamb_C)
+
+        Aseg_m2 = aperture_area_m2 / Nseg  # aperture area per segment
+
+        # multi-segment calculation to avoid temperature jump at times of flow rate changes
+        Tout_Seg_C = do_multi_segment_calculation(Aseg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT, Mfl_kgpers, Mo_seg,
+                                                  Nseg, STORED, Tabs, TabsA, Tamb_C, Tfl, TflA, TflB, Tin_C, Tout_C,
+                                                  c1_pvt, c2, delts, q_gain_Seg, q_gain_Wperm2, q_rad_Wperm2)
+
+        # resulting energy output
+        q_out_kW = Mfl_kgpers * Cp_fluid_JperkgK * (Tout_Seg_C - Tin_C) / 1000  # [kW]
+        Tabs[2] = 0
+        # storage of the mean temperature
+        for Iseg in range(1, Nseg + 1):
+            STORED[200 + Iseg] = TflB[Iseg]
+            STORED[400 + Iseg] = TabsB[Iseg]
+            Tabs[2] = Tabs[2] + TabsB[Iseg] / Nseg
+
+        # outputs
+        temperature_out_flow[t] = Tout_Seg_C
+        temperature_in_flow[t] = Tin_C
+        supply_out_kW_flow[t] = q_out_kW
+        temperature_mean_flow[t] = (Tin_C + Tout_Seg_C) / 2  # Mean absorber temperature at present
+
+        q_gain_Wperm2 = 0
+        TavgB = 0
+        TavgA = 0
+        for Iseg in range(1, Nseg + 1):
+            q_gain_Wperm2 = q_gain_Wperm2 + q_gain_Seg[Iseg] * Aseg_m2  # W
+            TavgA = TavgA + TflA[Iseg] / Nseg
+            TavgB = TavgB + TflB[Iseg] / Nseg
+
+                # # OUT[9] = qgain/Area_a # in W/m2
+                # q_mtherm_Wperm2 = (TavgB - TavgA) * C_eff_Jperm2K * aperture_area_m2 / delts
+                # q_balance_error = q_gain_Wperm2 - q_mtherm_Wperm2 - q_out_kW
+
+                # OUT[11] = q_mtherm
+                # OUT[12] = q_balance_error
+
+
 def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_properties_PV, Tamb_vector_C, IAM_b,
                     tilt_angle_deg, pipe_lengths, absorbed_radiation_PV_Wperm2, Tcell_PV_C, module_area_per_group_m2):
     """
@@ -405,6 +464,8 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
     tilt_rad = radians(tilt_angle_deg)
     q_rad_vector = calc_q_rad(n0, IAM_b, IAM_d, radiation_Wperm2.I_direct, radiation_Wperm2.I_diffuse,
                               tilt_rad)  # absorbed solar radiation in W/m2 is a mean of the group
+    Tamb_vector_C = np.asarray(Tamb_vector_C)
+    q_rad_vector = np.asarray(q_rad_vector)
     # counter = 0
     # Flag = False
     # Flag2 = False
@@ -423,60 +484,15 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
         TabsA = np.zeros(600)
         q_gain_Seg = np.zeros(101)  # maximum Iseg = maximum Nseg + 1 = 101
 
-        for t in range(HOURS_IN_YEAR):
-            # c1_pvt = c1 - eff_nom * Bref * absorbed_radiation_PV_Wperm2[time] #todo: to delete
-            c1_pvt = calc_cl_pvt(Bref, absorbed_radiation_PV_Wperm2, c1, eff_nom, t)
-            Mfl_kgpers = calc_Mfl_kgpers(DELT, Nseg, STORED, TIME0, Tin_C, specific_flows_kgpers[flow], t,
-                                         Cp_fluid_JperkgK, C_eff_Jperm2K, aperture_area_m2)
-
-            # calculate average fluid temperature and average absorber temperature at the beginning of the time-step
-            Tamb_C = Tamb_vector_C[t]
-            q_rad_Wperm2 = q_rad_vector[t]
-            Tout_C = calc_Tout_C(Cp_fluid_JperkgK, DT, Mfl_kgpers, Nseg, STORED, Tabs, Tamb_C, Tfl, Tin_C,
-                                 aperture_area_m2, c1_pvt, q_rad_Wperm2)
-
-            # calculate q_gain with the guess for DT[1]
-            q_gain_Wperm2 = calc_q_gain(Tfl, q_rad_Wperm2, DT, Tin_C, aperture_area_m2, c1_pvt, c2,
-                                        Mfl_kgpers, delts, Cp_fluid_JperkgK, C_eff_Jperm2K, Tamb_C)
-
-            Aseg_m2 = aperture_area_m2 / Nseg  # aperture area per segment
-
-            # multi-segment calculation to avoid temperature jump at times of flow rate changes
-            Tout_Seg_C = do_multi_segment_calculation(Aseg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT, Mfl_kgpers, Mo_seg,
-                                                      Nseg, STORED, Tabs, TabsA, Tamb_C, Tfl, TflA, TflB, Tin_C, Tout_C,
-                                                      c1_pvt, c2, delts, q_gain_Seg, q_gain_Wperm2, q_rad_Wperm2)
-
-            # resulting energy output
-            q_out_kW = Mfl_kgpers * Cp_fluid_JperkgK * (Tout_Seg_C - Tin_C) / 1000  # [kW]
-            Tabs[2] = 0
-            # storage of the mean temperature
-            for Iseg in range(1, Nseg + 1):
-                STORED[200 + Iseg] = TflB[Iseg]
-                STORED[400 + Iseg] = TabsB[Iseg]
-                Tabs[2] = Tabs[2] + TabsB[Iseg] / Nseg
-
-            # outputs
-            temperature_out[flow][t] = Tout_Seg_C
-            temperature_in[flow][t] = Tin_C
-            supply_out_kW[flow][t] = q_out_kW
-            temperature_mean[flow][t] = (Tin_C + Tout_Seg_C) / 2  # Mean absorber temperature at present
-
-            q_gain_Wperm2 = 0
-            TavgB = 0
-            TavgA = 0
-            for Iseg in range(1, Nseg + 1):
-                q_gain_Wperm2 = q_gain_Wperm2 + q_gain_Seg * Aseg_m2  # W
-                TavgA = TavgA + TflA[Iseg] / Nseg
-                TavgB = TavgB + TflB[Iseg] / Nseg
-
-                # # OUT[9] = qgain/Area_a # in W/m2
-                # q_mtherm_Wperm2 = (TavgB - TavgA) * C_eff_Jperm2K * aperture_area_m2 / delts
-                # q_balance_error = q_gain_Wperm2 - q_mtherm_Wperm2 - q_out_kW
-
-                # OUT[11] = q_mtherm
-                # OUT[12] = q_balance_error
+        _simulate_flow_timesteps(specific_flows_kgpers[flow], Tamb_vector_C, q_rad_vector,
+                                 absorbed_radiation_PV_Wperm2, Bref, c1, c2, eff_nom, Tin_C,
+                                 Cp_fluid_JperkgK, C_eff_Jperm2K, aperture_area_m2, Nseg, delts,
+                                 DELT, TIME0, Mo_seg,
+                                 Tfl, DT, Tabs, STORED, TflA, TflB, TabsA, TabsB, q_gain_Seg,
+                                 temperature_out[flow], temperature_in[flow], supply_out_kW[flow],
+                                 temperature_mean[flow])
         if flow < 4:
-            auxiliary_electricity_kW[flow] = vectorize_calc_Eaux_SC(specific_flows_kgpers[flow],
+            auxiliary_electricity_kW[flow] = calc_Eaux_SC(specific_flows_kgpers[flow],
                                                                     specific_pressure_losses_Pa[flow], pipe_lengths,
                                                                     aperture_area_m2)  # in kW
         if flow == 3:
@@ -494,7 +510,7 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
                                                                                               dP2, dP3, dP4,
                                                                                               aperture_area_m2)
         if flow == 4:
-            auxiliary_electricity_kW[flow] = vectorize_calc_Eaux_SC(specific_flows_kgpers[flow],
+            auxiliary_electricity_kW[flow] = calc_Eaux_SC(specific_flows_kgpers[flow],
                                                                     specific_pressure_losses_Pa[flow], pipe_lengths,
                                                                     aperture_area_m2)  # in kW
             dp5 = specific_pressure_losses_Pa[flow]
@@ -509,7 +525,7 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
                                                                       aperture_area_m2, temperature_mean[flow],
                                                                       Tamb_vector_C, msc_max_kgpers)
             # supply_out_pre = supply_out_kW[flow].copy() + supply_losses_kW[flow].copy()
-            auxiliary_electricity_kW[flow] = vectorize_calc_Eaux_SC(specific_flows_kgpers[flow],
+            auxiliary_electricity_kW[flow] = calc_Eaux_SC(specific_flows_kgpers[flow],
                                                                     specific_pressure_losses_Pa[flow], pipe_lengths,
                                                                     aperture_area_m2)  # in kW
             supply_out_total_kW = supply_out_kW + 0.5 * auxiliary_electricity_kW[flow] - supply_losses_kW[flow]
@@ -531,13 +547,13 @@ def calc_PVT_module(config, radiation_Wperm2, panel_properties_SC, panel_propert
     return result
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True)
 def calc_cl_pvt(Bref, absorbed_radiation_PV_Wperm2, c1, eff_nom, time):
     c1_pvt = max(0, c1 - eff_nom * Bref * absorbed_radiation_PV_Wperm2[time])  # _[J. Allan et al., 2015] eq.(18)
     return c1_pvt
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True)
 def turn_off_the_water_circuit_if_total_energy_supply_is_zero(T_module_C, Tcell_PV_C, auxiliary_electricity_kW,
                                                               mcp_kWperK, supply_out_total_kW, temperature_in,
                                                               temperature_out):
@@ -554,7 +570,7 @@ def turn_off_the_water_circuit_if_total_energy_supply_is_zero(T_module_C, Tcell_
         T_module_C[x] = T_module_mean_C if T_module_mean_C > 0 else Tcell_PV_C[x]
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True)
 def do_multi_segment_calculation(Aseg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT, Mfl_kgpers, Mo_seg, Nseg, STORED, Tabs,
                                  TabsA, Tamb_C, Tfl, TflA, TflB, Tin_C, Tout_C, c1_pvt, c2, delts, q_gain_Seg,
                                  q_gain_Wperm2, q_rad_Wperm2):
@@ -596,7 +612,7 @@ def do_multi_segment_calculation(Aseg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT, M
     return Tout_Seg_C
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True)
 def calc_Tout_C(Cp_fluid_JperkgK, DT, Mfl_kgpers, Nseg, STORED, Tabs, Tamb_C, Tfl, Tin_C, aperture_area_m2, c1_pvt,
                 q_rad_Wperm2):
     Tfl[1] = 0  # mean fluid temperature
@@ -620,7 +636,7 @@ def calc_Tout_C(Cp_fluid_JperkgK, DT, Mfl_kgpers, Nseg, STORED, Tabs, Tamb_C, Tf
     return Tout_C
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True)
 def calc_Mfl_kgpers(DELT, Nseg, STORED, TIME0, Tin_C, specific_flows_kgpers, time, Cp_fluid_JperkgK, C_eff_Jperm2K,
                     aperture_area_m2):
     Mfl_kgpers = specific_flows_kgpers[time]
@@ -790,7 +806,7 @@ def main(config: cea.config.Configuration):
     # weather hourly_results_per_building
     weather_data = epwreader.epw_reader(locator.get_weather_file())
     date_local = solar_equations.calc_datetime_local_from_weather_file(weather_data, latitude, longitude)
-
+    solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, date_local, config)
 
     n = len(building_names)
     for type_pvpanel in types_pvpanel:
@@ -804,6 +820,7 @@ def main(config: cea.config.Configuration):
                                                                                          repeat(longitude, n),
                                                                                          repeat(weather_data, n),
                                                                                          repeat(date_local, n),
+                                                                                         repeat(solar_properties, n),
                                                                                          building_names)
 
 

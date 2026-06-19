@@ -180,10 +180,10 @@ def test_pathway_panel_jobs_run_via_cea_api(pathway_api_fixture):
 
     cea.api.pathway_update_building_events(
         scenario=config.scenario,
-        existing_pathway_name="demo",
+        existing_pathway_names=["demo"],
         year_of_state=2035,
-        new_buildings=["B2"],
-        demolished_buildings=["B1"],
+        buildings_to_construct=["B2"],
+        buildings_to_demolish=["B1"],
     )
     log_data = _read_log(locator, "demo")
     assert log_data[2035]["building_events"] == {
@@ -193,7 +193,7 @@ def test_pathway_panel_jobs_run_via_cea_api(pathway_api_fixture):
 
     cea.api.pathway_save_yaml(
         scenario=config.scenario,
-        existing_pathway_name="demo",
+        existing_pathway_names=["demo"],
         year_of_state=2036,
         raw_yaml="modifications: {}\n",
     )
@@ -201,7 +201,7 @@ def test_pathway_panel_jobs_run_via_cea_api(pathway_api_fixture):
 
     cea.api.pathway_delete_state(
         scenario=config.scenario,
-        existing_pathway_name="demo",
+        existing_pathway_names=["demo"],
         year_of_state=2036,
     )
     assert 2036 not in _read_log(locator, "demo")
@@ -249,6 +249,8 @@ def test_put_year_yaml_saves_mapping(pathway_api_fixture):
 
     raw_yaml = """
 building_events:
+  new_buildings:
+    - B2
   demolished_buildings:
     - B1
 modifications: {}

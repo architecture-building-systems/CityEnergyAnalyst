@@ -15,8 +15,13 @@ from cea.datamanagement.databases_verification import verify_input_geometry_zone
 from cea.datamanagement.district_pathways.pathway_integrity import (
     check_district_pathway_log_yaml_integrity,
     merge_modify_recipes,
+    scan_state_year_folders,
 )
 from cea.datamanagement.district_pathways.envelope_topology import (
+    ALL_MATERIAL_FIELDS,
+    extract_material_fields,
+    is_filled,
+    row_has_full_material_set,
     validate_three_layer_topology,
 )
 from cea.datamanagement.district_pathways.pathway_log import (
@@ -253,34 +258,47 @@ class DistrictEvolutionPathway:
         but nothing changes are excluded.
         """
         intervals = self.get_building_lifecycle_intervals()
-
-        # Collect years where a lifecycle event occurs
-        event_years: set[int] = set()
-        for ivs in intervals.values():
-            for start, end in ivs:
-                event_years.add(start)
-                if end is not None:
-                    event_years.add(end)
-
-        # Also include log years with actual content (modifications or building events)
-        for year in self.log_data.keys():
-            entry = self.log_data.get(int(year), {}) or {}
-            events = entry.get("building_events", {}) or {}
-            has_content = (
-                bool(entry.get("modifications"))
-                or bool(events.get("new_buildings"))
-                or bool(events.get("demolished_buildings"))
-            )
-            if has_content:
-                event_years.add(int(year))
-
-        # Filter out years with no active buildings
+        # Years where a lifecycle event occurs or the log authors content, minus those with no
+        # active buildings (an empty state is never baked).
         return sorted(
-            year for year in event_years
+            year for year in self._candidate_event_years(intervals)
             if any(
                 self._is_building_active(name, year, intervals)
                 for name in intervals
             )
+        )
+
+    def _candidate_event_years(self, intervals: dict[str, list[tuple[int, int | None]]]) -> set[int]:
+        """Years where a lifecycle event occurs or the log authors content.
+
+        This is the unfiltered set behind `required_state_years` (which then drops years with no
+        active buildings). Used both to pick which states to bake and to detect empty states.
+        """
+        years: set[int] = set()
+        for ivs in intervals.values():
+            for start, end in ivs:
+                years.add(start)
+                if end is not None:
+                    years.add(end)
+        # Any explicit log entry — including an empty-modifications placeholder authored via the
+        # YAML editor — counts as an authored state. The downstream active-buildings filter
+        # still drops years that would have zero buildings.
+        for year in self.log_data.keys():
+            years.add(int(year))
+        return years
+
+    def years_without_active_buildings(self) -> list[int]:
+        """Candidate state years that would contain zero buildings.
+
+        Every pathway state must contain at least one building (an empty state has nothing to
+        simulate), so any year returned here is invalid. Note `required_state_years` silently
+        drops these; this method surfaces them for validation.
+        """
+        intervals = self.get_building_lifecycle_intervals()
+        return sorted(
+            year
+            for year in self._candidate_event_years(intervals)
+            if not any(self._is_building_active(name, year, intervals) for name in intervals)
         )
 
     def get_explicit_building_events(self, year: int) -> dict[str, list[str]]:
@@ -353,6 +371,21 @@ class DistrictEvolutionPathway:
             if start <= year and (end is None or end > year):
                 return True
         return False
+
+    def buildings_standing_entering_year(self, year: int) -> set[str]:
+        """Return buildings that exist at the *start* of `year`.
+
+        Evaluated as "active in year - 1", which is independent of any construct/demolish events
+        authored in `year` itself. Used to filter the building-event pickers: only standing
+        buildings can be demolished in `year`, and only non-standing ones can be (re)constructed.
+        """
+        intervals = self.get_building_lifecycle_intervals()
+        probe = int(year) - 1
+        return {
+            name
+            for name in intervals
+            if self._is_building_active(name, probe, intervals)
+        }
 
     def get_manual_new_building_years(self) -> dict[str, int]:
         """Return the latest manual construction year per building."""
@@ -565,14 +598,12 @@ class DistrictEvolutionPathway:
             cleaned_entry.pop("manual_state", None)
             self.log_data[year] = cleaned_entry
 
-        # Remove empty entries (no modifications, no building events)
+        # Strip only truly empty entries. An entry with metadata (e.g. created_at) but
+        # empty modifications is a valid manual-state placeholder authored via the YAML
+        # editor, and must persist (matches `_candidate_event_years` treating any explicit
+        # log entry as a candidate state year).
         for year in list(self.log_data.keys()):
-            entry = self.log_data.get(year, {}) or {}
-            events = entry.get("building_events", {}) or {}
-            has_new = bool(events.get("new_buildings"))
-            has_demolished = bool(events.get("demolished_buildings"))
-            has_modifications = bool(entry.get("modifications"))
-            if not has_new and not has_demolished and not has_modifications:
+            if not (self.log_data.get(year) or {}):
                 del self.log_data[year]
 
         save_pathway_log_yaml(self.main_locator, self.log_data, pathway_name=self.pathway_name)
@@ -747,6 +778,25 @@ class DistrictEvolutionPathway:
             "Each built state folder contains simulation status metadata in '.district_pathway_signature.json'.",
             flush=True,
         )
+
+        # Remove orphaned state folders: state_<year> directories whose year is no longer in the
+        # pathway definition (e.g. left behind after a year/intervention was deleted). These are
+        # regenerable bake outputs, so deleting them is safe and keeps re-bakes from failing the
+        # integrity check below. Non-year folders (e.g. 'state_status') are left untouched.
+        required_years = set(years)
+        district_pathway_folder = self.main_locator.get_district_pathway_folder(
+            pathway_name=self.pathway_name
+        )
+        year_to_folder, _ = scan_state_year_folders(district_pathway_folder)
+        for year, folder_name in year_to_folder.items():
+            if year in required_years:
+                continue
+            shutil.rmtree(os.path.join(district_pathway_folder, folder_name), ignore_errors=True)
+            print(
+                f"Removed orphaned state folder '{folder_name}' "
+                f"(year {year} is no longer in the pathway definition).",
+                flush=True,
+            )
 
         check_district_pathway_log_yaml_integrity(self.config, self.pathway_name)
 
@@ -1167,11 +1217,30 @@ def _apply_state_construction_changes(
                 new_row = cast(pd.Series, component_db.loc[code_current].copy())
                 new_row.name = code_new
 
+                # Classify the source row + the requested modification: is this an in-place
+                # promotion (direct-property source -> material-based new row)?
+                material_fields_in_mod = extract_material_fields(modifications)
+                is_material_promotion = (
+                    bool(material_fields_in_mod) and not row_has_full_material_set(new_row)
+                )
+
+                # If promoting, the user must supply the full material set — there's no prior
+                # composition to inherit the missing layers from. Mirrors the pre-flight check in
+                # envelope_topology.validate_recipe_against_envelope (which catches this at template
+                # save time); this branch is the safety net for any other path that bypasses save.
+                if is_material_promotion:
+                    missing = ALL_MATERIAL_FIELDS - material_fields_in_mod
+                    if missing:
+                        raise ValueError(
+                            f"Cannot apply material intervention on archetype '{archetype}' "
+                            f"component '{component}' (source row '{code_current}', year {year_of_state}): "
+                            f"source is direct-property only, so the full material set must be provided "
+                            f"to promote it. Missing fields: {sorted(missing)}."
+                        )
+
                 for field, new_value in modifications.items():
                     if new_value is not None:
-                        if field.startswith("material_name_") or field.startswith(
-                            "thickness_"
-                        ):
+                        if field in ALL_MATERIAL_FIELDS:
                             component_field_name = field
                         else:
                             component_field_name = envelope_lookup._col(
@@ -1181,14 +1250,36 @@ def _apply_state_construction_changes(
                         db_modified += 1
 
                 if db_modified:
-                    _validate_three_layer_topology_row(
-                        new_row,
-                        year_of_state=year_of_state,
-                        archetype=archetype,
-                        component=component,
-                        envelope_db_name=envelope_db_name,
-                        code=code_new,
-                    )
+                    if is_material_promotion:
+                        # Clear stale direct-property cache; values will be re-derived from
+                        # materials by Envelope.from_locator on next load.
+                        suf = envelope_lookup._SUFFIX[envelope_db_name]
+                        derived_cols = (
+                            "U_base" if envelope_db_name == "floor" else f"U_{suf}",
+                            f"GHG_{suf}_kgCO2m2",
+                            f"GHG_biogenic_{suf}_kgCO2m2",
+                        )
+                        for c in derived_cols:
+                            if c in new_row.index:
+                                new_row[c] = None
+                        print(
+                            f"  Row '{code_new}' promoted to material-based from direct-property "
+                            f"source '{code_current}'; cleared stale {', '.join(derived_cols)} "
+                            f"(will be re-derived from materials on next load).",
+                            flush=True,
+                        )
+
+                    # Only validate 3-layer topology when the new row claims a material set;
+                    # pure direct-property modifications must not be required to pass it.
+                    if any(is_filled(new_row.get(f)) for f in ALL_MATERIAL_FIELDS):
+                        _validate_three_layer_topology_row(
+                            new_row,
+                            year_of_state=year_of_state,
+                            archetype=archetype,
+                            component=component,
+                            envelope_db_name=envelope_db_name,
+                            code=code_new,
+                        )
                     new_row["description"] = (
                         f"Modified {component} for archetype {archetype} in year {year_of_state}, "
                         f"based on {code_current}, fields: {', '.join(modifications.keys())}"
@@ -1339,6 +1430,70 @@ def create_modify_recipe(
             modify_recipe[archetype] = cleaned_components
 
     return modify_recipe
+
+
+# Inverse mapping for recipe_to_define_config: (component, recipe field) -> the kebab-case
+# config parameter used by the `pathway-intervention-templates-define` script.
+# Keep in sync with create_modify_recipe above.
+_ENVELOPE_FIELD_TO_PARAM_SUFFIX: dict[str, str] = {
+    "material_name_1": "material-name-1",
+    "thickness_1_m": "thickness-1-m",
+    "material_name_2": "material-name-2",
+    "thickness_2_m": "thickness-2-m",
+    "material_name_3": "material-name-3",
+    "thickness_3_m": "thickness-3-m",
+    "Service_Life": "lifetime",
+}
+_CONSTRUCTION_TYPE_FIELD_TO_PARAM: dict[str, str] = {
+    "type_win": "type-win",
+    "supply_type_hs": "supply-type-hs",
+    "supply_type_cs": "supply-type-cs",
+    "supply_type_dhw": "supply-type-dhw",
+    "supply_type_el": "supply-type-el",
+    "hvac_type_hs": "hvac-type-hs",
+    "hvac_type_cs": "hvac-type-cs",
+    "hvac_type_dhw": "hvac-type-dhw",
+    "hvac_type_ctrl": "hvac-type-ctrl",
+    "hvac_type_vent": "hvac-type-vent",
+}
+_ENVELOPE_COMPONENTS = ("wall", "roof", "base", "floor")
+
+
+def recipe_to_define_config(
+    modifications: dict[str, dict[str, dict[str, Any]]],
+) -> tuple[dict[str, Any], bool]:
+    """Inverse of create_modify_recipe: flatten a nested per-archetype recipe back into the
+    flat kebab-case parameters of the `pathway-intervention-templates-define` script, so an
+    existing template can be re-opened in the define form for editing.
+
+    Returns (payload, diverged):
+      - payload maps kebab-case parameter names -> values (ready to POST to save-config),
+        plus 'archetypes' (the list of archetype names the template targets).
+      - diverged is True if the archetypes do not all share identical modifications. The flat
+        form cannot represent per-archetype variation, so the first archetype's values are used
+        and the caller should warn the user.
+    """
+    archetypes = list(modifications.keys())
+    payload: dict[str, Any] = {"archetypes": archetypes}
+    if not archetypes:
+        return payload, False
+
+    first = modifications[archetypes[0]]
+    diverged = any(modifications[a] != first for a in archetypes[1:])
+
+    for component, fields in first.items():
+        if component == "construction_type":
+            for field, value in (fields or {}).items():
+                param = _CONSTRUCTION_TYPE_FIELD_TO_PARAM.get(field)
+                if param is not None:
+                    payload[param] = value
+        elif component in _ENVELOPE_COMPONENTS:
+            for field, value in (fields or {}).items():
+                suffix = _ENVELOPE_FIELD_TO_PARAM_SUFFIX.get(field)
+                if suffix is not None:
+                    payload[f"{component}-{suffix}"] = value
+
+    return payload, diverged
 
 
 def validate_pathway_name(pathway_name: str) -> str:

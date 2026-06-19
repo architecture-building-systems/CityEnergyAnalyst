@@ -2701,14 +2701,9 @@ def main(config: cea.config.Configuration):
 
     print(f"Network name: {network_layout.network_name}")
 
-    target_folder = locator.get_thermal_network_folder_network_name_folder(
-        network_layout.network_name
-    )
-    if os.path.isdir(target_folder):
-        print(f"  Removing existing network folder: {target_folder}")
-        shutil.rmtree(target_folder)
-
-    # Check if user provided a custom network layout
+    # Resolve existing-network inputs BEFORE touching the target folder so that
+    # when existing_network == network_layout.network_name the source files are
+    # read into memory/temp paths before any directory removal.
     existing_network = config.network_layout.existing_network
     edges_shp = config.network_layout.edges_shp_path
     nodes_shp = config.network_layout.nodes_shp_path
@@ -2723,6 +2718,15 @@ def main(config: cea.config.Configuration):
         edges_shp, nodes_shp = _load_existing_network_node_paths(locator, existing_network)
         print(f"    Edges: {edges_shp}")
         print(f"    Nodes: {nodes_shp}")
+
+    target_folder = locator.get_thermal_network_folder_network_name_folder(
+        network_layout.network_name
+    )
+    # Skip deletion when the source network lives in the same folder to avoid
+    # wiping files that were just resolved above.
+    if os.path.isdir(target_folder) and existing_network != network_layout.network_name:
+        print(f"  Removing existing network folder: {target_folder}")
+        shutil.rmtree(target_folder)
 
     try:
         # Generate network layout from user-defined files if provided

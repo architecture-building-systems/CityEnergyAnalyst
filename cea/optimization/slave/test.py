@@ -10,7 +10,7 @@ def main():
     index = pd.date_range('9/1/2016', periods=1392, freq='30min')
 
     series = pd.Series(data['KWH'].values, index=index)
-    resample = series.resample('1H').mean()
+    resample = series.resample('1h').mean()
     print(resample.sum())
 
 if __name__ == '__main__':

@@ -1980,6 +1980,86 @@ class OptionalBuildingsParameter(BuildingsParameter):
     empty_means_all = False
 
 
+def _pathway_event_building_sets(config: 'Configuration', section_name: str):
+    """Existence of buildings entering ``year-of-state`` across the selected pathways.
+
+    Reads the sibling parameters ``year-of-state`` and ``existing-pathway-names`` and, for each
+    selected pathway, computes which buildings are standing at the start of that year. Returns
+    ``(all_buildings, standing_in_all, standing_in_any)``:
+      - ``all_buildings``: every building known to any selected pathway.
+      - ``standing_in_all``: standing entering the year in *every* selected pathway (safe to
+        demolish that year for all of them).
+      - ``standing_in_any``: standing entering the year in *at least one* selected pathway.
+
+    The construct picker offers ``all_buildings - standing_in_any`` (not standing anywhere, so a
+    construct/rebuild is feasible for every selected pathway); the demolish picker offers
+    ``standing_in_all``.
+    """
+    section = getattr(config, section_name.replace('-', '_'))
+    year = getattr(section, 'year_of_state', None)
+    pathway_names = list(getattr(section, 'existing_pathway_names', []) or [])
+    if year is None or not pathway_names:
+        return set(), set(), set()
+
+    # Imported lazily: pathway_state imports cea.config, so importing it at module load would cycle.
+    from cea.datamanagement.district_pathways.pathway_state import DistrictEvolutionPathway
+
+    all_buildings: set[str] = set()
+    standing_sets: list[set[str]] = []
+    for pathway_name in pathway_names:
+        pathway = DistrictEvolutionPathway(config, pathway_name=pathway_name)
+        all_buildings |= set(pathway.get_building_lifecycle_intervals().keys())
+        standing_sets.append(pathway.buildings_standing_entering_year(int(year)))
+
+    if not standing_sets:
+        return all_buildings, set(), set()
+    return all_buildings, set.intersection(*standing_sets), set.union(*standing_sets)
+
+
+class _PathwayEventBuildingsParameter(OptionalBuildingsParameter):
+    """Base for the year-aware pathway building pickers (construct / demolish).
+
+    Choices are filtered by the sibling ``year-of-state`` / ``existing-pathway-names`` parameters
+    (subclasses define which buildings via ``_choices``). Empty is valid (a save typically sets
+    only construct OR demolish), but a non-empty value is strictly validated against the filtered
+    choices, so a building picked on the map but invalid for the year is rejected on save rather
+    than silently dropped.
+    """
+
+    strict_validation = True
+
+    def initialize(self, parser):
+        self.nullable = True
+        self.depends_on = [
+            f'{self.section.name}:year-of-state',
+            f'{self.section.name}:existing-pathway-names',
+        ]
+
+
+class PathwayDemolishBuildingsParameter(_PathwayEventBuildingsParameter):
+    """Buildings standing at the start of ``year-of-state`` in every selected pathway."""
+
+    @property
+    def _choices(self):
+        try:
+            _, standing_in_all, _ = _pathway_event_building_sets(self.config, self.section.name)
+            return sorted(standing_in_all)
+        except Exception:
+            return []
+
+
+class PathwayConstructBuildingsParameter(_PathwayEventBuildingsParameter):
+    """Buildings not standing at the start of ``year-of-state`` in any selected pathway."""
+
+    @property
+    def _choices(self):
+        try:
+            all_buildings, _, standing_in_any = _pathway_event_building_sets(self.config, self.section.name)
+            return sorted(all_buildings - standing_in_any)
+        except Exception:
+            return []
+
+
 class CoordinateListParameter(ListParameter):
     def encode(self, value):
         if isinstance(value, str):
@@ -2428,6 +2508,14 @@ class SubfolderChoiceParameter(ChoiceParameter):
             raise ValueError(f'There was an error reading subfolders for {self.name} from {location}') from e
 
     def encode(self, value):
+        if isinstance(value, (list, tuple)):
+            if len(value) == 0:
+                value = None
+            elif len(value) == 1:
+                value = value[0]
+            else:
+                raise ValueError(
+                    f"Invalid parameter value {value} for {self.fqname}: expected a single selection.")
         if value is None or value == '':
             if self.nullable or not self._choices:
                 # Allow empty string if nullable or if no subfolders exist yet

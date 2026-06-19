@@ -46,6 +46,9 @@ from cea.datamanagement.district_pathways.pathway_status import (
 from cea.datamanagement.district_pathways.pathway_timeline import (
     validate_all_baked_states,
 )
+from cea.datamanagement.district_pathways.pathway_validation import (
+    raise_if_invalid_pathway_log,
+)
 
 
 def _cleanup_state_outputs(state_locator: InputLocator, year: int) -> None:
@@ -98,7 +101,7 @@ def simulate_all_states(config: Configuration, pathway_name: str) -> None:
                 stale_custom.append(int(year))
     if stale_custom:
         print(
-            f"\n⚠ Warning: Custom state(s) {stale_custom} have stale or missing "
+            f"\nWarning: Custom state(s) {stale_custom} have stale or missing "
             f"simulation outputs (inputs were edited after the last simulation).\n"
             f"  These states will be re-simulated unless 'skip-custom-states' is enabled.\n"
             f"  If skipped, their outputs may not reflect the current inputs.",
@@ -304,6 +307,11 @@ def main(config: Configuration) -> None:
         flush=True,
     )
     print("=" * 80, flush=True)
+    # Fail loudly on an infeasible or empty-state pathway log before running any simulation.
+    pathway = DistrictEvolutionPathway(config, pathway_name=pathway_name)
+    raise_if_invalid_pathway_log(
+        config=config, pathway_name=pathway_name, log_data=pathway.log_data
+    )
     simulate_all_states(config, pathway_name=pathway_name)
     print("All pathway states have been simulated.", flush=True)
     try:

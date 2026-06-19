@@ -82,6 +82,39 @@ _SOLAR_TABLES = {
     'PHOTOVOLTAIC_THERMAL_PANELS',
 }
 
+# Tables whose rows currently carry only cost/geometry data — no fuel_code
+# and no efficiency column. If a user references one of these codes in a
+# supply assembly, the classification logic would silently fall through to
+# the passive branch and return efficiency=None, causing a cryptic crash
+# downstream. Raise early with a targeted message instead.
+#
+# TODO: complete the database entries for each table below so they can be
+# used in supply assemblies without restrictions:
+#   - FUEL_CELLS:         add fuel_code, therm_eff_design, elec_eff_design
+#   - POWER_TRANSFORMERS: add min_eff_rating (≈ 0.98)
+#   - BORE_HOLES:         not a conversion component; clarify role in docs
+# Once a table is complete, remove it from this dict.
+_COST_ONLY_TABLES: Dict[str, str] = {
+    'FUEL_CELLS': (
+        "FUEL_CELLS rows contain only cost data (no fuel_code or efficiency "
+        "column). To use a fuel-cell component in a supply assembly, add "
+        "fuel_code, therm_eff_design, and elec_eff_design columns to "
+        "COMPONENTS/CONVERSION/FUEL_CELLS.csv."
+    ),
+    'BORE_HOLES': (
+        "BORE_HOLES rows contain only cost data. Bore holes are ground heat "
+        "exchangers — they extract heat from the ground but do not convert "
+        "fuel to useful energy themselves. Pair a bore hole with a ground-"
+        "source heat pump (e.g. HP1) as the primary component instead."
+    ),
+    'POWER_TRANSFORMERS': (
+        "POWER_TRANSFORMERS rows contain only cost data (no efficiency "
+        "column). To use a transformer in a supply assembly, add an "
+        "efficiency column (e.g. min_eff_rating ≈ 0.98) to "
+        "COMPONENTS/CONVERSION/POWER_TRANSFORMERS.csv."
+    ),
+}
+
 
 @functools.lru_cache(maxsize=8)
 def _scan_conversion_tables(scenario: str) -> Dict[str, Tuple[str, Dict]]:
@@ -141,7 +174,8 @@ def _pick_efficiency(row: Dict) -> Optional[float]:
     1. ``therm_eff_design`` (cogeneration: thermal output is primary for
        heat-supply sizing)
     2. ``min_eff_rating`` (standard efficiency/COP)
-    3. ``min_eff_rating_seasonal`` (heat pumps use SCOP)
+    3. ``min_eff_rating_seasonal`` / ``rated_COP_seasonal`` (heat pumps,
+       unitary air conditioners — canonical name or legacy alias)
     4. ``elec_eff_design`` (cogeneration electrical, if no thermal)
     5. ``aux_power`` (cooling tower fan ratio)
     """
@@ -149,6 +183,7 @@ def _pick_efficiency(row: Dict) -> Optional[float]:
         'therm_eff_design',
         'min_eff_rating',
         'min_eff_rating_seasonal',
+        'rated_COP_seasonal',
         'elec_eff_design',
         'aux_power',
     ):
@@ -186,6 +221,27 @@ def load_component_info(component_code: str, locator) -> Dict:
         )
     table_name, row = hit
 
+    # Tables with only cost data — no carrier or efficiency information.
+    # Return a targeted error rather than silently falling to the passive branch.
+    if table_name in _COST_ONLY_TABLES:
+        raise ValueError(
+            f"Component code {component_code!r} is from table {table_name!r}, "
+            f"which cannot be used directly in a supply assembly:\n"
+            f"{_COST_ONLY_TABLES[table_name]}"
+        )
+
+    # PV panels generate electricity from irradiance; they do not follow the
+    # demand/efficiency model (carrier consumed per unit of useful energy).
+    # Handled here rather than via _SOLAR_TABLES so load_solar_component_info
+    # stays SC-only and solar_dhw.py is not burdened with PV semantics.
+    if table_name == 'PHOTOVOLTAIC_PANELS':
+        from cea.technologies.energy_carriers import electricity_carrier
+        return {
+            'type': 'PV',
+            'carrier': electricity_carrier(locator),
+            'efficiency': None,
+        }
+
     # Solar tables have their own semantics (aperture-based sizing, no
     # efficiency column in the usual sense) — delegate.
     if table_name in _SOLAR_TABLES:
@@ -211,11 +267,18 @@ def load_component_info(component_code: str, locator) -> Dict:
     # correct name here.
     from cea.technologies.energy_carriers import electricity_carrier
 
-    # 2) Seasonal-COP heat pump.
-    if 'min_eff_rating_seasonal' in cols and pd.notna(row.get('min_eff_rating_seasonal')):
+    # 2) Seasonal-COP electric device (heat pump or unitary AC).
+    # Accept both the canonical column name and the legacy alias used in
+    # UNITARY_AIR_CONDITIONERS.csv so neither table needs renaming.
+    _seasonal_col = next(
+        (c for c in ('min_eff_rating_seasonal', 'rated_COP_seasonal')
+         if c in cols and pd.notna(row.get(c))),
+        None,
+    )
+    if _seasonal_col is not None:
         return {
             'carrier': electricity_carrier(locator),
-            'efficiency': float(row['min_eff_rating_seasonal']),
+            'efficiency': float(row[_seasonal_col]),
         }
 
     # 3) Absorption chiller (thermal-driven): has both min_eff_rating

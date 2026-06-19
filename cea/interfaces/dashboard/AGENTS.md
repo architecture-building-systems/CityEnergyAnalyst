@@ -1,3 +1,16 @@
+# Dashboard
+
+## Frontend Code
+
+The dashboard UI (React frontend) is in a **separate repository** — not here.
+
+- **ALWAYS** run `ls ../CityEnergyAnalyst-GUI` (relative to this repo root) before concluding the frontend repo is absent — do NOT rely on name-based searches
+- If not found, ask user before proceeding
+- This directory (`cea/interfaces/dashboard/`) contains only the **Python/FastAPI backend** — API routes, job system, and SocketIO server
+- For frontend changes (components, pages, API calls from the UI), work in the GUI repo instead
+
+---
+
 # Dashboard Job System
 
 ## Architecture
@@ -69,6 +82,12 @@ Retry: `emit_with_retry()` (3 retries, exponential backoff).
 ## Dashboard API Pattern
 
 Not every user action should become a background job. Keep fast synchronous API routes for lightweight, reusable domain operations. Promote an action to a native job when the user experience depends on persistent Job Info logs, streamed stdout/stderr, or parity with long-running workflow actions. In both cases, keep the business logic in shared service functions so API routes and jobs call the same implementation.
+
+## Statelessness (important for container scaling)
+
+Treat the dashboard server as stateless. Do not persist request-scoped selections (e.g. pathway child scenario) to `config` or any server-side store. Prefer passing such context per request — accept it as a query or body parameter and apply it in memory for that request only; never call `save()` on it. Persisting shared global state blocks horizontal scaling across containers and causes cross-request / cross-client staleness bugs. When you must apply per-request state to a shared config object (e.g. as a FastAPI router-level dependency), snapshot the original values and restore them in a `finally` block.
+
+**Current exception — project/scenario selection**: The active project and scenario (`general:project` + `general:scenario-name` in config) are still persisted to disk via `PUT /api/project/`. This is intentional for now; making scenario selection stateless is planned for a future refactor. Refrain from adding new server-side persistence beyond this existing exception. Warn if user insists on breaking this rule.
 
 ## Docker
 

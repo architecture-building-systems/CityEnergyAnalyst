@@ -503,9 +503,9 @@ class ThermalNetwork(object):
                     if len(j) > 1:  # valid if e.g. if more than one flow and all flows incoming. Only need to flip one.
                         j = random.choice(j)
                     edge_node_df[edge_node_df.columns[j]] = -edge_node_df[edge_node_df.columns[j]]
-                    new_nodes = [edge_df['end node'][j], edge_df['start node'][j]]
-                    edge_df['start node'][j] = new_nodes[0]
-                    edge_df['end node'][j] = new_nodes[1]
+                    new_nodes = [edge_df['end node'].iloc[j], edge_df['start node'].iloc[j]]
+                    edge_df.iloc[j, edge_df.columns.get_loc('start node')] = new_nodes[0]
+                    edge_df.iloc[j, edge_df.columns.get_loc('end node')] = new_nodes[1]
                     changed[i] = True
                 else:
                     changed[i] = False
@@ -795,7 +795,8 @@ def thermal_network_main(locator, thermal_network, processes=1):
             # To do this, the initial dataset is repeated 4 times, the remaining values are filled with the average values of all above.
             edge_mass_flow_for_csv = pd.concat([edge_mass_flow_for_csv] * 4, ignore_index=True)
             while len(edge_mass_flow_for_csv.index) < HOURS_IN_YEAR:
-                edge_mass_flow_for_csv = edge_mass_flow_for_csv.append(edge_mass_flow_for_csv.mean(), ignore_index=True)
+                edge_mass_flow_for_csv = pd.concat(
+                    [edge_mass_flow_for_csv, edge_mass_flow_for_csv.mean().to_frame().T], ignore_index=True)
             edge_mass_flow_for_csv.to_csv(
                 thermal_network.locator.get_nominal_edge_mass_flow_csv_file(thermal_network.network_type,
                                                                             thermal_network.network_name), index=False)
@@ -862,7 +863,7 @@ def thermal_network_main(locator, thermal_network, processes=1):
             max_demand = abs(max(csv_outputs['plant_heat_requirement'], key=abs))
         # add plant heat demand to node.csv file
         ID = np.where(all_nodes_df_output['name'] == 'NODE' + str(plant_index))[0][0]
-        all_nodes_df_output['Q_hex_plant_kW'][ID] = max_demand
+        all_nodes_df_output.iloc[ID, all_nodes_df_output.columns.get_loc('Q_hex_plant_kW')] = max_demand
     # Output substation HEX node data
     all_nodes_df_output.to_csv(
         thermal_network.locator.get_thermal_network_node_types_csv_file(thermal_network.network_type,
@@ -1306,7 +1307,8 @@ def extrapolate_datapoints_for_representative_weeks(representative_week_data):
     representative_week_df = pd.DataFrame(representative_week_data)
     representative_week_df = pd.concat([representative_week_df] * 4, ignore_index=True)
     while len(representative_week_df.index) < HOURS_IN_YEAR:
-        representative_week_df = representative_week_df.append(representative_week_df.mean(), ignore_index=True)
+        representative_week_df = pd.concat(
+            [representative_week_df, representative_week_df.mean().to_frame().T], ignore_index=True)
     return representative_week_df
 
 
@@ -2396,12 +2398,12 @@ def initial_diameter_guess(thermal_network):
 
                 if required_flow_rate_df.abs().max(axis=1)[0] > 0:  # non 0 demand
                     # solve mass flow rates on edges
-                    thermal_network_reduced.edge_mass_flow_df[:][t:t + 1] = [
+                    thermal_network_reduced.edge_mass_flow_df.iloc[t:t + 1] = [
                         calc_mass_flow_edges(thermal_network_reduced.edge_node_df.copy(), required_flow_rate_df,
                                              thermal_network_reduced.all_nodes_df,
                                              diameter_guess, thermal_network_reduced.edge_df['length_m'].values,
                                              T_edge_initial_K, thermal_network_reduced.find_loops)]
-                    thermal_network_reduced.node_mass_flow_df[:][t:t + 1] = required_flow_rate_df.values
+                    thermal_network_reduced.node_mass_flow_df.iloc[t:t + 1] = required_flow_rate_df.values
 
                 iteration, \
                 min_edge_flow_flag = edge_mass_flow_iteration(thermal_network_reduced,

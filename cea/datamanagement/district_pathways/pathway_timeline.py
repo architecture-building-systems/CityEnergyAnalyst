@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import os
+import re
 import shutil
 from copy import deepcopy
+from dataclasses import dataclass
 from typing import Any, cast
 
 import pandas as pd
@@ -44,16 +46,34 @@ class StockYearRequiresEditError(ValueError):
     """Raised when a stock year is promoted without any actual user-authored content."""
 
 
-def _resolve_parent_scenario(scenario_path: str) -> str:
-    """If scenario_path points to a child state folder
-    (outputs/pathways/{name}/state_{year}), return the parent scenario
-    path. Otherwise return as-is."""
-    return InputLocator.parent_scenario_for_pathway_child(scenario_path)
+_PATHWAY_CHILD_MARKER = os.path.join(os.sep, "outputs", "pathways", "")
+_PATHWAY_CHILD_RE = re.compile(
+    re.escape(_PATHWAY_CHILD_MARKER) + r'([^' + re.escape(os.sep) + r']+)' + re.escape(os.sep) + r'state_(\d+)'
+)
+
+
+@dataclass
+class PathwayChildScenario:
+    pathway_name: str
+    year: int
+    parent: str
+
+    @staticmethod
+    def is_valid(scenario_path: str) -> bool:
+        """True when ``scenario_path`` points inside a pathway state folder."""
+        return _PATHWAY_CHILD_MARKER in scenario_path
+
+    @classmethod
+    def parse(cls, scenario_path: str) -> PathwayChildScenario | None:
+        """Extract pathway_name, year, and parent from a pathway state path, or None."""
+        match = _PATHWAY_CHILD_RE.search(scenario_path)
+        if match:
+            return cls(match.group(1), int(match.group(2)), scenario_path[:match.start()])
+        return None
 
 
 def list_pathway_names(config: Configuration) -> list[str]:
-    scenario = _resolve_parent_scenario(config.scenario)
-    locator = InputLocator(scenario)
+    locator = InputLocator(config.scenario)
     container = locator.get_district_pathway_container_folder()
     if not os.path.isdir(container):
         return []
@@ -94,11 +114,6 @@ def delete_pathway(config: Configuration, pathway_name: str) -> dict[str, Any]:
 
 
 def get_pathway_overview(config: Configuration) -> dict[str, Any]:
-    # Auto-recover if config points to a child state folder
-    parent = _resolve_parent_scenario(config.scenario)
-    if parent != config.scenario:
-        config.scenario = parent
-
     pathways: list[dict[str, Any]] = []
     all_years: list[int] = []
     for pathway_name in list_pathway_names(config):

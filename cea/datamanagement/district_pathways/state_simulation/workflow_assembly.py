@@ -64,7 +64,9 @@ def should_use_crax_radiation(state_locator: InputLocator) -> bool:
         return False
 
     if "void_deck" not in zone_gdf.columns:
-        return True
+        # Without a void_deck column we cannot rule out void decks, so use the engine that
+        # handles them correctly (DAYSIM) rather than CRAX.
+        return False
 
     void_deck = pd.to_numeric(zone_gdf["void_deck"], errors="coerce").fillna(0)
     return bool((void_deck <= 0).all())
