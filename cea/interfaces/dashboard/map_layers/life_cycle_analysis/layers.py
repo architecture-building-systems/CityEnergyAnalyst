@@ -20,7 +20,7 @@ from cea.visualisation.format.plot_colours import (
 
 logger = getCEAServerLogger("cea-server-lca-map-layers")
 
-IGNORE_COLUMNS = {"name", "GFA_m2", "period", "date", "hour", "month", "day"}
+IGNORE_COLUMNS = {"name", "GFA_m2", "period", "date", "hour", "month", "day", "Note"}
 
 def period_to_year(period: pd.Series) -> pd.Series:
     """Convert a period string of the form 'Y_XXXX' to an integer year XXXX"""
@@ -80,13 +80,23 @@ def get_columns_from_building_files(paths: list) -> Optional[list]:
     return sorted(columns) if columns else None
 
 
-def get_whatif_names(locator) -> list:
+def get_whatif_names(locator, path_fn=None) -> list:
     """Return what-if names ordered by most-recently modified first.
 
     The dropdown that consumes this list takes its default value from the
     first entry, so a fresh `cea final-energy` / `cea emissions` / etc.
-    run will surface as the auto-selected what-if in the LCA map layers
+    run surfaces as the auto-selected what-if in the LCA map layers
     immediately after the success notification's "View Results" click.
+
+    :param path_fn: Optional callable ``name -> absolute_path``. When
+        provided, the sort key is the mtime of ``path_fn(name)`` (the
+        layer's key output file) and any name whose file is missing is
+        filtered out. Preferred for map-layer dropdowns because
+        **overwriting an existing file does not reliably bump the parent
+        folder's mtime** on common filesystems, so sorting by folder
+        mtime alone leaves just-re-run scenarios at their old position.
+        When ``None``, sorts by the folder mtime itself — fine for
+        callers that only need "some" recency ordering.
 
     - Skips hidden entries (e.g. macOS ``.DS_Store``) and non-directories.
     - Sort key: ``(-mtime, name)`` → newest first, ties broken alphabetically.
@@ -98,11 +108,17 @@ def get_whatif_names(locator) -> list:
     for name in os.listdir(base):
         if name.startswith('.'):
             continue
-        path = os.path.join(base, name)
-        if not os.path.isdir(path):
+        folder = os.path.join(base, name)
+        if not os.path.isdir(folder):
             continue
+        if path_fn is not None:
+            sort_path = path_fn(name)
+            if not os.path.exists(sort_path):
+                continue
+        else:
+            sort_path = folder
         try:
-            mtime = os.path.getmtime(path)
+            mtime = os.path.getmtime(sort_path)
         except OSError:
             mtime = 0.0
         entries.append((name, mtime))
@@ -291,9 +307,16 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
         }
 
     def _get_whatif_names(self) -> Optional[list]:
-        """Return sorted list of what-if names that have final-energy results."""
-        names = get_whatif_names(self.locator)
-        return [name for name in names if os.path.isdir(self.locator.get_final_energy_folder(name))]
+        """Return what-if names with final-energy results, mtime-desc.
+
+        Sorts by the summary file's mtime so a just-re-run scenario
+        surfaces at the top — the analysis folder's mtime alone isn't
+        reliable because overwriting files doesn't always bump it.
+        """
+        return get_whatif_names(
+            self.locator,
+            path_fn=self.locator.get_final_energy_buildings_file,
+        ) or None
 
     def _get_results_files(self, parameters) -> list:
         whatif_name = parameters.get('whatif_name')
@@ -765,9 +788,11 @@ class LifecycleEmissionsMapLayer(WhatifDeletableMixin, MapLayer):
         }
 
     def _get_whatif_names(self) -> Optional[list]:
-        """Return sorted list of what-if names that have lifecycle analysis results."""
-        names = get_whatif_names(self.locator)
-        return [name for name in names if os.path.exists(self.locator.get_emissions_whatif_timeline_file(name))]
+        """Return what-if names with lifecycle-emissions results, mtime-desc."""
+        return get_whatif_names(
+            self.locator,
+            path_fn=self.locator.get_emissions_whatif_timeline_file,
+        ) or None
 
     def _get_results_files(self, parameters) -> list:
         whatif_name = parameters.get('whatif_name')
@@ -1368,9 +1393,11 @@ class OperationalEmissionsMapLayer(WhatifDeletableMixin, MapLayer):
         }
 
     def _get_whatif_names(self) -> Optional[list]:
-        """Return sorted list of what-if names that have operational emissions results."""
-        names = get_whatif_names(self.locator)
-        return [name for name in names if os.path.exists(self.locator.get_emissions_whatif_operational_file(name))]
+        """Return what-if names with operational-emissions results, mtime-desc."""
+        return get_whatif_names(
+            self.locator,
+            path_fn=self.locator.get_emissions_whatif_operational_file,
+        ) or None
 
     def _get_results_files(self, parameters) -> list:
         whatif_name = parameters.get('whatif_name')
@@ -1714,10 +1741,12 @@ class EmissionTimelineMapLayer(WhatifDeletableMixin, MapLayer):
     description = ""
 
     def _get_whatif_names(self) -> Optional[list]:
-        """Return sorted list of what-if names that have emission results."""
-        names = get_whatif_names(self.locator)
-        return [name for name in names if os.path.exists(self.locator.get_emissions_whatif_timeline_file(name))]
-    
+        """Return what-if names with emission-timeline results, mtime-desc."""
+        return get_whatif_names(
+            self.locator,
+            path_fn=self.locator.get_emissions_whatif_timeline_file,
+        ) or None
+
     def _get_results_files(self, parameters) -> list:
         whatif_name = parameters.get('whatif_name')
         
@@ -1786,17 +1815,16 @@ class AnthropogenicHeatMapLayer(WhatifDeletableMixin, MapLayer):
     def _get_whatif_names(self) -> Optional[list]:
         """Return what-if names with heat-rejection results, mtime-desc.
 
-        Uses the shared ``get_whatif_names`` helper so the dropdown
-        ordering and the auto-selected default match every other LCA
-        layer — the just-run what-if surfaces at the top of the list
-        immediately after the success notification's "View Results" click.
+        Sorts by the ``heat_rejection_buildings.csv`` mtime (not the
+        folder's) so re-running the feature over an existing what-if
+        surfaces it at the top of the dropdown. Folder mtime alone
+        isn't reliable — overwriting an existing file doesn't bump the
+        parent directory's mtime on most filesystems.
         """
-        names = get_whatif_names(self.locator)
-        names = [
-            name for name in names
-            if os.path.exists(self.locator.get_heat_rejection_whatif_buildings_file(name))
-        ]
-        return names or None
+        return get_whatif_names(
+            self.locator,
+            path_fn=self.locator.get_heat_rejection_whatif_buildings_file,
+        ) or None
 
     def _get_results_files(self, parameters):
         """Return required files for caching"""

@@ -106,11 +106,27 @@ When users provide their own network layout (via `edges-shp-path`/`nodes-shp-pat
 
 **Augmentation** (`augment_user_network_with_buildings()`): creates potential network (user edges + streets), runs Kou Steiner with existing + new buildings as terminals, merges result additively. User disk files never modified.
 
-**Filtering** (`filter_network_to_buildings()`): removes nodes not in keep list, drops incident edges, keeps connected components anchored by a surviving terminal or plant, then iteratively prunes dangling junction stubs via `_prune_dangling_stubs()`.
+**Filtering function:** `filter_network_to_buildings()` in `user_network_loader.py`
+
+**Filtering algorithm:**
+1. Remove building nodes not in `buildings_to_keep` list
+2. Drop every edge incident to a removed building node
+3. Keep only connected components anchored by a surviving terminal (remaining building) or a plant node
+4. Iteratively prune dangling junction stubs via `_prune_dangling_stubs()` until stable
 
 **Plant preservation invariant (filter):** plant nodes and the pipes connecting them to the trunk are protected infrastructure — they are never pruned, even if the building they were anchored to was removed. If a plant ends up in a component with no surviving consumers, the plant and its pipework are still kept and a warning is printed.
 
-**Stub pruning (`_prune_dangling_stubs()`):** iterative helper used by filter. Drops any degree-≤1 node that isn't in the protected-coord set (terminals + plants) and drops its incident edge, repeating until stable. This is what removes leftover junction-only stubs after building removal.
+**Stub pruning (`_prune_dangling_stubs()`):** iterative helper used by filter. Drops any degree-≤1 node that isn't in the protected-coord set (terminals + plants) and drops its incident edge, repeating until no more stubs remain.
+
+**Key properties:**
+- **User's disk files never modified**: only in-memory GeoDataFrames are changed
+- Augmentation: new buildings connect at optimal entry points (existing nodes)
+- When reusing an existing DH network, copied plant nodes must be reconciled with the
+  current `itemised-dh-services` before saving `DH/layout/nodes.shp`; otherwise
+  `thermal-network` infers the old service mix from the stale plant type
+- Filtering: graph-based cleanup removes orphaned infrastructure while preserving plants
+- Both use `connection_candidates` parameter (default: 3) for Steiner optimisation
+- Coordinate precision: SHAPEFILE_TOLERANCE (6 decimal places)
 
 ### Input Format Support
 
@@ -203,7 +219,7 @@ Terminal nodes (building connection points) are never used as bridge points — 
 
 ## Common Patterns
 
-### ✅ DO: Use helper function for node naming
+### DO: Use helper function for node naming
 ```python
 # Good - handles node removal correctly
 from cea.technologies.network_layout.steiner_spanning_tree import get_next_node_name
@@ -211,35 +227,35 @@ node_name = get_next_node_name(nodes_gdf)
 new_node = gpd.GeoDataFrame([{'name': node_name, ...}])
 ```
 
-### ❌ DON'T: Use len() or count() for node naming
+### DON'T: Use len() or count() for node naming
 ```python
 # Bad - creates duplicates if nodes are removed
 node_name = f'NODE{len(nodes_gdf)}'  # WRONG
 node_name = f'NODE{nodes_gdf.name.count()}'  # WRONG
 ```
 
-### ✅ DO: Normalize after geometric operations
+### DO: Normalize after geometric operations
 ```python
 # Good
 point_raw = line.interpolate(distance)
 point = normalize_geometry(point_raw, SHAPEFILE_TOLERANCE)
 ```
 
-### ❌ DON'T: Use raw coordinates from geometric operations
+### DON'T: Use raw coordinates from geometric operations
 ```python
 # Bad - floating-point drift will cause disconnections
 point = line.interpolate(distance)  # RAW FLOATS
 line = LineString([point1.coords[0], point2.coords[0]])  # RAW COORDS
 ```
 
-### ✅ DO: Use building terminal metadata
+### DO: Use building terminal metadata
 ```python
 # Good - guaranteed to work
 graph = calc_connectivity_network_with_geometry(streets, buildings)
 terminal_coord = graph.graph['building_terminals'][building_id]
 ```
 
-### ❌ DON'T: Search for terminals manually
+### DON'T: Search for terminals manually
 ```python
 # Bad - floating-point errors, CRS mismatches
 for node in graph.nodes():
@@ -256,7 +272,7 @@ for node in graph.nodes():
 - **PLANT nodes:** Thermal plant infrastructure (supply-side)
 - **NONE nodes:** Junction points in network (no building, no plant)
 
-### ✅ DO: Create separate plant node near anchor building
+### DO: Create separate plant node near anchor building
 ```python
 # Good - building node remains CONSUMER, plant is separate node
 building_anchor = nodes[nodes['building'] == anchor_building]
@@ -268,7 +284,7 @@ nodes, edges = add_plant_close_to_anchor(
 #   - Plant node: type=PLANT, building=NONE (separate node)
 ```
 
-### ❌ DON'T: Convert building node to plant
+### DON'T: Convert building node to plant
 ```python
 # Bad - building loses its consumer status
 anchor_node_idx = nodes[nodes['building'] == anchor_building].index[0]

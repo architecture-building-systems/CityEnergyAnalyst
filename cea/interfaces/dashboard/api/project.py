@@ -10,7 +10,7 @@ from typing import Dict, Any, Optional, List, Union
 import geopandas
 import pandas as pd
 import sqlalchemy.exc
-from fastapi import APIRouter, UploadFile, Form, HTTPException, status, Request, Path, Depends
+from fastapi import APIRouter, UploadFile, Form, HTTPException, Query, status, Request, Path, Depends
 from fastapi.concurrency import run_in_threadpool
 from geopandas import GeoDataFrame
 from osgeo import gdal
@@ -31,7 +31,7 @@ from cea.interfaces.dashboard.lib.database.session import SessionDep
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 from cea.interfaces.dashboard.settings import get_settings
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
-from cea.interfaces.dashboard.api.utils import validate_scenario_name
+from cea.interfaces.dashboard.api.utils import ScenarioQuery, validate_scenario_name
 from cea.utilities.dbf import dbf_to_dataframe
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system, raster_to_WSG_and_UTM
 
@@ -347,6 +347,45 @@ async def update_project(project_root: CEAProjectRoot, config: CEAConfig, scenar
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f'Parameters not valid - project: {project}, scenario_name: {scenario_name}',
         )
+
+
+@router.get('/state-folder')
+async def get_state_folder(
+    config: CEAConfig,
+    project_root: CEAProjectRoot,
+    pathway_name: str = Query(...),
+    year: int = Query(...),
+    project: Optional[str] = Query(None),
+    scenario_name: Optional[str] = Query(None),
+):
+    """Return the path to a pathway state folder without mutating server state.
+
+    Accepts an optional ``project`` + ``scenario_name`` pair to identify the
+    parent scenario; falls back to ``config.scenario`` when omitted.
+    """
+    from cea.datamanagement.district_pathways.pathway_state import validate_pathway_name
+    try:
+        pathway_name = validate_pathway_name(pathway_name)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+    parent_scenario = ScenarioQuery(project=project, scenario_name=scenario_name).resolve(config, project_root)
+
+    locator = cea.inputlocator.InputLocator(parent_scenario)
+    state_folder = locator.get_state_in_time_scenario_folder(pathway_name, year)
+
+    if not os.path.isdir(state_folder):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"State folder not found for pathway '{pathway_name}' year {year}.",
+        )
+
+    return {
+        'scenario_path': state_folder,
+        'parent_scenario': parent_scenario,
+        'pathway_name': pathway_name,
+        'year': year,
+    }
 
 
 # TODO: Rename this endpoint once the old one is removed

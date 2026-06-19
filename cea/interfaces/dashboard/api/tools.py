@@ -4,18 +4,21 @@ from itertools import groupby
 from typing import Dict, Any, List, Optional
 import logging
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel
+from typing import Annotated
 
 import cea.config
+import cea.inputlocator
 import cea.scripts
 from cea.schemas import schemas
-from .utils import deconstruct_parameters, validate_scenario_name
-from cea.interfaces.dashboard.utils import secure_path
+from .utils import deconstruct_parameters, validate_scenario_name, ScenarioQuery
+from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEADatabaseConfig, CEASeverDemoAuthCheck, CEAProjectRoot
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
 
 
 def _normalize_choice_value(param: cea.config.ChoiceParameterBase, value: Any, choices: list[str]) -> Any:
@@ -75,9 +78,8 @@ def validate_parameter(parameter, value, parameter_name: str | None = None) -> t
         logger.error(f"Validation failed for {parameter_name or parameter.name}: {error_message}")
         return False, error_message
     except Exception as e:
-        error_message = f"Validation error: {str(e)}"
-        logger.error(f"Unexpected validation error for {parameter_name or parameter.name}: {error_message}")
-        return False, error_message
+        logger.error(f"Unexpected validation error for {parameter_name or parameter.name}: {e}", exc_info=True)
+        return False, "Unexpected validation error."
 
 
 def validate_and_apply_parameters(
@@ -139,41 +141,44 @@ async def get_tool_list(config: CEAConfig) -> Dict[str, List[ToolDescription]]:
 
 @router.get('/{tool_name}')
 async def get_tool_properties(config: CEAConfig, project_root: CEAProjectRoot, tool_name: str,
-                               project: Optional[str] = None,
-                               scenario_name: Optional[str] = None) -> ToolProperties:
+                              scenario: Annotated[ScenarioQuery, Query()]) -> ToolProperties:
     # TODO: Add plugin support
-
-    # Set project and scenario on config to ensure parameters that depend on them are constructed correctly
-    if project is not None:
-        if project_root is not None and not project.startswith(project_root):
-            project = os.path.join(project_root, project)
-        config.project = secure_path(project)
-    if scenario_name is not None:
-        config.scenario_name = validate_scenario_name(scenario_name)
-
-    script = cea.scripts.by_name(tool_name, plugins=config.plugins)
-
-    parameters = []
-    categories = defaultdict(list)
-    for _, parameter in config.matching_parameters(script.parameters):
-        parameter_dict = deconstruct_parameters(parameter, config)
-
-        if parameter.category:
-            categories[parameter.category].append(parameter_dict)
+    original_scenario = str(config.scenario)
+    try:
+        if scenario.scenario_path is not None:
+            config.scenario = secure_path(scenario.scenario_path)
         else:
-            parameters.append(parameter_dict)
+            if scenario.project is not None:
+                project = scenario.project
+                if project_root is not None and not project.startswith(project_root):
+                    project = os.path.join(project_root, project)
+                config.project = secure_path(project)
+            if scenario.scenario_name is not None:
+                config.scenario_name = validate_scenario_name(scenario.scenario_name)
 
-    out = ToolProperties(
-        name=tool_name,
-        label=script.label,
-        description=script.description,
-        short_description=script.short_description,
-        category=script.category,
-        categorical_parameters=categories,
-        parameters=parameters,
-    )
+        script = cea.scripts.by_name(tool_name, plugins=config.plugins)
 
-    return out
+        parameters = []
+        categories = defaultdict(list)
+        for _, parameter in config.matching_parameters(script.parameters):
+            parameter_dict = deconstruct_parameters(parameter, config)
+
+            if parameter.category:
+                categories[parameter.category].append(parameter_dict)
+            else:
+                parameters.append(parameter_dict)
+
+        return ToolProperties(
+            name=tool_name,
+            label=script.label,
+            description=script.description,
+            short_description=script.short_description,
+            category=script.category,
+            categorical_parameters=categories,
+            parameters=parameters,
+        )
+    finally:
+        config.scenario = original_scenario
 
 
 @router.post('/{tool_name}/default', dependencies=[CEASeverDemoAuthCheck])
@@ -288,7 +293,14 @@ async def validate_field(config: CEAConfig, tool_name: str, payload: Dict[str, A
 
     # Validate using encode() method
     is_valid, error_message = validate_parameter(target_parameter, value, parameter_name)
-    return {"valid": is_valid, "error": error_message}
+    result = {"valid": is_valid, "error": error_message}
+
+    if is_valid:
+        warnings = _collect_field_warnings(tool_name, parameter_name, value, config)
+        if warnings:
+            result["warnings"] = warnings
+
+    return result
 
 
 @router.post('/{tool_name}/parameter-metadata')
@@ -378,6 +390,63 @@ async def check_tool_inputs(config: CEAConfig, tool_name: str, payload: Dict[str
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail={"message": "Missing input files",
                                     "script_suggestions": list(scripts)})
+
+    # Collision warnings from the check-inputs path (Run button confirmation)
+    warnings = []
+    for field_name in ('network-name', 'what-if-name'):
+        if field_name in payload:
+            warnings.extend(
+                _collect_field_warnings(tool_name, field_name, payload[field_name], config)
+            )
+    return {"warnings": warnings} if warnings else None
+
+
+def _collect_field_warnings(tool_name, parameter_name, value, config):
+    """Return structured ``{field, message}`` warnings for a single field.
+
+    Centralises collision detection so ``validate_field`` and
+    ``check_tool_inputs`` share one code path.
+    """
+    if isinstance(value, list):
+        return []
+    v = (value or '').strip()
+    if not v:
+        return []
+    locator = cea.inputlocator.InputLocator(config.scenario)
+
+    if tool_name == 'network-layout' and parameter_name == 'network-name':
+        folder = locator.get_thermal_network_folder_network_name_folder(v)
+        try:
+            folder = secure_path(folder, root=config.scenario)
+        except OutsideProjectRootError:
+            return []
+        if os.path.isdir(folder):
+            return [{
+                "field": "network-name",
+                "message": (
+                    f"Network '{v}' already exists. "
+                    f"Running will delete the existing network and create a new one."
+                ),
+            }]
+
+    if tool_name == 'final-energy' and parameter_name == 'what-if-name':
+        folder = locator.get_analysis_folder(v)
+        try:
+            folder = secure_path(folder, root=config.scenario)
+        except OutsideProjectRootError:
+            return []
+        if os.path.isdir(folder):
+            return [{
+                "field": "what-if-name",
+                "message": (
+                    f"What-if Scenario '{v}' already exists. "
+                    f"Running will delete the entire What-if Scenario folder, "
+                    f"including any final-energy, costs, emissions, and heat-rejection results, "
+                    f"and create a new one."
+                ),
+            }]
+
+    return []
 
 
 def parameters_for_script(script_name, config):

@@ -2290,9 +2290,14 @@ get_database_assemblies_envelope_floor:
   file_path: inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_FLOOR.csv
   file_type: csv
   schema:
+    # Per-row rule: each row must satisfy at least one of these column sets.
+    # Rows with both will be cross-checked at load (materials canonical, 1% tolerance).
+    required_one_of:
+      - [U_base, GHG_floor_kgCO2m2, GHG_biogenic_floor_kgCO2m2]
+      - [material_name_1, thickness_1_m, material_name_2, thickness_2_m, material_name_3, thickness_3_m]
     columns:
       description:
-        description: Describes the Type of roof
+        description: Describes the Type of floor
         type: string
         unit: NA
       Service_Life_floor:
@@ -2301,25 +2306,61 @@ get_database_assemblies_envelope_floor:
         unit: '[yr]'
         min: 0.0
       GHG_floor_kgCO2m2:
-        description: Embodied emissions per m2 of floor.(entire building life cycle)
+        description: Embodied emissions per m2 of floor (entire building life cycle). Derivable from the material layer set.
         type: float
         unit: '[kg CO2-eq/m2]'
         min: 0.0
+        nullable: true
       GHG_biogenic_floor_kgCO2m2:
-        description: Biogenic carbon storage per m2 of floor.(entire building life cycle)
+        description: Biogenic carbon storage per m2 of floor (entire building life cycle). Derivable from the material layer set.
         type: float
         unit: '[kg CO2-eq/m2]'
         max: 0.0
+        nullable: true
       U_base:
-        description: Thermal transmittance of floor including linear losses (+10%). Defined according to ISO 13790.
+        description: Thermal transmittance of floor including linear losses (+10%). Defined according to ISO 13790. Derivable from the material layer set.
         type: float
         unit: '[-]'
         min: 0.1
+        nullable: true
       code:
-        description: Type of roof
+        description: Type of floor
         primary: true
         type: string
         unit: NA
+      material_name_1:
+        description: Layer 1 material name; must match a `name` in MATERIALS.csv. Required when the material layer set is used.
+        type: string
+        unit: NA
+        nullable: true
+      thickness_1_m:
+        description: Layer 1 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused.
+        type: float
+        unit: '[m]'
+        min: 0.0
+        nullable: true
+      material_name_2:
+        description: Layer 2 material name; must match a `name` in MATERIALS.csv. Required when the material layer set is used.
+        type: string
+        unit: NA
+        nullable: true
+      thickness_2_m:
+        description: Layer 2 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused.
+        type: float
+        unit: '[m]'
+        min: 0.0
+        nullable: true
+      material_name_3:
+        description: Layer 3 material name; must match a `name` in MATERIALS.csv. Required when the material layer set is used.
+        type: string
+        unit: NA
+        nullable: true
+      thickness_3_m:
+        description: Layer 3 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused.
+        type: float
+        unit: '[m]'
+        min: 0.0
+        nullable: true
   used_by:
   - demand
   - radiation
@@ -2329,26 +2370,34 @@ get_database_assemblies_envelope_roof:
   file_path: inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_ROOF.csv
   file_type: csv
   schema:
+    # Per-row rule: each row must satisfy at least one of these column sets.
+    # Rows with both will be cross-checked at load (materials canonical, 1% tolerance).
+    required_one_of:
+      - [U_roof, GHG_roof_kgCO2m2, GHG_biogenic_roof_kgCO2m2]
+      - [material_name_1, thickness_1_m, material_name_2, thickness_2_m, material_name_3, thickness_3_m]
     columns:
       description:
         description: Describes the Type of roof
         type: string
         unit: NA
       GHG_roof_kgCO2m2:
-        description: Embodied emissions per m2 of roof.(entire building life cycle)
+        description: Embodied emissions per m2 of roof (entire building life cycle). Derivable from the material layer set.
         type: float
         unit: '[kg CO2-eq/m2]'
         min: 0.0
+        nullable: true
       GHG_biogenic_roof_kgCO2m2:
-        description: Biogenic carbon storage per m2 of roof.(entire building life cycle)
+        description: Biogenic carbon storage per m2 of roof (entire building life cycle). Derivable from the material layer set.
         type: float
         unit: '[kg CO2-eq/m2]'
         max: 0.0
+        nullable: true
       U_roof:
-        description: Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.
+        description: Thermal transmittance of roof including linear losses (+10%). Defined according to ISO 13790. Derivable from the material layer set.
         type: float
         unit: '[-]'
         min: 0.1
+        nullable: true
       a_roof:
         description: Solar absorption coefficient. Defined according to ISO 13790.
         type: float
@@ -2377,6 +2426,39 @@ get_database_assemblies_envelope_roof:
         unit: '[-]'
         min: 0.0
         max: 1.0
+      material_name_1:
+        description: Layer 1 material name; must match a `name` in MATERIALS.csv. Required when the material layer set is used.
+        type: string
+        unit: NA
+        nullable: true
+      thickness_1_m:
+        description: Layer 1 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused.
+        type: float
+        unit: '[m]'
+        min: 0.0
+        nullable: true
+      material_name_2:
+        description: Layer 2 material name; must match a `name` in MATERIALS.csv. Required when the material layer set is used.
+        type: string
+        unit: NA
+        nullable: true
+      thickness_2_m:
+        description: Layer 2 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused.
+        type: float
+        unit: '[m]'
+        min: 0.0
+        nullable: true
+      material_name_3:
+        description: Layer 3 material name; must match a `name` in MATERIALS.csv. Required when the material layer set is used.
+        type: string
+        unit: NA
+        nullable: true
+      thickness_3_m:
+        description: Layer 3 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused.
+        type: float
+        unit: '[m]'
+        min: 0.0
+        nullable: true
   used_by:
   - demand
   - radiation
@@ -2461,26 +2543,34 @@ get_database_assemblies_envelope_wall:
   file_path: inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_WALL.csv
   file_type: csv
   schema:
+    # Per-row rule: each row must satisfy at least one of these column sets.
+    # Rows with both will be cross-checked at load (materials canonical, 1% tolerance).
+    required_one_of:
+      - [U_wall, GHG_wall_kgCO2m2, GHG_biogenic_wall_kgCO2m2]
+      - [material_name_1, thickness_1_m, material_name_2, thickness_2_m, material_name_3, thickness_3_m]
     columns:
       description:
         description: Describes the Type of wall
         type: string
         unit: NA
       GHG_wall_kgCO2m2:
-        description: Embodied emissions per m2 of walls (entire building life cycle)
+        description: Embodied emissions per m2 of walls (entire building life cycle). Derivable from the material layer set.
         type: float
         unit: '[kg CO2-eq/m2]'
         min: 0.0
+        nullable: true
       GHG_biogenic_wall_kgCO2m2:
-        description: Biogenic carbon storage per m2 of walls (entire building life cycle)
+        description: Biogenic carbon storage per m2 of walls (entire building life cycle). Derivable from the material layer set.
         type: float
         unit: '[kg CO2-eq/m2]'
         max: 0.0
+        nullable: true
       U_wall:
-        description: Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790.
+        description: Thermal transmittance of walls including linear losses (+10%). Defined according to ISO 13790. Derivable from the material layer set.
         type: float
         unit: '[-]'
         min: 0.1
+        nullable: true
       a_wall:
         description: Solar absorption coefficient. Defined according to ISO 13790.
         type: float
@@ -2509,6 +2599,39 @@ get_database_assemblies_envelope_wall:
         type: float
         unit: '[yr]'
         min: 0.0
+      material_name_1:
+        description: Layer 1 material name; must match a `name` in MATERIALS.csv. Required when the material layer set is used.
+        type: string
+        unit: NA
+        nullable: true
+      thickness_1_m:
+        description: Layer 1 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused.
+        type: float
+        unit: '[m]'
+        min: 0.0
+        nullable: true
+      material_name_2:
+        description: Layer 2 material name; must match a `name` in MATERIALS.csv. Required when the material layer set is used.
+        type: string
+        unit: NA
+        nullable: true
+      thickness_2_m:
+        description: Layer 2 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused.
+        type: float
+        unit: '[m]'
+        min: 0.0
+        nullable: true
+      material_name_3:
+        description: Layer 3 material name; must match a `name` in MATERIALS.csv. Required when the material layer set is used.
+        type: string
+        unit: NA
+        nullable: true
+      thickness_3_m:
+        description: Layer 3 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused.
+        type: float
+        unit: '[m]'
+        min: 0.0
+        nullable: true
   used_by:
   - demand
   - radiation

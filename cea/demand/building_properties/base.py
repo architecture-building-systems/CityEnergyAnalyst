@@ -92,7 +92,7 @@ class BuildingPropertiesDatabase:
             if prop_data is None:
                 continue
 
-            prop_data.reset_index(inplace=True) # Ensure 'code' is a column for merging
+            prop_data = prop_data.reset_index()  # Ensure 'code' is a column for merging
             # Validate join_column values before merging
             print(f"Checking building {component_type} properties...")
             join_column_values = set(building_properties[join_column].unique())
