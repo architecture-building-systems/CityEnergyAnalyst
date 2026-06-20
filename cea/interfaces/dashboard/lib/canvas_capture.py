@@ -36,11 +36,12 @@ abort the export.
 
 from __future__ import annotations
 
-import html as html_lib
 import json
 import logging
 import os
 from typing import Optional
+
+from jinja2 import Template
 
 import cea.inputlocator
 
@@ -355,6 +356,41 @@ def _capture_kpi_card(
         )
 
 
+_KPI_HTML_TEMPLATE = Template(
+    """<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>KPI · {{ kpi_id }}</title>
+<style>
+  body { margin: 0; padding: 24px; font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f7f7f7; color: #222; }
+  .card { background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 16px 20px; max-width: 320px; }
+  .label { font-size: 11px; color: #666; font-weight: 500; }
+  .feature { color: #888; }
+  .dot { color: #bbb; margin: 0 4px; }
+  .value { font-size: 32px; font-weight: 700; line-height: 1.1; margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .unit { font-size: 12px; color: #666; margin-top: 2px; }
+  .footer { font-size: 10px; color: #999; margin-top: 12px; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="label">
+      <span class="feature">{{ feature_display }}</span>
+      <span class="dot">·</span>
+      <span>{{ short }}</span>
+    </div>
+    <div class="value">{{ value_str }}</div>
+    <div class="unit">{{ unit }}</div>
+    <div class="footer">Captured {{ computed_at }}</div>
+  </div>
+</body>
+</html>
+""",
+    autoescape=True,
+)
+
+
 def _render_kpi_html(payload: dict) -> str:
     """Render a KPI snapshot as a small standalone HTML page.
 
@@ -363,42 +399,18 @@ def _render_kpi_html(payload: dict) -> str:
     unzipped archive without a server. Mirrors the on-canvas
     `FeatureCardKpi` shape (label / big value / unit / footer).
     """
-    kpi_id = html_lib.escape(str(payload.get('kpi_id') or ''))
+    kpi_id = str(payload.get('kpi_id') or '')
     value = payload.get('value')
-    value_str = (
-        format(value, '.4g') if isinstance(value, (int, float)) else '—'
-    )
-    unit = html_lib.escape(str(payload.get('unit') or ''))
-    computed_at = html_lib.escape(str(payload.get('computed_at') or ''))
+    value_str = format(value, '.4g') if isinstance(value, (int, float)) else '—'
+    unit = str(payload.get('unit') or '')
+    computed_at = str(payload.get('computed_at') or '')
     feature, _, short = kpi_id.partition('.')
     feature_display = feature.title() if feature else ''
-    return f"""<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<title>KPI · {kpi_id}</title>
-<style>
-  body {{ margin: 0; padding: 24px; font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f7f7f7; color: #222; }}
-  .card {{ background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 16px 20px; max-width: 320px; }}
-  .label {{ font-size: 11px; color: #666; font-weight: 500; }}
-  .feature {{ color: #888; }}
-  .dot {{ color: #bbb; margin: 0 4px; }}
-  .value {{ font-size: 32px; font-weight: 700; line-height: 1.1; margin-top: 6px; font-variant-numeric: tabular-nums; }}
-  .unit {{ font-size: 12px; color: #666; margin-top: 2px; }}
-  .footer {{ font-size: 10px; color: #999; margin-top: 12px; }}
-</style>
-</head>
-<body>
-  <div class="card">
-    <div class="label">
-      <span class="feature">{feature_display}</span>
-      <span class="dot">·</span>
-      <span>{short}</span>
-    </div>
-    <div class="value">{value_str}</div>
-    <div class="unit">{unit}</div>
-    <div class="footer">Captured {computed_at}</div>
-  </div>
-</body>
-</html>
-"""
+    return _KPI_HTML_TEMPLATE.render(
+        kpi_id=kpi_id,
+        feature_display=feature_display,
+        short=short,
+        value_str=value_str,
+        unit=unit,
+        computed_at=computed_at,
+    )
