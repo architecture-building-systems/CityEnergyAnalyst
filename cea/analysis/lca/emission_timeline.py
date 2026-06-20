@@ -1023,15 +1023,19 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
 
         # Convert demolition_year to string format for comparison with timeline index
         demolition_year_str = f"Y_{int(demolition_year)}"
-        self.timeline.loc[self.timeline.index >= demolition_year_str, :] = 0.0
+        emission_cols = [c for c in self.timeline.columns if c.endswith("_kgCO2e")]
+        self.timeline.loc[self.timeline.index >= demolition_year_str, emission_cols] = 0.0
         for key, value in _MAPPING_DICT.items():
-            type_str = f"type_{value}"
-            try:
-                demolition_any = self.envelope_lookup.get_item_value(
-                    code=self.envelope[type_str], field="GHG_recycling_kgCO2m2"
-                )
-            except KeyError:  # if detailed LCA data not available, use simplified
+            if key == "technical_systems":
                 demolition_any = 0.0
+            else:
+                type_str = f"type_{value}"
+                try:
+                    demolition_any = self.envelope_lookup.get_item_value(
+                        code=self.envelope[type_str], field="GHG_recycling_kgCO2m2"
+                    )
+                except KeyError:  # if detailed LCA data not available, use simplified
+                    demolition_any = 0.0
 
             if demolition_any is not None:
                 demolition = float(demolition_any)
