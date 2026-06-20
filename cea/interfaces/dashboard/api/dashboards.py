@@ -6,7 +6,12 @@ from fastapi.concurrency import run_in_threadpool
 
 import cea.config
 import cea.plots
-from .utils import deconstruct_parameters, validate_scenario_name
+from .utils import (
+    deconstruct_parameters,
+    split_scenario_subpath,
+    validate_scenario_name,
+    validate_scenario_name_or_subpath,
+)
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEAPlotCache
 
 router = APIRouter()
@@ -57,8 +62,13 @@ def get_parameters_from_plot(config, plot, scenario_name=None):
 
 def get_parameters_from_plot_class(config, plot_class, scenario_name=None):
     parameters = []
-    # Make sure to set scenario name to config first
+    # `scenario_name` may be a project-relative sub-path (canvas
+    # pathway-single columns); `split_scenario_subpath` rebases the
+    # project so `config.scenario_name` stays a bare basename.
     if 'scenario-name' in plot_class.expected_parameters and scenario_name is not None:
+        config.project, scenario_name = split_scenario_subpath(
+            scenario_name, config.project,
+        )
         config.scenario_name = scenario_name
 
     for pname, fqname in sorted(plot_class.expected_parameters.items(), key=lambda x: x[1]):
@@ -107,7 +117,10 @@ async def get_plot_categories(config: CEAConfig):
 @router.get('/plot-categories/{category_name}/plots/{plot_id}/parameters')
 async def get_plot_category_parameters(config: CEAConfig, category_name: str, plot_id: str, scenario: str = None):
     if scenario is not None:
-        scenario = validate_scenario_name(scenario)
+        # `validate_scenario_name_or_subpath` accepts the project-
+        # relative path that pathway-single columns use; the path is
+        # split downstream in `get_parameters_from_plot_class`.
+        scenario = validate_scenario_name_or_subpath(scenario)
     plot_class = cea.plots.categories.load_plot_by_id(category_name, plot_id, config.plugins)
     return get_parameters_from_plot_class(config, plot_class, scenario)
 

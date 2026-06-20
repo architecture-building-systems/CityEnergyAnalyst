@@ -13,6 +13,8 @@ import cea.interfaces.dashboard.api.weather as weather
 import cea.interfaces.dashboard.api.geometry as geometry
 import cea.interfaces.dashboard.api.map_layers as map_layers
 import cea.interfaces.dashboard.api.user as user
+import cea.interfaces.dashboard.api.reports as reports
+import cea.interfaces.dashboard.api.canvas as canvas
 
 router = APIRouter()
 
@@ -29,3 +31,5 @@ router.include_router(weather.router, prefix="/weather")
 router.include_router(geometry.router, prefix="/geometry")
 router.include_router(map_layers.router, prefix="/map_layers")
 router.include_router(user.router, prefix="/user")
+router.include_router(reports.router, prefix="/reports")
+router.include_router(canvas.router, prefix="/canvas")

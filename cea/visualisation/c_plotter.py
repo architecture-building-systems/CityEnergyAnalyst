@@ -562,23 +562,15 @@ def position_legend_between_title_and_graph(fig, plot_cea_feature=None):
     """
     Position legend below the graph.
 
+    Thin wrapper kept for back-compat — delegates to the canonical
+    ``apply_legend_below`` helper so every CEA plot uses the same offset.
+
     Parameters:
     - fig: plotly.graph_objects.Figure
     - plot_cea_feature: str, the CEA feature being plotted (unused, kept for compatibility)
     """
-
-    # Standard horizontal legend below the graph
-    fig.update_layout(
-        legend=dict(
-            orientation='h',
-            yanchor="top",
-            y=-0.15,  # Position legend below the graph
-            xanchor="left",
-            x=0
-        )
-    )
-
-    return fig
+    from cea.visualisation.legend import apply_legend_below
+    return apply_legend_below(fig)
 
 
 def convert_to_percent_stacked(df, list_y_columns):

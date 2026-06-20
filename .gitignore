@@ -113,3 +113,8 @@ setup/Dependencies/cityenergyanalyst.tar.gz
 # pixi environments
 .pixi/*
 !.pixi/config.toml
+
+# Pytest fixture scratch — `test_pathway_api.py` creates per-run
+# project folders here; teardown removes them on success but
+# fixture-setup errors leave stragglers behind.
+.tmp-pathway-api/

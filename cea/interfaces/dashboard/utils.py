@@ -1,7 +1,9 @@
 import importlib
 import inspect
 import os
-from typing import List, Any, Type, Union
+from typing import List, Any, Optional, Type, Union
+
+from fastapi import HTTPException, status
 
 from cea.interfaces.dashboard.settings import get_settings
 from cea.utilities import validate_path_within_root
@@ -49,6 +51,32 @@ def secure_path(path: Union[str, os.PathLike], root: Union[str, os.PathLike, Non
             raise OutsideProjectRootError(path)
 
     return real_path
+
+
+def resolve_scenario_path(
+    project_root: Optional[str],
+    project: str,
+    scenario: str,
+) -> str:
+    """Resolve and validate a scenario path from project + scenario name.
+
+    Shared by endpoints (Reports, Inputs) that accept an explicit
+    `project` + `scenario` pair so they can operate on a scenario
+    other than the dashboard's currently active one.
+    """
+    project_path = project
+    if project_root is not None and not project_path.startswith(project_root):
+        project_path = os.path.join(project_root, project_path)
+
+    project_path = secure_path(project_path)
+    scenario_path = os.path.join(project_path, scenario)
+
+    if not os.path.isdir(scenario_path):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Scenario not found: {scenario}",
+        )
+    return scenario_path
 
 
 def find_subclasses_in_path(parent_class: Type, path: str) -> List[Any]:

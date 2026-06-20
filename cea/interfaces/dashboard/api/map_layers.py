@@ -5,7 +5,10 @@ from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, field_validator
 
 from cea import MissingInputDataException
-from cea.interfaces.dashboard.api.utils import validate_scenario_name
+from cea.interfaces.dashboard.api.utils import (
+    split_scenario_subpath,
+    validate_scenario_name_or_subpath,
+)
 from cea.interfaces.dashboard.dependencies import CEAProjectRoot
 from cea.interfaces.dashboard.map_layers import get_layers_grouped_by_category, load_layer
 from cea.interfaces.dashboard.utils import secure_path
@@ -23,7 +26,7 @@ def _resolve_layer_scenario(params_project, params_scenario_name, scenario_path=
     """
     if scenario_path is not None:
         return os.path.dirname(scenario_path), os.path.basename(scenario_path)
-    return params_project, params_scenario_name
+    return split_scenario_subpath(params_scenario_name, params_project)
 
 
 class LayerParams(BaseModel):
@@ -35,7 +38,7 @@ class LayerParams(BaseModel):
     @field_validator('scenario_name')
     @classmethod
     def _validate_scenario_name(cls, v):
-        return validate_scenario_name(v)
+        return validate_scenario_name_or_subpath(v)
 
     @field_validator('scenario_path')
     @classmethod
@@ -53,7 +56,7 @@ class DeleteChoiceParams(BaseModel):
     @field_validator('scenario_name')
     @classmethod
     def _validate_scenario_name(cls, v):
-        return validate_scenario_name(v)
+        return validate_scenario_name_or_subpath(v)
 
 
 class LayerDescription(BaseModel):

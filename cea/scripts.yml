@@ -1024,7 +1024,6 @@ Visualisation:
       - [get_final_energy_buildings_file, 'plots-final-energy:what-if-name']
       - [get_building_architecture]
       - [get_zone_geometry]
-      - [get_total_yearly_operational_building]
 
   - name: plot-emission-timeline
     label: Plot - Emission Timeline
@@ -1063,7 +1062,6 @@ Visualisation:
     input-files:
       - [get_building_architecture]
       - [get_zone_geometry]
-
 
   - name: plot-operational-emissions
     label: Plot - Operational Emissions
@@ -1110,7 +1108,6 @@ Visualisation:
       - [get_emissions_whatif_buildings_file, 'plots-lifecycle-emissions:what-if-name']
       - [get_building_architecture]
       - [get_zone_geometry]
-
   - name: plot-comfort-chart
     label: Plot - Building Comfort Chart
     short_description: Plot comfort and discomfort hours for buildings

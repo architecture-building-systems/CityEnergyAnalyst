@@ -8,7 +8,7 @@ from cea.visualisation.special.pathway_emission_timeline import (
 )
 
 
-def test_apply_cutoff_year_filters_earlier_periods():
+def test_apply_cutoff_year_keeps_all_rows():
     timeline_df = pd.DataFrame(
         {
             "period": ["Y_2020", "Y_2025", "Y_2030"],
@@ -18,7 +18,7 @@ def test_apply_cutoff_year_filters_earlier_periods():
 
     filtered = _apply_cutoff_year(timeline_df, 2025)
 
-    assert filtered["period"].tolist() == ["Y_2025", "Y_2030"]
+    assert filtered["period"].tolist() == ["Y_2020", "Y_2025", "Y_2030"]
 
 
 def test_resolve_effective_year_bounds_uses_later_cutoff_year():
