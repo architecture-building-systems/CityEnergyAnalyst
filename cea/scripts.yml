@@ -1063,7 +1063,6 @@ Visualisation:
       - [get_building_architecture]
       - [get_zone_geometry]
 
-
   - name: plot-operational-emissions
     label: Plot - Operational Emissions
     short_description: Plot bar chart of building operational emissions

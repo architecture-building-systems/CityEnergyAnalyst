@@ -21,6 +21,7 @@ from .utils import (
 )
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEADatabaseConfig, CEASeverDemoAuthCheck, CEAProjectRoot
+from cea.datamanagement.district_pathways.pathway_timeline import PathwayChildScenario
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -148,6 +149,7 @@ async def get_tool_list(config: CEAConfig) -> Dict[str, List[ToolDescription]]:
 @router.get('/{tool_name}')
 async def get_tool_properties(config: CEAConfig, project_root: CEAProjectRoot, tool_name: str,
                               scenario: Annotated[ScenarioQuery, Query()]) -> ToolProperties:
+    # TODO: Add plugin support
     original_scenario = str(config.scenario)
     try:
         if scenario.scenario_path is not None:
