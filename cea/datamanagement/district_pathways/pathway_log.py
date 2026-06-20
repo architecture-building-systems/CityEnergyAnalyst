@@ -77,7 +77,8 @@ def save_pathway_log_yaml(
     ordered_log_data: dict[int, dict[str, Any]] = {
         year: log_data[year] for year in sorted(log_data)
     }
-    with open(yml_path, "w") as f:
+    tmp_path = yml_path + ".tmp"
+    with open(tmp_path, "w", encoding="utf-8") as f:
         yaml.dump(
             ordered_log_data,
             f,
@@ -85,6 +86,7 @@ def save_pathway_log_yaml(
             sort_keys=False,
             default_flow_style=False,
         )
+    os.replace(tmp_path, yml_path)
 
 
 def add_year_in_pathway_yaml(

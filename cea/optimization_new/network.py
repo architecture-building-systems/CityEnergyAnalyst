@@ -792,26 +792,28 @@ class Network(object):
         network_connection = self.network_edges[self.network_edges['start node'] == building_node]
         if network_connection.empty:
             network_connection = self.network_edges[self.network_edges['end node'] == building_node]
-            network_anchor_node = network_connection['start node'][0]
+            network_anchor_node = network_connection['start node'].iloc[0]
         else:
-            network_anchor_node = network_connection['end node'][0]
+            network_anchor_node = network_connection['end node'].iloc[0]
 
         network_anchor = self.network_nodes[self.network_nodes.index == network_anchor_node]
         plant_terminal = network_anchor.copy()
         plant_terminal['geometry'] = network_anchor.translate(xoff=1, yoff=1)
         # Normalize coordinates to ensure consistent precision (SHAPEFILE_TOLERANCE)
-        plant_terminal['coordinates'][0] = normalize_coords([(plant_terminal.geometry[0].x, plant_terminal.geometry[0].y)])[0]
+        plant_terminal_geom = plant_terminal.geometry.iloc[0]
+        plant_terminal.at[plant_terminal.index[0], 'coordinates'] = \
+            normalize_coords([(plant_terminal_geom.x, plant_terminal_geom.y)])[0]
         plant_terminal_node = "NODE" + str(len(self.network_nodes.index))
         plant_terminal = plant_terminal.rename({plant_terminal.index[0]: plant_terminal_node})
-        plant_terminal['type'][0] = "PLANT"
+        plant_terminal.at[plant_terminal_node, 'type'] = "PLANT"
 
         self.network_nodes = pd.concat([self.network_nodes, plant_terminal])
 
         # create new edge connecting plant to network
         # Normalize coordinates to ensure consistent precision (prevents floating-point matching issues)
         point1, point2 = normalize_coords([
-            (plant_terminal.geometry[0].x, plant_terminal.geometry[0].y),
-            (network_anchor.geometry[0].x, network_anchor.geometry[0].y)
+            (plant_terminal.geometry.iloc[0].x, plant_terminal.geometry.iloc[0].y),
+            (network_anchor.geometry.iloc[0].x, network_anchor.geometry.iloc[0].y)
         ])
         line = normalize_geometry(LineString([point1, point2]))
         plant_to_network = Gdf({'geometry': line, 'length_m': line.length, 'type_mat': TYPE_MAT_DEFAULT,

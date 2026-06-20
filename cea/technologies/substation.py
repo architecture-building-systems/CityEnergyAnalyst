@@ -374,7 +374,7 @@ def substation_model_cooling_thermal_network(name, building, T_DC_supply_C, T_DC
     # Create output DataFrame matching DH format
     substation_activation = pd.DataFrame({
         # Timestamp
-        "date": building.date if 'date' in building.columns else pd.date_range(start='2011-01-01', periods=HOURS_IN_YEAR, freq='H'),
+        "date": building.date if 'date' in building.columns else pd.date_range(start='2011-01-01', periods=HOURS_IN_YEAR, freq='h'),
 
         # DC network parameters
         "mdot_DC_result_kgpers": mdot_DC_result_kgpers,
@@ -895,7 +895,7 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
     # save the results into a .csv file
     substation_activation = pd.DataFrame({
         # Timestamp
-        "date": building_demand_df.date if 'date' in building_demand_df.columns else pd.date_range(start='2011-01-01', periods=HOURS_IN_YEAR, freq='H'),
+        "date": building_demand_df.date if 'date' in building_demand_df.columns else pd.date_range(start='2011-01-01', periods=HOURS_IN_YEAR, freq='h'),
 
         # DH network parameters
         "mdot_DH_result_kgpers": mdot_DH_result_flat,
@@ -1034,7 +1034,7 @@ def calc_substation_heating(Q, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_
     return tho, ch, Area_HEX_heating
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True)
 def calc_plate_HEX(NTU, cr):
     """
     This function calculates the efficiency of exchange for a plate heat exchanger according to the NTU method of
@@ -1051,7 +1051,7 @@ def calc_plate_HEX(NTU, cr):
     return efficiency
 
 
-@jit('boolean(float64, float64)', nopython=True)
+@jit('boolean(float64, float64)', nopython=True, cache=True)
 def efficiencies_not_converged(previous_efficiency, current_efficiency):
     # Convergence tolerance for heat exchanger efficiency iteration
     tolerance = 1e-08  # Convergence tolerance value
@@ -1063,7 +1063,7 @@ def efficiencies_not_converged(previous_efficiency, current_efficiency):
     return abs((previous_efficiency - current_efficiency) / previous_efficiency) > tolerance
 
 
-@jit('boolean(float64, float64)', nopython=True)
+@jit('boolean(float64, float64)', nopython=True, cache=True)
 def isclose(a, b):
     """adapted from here: https://stackoverflow.com/a/33024979/2260"""
     rel_tol = 1e-09
@@ -1072,7 +1072,7 @@ def isclose(a, b):
 
 
 # Heat exchanger model
-@jit('UniTuple(f8, 2)(f8, f8, f8, f8, f8, f8)', nopython=True)
+@jit('UniTuple(f8, 2)(f8, f8, f8, f8, f8, f8)', nopython=True, cache=True)
 def calc_HEX_cooling(Q_cooling_W, UA, thi_K, tho_K, tci_K, ch_kWperK):
     """
     This function calculates the mass flow rate, temperature of return (secondary side)
@@ -1136,7 +1136,7 @@ def calc_HEX_cooling(Q_cooling_W, UA, thi_K, tho_K, tci_K, ch_kWperK):
     return float(tco_C), float(cc_kWperK)
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True)
 def calc_shell_HEX(NTU, cr):
     """
     This function calculates the efficiency of exchange for a tube-shell heat exchanger according to the NTU method of
@@ -1185,7 +1185,7 @@ def calc_HEX_mix_3_flows(Q1, Q2, Q3, m1, m2, m3, t1, t2, t3):
     return float(tavg)
 
 
-@jit('UniTuple(f8, 2)(f8, f8, f8, f8, f8, f8)', nopython=True)
+@jit('UniTuple(f8, 2)(f8, f8, f8, f8, f8, f8)', nopython=True, cache=True)
 def calc_HEX_heating(Q_heating_W, UA, thi_K, tco_K, tci_K, cc_kWperK):
     """
     This function calculates the mass flow rate, temperature of return (secondary side)

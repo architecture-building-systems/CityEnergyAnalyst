@@ -224,6 +224,9 @@ def verify_file_against_schema_4_db(scenario, item, sheet_name=None):
 
     schema_section = schema[locator]
     schema_columns = schema_section['schema']['columns']
+    # Optional schema-level rule: each row must satisfy one of several alternative column sets.
+    # Used by ENVELOPE_{WALL,ROOF,FLOOR} to permit either direct-property or material-based shape.
+    required_one_of = schema_section['schema'].get('required_one_of') or []
     if sheet_name == 'ENERGY_CARRIERS':
         id_column = mapping_dict_db_item_to_id_column[sheet_name]
     else:
@@ -250,6 +253,10 @@ def verify_file_against_schema_4_db(scenario, item, sheet_name=None):
     # Validation process
     for col_name, col_specs in schema_columns.items():
         if col_name not in df.columns:
+            # Skip nullable columns entirely if absent (column-level missing-OK).
+            # `required_one_of` is evaluated separately below.
+            if col_specs.get('nullable'):
+                continue
             missing_columns.append(col_name)
             continue
 
@@ -293,6 +300,30 @@ def verify_file_against_schema_4_db(scenario, item, sheet_name=None):
                     identifier = df.at[idx, id_column]
                     errors.append(f"The {col_name} value for row {identifier} is too high ({value}). It should be at most {col_specs['max']}.")
 
+
+    # Enforce `required_one_of`: every row must have all columns of at least one alternative
+    # set populated (non-null). This lets a single file mix material-based and direct-property rows.
+    if required_one_of:
+        # Per-row evaluation
+        for idx in df.index:
+            row = df.loc[idx]
+            row_id = df.at[idx, id_column] if id_column in df.columns else idx
+            satisfied = False
+            for alternative in required_one_of:
+                if all(
+                    (col in df.columns) and (not pd.isnull(row.get(col)))
+                    for col in alternative
+                ):
+                    satisfied = True
+                    break
+            if not satisfied:
+                alt_descriptions = " OR ".join(
+                    "{" + ", ".join(alt) + "}" for alt in required_one_of
+                )
+                errors.append(
+                    f"Row '{row_id}' does not satisfy any of the required column sets: {alt_descriptions}. "
+                    f"At least one full set must be present (non-null)."
+                )
 
     # Relax from the descriptive columns which not used in the modelling
     missing_columns = [item for item in missing_columns if item not in ['geometry', 'reference', 'description', 'assumption']]

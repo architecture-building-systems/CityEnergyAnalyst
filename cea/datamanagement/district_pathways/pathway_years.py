@@ -6,6 +6,7 @@ from typing import Any
 import os
 
 import geopandas as gpd
+import pandas as pd
 
 from cea.config import Configuration
 from cea.inputlocator import InputLocator
@@ -46,7 +47,7 @@ def get_building_construction_years(locator: InputLocator) -> dict[str, int]:
     for _, row in zone.iterrows():
         name = str(row["name"])
         y = row["year"]
-        if y is None:
+        if y is None or pd.isna(y):
             continue
         try:
             out[name] = int(y)

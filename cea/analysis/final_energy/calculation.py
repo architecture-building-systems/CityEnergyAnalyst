@@ -492,6 +492,20 @@ def parse_supply_assembly(
 
     # Load component information from COMPONENTS database
     component_info = load_component_info(primary_component, locator)
+    primary_type = component_info.get('type')
+
+    # PV panels generate electricity from irradiance — they are not a supply
+    # component for heating, cooling, or DHW services. Electricity supply is
+    # handled separately via the solar technology settings and
+    # calculate_solar_generation(); it never goes through this assembly path.
+    if primary_type == 'PV':
+        raise ValueError(
+            f"Assembly {assembly_code!r}: primary component {primary_component!r} "
+            f"is a photovoltaic panel (type='PV') and cannot be used in a "
+            f"heating, cooling, or DHW supply assembly. "
+            f"PV generation is configured via the solar technology settings, "
+            f"not via supply assemblies."
+        )
 
     # For district systems, carrier is DH or DC, not the plant fuel
     if scale == 'DISTRICT':
@@ -505,13 +519,31 @@ def parse_supply_assembly(
     else:
         carrier = component_info['carrier']
         efficiency = component_info['efficiency']
+        # Thermally-driven devices (e.g. absorption chillers) resolve to
+        # carrier=None because their energy source depends on an upstream
+        # heat supply — not representable in the building-scale carrier model.
+        if carrier is None and primary_type not in ('SC', 'PVT'):
+            raise ValueError(
+                f"Assembly {assembly_code!r}: primary component {primary_component!r} "
+                f"resolved to carrier=None (thermally-driven device). "
+                f"Building-scale supply assemblies require a component with a direct "
+                f"fuel or electricity carrier. Use a district-scale assembly for "
+                f"thermally-driven equipment such as absorption chillers."
+            )
+        # efficiency=None would crash demand / efficiency downstream.
+        if efficiency is None and primary_type not in ('SC', 'PVT'):
+            raise ValueError(
+                f"Assembly {assembly_code!r}: primary component {primary_component!r} "
+                f"resolved to efficiency=None. Ensure the component row contains one "
+                f"of: min_eff_rating, min_eff_rating_seasonal, rated_COP_seasonal, "
+                f"therm_eff_design, elec_eff_design, or aux_power."
+            )
 
     # When the primary is a solar-thermal component (SC or PVT), the caller
     # needs the secondary component's info too so it can back up the tank
     # when solar output is insufficient. Load it eagerly and stash it on the
     # supply config. We only block on this for building-scale hot-water
     # assemblies — district plants with SC primaries aren't supported.
-    primary_type = component_info.get('type')
     secondary_info = None
     if primary_type in ('SC', 'PVT') and secondary_component:
         secondary_info = load_component_info(secondary_component, locator)

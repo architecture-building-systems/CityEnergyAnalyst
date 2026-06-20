@@ -5,6 +5,9 @@ from typing import Any
 import yaml
 
 from cea.config import Configuration
+from cea.datamanagement.district_pathways.envelope_topology import (
+    validate_recipe_against_envelope,
+)
 from cea.inputlocator import InputLocator
 
 
@@ -69,6 +72,18 @@ def add_or_update_intervention_template(
 ) -> None:
     """Add or update an intervention-template definition."""
     locator = InputLocator(config.scenario)
+
+    # Pre-flight: catch incomplete material interventions against direct-property source rows
+    # *before* persisting the template, so the user discovers the issue at define time rather
+    # than later when the pathway state is baked. The same rule is re-enforced at apply time
+    # in pathway_state._apply_state_construction_changes against the state's database.
+    recipe_errors = validate_recipe_against_envelope(locator, modifications)
+    if recipe_errors:
+        raise ValueError(
+            f"Intervention template '{template_name}' cannot be saved:\n"
+            + "\n".join(f"  - {e}" for e in recipe_errors)
+        )
+
     intervention_templates = load_intervention_templates(
         locator,
         allow_missing=True,
@@ -111,6 +126,58 @@ def delete_intervention_template(
     print(
         f"Intervention template '{template_name}' deleted."
     )
+
+
+def _recipe_is_subset(sub: dict[str, Any], sup: dict[str, Any]) -> bool:
+    """True if every archetype/component/field/value in `sub` also appears in `sup`."""
+    for archetype, components in (sub or {}).items():
+        sup_components = sup.get(archetype)
+        if not isinstance(sup_components, dict):
+            return False
+        for component, fields in (components or {}).items():
+            sup_fields = sup_components.get(component)
+            if not isinstance(sup_fields, dict):
+                return False
+            for field, value in (fields or {}).items():
+                if sup_fields.get(field) != value:
+                    return False
+    return True
+
+
+def find_template_usage(
+    config: Configuration,
+    template_name: str,
+) -> list[dict[str, Any]]:
+    """Best-effort scan of every pathway log for years that contain this template's changes.
+
+    Applying a template copies its modifications into the year with no stored link back to the
+    template, so this is a structural subset match — not a guaranteed reference. It can miss
+    usage when the template was edited after being applied, or when the year's changes were
+    later overwritten/merged. Returns a list of ``{'pathway': str, 'year': int}``.
+    """
+    # Imported lazily to avoid an import cycle (pathway_timeline imports this module).
+    from cea.datamanagement.district_pathways.pathway_timeline import list_pathway_names
+    from cea.datamanagement.district_pathways.pathway_log import load_pathway_log_yaml
+
+    locator = InputLocator(config.scenario)
+    entry = load_intervention_templates(locator, allow_missing=True).get(template_name)
+    template_mods = (entry or {}).get("modifications", {}) or {}
+    if not template_mods:
+        return []
+
+    usage: list[dict[str, Any]] = []
+    for pathway_name in list_pathway_names(config):
+        try:
+            log = load_pathway_log_yaml(
+                locator, pathway_name=pathway_name, allow_missing=True, allow_empty=True
+            )
+        except Exception:
+            continue  # A malformed/unreadable log must never block deletion.
+        for year in sorted(log.keys()):
+            year_mods = (log.get(year, {}) or {}).get("modifications", {}) or {}
+            if _recipe_is_subset(template_mods, year_mods):
+                usage.append({"pathway": pathway_name, "year": int(year)})
+    return usage
 
 
 def get_intervention_template_names(

@@ -15,6 +15,10 @@ dynamic = [ "version" ]
 "Source" = "https://github.com/architecture-building-systems/CityEnergyAnalyst"
 
 [build-system]
+# TODO: Add "cmake>=3.15" and "pyarrow>=19.0" here once linux-aarch64 and osx-64 wheel
+# builds are added to the CI (needed so cibuildwheel can install them inside manylinux
+# containers without pixi). Also lower libc in the main pyproject.toml to "2.17" and
+# run `pixi update cea-external-tools` after publishing the new wheels.
 requires = ["scikit-build-core>=0.11.0"]
 build-backend = "scikit_build_core.build"
 

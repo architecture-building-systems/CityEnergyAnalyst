@@ -1321,4 +1321,5 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
     # save updated edge data back to shapefile
     fields = ['length_m', 'pipe_DN', 'type_mat', 'geometry']
     edge_df_gdf = gpd.GeoDataFrame(edge_df[fields], index=edge_df.index)
+    edge_df_gdf['length_m'] = edge_df_gdf.geometry.length
     edge_df_gdf.to_file(locator.get_network_layout_edges_shapefile(network_type, network_name))

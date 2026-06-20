@@ -19,8 +19,9 @@ New to CEA-4? Start with these resources:
 
 1. **Create New Scenario Wizard** - Use this in CEA-4 App to automate initial data setup
 2. **[Quick Reference Guide](00-quick-reference.md)** - A single-page overview of all 41 features
-3. **[Data Management](08-data-management.md)** - Understanding the automated data preparation
-4. **[Energy Demand Forecasting](04-demand-forecasting.md)** - Core functionality for building energy analysis
+3. **[Variable & File Glossary](../glossary/index.md)** - Reference of all 179 input/intermediate/output files, grouped by feature
+4. **[Data Management](08-data-management.md)** - Understanding the automated data preparation
+5. **[Energy Demand Forecasting](04-demand-forecasting.md)** - Core functionality for building energy analysis
 
 ## Feature Categories
 

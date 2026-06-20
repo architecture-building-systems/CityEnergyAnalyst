@@ -26,6 +26,12 @@ jobs:
         # macos-13 for x86_64, macos-latest (macos-14) for arm64
         # Ignore macos-13 for now
         os: [ubuntu-latest, windows-latest, macos-latest]
+        # TODO: Add linux-aarch64 and osx-64 (macos-13) wheel builds:
+        #   - linux-aarch64: use cibuildwheel + docker/setup-qemu-action for QEMU emulation,
+        #     with quay.io/pypa/manylinux_2_17_aarch64 image
+        #   - osx-64 (macos-13): re-enable once CRAX compile issue is fixed, or build with
+        #     CMAKE_ARGS=-DBUILD_CRAX=OFF; requires cmake and pyarrow added to [build-system].requires
+        #     in external/pyproject.toml so the pip-based build works without pixi
 
     steps:
       - uses: actions/checkout@v4

@@ -48,6 +48,7 @@ jobs:
         uses: prefix-dev/setup-pixi@v0.8.14
         with:
           cache: true
+          pixi-version: v0.70.1
 
       - name: Install CEA
         run: pixi run pip install . --group dev

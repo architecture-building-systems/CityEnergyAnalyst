@@ -1,16 +1,17 @@
 from __future__ import annotations
 
 import os
-from typing import Any
+from typing import Any, Optional, Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+import cea.inputlocator
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
 
-import cea.inputlocator
 from cea.datamanagement.district_pathways.intervention_templates import (
     delete_intervention_template,
-    get_intervention_template_names,
+    find_template_usage,
+    load_intervention_templates,
 )
 from cea.datamanagement.district_pathways.pathway_timeline import (
     StockOnlyStateError,
@@ -29,26 +30,29 @@ from cea.datamanagement.district_pathways.pathway_timeline import (
     validate_baked_state,
     validate_pathway_log,
 )
-from cea.interfaces.dashboard.dependencies import CEAConfig, CEASeverDemoAuthCheck
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEASeverDemoAuthCheck, CEAProjectRoot
+from cea.interfaces.dashboard.api.utils import ScenarioQuery
 
 
-async def _use_parent_scenario(config: CEAConfig):
-    """Router-level dependency: temporarily resolves config.scenario to
-    the parent scenario (stripping any ``/outputs/pathways/.../state_YYYY``
-    suffix) so pathway endpoints always see the correct folder. Restores
-    the original path after the response is sent, so map-layer and tool
-    endpoints that run later still see the child-scenario path."""
-    original = config.scenario
-    parent = cea.inputlocator.InputLocator.parent_scenario_for_pathway_child(original)
-    if parent != original:
-        config.scenario = parent
+async def _apply_parent_scenario(
+    config: CEAConfig,
+    project_root: CEAProjectRoot,
+    project: Annotated[Optional[str], Query()] = None,
+    scenario_name: Annotated[Optional[str], Query(alias='scenario_name')] = None,
+):
+    """Router-level dependency: apply the per-request parent scenario to config
+    in memory for the duration of the request, then restore the original values.
+    Never calls save() — this is a stateless, request-scoped override.
+    Falls back to config.scenario when no params are provided."""
+    original_scenario = str(config.scenario)
+    config.scenario = ScenarioQuery(project=project, scenario_name=scenario_name).resolve(config, project_root)
     try:
         yield
     finally:
-        config.scenario = original
+        config.scenario = original_scenario
 
 
-router = APIRouter(dependencies=[Depends(_use_parent_scenario)])
+router = APIRouter(dependencies=[Depends(_apply_parent_scenario)])
 
 
 class CreatePathwayPayload(BaseModel):
@@ -131,10 +135,69 @@ async def duplicate_pathway(
 
 
 @router.get("/templates")
-async def get_templates(config: CEAConfig) -> dict[str, list[str]]:
+async def get_templates(config: CEAConfig) -> dict[str, Any]:
     locator = cea.inputlocator.InputLocator(config.scenario)
-    names = await run_in_threadpool(get_intervention_template_names, locator)
-    return {"templates": names}
+
+    def fn() -> dict[str, Any]:
+        templates = load_intervention_templates(locator, allow_missing=True)
+        names = sorted(templates.keys())
+        descriptions = {
+            name: (templates[name].get("description") or "") for name in names
+        }
+        return {"templates": names, "descriptions": descriptions}
+
+    return await run_in_threadpool(fn)
+
+
+@router.get("/templates/{template_name}")
+async def get_template(config: CEAConfig, template_name: str) -> dict[str, Any]:
+    """Return one template's definition plus a flat config payload for the define form.
+
+    `config` is the kebab-case parameter payload ready to POST to the tool's save-config
+    endpoint so the define form re-opens pre-filled. `diverged` is True when the template's
+    archetypes don't all share identical modifications (the flat form can't represent that;
+    the first archetype's values are used).
+    """
+    from cea.datamanagement.district_pathways.pathway_state import recipe_to_define_config
+
+    locator = cea.inputlocator.InputLocator(config.scenario)
+
+    def fn() -> dict[str, Any] | None:
+        templates = load_intervention_templates(locator, allow_missing=True)
+        if template_name not in templates:
+            return None
+        entry = templates[template_name] or {}
+        description = entry.get("description", "") or ""
+        modifications = entry.get("modifications", {}) or {}
+        payload, diverged = recipe_to_define_config(modifications)
+        payload["intervention-template-name"] = template_name
+        payload["intervention-template-description"] = description
+        return {
+            "name": template_name,
+            "description": description,
+            "modifications": modifications,
+            "config": payload,
+            "diverged": diverged,
+        }
+
+    result = await run_in_threadpool(fn)
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Intervention template '{template_name}' not found.",
+        )
+    return result
+
+
+@router.get("/templates/{template_name}/usage")
+async def get_template_usage(config: CEAConfig, template_name: str) -> dict[str, Any]:
+    """Best-effort list of pathway-years whose saved changes contain this template's changes.
+
+    Used to warn the user before deleting a template. This is a structural match (templates are
+    not linked to states), so it can miss usage if the template or year was edited after applying.
+    """
+    usage = await run_in_threadpool(find_template_usage, config, template_name)
+    return {"usage": usage}
 
 
 @router.delete("/templates/{template_name}", dependencies=[CEASeverDemoAuthCheck])
@@ -227,6 +290,12 @@ async def get_building_lifecycle(config: CEAConfig, pathway_name: str, building_
 @router.get("/{pathway_name}/years/{year}/geojson")
 async def get_state_geojson(config: CEAConfig, pathway_name: str, year: int) -> dict[str, Any]:
     from cea.interfaces.dashboard.api.inputs import df_to_json
+    from cea.datamanagement.district_pathways.pathway_state import validate_pathway_name
+
+    try:
+        pathway_name = validate_pathway_name(pathway_name)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
     locator = cea.inputlocator.InputLocator(config.scenario)
     state_folder = locator.get_state_in_time_scenario_folder(pathway_name, year)

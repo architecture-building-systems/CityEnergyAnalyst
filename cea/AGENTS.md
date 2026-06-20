@@ -115,6 +115,11 @@ def encode(self, value):
 
 ### DO: Use @property for dynamic choices
 
+### DO: Keep parameter initialisation I/O-free
+- Parameter `__init__` methods should not read files, scan directories, or load CSV/JSON.
+- Class-level definitions in `config.py` should avoid filesystem access at import time.
+- Use lazy properties/helpers for filesystem-backed choices and resolve them only when needed.
+
 ### DO: Use dedicated config sections for plot scripts
 ```text
 plot-pathway-emission-timeline -> plots-pathway-emission-timeline

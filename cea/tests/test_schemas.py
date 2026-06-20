@@ -201,7 +201,7 @@ class TestSchemas(unittest.TestCase):
                     "pathway_name": "test_pathway",
                     "plan_name": "default",
                     "phase": "timeline",
-                    "whatif_name": "basline",
+                    "whatif_name": "baseline",
                     # Canvas Builder folders accept either a saved-canvas
                     # `name` or a resolved `canvas_folder` plus optional
                     # `card_id` for the per-card data slot. Provide all

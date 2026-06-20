@@ -96,8 +96,9 @@ def schedule_to_dataframe(schedule_path):
 
     schedule_data = pd.read_csv(schedule_path, skiprows=2, usecols=columns).set_index(
         ['DAY', 'HOUR']).unstack().reindex(['WEEKDAY', 'SATURDAY', 'SUNDAY'])
-    for t, df in schedule_data.groupby(axis=1, level=0, sort=False):
-        df.columns = [i for i in range(1, 25)]
+    for t in dict.fromkeys(schedule_data.columns.get_level_values(0)):
+        df = schedule_data[t].copy()
+        df.columns = range(1, 25)
         out[t] = df.reset_index()
 
     return out

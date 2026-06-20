@@ -4,8 +4,9 @@ from itertools import groupby
 from typing import Dict, Any, List, Optional
 import logging
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel
+from typing import Annotated
 
 import cea.config
 import cea.inputlocator
@@ -14,13 +15,16 @@ from cea.schemas import schemas
 from .utils import (
     deconstruct_parameters,
     split_scenario_subpath,
+    validate_scenario_name,
     validate_scenario_name_or_subpath,
+    ScenarioQuery,
 )
-from cea.interfaces.dashboard.utils import secure_path
+from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEADatabaseConfig, CEASeverDemoAuthCheck, CEAProjectRoot
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
 
 
 def _normalize_choice_value(param: cea.config.ChoiceParameterBase, value: Any, choices: list[str]) -> Any:
@@ -80,9 +84,8 @@ def validate_parameter(parameter, value, parameter_name: str | None = None) -> t
         logger.error(f"Validation failed for {parameter_name or parameter.name}: {error_message}")
         return False, error_message
     except Exception as e:
-        error_message = f"Validation error: {str(e)}"
-        logger.error(f"Unexpected validation error for {parameter_name or parameter.name}: {error_message}")
-        return False, error_message
+        logger.error(f"Unexpected validation error for {parameter_name or parameter.name}: {e}", exc_info=True)
+        return False, "Unexpected validation error."
 
 
 def validate_and_apply_parameters(
@@ -144,59 +147,43 @@ async def get_tool_list(config: CEAConfig) -> Dict[str, List[ToolDescription]]:
 
 @router.get('/{tool_name}')
 async def get_tool_properties(config: CEAConfig, project_root: CEAProjectRoot, tool_name: str,
-                               project: Optional[str] = None,
-                               scenario_name: Optional[str] = None) -> ToolProperties:
-    # TODO: Add plugin support
-
-    # Set project and scenario on config to ensure parameters that depend
-    # on them are constructed correctly. Skip BOTH overrides when the
-    # pathway viewer is active — config.scenario already points to the
-    # state folder (set by switchToChildScenario), and overriding either
-    # config.project or config.scenario_name would break that path.
-    in_child_scenario = cea.inputlocator.InputLocator.is_pathway_child_scenario(
-        config.scenario,
-    )
-    if not in_child_scenario:
-        if project is not None:
-            if project_root is not None and not project.startswith(project_root):
-                project = os.path.join(project_root, project)
-            config.project = secure_path(project)
-        if scenario_name is not None:
-            # Canvas pathway-single columns target child states by a
-            # relative sub-path under the parent scenario; the
-            # validator accepts the path and `split_scenario_subpath`
-            # rebases the project so `config.scenario_name` stays a
-            # bare basename.
-            scenario_name = validate_scenario_name_or_subpath(scenario_name)
-            project_dir, scenario_name = split_scenario_subpath(
-                scenario_name, config.project,
-            )
-            config.project = secure_path(project_dir)
-            config.scenario_name = scenario_name
-
-    script = cea.scripts.by_name(tool_name, plugins=config.plugins)
-
-    parameters = []
-    categories = defaultdict(list)
-    for _, parameter in config.matching_parameters(script.parameters):
-        parameter_dict = deconstruct_parameters(parameter, config)
-
-        if parameter.category:
-            categories[parameter.category].append(parameter_dict)
+                              scenario: Annotated[ScenarioQuery, Query()]) -> ToolProperties:
+    original_scenario = str(config.scenario)
+    try:
+        if scenario.scenario_path is not None:
+            config.scenario = secure_path(scenario.scenario_path)
         else:
-            parameters.append(parameter_dict)
+            if scenario.project is not None:
+                project = scenario.project
+                if project_root is not None and not project.startswith(project_root):
+                    project = os.path.join(project_root, project)
+                config.project = secure_path(project)
+            if scenario.scenario_name is not None:
+                config.scenario_name = validate_scenario_name(scenario.scenario_name)
 
-    out = ToolProperties(
-        name=tool_name,
-        label=script.label,
-        description=script.description,
-        short_description=script.short_description,
-        category=script.category,
-        categorical_parameters=categories,
-        parameters=parameters,
-    )
+        script = cea.scripts.by_name(tool_name, plugins=config.plugins)
 
-    return out
+        parameters = []
+        categories = defaultdict(list)
+        for _, parameter in config.matching_parameters(script.parameters):
+            parameter_dict = deconstruct_parameters(parameter, config)
+
+            if parameter.category:
+                categories[parameter.category].append(parameter_dict)
+            else:
+                parameters.append(parameter_dict)
+
+        return ToolProperties(
+            name=tool_name,
+            label=script.label,
+            description=script.description,
+            short_description=script.short_description,
+            category=script.category,
+            categorical_parameters=categories,
+            parameters=parameters,
+        )
+    finally:
+        config.scenario = original_scenario
 
 
 @router.post('/{tool_name}/default', dependencies=[CEASeverDemoAuthCheck])
@@ -392,7 +379,7 @@ async def check_tool_inputs(
     # project store happens to be on. Mirrors the same override
     # pattern in `get_tool_properties` above, including the
     # pathway-viewer guard.
-    in_child_scenario = os.sep + 'pathways' + os.sep in config.scenario
+    in_child_scenario = PathwayChildScenario.is_valid(config.scenario)
     if not in_child_scenario:
         if project is not None:
             if project_root is not None and not project.startswith(project_root):
@@ -464,6 +451,10 @@ def _collect_field_warnings(tool_name, parameter_name, value, config):
 
     if tool_name == 'network-layout' and parameter_name == 'network-name':
         folder = locator.get_thermal_network_folder_network_name_folder(v)
+        try:
+            folder = secure_path(folder, root=config.scenario)
+        except OutsideProjectRootError:
+            return []
         if os.path.isdir(folder):
             return [{
                 "field": "network-name",
@@ -475,6 +466,10 @@ def _collect_field_warnings(tool_name, parameter_name, value, config):
 
     if tool_name == 'final-energy' and parameter_name == 'what-if-name':
         folder = locator.get_analysis_folder(v)
+        try:
+            folder = secure_path(folder, root=config.scenario)
+        except OutsideProjectRootError:
+            return []
         if os.path.isdir(folder):
             return [{
                 "field": "what-if-name",
