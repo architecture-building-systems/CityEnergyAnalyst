@@ -150,10 +150,10 @@ def invalidate(
 ) -> None:
     """Drop cache entries — see :func:`cea.kpi.status.clear_kpi`.
 
-    Wired by the Phase-1e post-processing hook: when a CEA tool
-    finishes, the matching feature's KPIs are cleared so the next
-    fetch recomputes against the fresh upstream CSVs without
-    paying the file-hash cost on every read."""
+    Useful for tests and explicit resets. Not needed as a
+    post-tool hook: ``compute_kpi_cached`` hashes upstream files
+    before every lookup, so stale entries are caught automatically
+    without a separate invalidation pass."""
     _clear_kpi(scenario, kpi_id=kpi_id, feature=feature)
 
 
