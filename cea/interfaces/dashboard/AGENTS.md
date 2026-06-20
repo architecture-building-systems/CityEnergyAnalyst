@@ -30,8 +30,30 @@ For any trigger-phrased request:
 
 UI language hides scalability assumptions that hold for a single local user but break under concurrent load. A feature that "works fine" with one user triggering one job can become a bottleneck when 20 jobs complete simultaneously or when the server runs across multiple containers. Reframe the requirement as an invariant first, then choose the implementation.
 
+The user describing a feature may not be a software engineer and won't catch an architectural shortcut. When a request is ambiguous, prefer the more separated/conservative design and explain the tradeoff in plain language rather than guessing.
+
 ## Statelessness (important for container scaling)
 
 Treat the dashboard server as stateless. Do not persist request-scoped selections (e.g. pathway child scenario) to `config` or any server-side store. Prefer passing such context per request — accept it as a query or body parameter and apply it in memory for that request only; never call `save()` on it. Persisting shared global state blocks horizontal scaling across containers and causes cross-request / cross-client staleness bugs. When you must apply per-request state to a shared config object (e.g. as a FastAPI router-level dependency), snapshot the original values and restore them in a `finally` block.
 
 **Current exception — project/scenario selection**: The active project and scenario (`general:project` + `general:scenario-name` in config) are still persisted to disk via `PUT /api/project/`. This is intentional for now; making scenario selection stateless is planned for a future refactor. Refrain from adding new server-side persistence beyond this existing exception. Warn if user insists on breaking this rule.
+
+## State Ownership
+
+Use this to decide where state lives before implementing any feature.
+
+**The boundary rule**: if removing the server-side state would break correctness for a *different* client (a second browser tab, a CLI user, a different container), it belongs on the backend. If it only affects the current user's current view, it belongs on the frontend.
+
+### Backend owns
+- **Persisted domain state** — scenario files, input/output data, pathway YAML, job logs, status files; anything that must survive a page reload or server restart
+- **Derived reads requiring disk or computation** — KPI results, geometry queries, timeline data; computed on demand from files, never cached server-side between requests
+- **Authentication and session tokens** — access/refresh tokens, cookie management
+- **Job lifecycle** — queuing, worker process management, stdout/stderr streaming
+
+### Frontend owns (lives in the GUI repo — see Frontend Code above; not actionable in this repo)
+- **UI state** — which panel is open, active tab, scroll position, expanded/collapsed sections
+- **Form state** — draft values typed but not yet submitted
+- **Selection state** — which scenario, pathway, or year is active in the UI (per Statelessness)
+- **Sequence orchestration** — calling routes in the correct order for multi-step flows
+- **Optimistic updates** — reflecting a write in the UI before the server confirms
+- **Refetch logic** — when to re-fetch after a write (per Prefer pull over push)
