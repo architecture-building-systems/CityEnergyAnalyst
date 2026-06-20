@@ -54,40 +54,6 @@ kpis:
         op: sum
         of: { kind: column, name: TOTAL_MWh }
 
-  - id: final_energy.grid_share_pct
-    label: Grid Electricity Share
-    category: energy-by-carrier
-    unit: '%'
-    better_direction: neutral
-    info_note: |
-      Share of total final energy that is delivered as grid
-      electricity. Higher means the district leans on the grid
-      for end-use services; rises with electrification, falls
-      when on-site PV / heat-pumps offset grid imports.
-
-      Share = Σ(GRID_MWh) ÷ Σ(TOTAL_MWh) × 100
-        in [%]
-    source:
-      locator: get_final_energy_buildings_file
-      locator_args:
-        whatif_name: ""
-      parameters:
-        whatif_name:
-          label: What-if scenario
-          options_generator: whatif_names
-          default: ""
-          description: Which what-if folder to read final-energy outputs from.
-      formula:
-        kind: share_of
-        part:
-          kind: aggregate
-          op: sum
-          of: { kind: column, name: GRID_MWh }
-        whole:
-          kind: aggregate
-          op: sum
-          of: { kind: column, name: TOTAL_MWh }
-
   - id: final_energy.fossil_share_pct
     label: Fossil Fuel Share
     category: energy-by-carrier
@@ -119,39 +85,6 @@ kpis:
           of:
             kind: sum_columns
             columns: [NATURALGAS_MWh, OIL_MWh, COAL_MWh]
-        whole:
-          kind: aggregate
-          op: sum
-          of: { kind: column, name: TOTAL_MWh }
-
-  - id: final_energy.district_heating_share_pct
-    label: District Heating Share
-    category: energy-by-carrier
-    unit: '%'
-    better_direction: neutral
-    info_note: |
-      Share of total final energy delivered via district heating.
-      Useful for districts running a DH network — measures how
-      much of the load the central plant is actually serving.
-
-      Share = Σ(DH_MWh) ÷ Σ(TOTAL_MWh) × 100
-        in [%]
-    source:
-      locator: get_final_energy_buildings_file
-      locator_args:
-        whatif_name: ""
-      parameters:
-        whatif_name:
-          label: What-if scenario
-          options_generator: whatif_names
-          default: ""
-          description: Which what-if folder to read final-energy outputs from.
-      formula:
-        kind: share_of
-        part:
-          kind: aggregate
-          op: sum
-          of: { kind: column, name: DH_MWh }
         whole:
           kind: aggregate
           op: sum

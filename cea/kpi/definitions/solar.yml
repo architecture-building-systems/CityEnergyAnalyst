@@ -99,7 +99,7 @@ kpis:
           of: { kind: column, name: E_PV_gen_kWh }
 
   - id: solar.south_facade_share_pct
-    label: South Facade Share
+    label: Facade PV Share
     category: renewable-energy-potentials
     unit: '%'
     better_direction: neutral
