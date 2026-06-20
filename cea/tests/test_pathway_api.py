@@ -61,11 +61,6 @@ def pathway_api_fixture():
     shutil.rmtree(project_root, ignore_errors=True)
 
 
-# TODO(pathway): pre-existing failure on temp-inter-scenario-compare
-# — pathway timeline drops year 2030 from the [2020, 2030, 2040]
-# fixture. Skipped here so CI is green; re-enable when the pathway
-# work resumes in its own PR.
-@pytest.mark.skip(reason="pathway timeline regression — deferred to follow-up PR")
 def test_list_create_and_overview_pathways(pathway_api_fixture):
     client = pathway_api_fixture["client"]
 
@@ -87,7 +82,6 @@ def test_list_create_and_overview_pathways(pathway_api_fixture):
     assert create_response.status_code == 200
 
 
-@pytest.mark.skip(reason="pathway timeline regression — deferred to follow-up PR")
 def test_get_timeline_returns_required_years_without_manual_state_field(
     pathway_api_fixture,
 ):
@@ -173,7 +167,6 @@ def test_apply_templates_route_merges_modifications(pathway_api_fixture):
     assert rows[2020]["state_kind"] == "mixed"
 
 
-@pytest.mark.skip(reason="pathway timeline regression — deferred to follow-up PR")
 def test_pathway_panel_jobs_run_via_cea_api(pathway_api_fixture):
     config = pathway_api_fixture["config"]
     locator = pathway_api_fixture["locator"]
@@ -222,7 +215,6 @@ def test_delete_pathway_job_via_cea_api(pathway_api_fixture):
     assert not pathway_folder.exists()
 
 
-@pytest.mark.skip(reason="pathway timeline regression — deferred to follow-up PR")
 def test_validate_all_states_job_via_cea_api(pathway_api_fixture):
     config = pathway_api_fixture["config"]
     locator = pathway_api_fixture["locator"]
@@ -265,7 +257,6 @@ modifications: {}
     assert log_data[2031]["building_events"]["demolished_buildings"] == ["B1"]
 
 
-@pytest.mark.skip(reason="pathway timeline regression — deferred to follow-up PR")
 def test_validate_state_records_status_and_timeline_detects_log_drift(pathway_api_fixture):
     client = pathway_api_fixture["client"]
     config = pathway_api_fixture["config"]
