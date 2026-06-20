@@ -53,7 +53,7 @@ def get_cache():
         logger.info(f"Using RedisCache: {CACHE_NAME} [{host}:{port}]")
     else:
         _cache_instance = SimpleMemoryCache(serializer=PickleSerializer(), namespace=CACHE_NAME)
-        logger.info(f"Using SimpleMemoryCache: {CACHE_NAME}")
+        logger.debug(f"Using SimpleMemoryCache: {CACHE_NAME}")
 
     return _cache_instance
 
@@ -99,5 +99,3 @@ async def cleanup_cache_connections():
         finally:
             _cache_instance = None
 
-# Initialise cache object
-get_cache()

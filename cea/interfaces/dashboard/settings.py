@@ -69,8 +69,8 @@ class Settings(BaseSettings):
                     f"Wildcard CORS origin ('*') is not allowed in non-local mode. "
                     f"Please set {(ENV_VAR_PREFIX + 'cors_origin').upper()} to your frontend URL(s)."
                 )
-            # Allow wildcard in local mode, but warn
-            logger.warning(
+            # Wildcard is the expected default for local mode — log at DEBUG only.
+            logger.debug(
                 "Using wildcard CORS origin ('*'). This is only safe for local development. "
                 "For production, set CEA_CORS_ORIGIN to specific domain(s)."
             )
