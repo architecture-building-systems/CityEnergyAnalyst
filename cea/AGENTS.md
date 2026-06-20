@@ -88,6 +88,10 @@ python scripts/config_type_generator.py
 
 `decode()` is called on every config load — keep it lenient (security checks only, no business rules or I/O). `encode()` is called on save — apply all validation there.
 
+**Hard rules for decode()**:
+- **Never substitute values**: return the stored value, `None` (nullable), or raise. Never fall back to `self._choices[0]` or "the most recent X" — silently running with a value the user didn't configure can change simulation results.
+- **Never touch the disk**: no file writes, no writability probes (do those in `encode()` or the consuming script).
+
 Use helpers to share security checks without duplicating:
 
 ```python
@@ -137,12 +141,41 @@ interfaces: [cli]
 # Bad: os.path.join(config.scenario, "inputs", ...)
 ```
 
+## Frontend vs Backend: Decide the Layer First
+
+User requests are often phrased in UI terms ("the dropdown should show…", "default to the most recent…", "when nothing is selected…"). **Do not translate UI phrasing directly into `config.py` changes.** Before editing, decide which layer owns the behaviour:
+
+| Concern | Owner |
+|---|---|
+| Value storage, types, validation, available choices (data) | `config.py` parameter classes |
+| GUI payload normalisation, form metadata, pre-selection/fallback for forms | `interfaces/dashboard/api/tools.py` |
+| Widgets, display labels, placeholders ("Nothing Selected"), ordering/presentation | `CityEnergyAnalyst-GUI` repo |
+
+Rules of thumb:
+- A "default shown in the form" is API/frontend behaviour — not a `decode()` fallback. Config stores what the user set; the form decides what to suggest.
+- Placeholder/sentinel text the user sees must never become a value `config.py` parses or stores.
+- If the request only changes what the user *sees* (labels, ordering, visibility), the change likely belongs entirely in the GUI repo — say so rather than approximating it in the backend.
+- Remember `config.py` serves the CLI and `cea.api` too: any behaviour added for the dashboard's benefit must still make sense for a headless `cea` run.
+
+## Writing Parameter Classes
+
+- **Reuse before writing**: check `config.py` for an existing class/mixin first (e.g. `validate_filesystem_name`-style checks, `ColumnChoicesMixin`, `SubfolderChoiceParameter`). Never copy-paste an `invalid_chars` block or a near-identical class with a different noun in the error message.
+- **Errors via `logging`, never `print()`**
+- **No bare `except Exception: return []` in `_choices`**: catch the expected errors (`OSError`, `FileNotFoundError`, `KeyError`) and `logger.warning` anything caught — a typo'd locator method must not present as "no options available".
+- **One null sentinel**: `''` on disk, `None` decoded. No new magic strings (`'(none)'`, `'null'`, `'Nothing Selected'`).
+- **GUI payloads normalise at the API boundary** (`interfaces/dashboard/api/tools.py`), not inside `encode()` — no `isinstance(value, list)` unwrapping in parameter classes.
+- **No second init path**: read dotted metadata options in `__init__`; don't add new `initialize(parser)` hooks.
+- **No hardcoded section names**: cross-parameter checks like `getattr(config.network_layout, ...)` tie a class to one section — put script-level validation in `tools.py::check_tool_inputs` instead.
+- **Write real docstrings**: don't copy one from a neighbouring class.
+
 ## Common Pitfalls
 
 1. **Validating in decode()** → Fragile config loading
 2. **No dependency declaration** → Dynamic choices don't update
 3. **Caching without invalidation** → Stale options
 4. **Mixing security/business validation** → Security checks in both, business in encode only
+5. **Silent fallback in decode()** → Script runs with a value the user never set
+6. **I/O at import or in `__init__`** → Every `Configuration()` (185 call sites) pays the cost
 
 ## Related Files
 
@@ -152,7 +185,6 @@ interfaces: [cli]
 - `default.config` - Default values for all parameters
 - `scripts.yml` - Script registry and interface metadata.
 - `interfaces/dashboard/api/tools.py` - Validation API endpoints (`validate_field`, `get_parameter_metadata`)
-
 
 ## Module Documentation
 
