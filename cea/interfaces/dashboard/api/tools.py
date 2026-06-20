@@ -21,6 +21,7 @@ from .utils import (
 )
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEADatabaseConfig, CEASeverDemoAuthCheck, CEAProjectRoot
+from cea.datamanagement.district_pathways.pathway_timeline import PathwayChildScenario
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -380,7 +381,7 @@ async def check_tool_inputs(
     # project store happens to be on. Mirrors the same override
     # pattern in `get_tool_properties` above, including the
     # pathway-viewer guard.
-    in_child_scenario = os.sep + 'pathways' + os.sep in config.scenario
+    in_child_scenario = PathwayChildScenario.is_valid(config.scenario)
     if not in_child_scenario:
         if project is not None:
             if project_root is not None and not project.startswith(project_root):
