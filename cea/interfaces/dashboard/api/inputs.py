@@ -7,7 +7,7 @@ import traceback
 import warnings
 from collections import defaultdict
 from contextlib import redirect_stdout
-from typing import Dict, Any, Optional, Annotated
+from typing import Dict, Any, Annotated
 import zipfile
 
 from fastapi.responses import StreamingResponse
