@@ -9,79 +9,28 @@ The dashboard UI (React frontend) is in a **separate repository** — not here.
 - This directory (`cea/interfaces/dashboard/`) contains only the **Python/FastAPI backend** — API routes, job system, and SocketIO server
 - For frontend changes (components, pages, API calls from the UI), work in the GUI repo instead
 
----
-
-# Dashboard Job System
-
-## Architecture
-
-```
-Client → Server (jobs.py) → Worker (cea/worker.py) → Server
-         ↓                    ↓
-    Database (SQLModel)   CEA Scripts
-         ↓
-    SocketIO Events
-```
-
-- **Server**: Job lifecycle, database, SocketIO
-- **Worker**: Subprocess executing CEA scripts
-- **Communication**: Worker POSTs to server → server emits SocketIO to client
-
-## Job States
-
-`PENDING → STARTED → SUCCESS/ERROR/CANCELED/KILLED`
-
-**Soft Deletion**: Uses `deleted_at`/`deleted_by` fields (not state change) to preserve completion state.
-
-## Job Lifecycle
-
-**Creation** (`POST /jobs/new`): Creates `JobInfo` UUID+PENDING, handles file uploads to `/tmp/cea_job_{job_id}_*`.
-
-**Start** (`POST /jobs/start/{job_id}`): Auth-checked, row-locked. Spawns `python -m cea.worker {job_id} {server_url}`.
-
-**Worker steps**:
-1. Register signal handlers → fetch job → redirect stdout/stderr to `JobServerStream`
-2. `POST /jobs/started` → `cea.api.{script_name}(**parameters)` → `POST /jobs/success` or `/jobs/error`
-
-**Signal handling**: Worker uses `os._exit(0)` on `SIGTERM`/`SIGINT` — immediate exit, no cleanup needed (server already set state before signalling).
-
-**Stream capture**: `JobServerStream` queues output → daemon thread POSTs to server → server emits `cea-worker-message` via SocketIO.
-
-## State Transitions
-
-All transitions are auth-checked and row-locked (TOCTOU protection).
-
-| Endpoint | Sets state | Notes |
-|---|---|---|
-| `POST /jobs/started/{id}` | STARTED | Worker-initiated |
-| `POST /jobs/success/{id}` | SUCCESS | Graceful cleanup |
-| `POST /jobs/error/{id}` | ERROR | Graceful cleanup |
-| `POST /jobs/cancel/{id}` | CANCELED | User-initiated; must be PENDING or STARTED |
-| `kill_job()` | KILLED | Internal; force kill |
-| `DELETE /jobs/{id}` | *(soft delete)* | Sets `deleted_at`, preserves state; blocked if STARTED |
-
-**Cleanup**: Graceful = `terminate()` → wait → `kill()`. Force = immediate `kill()`. Temp files removed on all transitions.
-
-**Pitfalls**:
-- Commit DB **before** emitting SocketIO (emit outside try-except to prevent rollback)
-- Serialise SocketIO payloads with captured strings, not `job.model_dump()` on expired ORM state
-- Keep FastAPI responses as Python objects; JSON-safe conversion too early breaks computed fields like `duration`
-- Prefer FastAPI `status.HTTP_*` constants over numeric status codes in `HTTPException` and response constructors
-
-## Caching (`dependencies.py`)
-
-- `worker_processes`: `job_id → PID` (TTL-based)
-- `streams`: `job_id → List[str]` stdout/stderr chunks (TTL-based)
-
-## SocketIO Events (room: `user-{user_id}`)
-
-`cea-job-created`, `cea-worker-started`, `cea-worker-message`, `cea-worker-success`, `cea-worker-error`, `cea-worker-canceled`, `cea-worker-killed`, `cea-job-deleted`
-
-Retry: `emit_with_retry()` (3 retries, exponential backoff).
-
 ## Dashboard API Pattern
 
 Not every user action should become a background job. Keep fast synchronous API routes for lightweight, reusable domain operations. Promote an action to a native job when the user experience depends on persistent Job Info logs, streamed stdout/stderr, or parity with long-running workflow actions. In both cases, keep the business logic in shared service functions so API routes and jobs call the same implementation.
+
+## Prefer pull over push
+
+When a consumer needs fresh data, it should fetch and compute on demand rather than relying on a producer to push updates at the right moment. Push-based side effects (post-job hooks, event handlers, eager refreshes) couple producers to consumers, run unconditionally regardless of who needs the result, and compound under concurrency.
+
+Before adding a push mechanism, ask: does the consumer already recompute correctly when it reads? If yes, the push is redundant — decline to add it.
+
+## Framing
+
+Users describe requirements in UI and event terms: "after X finishes", "when the user clicks Y", "the panel should refresh when Z". These are valid UX descriptions but are not backend specifications — translate them before deciding on an implementation.
+
+For any trigger-phrased request:
+1. Identify the **invariant** the user actually wants: "the panel always shows current data" rather than "refresh after job completion".
+2. Check whether the invariant is already satisfied by the existing read path.
+3. Only if it isn't, consider a push mechanism — and evaluate it against scalability first: does it run unconditionally for every event regardless of who needs the result? Does it compound under concurrent users or jobs?
+
+UI language hides scalability assumptions that hold for a single local user but break under concurrent load. A feature that "works fine" with one user triggering one job can become a bottleneck when 20 jobs complete simultaneously or when the server runs across multiple containers. Reframe the requirement as an invariant first, then choose the implementation.
+
+The user describing a feature may not be a software engineer and won't catch an architectural shortcut. When a request is ambiguous, prefer the more separated/conservative design and explain the tradeoff in plain language rather than guessing.
 
 ## Statelessness (important for container scaling)
 
@@ -89,6 +38,22 @@ Treat the dashboard server as stateless. Do not persist request-scoped selection
 
 **Current exception — project/scenario selection**: The active project and scenario (`general:project` + `general:scenario-name` in config) are still persisted to disk via `PUT /api/project/`. This is intentional for now; making scenario selection stateless is planned for a future refactor. Refrain from adding new server-side persistence beyond this existing exception. Warn if user insists on breaking this rule.
 
-## Docker
+## State Ownership
 
-Server runs as PID 1 with a `SIGCHLD` handler (`setup_sigchld_handler` in `app.py`) that reaps zombie workers via `os.waitpid(-1, WNOHANG)`. Tini not required but easy to re-enable.
+Use this to decide where state lives before implementing any feature.
+
+**The boundary rule**: if removing the server-side state would break correctness for a *different* client (a second browser tab, a CLI user, a different container), it belongs on the backend. If it only affects the current user's current view, it belongs on the frontend.
+
+### Backend owns
+- **Persisted domain state** — scenario files, input/output data, pathway YAML, job logs, status files; anything that must survive a page reload or server restart
+- **Derived reads requiring disk or computation** — KPI results, geometry queries, timeline data; computed on demand from files, never cached server-side between requests
+- **Authentication and session tokens** — access/refresh tokens, cookie management
+- **Job lifecycle** — queuing, worker process management, stdout/stderr streaming
+
+### Frontend owns (lives in the GUI repo — see Frontend Code above; not actionable in this repo)
+- **UI state** — which panel is open, active tab, scroll position, expanded/collapsed sections
+- **Form state** — draft values typed but not yet submitted
+- **Selection state** — which scenario, pathway, or year is active in the UI (per Statelessness)
+- **Sequence orchestration** — calling routes in the correct order for multi-step flows
+- **Optimistic updates** — reflecting a write in the UI before the server confirms
+- **Refetch logic** — when to re-fetch after a write (per Prefer pull over push)

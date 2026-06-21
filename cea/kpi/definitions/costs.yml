@@ -1,0 +1,139 @@
+# Costs KPIs.
+#
+# Source CSV: outputs/data/analysis/{whatif_name}/costs/
+#               costs_buildings.csv
+# (one row per building or plant, produced by `cea system-costs`
+# under the active what-if). Column meanings live in cea/schemas.yml
+# under `get_costs_whatif_buildings_file`. `GFA_m2` is co-located
+# in the same CSV — no cross-file reads needed.
+#
+# Currency: schema declares USD ([$USD(2015)/yr]). v1 locked-list
+# said EUR; switching to USD here to match the data. Re-label /
+# re-convert later when CEA gains a currency-conversion primitive.
+#
+# Migration note: previously this yml read from the legacy
+# `get_baseline_costs` (no whatif support). The whatif file uses
+# lowercased column names (`capex_a_USD`, `opex_fixed_a_USD`,
+# `opex_var_a_USD` — no rolled-up `Opex_a_USD`) so the opex KPI
+# now sums the fixed + var columns directly. The legacy
+# `Capex_a_building_scale_USD` / `..._district_scale_USD` columns
+# don't exist on the whatif file — that data is now a row-level
+# `scale` attribute (BUILDING / DISTRICT). Without a row-filter
+# primitive in the resolver, the scale-split KPIs (TAC — Building
+# Scale / TAC — District Scale) are dropped from v1; bring them
+# back when the resolver gains a `filter_rows` node.
+#
+# Picker grouping uses the `cost-breakdown` plot key so each
+# entry lands under "Life Cycle Analysis → Costs" alongside the
+# matching plot card family.
+
+feature: costs
+
+kpis:
+  - id: costs.tac_usd_m2
+    label: Total Annualised Cost
+    category: cost-breakdown
+    unit: USD/m²
+    better_direction: lower
+    headline: true
+    info_note: |
+      Total annualised cost (capex_a + opex_a) divided by gross
+      floor area. Combines on-site building systems and
+      district-scale networks/piping into one number.
+
+      TAC = Σ(TAC_USD) ÷ Σ(GFA_m²)
+        in [USD/m²/yr]
+    description: >
+      Total annualised cost is the per-year amortised capital
+      expenditure plus annual operational expenditure. Divided
+      by GFA so the value scales meaningfully across districts
+      of different sizes.
+    source:
+      locator: get_costs_whatif_buildings_file
+      locator_args:
+        whatif_name: ""
+      parameters:
+        whatif_name:
+          label: What-if scenario
+          options_generator: whatif_names
+          default: ""
+          description: Which what-if folder to read costs outputs from.
+      formula:
+        kind: divide
+        numerator:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: TAC_USD }
+        denominator:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: GFA_m2 }
+
+  - id: costs.capex_intensity_usd_m2
+    label: Capex Intensity
+    category: cost-breakdown
+    unit: USD/m²
+    better_direction: lower
+    info_note: |
+      Annualised capital expenditure per unit gross floor area.
+
+      capex_a / GFA = Σ(capex_a_USD) ÷ Σ(GFA_m²)
+        in [USD/m²/yr]
+    source:
+      locator: get_costs_whatif_buildings_file
+      locator_args:
+        whatif_name: ""
+      parameters:
+        whatif_name:
+          label: What-if scenario
+          options_generator: whatif_names
+          default: ""
+          description: Which what-if folder to read costs outputs from.
+      formula:
+        kind: divide
+        numerator:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: capex_a_USD }
+        denominator:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: GFA_m2 }
+
+  - id: costs.opex_intensity_usd_m2_yr
+    label: Opex Intensity
+    category: cost-breakdown
+    unit: USD/m²/yr
+    better_direction: lower
+    info_note: |
+      Total annual operational expenditure (fixed + variable)
+      per unit gross floor area. Sums opex_fixed_a + opex_var_a
+      because the whatif file doesn't carry a rolled-up
+      `Opex_a_USD` column the way the legacy baseline did.
+
+      opex_a / GFA = Σ(opex_fixed_a + opex_var_a) ÷ Σ(GFA_m²)
+        in [USD/m²/yr]
+    source:
+      locator: get_costs_whatif_buildings_file
+      locator_args:
+        whatif_name: ""
+      parameters:
+        whatif_name:
+          label: What-if scenario
+          options_generator: whatif_names
+          default: ""
+          description: Which what-if folder to read costs outputs from.
+      formula:
+        kind: divide
+        numerator:
+          kind: aggregate
+          op: sum
+          of:
+            kind: sum_columns
+            columns:
+              - opex_fixed_a_USD
+              - opex_var_a_USD
+        denominator:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: GFA_m2 }

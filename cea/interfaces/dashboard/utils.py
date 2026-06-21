@@ -69,7 +69,13 @@ def resolve_scenario_path(
         project_path = os.path.join(project_root, project_path)
 
     project_path = secure_path(project_path)
-    scenario_path = os.path.join(project_path, scenario)
+    try:
+        scenario_path = secure_path(os.path.join(project_path, scenario), root=project_path)
+    except OutsideProjectRootError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid scenario name: {scenario}",
+        )
 
     if not os.path.isdir(scenario_path):
         raise HTTPException(
