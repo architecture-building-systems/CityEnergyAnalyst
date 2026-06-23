@@ -58,6 +58,31 @@ def get_cache():
     return _cache_instance
 
 
+async def init_cache():
+    """Initialize and probe the cache connection on startup.
+
+    If Redis is configured but unreachable, falls back to SimpleMemoryCache so the
+    server stays healthy instead of spinning in aiocache's retry loop on every request.
+    """
+    global _cache_instance
+    cache = get_cache()
+    if not isinstance(cache, RedisCache):
+        return
+
+    try:
+        import asyncio
+        await asyncio.wait_for(cache.exists("_startup"), timeout=5.0)
+        logger.info("Redis cache connected")
+    except Exception as e:
+        logger.warning(f"Redis cache unreachable ({e}), falling back to SimpleMemoryCache")
+        if hasattr(cache, 'close'):
+            try:
+                await cache.close()
+            except Exception:
+                pass
+        _cache_instance = SimpleMemoryCache(serializer=PickleSerializer(), namespace=CACHE_NAME)
+
+
 async def get_dict_cache(key: str, default_ttl: Optional[int] = DEFAULT_CACHE_TTL) -> AsyncDictCache:
     """
     Get or create a dictionary cache for a specific key.

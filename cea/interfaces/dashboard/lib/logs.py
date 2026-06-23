@@ -27,7 +27,14 @@ class CustomFormatter(logging.Formatter):
     def format(self, record):
         log_fmt = self.FORMATS.get(record.levelno)
         formatter = logging.Formatter(log_fmt)
-        return formatter.format(record)
+        formatted = formatter.format(record)
+
+        # Check for extra fields added via logger.error(..., extra={...})
+        redis_exception = record.__dict__.get('redis_exception')
+        if redis_exception:
+            return f"{formatted} | redis_exception={redis_exception}"
+
+        return formatted
 
 
 def getCEAServerLogger(name="cea-server"):
