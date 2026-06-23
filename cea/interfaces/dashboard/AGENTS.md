@@ -85,9 +85,13 @@ Not every user action should become a background job. Keep fast synchronous API 
 
 ## Statelessness (important for container scaling)
 
-Treat the dashboard server as stateless. Do not persist request-scoped selections (e.g. pathway child scenario) to `config` or any server-side store. Prefer passing such context per request — accept it as a query or body parameter and apply it in memory for that request only; never call `save()` on it. Persisting shared global state blocks horizontal scaling across containers and causes cross-request / cross-client staleness bugs. When you must apply per-request state to a shared config object (e.g. as a FastAPI router-level dependency), snapshot the original values and restore them in a `finally` block.
+Treat the dashboard server as stateless. Do not persist request-scoped selections (e.g. scenario) to `config` or any server-side store. Pass context per request — accept it as a query parameter and apply it in memory for that request only; never call `save()` on it.
 
-**Current exception — project/scenario selection**: The active project and scenario (`general:project` + `general:scenario-name` in config) are still persisted to disk via `PUT /api/project/`. This is intentional for now; making scenario selection stateless is planned for a future refactor. Refrain from adding new server-side persistence beyond this existing exception. Warn if user insists on breaking this rule.
+**Config is per-request**: `get_cea_config()` creates a fresh instance on every request (local: `CEALocalConfig` from disk, non-local: `CEAStatelessConfig` from `DEFAULT_CONFIG`). There is no shared config singleton — mutations are request-scoped and need no snapshot/restore.
+
+**`CEAScenario`** (`api/utils.py`) is the standard dependency for resolving the effective scenario. Routes set `config.scenario = scenario` directly; no `finally` restore is needed.
+
+**`save()` behaviour**: `CEALocalConfig.save()` writes `~/cea.config`; `CEAStatelessConfig.save()` is a no-op. Call `config.save()` unconditionally where appropriate — it does the right thing in both modes.
 
 ## Docker
 

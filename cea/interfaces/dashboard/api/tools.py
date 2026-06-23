@@ -142,33 +142,28 @@ async def get_tool_list(config: CEAConfig) -> Dict[str, List[ToolDescription]]:
 @router.get('/{tool_name}')
 async def get_tool_properties(config: CEAConfig, tool_name: str, scenario: CEAScenario) -> ToolProperties:
     # TODO: Add plugin support
-    original_scenario = str(config.scenario)
-    try:
-        config.scenario = scenario
+    config.scenario = scenario
+    script = cea.scripts.by_name(tool_name, plugins=config.plugins)
 
-        script = cea.scripts.by_name(tool_name, plugins=config.plugins)
+    parameters = []
+    categories = defaultdict(list)
+    for _, parameter in config.matching_parameters(script.parameters):
+        parameter_dict = deconstruct_parameters(parameter, config)
 
-        parameters = []
-        categories = defaultdict(list)
-        for _, parameter in config.matching_parameters(script.parameters):
-            parameter_dict = deconstruct_parameters(parameter, config)
+        if parameter.category:
+            categories[parameter.category].append(parameter_dict)
+        else:
+            parameters.append(parameter_dict)
 
-            if parameter.category:
-                categories[parameter.category].append(parameter_dict)
-            else:
-                parameters.append(parameter_dict)
-
-        return ToolProperties(
-            name=tool_name,
-            label=script.label,
-            description=script.description,
-            short_description=script.short_description,
-            category=script.category,
-            categorical_parameters=categories,
-            parameters=parameters,
-        )
-    finally:
-        config.scenario = original_scenario
+    return ToolProperties(
+        name=tool_name,
+        label=script.label,
+        description=script.description,
+        short_description=script.short_description,
+        category=script.category,
+        categorical_parameters=categories,
+        parameters=parameters,
+    )
 
 
 @router.post('/{tool_name}/default', dependencies=[CEASeverDemoAuthCheck])
@@ -342,52 +337,48 @@ async def get_parameter_metadata(config: CEAConfig, tool_name: str, payload: Dic
 
 @router.post('/{tool_name}/check')
 async def check_tool_inputs(config: CEAConfig, tool_name: str, payload: Dict[str, Any], scenario: CEAScenario):
-    original_scenario = str(config.scenario)
+    config.scenario = scenario
+    candidates = [
+        (parameter, payload[parameter.name])
+        for parameter in parameters_for_script(tool_name, config)
+        if parameter.name in payload and parameter.name != 'scenario'
+    ]
     try:
-        config.scenario = scenario
-        candidates = [
-            (parameter, payload[parameter.name])
-            for parameter in parameters_for_script(tool_name, config)
-            if parameter.name in payload and parameter.name != 'scenario'
-        ]
-        try:
-            validate_and_apply_parameters(candidates)
-        except ValueError as e:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={'message': 'Validation failed', 'field_errors': e.args[0]})
+        validate_and_apply_parameters(candidates)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={'message': 'Validation failed', 'field_errors': e.args[0]})
 
-        # TODO: Add plugin support
-        script = cea.scripts.by_name(tool_name, plugins=config.plugins)
-        schema_data = schemas(config.plugins)
+    # TODO: Add plugin support
+    script = cea.scripts.by_name(tool_name, plugins=config.plugins)
+    schema_data = schemas(config.plugins)
 
-        script_suggestions = set()
+    script_suggestions = set()
 
-        for method_name, _ in script.missing_input_files(config):
-            _script_suggestions = schema_data[method_name]['created_by'] if 'created_by' in schema_data[
-                method_name] else None
+    for method_name, _ in script.missing_input_files(config):
+        _script_suggestions = schema_data[method_name]['created_by'] if 'created_by' in schema_data[
+            method_name] else None
 
-            if _script_suggestions is not None:
-                script_suggestions.update(_script_suggestions)
+        if _script_suggestions is not None:
+            script_suggestions.update(_script_suggestions)
 
-        if script_suggestions:
-            scripts = []
-            for script_suggestion in script_suggestions:
-                _script = cea.scripts.by_name(script_suggestion, plugins=config.plugins)
-                scripts.append({"label": _script.label, "name": _script.name})
+    if script_suggestions:
+        scripts = []
+        for script_suggestion in script_suggestions:
+            _script = cea.scripts.by_name(script_suggestion, plugins=config.plugins)
+            scripts.append({"label": _script.label, "name": _script.name})
 
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                detail={"message": "Missing input files",
-                                        "script_suggestions": list(scripts)})
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail={"message": "Missing input files",
+                                    "script_suggestions": list(scripts)})
 
-        # Collision warnings from the check-inputs path (Run button confirmation)
-        warnings = []
-        for field_name in ('network-name', 'what-if-name'):
-            if field_name in payload:
-                warnings.extend(
-                    _collect_field_warnings(tool_name, field_name, payload[field_name], config)
-                )
-        return {"warnings": warnings} if warnings else None
-    finally:
-        config.scenario = original_scenario
+    # Collision warnings from the check-inputs path (Run button confirmation)
+    warnings = []
+    for field_name in ('network-name', 'what-if-name'):
+        if field_name in payload:
+            warnings.extend(
+                _collect_field_warnings(tool_name, field_name, payload[field_name], config)
+            )
+    return {"warnings": warnings} if warnings else None
 
 
 def _collect_field_warnings(tool_name, parameter_name, value, config):

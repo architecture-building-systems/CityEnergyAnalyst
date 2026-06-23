@@ -35,16 +35,7 @@ from cea.interfaces.dashboard.api.utils import CEAScenario
 
 
 async def _apply_parent_scenario(config: CEAConfig, scenario: CEAScenario):
-    """Router-level dependency: apply the per-request parent scenario to config
-    in memory for the duration of the request, then restore the original values.
-    Never calls save() — this is a stateless, request-scoped override.
-    Falls back to config.scenario when no params are provided."""
-    original_scenario = str(config.scenario)
     config.scenario = scenario
-    try:
-        yield
-    finally:
-        config.scenario = original_scenario
 
 
 router = APIRouter(dependencies=[Depends(_apply_parent_scenario)])
