@@ -20,7 +20,7 @@ from .utils import (
     ScenarioQuery,
 )
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
-from cea.interfaces.dashboard.dependencies import CEAConfig, CEADatabaseConfig, CEASeverDemoAuthCheck, CEAProjectRoot
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEASeverDemoAuthCheck, CEAProjectRoot
 from cea.datamanagement.district_pathways.pathway_timeline import PathwayChildScenario
 
 router = APIRouter()
@@ -214,10 +214,7 @@ async def restore_default_config(config: CEAConfig, tool_name: str):
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={'message': 'Validation failed', 'field_errors': e.args[0]})
 
-    if isinstance(config, CEADatabaseConfig):
-        await config.save()
-    else:
-        config.save()
+    config.save()
 
     return 'Success'
 
@@ -255,10 +252,7 @@ async def save_tool_config(config: CEAConfig, tool_name: str, payload: Dict[str,
             value = payload[parameter.name]
             parameter.set(value)
 
-    if isinstance(config, CEADatabaseConfig):
-        await config.save()
-    else:
-        config.save()
+    config.save()
     return 'Success'
 
 

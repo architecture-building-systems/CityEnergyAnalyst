@@ -26,7 +26,7 @@ from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 import cea.schemas
 from cea.databases import CEADatabase, CEADatabaseException
 from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
-from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectInfo, CEAProjectRoot, CEASeverDemoAuthCheck
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot, CEASeverDemoAuthCheck
 from cea.interfaces.dashboard.utils import secure_path
 from cea.interfaces.dashboard.api.utils import ScenarioQuery
 from cea.plots.supply_system.a_supply_system_map import get_building_connectivity, newer_network_layout_exists
@@ -98,8 +98,10 @@ async def get_building_props_db(db: str):
 
 
 @router.get('/geojson/{kind}')
-async def get_input_geojson(project_info: CEAProjectInfo, kind: str):
-    locator = cea.inputlocator.InputLocator(project_info.scenario)
+async def get_input_geojson(config: CEAConfig, project_root: CEAProjectRoot,
+                            scenario: Annotated[ScenarioQuery, Query()], kind: str):
+    effective_scenario = scenario.resolve(config, project_root)
+    locator = cea.inputlocator.InputLocator(effective_scenario)
 
     if kind not in GEOJSON_KEYS:
         raise HTTPException(
@@ -109,7 +111,6 @@ async def get_input_geojson(project_info: CEAProjectInfo, kind: str):
     # Building geojsons
     elif kind in INPUT_KEYS and kind in GEOJSON_KEYS:
         db_info = INPUTS[kind]
-        locator = cea.inputlocator.InputLocator(project_info.scenario)
         location = getattr(locator, db_info['location'])()
         if db_info['file_type'] != 'shp':
             raise HTTPException(
@@ -118,14 +119,16 @@ async def get_input_geojson(project_info: CEAProjectInfo, kind: str):
             )
         return df_to_json(location)[0]
     elif kind in NETWORK_KEYS:
-        return get_network(project_info.scenario, kind)[0]
+        return get_network(effective_scenario, kind)[0]
     elif kind == 'streets':
         return df_to_json(locator.get_street_network())[0]
 
 
 @router.get('/building-properties')
-async def get_building_props(project_info: CEAProjectInfo):
-    return get_building_properties(project_info.scenario)
+async def get_building_props(config: CEAConfig, project_root: CEAProjectRoot,
+                             scenario: Annotated[ScenarioQuery, Query()]):
+    effective_scenario = scenario.resolve(config, project_root)
+    return get_building_properties(effective_scenario)
 
 
 @router.get('/all-inputs')
@@ -429,8 +432,10 @@ def df_to_json(file_location):
 
 
 @router.get('/building-schedule/{building}')
-async def get_building_schedule(project_info: CEAProjectInfo, building: str):
-    locator = cea.inputlocator.InputLocator(project_info.scenario)
+async def get_building_schedule(config: CEAConfig, project_root: CEAProjectRoot,
+                                scenario: Annotated[ScenarioQuery, Query()], building: str):
+    effective_scenario = scenario.resolve(config, project_root)
+    locator = cea.inputlocator.InputLocator(effective_scenario)
     try:
         schedule_data, schedule_complementary_data = read_cea_schedule(locator, use_type=None, building=building)
         df = pd.DataFrame(schedule_data).set_index(['hour'])
@@ -448,8 +453,10 @@ async def get_building_schedule(project_info: CEAProjectInfo, building: str):
 
 
 @router.get('/databases')
-async def get_input_database_data(project_info: CEAProjectInfo):
-    locator = cea.inputlocator.InputLocator(project_info.scenario)
+async def get_input_database_data(config: CEAConfig, project_root: CEAProjectRoot,
+                                  scenario: Annotated[ScenarioQuery, Query()]):
+    effective_scenario = scenario.resolve(config, project_root)
+    locator = cea.inputlocator.InputLocator(effective_scenario)
     try:
         cea_db = await run_in_threadpool(lambda: CEADatabase.from_locator(locator))
     except CEADatabaseException as e:
@@ -468,8 +475,10 @@ async def get_input_database_data(project_info: CEAProjectInfo):
 
 
 @router.put('/databases', dependencies=[CEASeverDemoAuthCheck])
-async def put_input_database_data(project_info: CEAProjectInfo, payload: Dict[str, Any]):
-    locator = cea.inputlocator.InputLocator(project_info.scenario)
+async def put_input_database_data(config: CEAConfig, project_root: CEAProjectRoot,
+                                  scenario: Annotated[ScenarioQuery, Query()], payload: Dict[str, Any]):
+    effective_scenario = scenario.resolve(config, project_root)
+    locator = cea.inputlocator.InputLocator(effective_scenario)
     try:
         def fn():
             db = CEADatabase.from_dict(payload)
@@ -485,11 +494,13 @@ async def put_input_database_data(project_info: CEAProjectInfo, payload: Dict[st
 
 
 @router.post('/databases/upload', dependencies=[CEASeverDemoAuthCheck])
-async def upload_input_database(project_info: CEAProjectInfo, file: UploadFile):
-    locator = cea.inputlocator.InputLocator(project_info.scenario)
+async def upload_input_database(config: CEAConfig, project_root: CEAProjectRoot,
+                                scenario: Annotated[ScenarioQuery, Query()], file: UploadFile):
+    effective_scenario = scenario.resolve(config, project_root)
+    locator = cea.inputlocator.InputLocator(effective_scenario)
 
     # Create a lock file path specific to this scenario
-    lock_file_path = os.path.join(tempfile.gettempdir(), f'cea_db_upload_{hash(project_info.scenario)}.lock')
+    lock_file_path = os.path.join(tempfile.gettempdir(), f'cea_db_upload_{hash(effective_scenario)}.lock')
 
     def do_upload():
         """Perform the upload operation with file-based locking"""
@@ -594,8 +605,10 @@ async def upload_input_database(project_info: CEAProjectInfo, file: UploadFile):
     return await run_in_threadpool(do_upload)
 
 @router.get('/databases/download', dependencies=[CEASeverDemoAuthCheck])
-async def download_input_database(project_info: CEAProjectInfo):
-    locator = cea.inputlocator.InputLocator(project_info.scenario)
+async def download_input_database(config: CEAConfig, project_root: CEAProjectRoot,
+                                  scenario: Annotated[ScenarioQuery, Query()]):
+    effective_scenario = scenario.resolve(config, project_root)
+    locator = cea.inputlocator.InputLocator(effective_scenario)
     filename = 'database.zip'
 
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -630,12 +643,13 @@ async def download_input_database(project_info: CEAProjectInfo):
 
 # Move to database route
 @router.get('/databases/check')
-async def check_input_database(project_info: CEAProjectInfo):
+async def check_input_database(config: CEAConfig, project_root: CEAProjectRoot,
+                               scenario: Annotated[ScenarioQuery, Query()]):
     """Check if the databases are valid"""
-    scenario = project_info.scenario
+    effective_scenario = scenario.resolve(config, project_root)
 
     try:
-        verify_database(scenario)
+        verify_database(effective_scenario)
         return {'status': 'success', 'message': True}
     except CEADatabaseException as e:
         output = str(e.message).strip()

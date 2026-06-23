@@ -24,7 +24,7 @@ import cea.inputlocator
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
     verify_input_typology, COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY, verify_input_terrain
 from cea.datamanagement.surroundings_helper import generate_empty_surroundings
-from cea.interfaces.dashboard.dependencies import CEAConfig, CEADatabaseConfig, CEAProjectRoot, CEAProjectInfo, \
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot, CEAProjectInfo, \
     create_project, CEAUserID, \
     CEASeverDemoAuthCheck, CEAServerLimits
 from cea.interfaces.dashboard.lib.database.session import SessionDep
@@ -317,7 +317,10 @@ async def create_new_project(project_root: CEAProjectRoot, new_project: NewProje
 @router.put('/')
 async def update_project(project_root: CEAProjectRoot, config: CEAConfig, scenario_path: ScenarioPath):
     """
-    Update Project info in config
+    Update Project info in config.
+
+    In local mode, persists the selection to ~/cea.config (keeps CLI parity).
+    In non-local (stateless) mode, save() is a no-op so only validation occurs.
     """
     project_path = scenario_path.project
     if project_root is not None and not project_path.startswith(project_root):
@@ -331,10 +334,7 @@ async def update_project(project_root: CEAProjectRoot, config: CEAConfig, scenar
         if os.path.exists(project):
             config.project = project
             config.scenario_name = scenario_name
-            if isinstance(config, CEADatabaseConfig):
-                await config.save()
-            else:
-                config.save()
+            config.save()
 
             return {'message': 'Updated project info in config', 'project': project, 'scenario_name': scenario_name}
         else:
@@ -696,7 +696,7 @@ async def put(config: CEAConfig, scenario: str, payload: Dict[str, Any]):
     """Update scenario"""
     scenario_path = secure_path(os.path.join(config.project, scenario))
     new_scenario_name = payload.get('name')
-    
+
     # Assume no operations done, return None
     if new_scenario_name is None:
         return None
@@ -708,10 +708,7 @@ async def put(config: CEAConfig, scenario: str, payload: Dict[str, Any]):
         os.rename(scenario_path, new_path)
         if config.scenario_name == scenario:
             config.scenario_name = new_scenario_name
-            if isinstance(config, CEADatabaseConfig):
-                await config.save()
-            else:
-                config.save()
+            config.save()
         return {'name': new_scenario_name}
     except OSError:
         raise HTTPException(
