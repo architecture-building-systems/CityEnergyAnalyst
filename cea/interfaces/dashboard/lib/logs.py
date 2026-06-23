@@ -1,5 +1,7 @@
 import logging
 
+from cea.interfaces.dashboard.settings import get_settings
+
 FORMAT = "%(levelname)-10s[%(name)s] - %(message)s"
 
 class CustomFormatter(logging.Formatter):
@@ -30,7 +32,7 @@ class CustomFormatter(logging.Formatter):
 
 def getCEAServerLogger(name="cea-server"):
     logger = logging.getLogger(name)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(get_settings().log_level.upper())
 
     stdout_handler = logging.StreamHandler()
     stdout_handler.setFormatter(CustomFormatter(FORMAT))

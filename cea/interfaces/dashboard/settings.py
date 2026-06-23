@@ -8,9 +8,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from cea.interfaces.dashboard.constants import ENV_VAR_PREFIX
 from cea.interfaces.dashboard.lib.cache.settings import cache_settings
 from cea.interfaces.dashboard.lib.database.settings import database_settings
-from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
-
-logger = getCEAServerLogger("cea-server-settings")
 
 
 class StackAuthSettings(BaseSettings):
@@ -41,12 +38,23 @@ class Settings(BaseSettings):
     project_root: Optional[str] = None
 
     local: bool = Field(default=True, description="Run in local mode. Writes to local file")
+    log_level: str = Field(default="INFO", description="Log level for the server (DEBUG, INFO, WARNING, ERROR).")
     cors_origin: str = Field(default="*", description="CORS origin(s) allowed to access the API. Use '*' for all origins (not recommended for production). For multiple origins, provide a comma-separated list (e.g. 'http://localhost:3000,https://mydomain.com')")
 
     workers: Optional[int] = Field(default=None, description="Number of workers")
 
     # Local only settings
     config_path: Optional[str] = "~/cea.config"
+
+    @field_validator('log_level', mode='before')
+    @classmethod
+    def validate_log_level(cls, v):
+        import logging
+        upper = str(v).upper()
+        if upper not in logging.getLevelNamesMapping():
+            valid = ', '.join(sorted(logging.getLevelNamesMapping()))
+            raise ValueError(f"Invalid log_level '{v}'. Must be one of: {valid}")
+        return upper
 
     @field_validator('cors_origin', mode='before')
     @classmethod
@@ -69,11 +77,6 @@ class Settings(BaseSettings):
                     f"Wildcard CORS origin ('*') is not allowed in non-local mode. "
                     f"Please set {(ENV_VAR_PREFIX + 'cors_origin').upper()} to your frontend URL(s)."
                 )
-            # Wildcard is the expected default for local mode — log at DEBUG only.
-            logger.debug(
-                "Using wildcard CORS origin ('*'). This is only safe for local development. "
-                "For production, set CEA_CORS_ORIGIN to specific domain(s)."
-            )
             return self
 
         # Validate each origin in comma-separated list
