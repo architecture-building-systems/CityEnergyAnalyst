@@ -14,7 +14,7 @@ from cea.schemas import schemas
 from .utils import deconstruct_parameters
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEASeverDemoAuthCheck
-from cea.interfaces.dashboard.api.utils import CEAScenario
+from cea.interfaces.dashboard.api.utils import CEAScenario, CEAScenarioLenient
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -140,7 +140,7 @@ async def get_tool_list(config: CEAConfig) -> Dict[str, List[ToolDescription]]:
 
 
 @router.get('/{tool_name}')
-async def get_tool_properties(config: CEAConfig, tool_name: str, scenario: CEAScenario) -> ToolProperties:
+async def get_tool_properties(config: CEAConfig, tool_name: str, scenario: CEAScenarioLenient) -> ToolProperties:
     # TODO: Add plugin support
     config.scenario = scenario
     script = cea.scripts.by_name(tool_name, plugins=config.plugins)

@@ -100,7 +100,11 @@ Treat the dashboard server as stateless. Do not persist request-scoped selection
 
 **Config is per-request**: `get_cea_config()` creates a fresh instance on every request (local: `CEALocalConfig` from disk, non-local: `CEAStatelessConfig` from `DEFAULT_CONFIG`). There is no shared config singleton — mutations are request-scoped and need no snapshot/restore.
 
-**`CEAScenario`** (`api/utils.py`) is the standard dependency for resolving the effective scenario. Routes set `config.scenario = scenario` directly; no `finally` restore is needed.
+**Scenario dependencies** (`api/utils.py`):
+- `CEAScenario` enforces that the resolved scenario directory exists (use for endpoints that read/write scenario files).
+- `CEAScenarioLenient` resolves and validates path boundaries but does not require directory existence (use for metadata/config endpoints).
+
+Both dependencies enforce `project_root` boundaries when present; in non-local mode, absolute `project` query values are rejected.
 
 **`save()` behaviour**: `CEALocalConfig.save()` writes `~/cea.config`; `CEAStatelessConfig.save()` is a no-op. Call `config.save()` unconditionally where appropriate — it does the right thing in both modes.
 

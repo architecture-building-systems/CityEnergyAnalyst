@@ -42,13 +42,20 @@ class ScenarioQuery(BaseModel):
         Never mutates config.
         """
         if self.scenario_path is not None:
-            return secure_path(self.scenario_path)
+            return secure_path(self.scenario_path, root=project_root)
         if self.project is not None and self.scenario_name is not None:
             p = self.project
-            if project_root is not None and not p.startswith(project_root):
+            if project_root is not None:
+                if os.path.isabs(p):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="project must be a relative path when project_root is enforced.",
+                    )
                 p = os.path.join(project_root, p)
-            return os.path.join(secure_path(p), validate_scenario_name(self.scenario_name))
-        return str(config.scenario)
+            project_path = secure_path(p, root=project_root)
+            scenario_path = os.path.join(project_path, validate_scenario_name(self.scenario_name))
+            return secure_path(scenario_path, root=project_root)
+        return secure_path(str(config.scenario), root=project_root)
 
 
 def validate_scenario_name(scenario_name: str) -> str:
@@ -158,20 +165,38 @@ def _should_validate(p: cea.config.Parameter) -> bool:
     return False
 
 
-def get_effective_scenario(
+def _get_effective_scenario(
     config: CEAConfig,
     project_root: CEAProjectRoot,
     scenario: Annotated[ScenarioQuery, Query()],
+    require_exists: bool,
 ) -> str:
     logger.debug("Resolving scenario: %s", scenario.model_dump(exclude_none=True))
     path = scenario.resolve(config, project_root)
-    if not os.path.isdir(path):
+    if require_exists and not os.path.isdir(path):
         logger.error("Scenario directory not found: %s", path)
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Scenario not found.",
         )
     return path
 
 
+def get_effective_scenario(
+    config: CEAConfig,
+    project_root: CEAProjectRoot,
+    scenario: Annotated[ScenarioQuery, Query()],
+) -> str:
+    return _get_effective_scenario(config, project_root, scenario, require_exists=True)
+
+
+def get_effective_scenario_lenient(
+    config: CEAConfig,
+    project_root: CEAProjectRoot,
+    scenario: Annotated[ScenarioQuery, Query()],
+) -> str:
+    return _get_effective_scenario(config, project_root, scenario, require_exists=False)
+
+
 CEAScenario = Annotated[str, Depends(get_effective_scenario)]
+CEAScenarioLenient = Annotated[str, Depends(get_effective_scenario_lenient)]
