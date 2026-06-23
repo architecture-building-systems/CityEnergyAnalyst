@@ -108,6 +108,24 @@ Both dependencies enforce `project_root` boundaries when present; in non-local m
 
 **`save()` behaviour**: `CEALocalConfig.save()` writes `~/cea.config`; `CEAStatelessConfig.save()` is a no-op. Call `config.save()` unconditionally where appropriate — it does the right thing in both modes.
 
+## Architectural Debt: Query-Param Scenario Passing
+
+**Current API pattern** (temporary):
+```
+PUT /tools/{tool}/save-config?scenario=MyScenario&project=project
+```
+
+**Planned refactor** (blocked by projects table):
+```
+PUT /projects/{project_id}/scenarios/{scenario_name}/tools/{tool}/config
+```
+
+**Why query params exist**: Scenarios are filesystem paths (contain `/`); cannot be safely embedded in URL paths. Refactor requires a projects table mapping `project_id → project_path` (both local and non-local modes).
+
+**Pathway child scenarios**: Use dedicated `?child_scenario=subpath` parameter (e.g., `pathway_output/year_2050/scenario`), validated to prevent directory escaping.
+
+**See also**: TODO comments in `cea/interfaces/dashboard/api/utils.py` and `api/tools.py` for refactor details.
+
 ## Docker
 
 Server runs as PID 1 with a `SIGCHLD` handler (`setup_sigchld_handler` in `app.py`) that reaps zombie workers via `os.waitpid(-1, WNOHANG)`. Tini not required but easy to re-enable.

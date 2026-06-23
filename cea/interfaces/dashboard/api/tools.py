@@ -1,3 +1,7 @@
+# TODO: Refactor to PUT /projects/{project_id}/scenarios/{scenario_name}/tools/{tool}/config
+# Requires: projects table mapping project_id → project_path (local + non-local compatible).
+# Pathway children use ?child_scenario=subpath. See AGENTS.md.
+
 import os
 from collections import defaultdict
 from itertools import groupby

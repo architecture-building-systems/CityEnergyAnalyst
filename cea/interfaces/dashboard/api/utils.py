@@ -1,3 +1,8 @@
+# TODO: Refactor to PUT /projects/{project_id}/scenarios/{scenario_name}/tools/{tool}/config
+# Requires: projects table mapping project_id → project_path (works in local + non-local modes).
+# Pathway children use ?child_scenario=subpath (e.g., pathway_output/year_2050/scenario).
+# See AGENTS.md for refactor details.
+
 import os
 from typing import Optional
 
