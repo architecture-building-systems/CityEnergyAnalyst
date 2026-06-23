@@ -3,9 +3,11 @@ from typing import Optional
 
 import cea.config
 import cea.inputlocator
-from fastapi import HTTPException, status
+from fastapi import Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field, model_validator
+from typing_extensions import Annotated
 
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot
 from cea.interfaces.dashboard.utils import secure_path
 
 
@@ -151,3 +153,14 @@ def _should_validate(p: cea.config.Parameter) -> bool:
 
     # By default, no explicit validation needed
     return False
+
+
+def get_effective_scenario(
+    config: CEAConfig,
+    project_root: CEAProjectRoot,
+    scenario: Annotated[ScenarioQuery, Query()],
+) -> str:
+    return scenario.resolve(config, project_root)
+
+
+CEAScenario = Annotated[str, Depends(get_effective_scenario)]

@@ -4,24 +4,17 @@ from itertools import groupby
 from typing import Dict, Any, List, Optional
 import logging
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
-from typing import Annotated
 
 import cea.config
 import cea.inputlocator
 import cea.scripts
 from cea.schemas import schemas
-from .utils import (
-    deconstruct_parameters,
-    split_scenario_subpath,
-    validate_scenario_name,
-    validate_scenario_name_or_subpath,
-    ScenarioQuery,
-)
+from .utils import deconstruct_parameters
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
-from cea.interfaces.dashboard.dependencies import CEAConfig, CEASeverDemoAuthCheck, CEAProjectRoot
-from cea.datamanagement.district_pathways.pathway_timeline import PathwayChildScenario
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEASeverDemoAuthCheck
+from cea.interfaces.dashboard.api.utils import CEAScenario
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -147,21 +140,11 @@ async def get_tool_list(config: CEAConfig) -> Dict[str, List[ToolDescription]]:
 
 
 @router.get('/{tool_name}')
-async def get_tool_properties(config: CEAConfig, project_root: CEAProjectRoot, tool_name: str,
-                              scenario: Annotated[ScenarioQuery, Query()]) -> ToolProperties:
+async def get_tool_properties(config: CEAConfig, tool_name: str, scenario: CEAScenario) -> ToolProperties:
     # TODO: Add plugin support
     original_scenario = str(config.scenario)
     try:
-        if scenario.scenario_path is not None:
-            config.scenario = secure_path(scenario.scenario_path)
-        else:
-            if scenario.project is not None:
-                project = scenario.project
-                if project_root is not None and not project.startswith(project_root):
-                    project = os.path.join(project_root, project)
-                config.project = secure_path(project)
-            if scenario.scenario_name is not None:
-                config.scenario_name = validate_scenario_name(scenario.scenario_name)
+        config.scenario = scenario
 
         script = cea.scripts.by_name(tool_name, plugins=config.plugins)
 
@@ -358,78 +341,53 @@ async def get_parameter_metadata(config: CEAConfig, tool_name: str, payload: Dic
 
 
 @router.post('/{tool_name}/check')
-async def check_tool_inputs(
-    config: CEAConfig,
-    project_root: CEAProjectRoot,
-    tool_name: str,
-    payload: Dict[str, Any],
-    project: Optional[str] = None,
-    scenario_name: Optional[str] = None,
-):
-    # Optional `project` + `scenario_name` query params let the
-    # caller validate inputs against a *different* scenario than
-    # the project store's active one. Used by the Canvas Builder's
-    # compare-mode per-column edit so the validation runs against
-    # the column's scenario (and pulls *its* choices for things
-    # like `what-if-name`) rather than whichever scenario the
-    # project store happens to be on. Mirrors the same override
-    # pattern in `get_tool_properties` above, including the
-    # pathway-viewer guard.
-    in_child_scenario = PathwayChildScenario.is_valid(config.scenario)
-    if not in_child_scenario:
-        if project is not None:
-            if project_root is not None and not project.startswith(project_root):
-                project = os.path.join(project_root, project)
-            config.project = secure_path(project)
-        if scenario_name is not None:
-            # See `get_tool_properties` for the path-handling rationale.
-            scenario_name = validate_scenario_name_or_subpath(scenario_name)
-            project_dir, scenario_name = split_scenario_subpath(
-                scenario_name, config.project,
-            )
-            config.project = secure_path(project_dir)
-            config.scenario_name = scenario_name
-    candidates = [
-        (parameter, payload[parameter.name])
-        for parameter in parameters_for_script(tool_name, config)
-        if parameter.name in payload and parameter.name != 'scenario'
-    ]
+async def check_tool_inputs(config: CEAConfig, tool_name: str, payload: Dict[str, Any], scenario: CEAScenario):
+    original_scenario = str(config.scenario)
     try:
-        validate_and_apply_parameters(candidates)
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={'message': 'Validation failed', 'field_errors': e.args[0]})
+        config.scenario = scenario
+        candidates = [
+            (parameter, payload[parameter.name])
+            for parameter in parameters_for_script(tool_name, config)
+            if parameter.name in payload and parameter.name != 'scenario'
+        ]
+        try:
+            validate_and_apply_parameters(candidates)
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={'message': 'Validation failed', 'field_errors': e.args[0]})
 
-    # TODO: Add plugin support
-    script = cea.scripts.by_name(tool_name, plugins=config.plugins)
-    schema_data = schemas(config.plugins)
+        # TODO: Add plugin support
+        script = cea.scripts.by_name(tool_name, plugins=config.plugins)
+        schema_data = schemas(config.plugins)
 
-    script_suggestions = set()
+        script_suggestions = set()
 
-    for method_name, path in script.missing_input_files(config):
-        _script_suggestions = schema_data[method_name]['created_by'] if 'created_by' in schema_data[
-            method_name] else None
+        for method_name, _ in script.missing_input_files(config):
+            _script_suggestions = schema_data[method_name]['created_by'] if 'created_by' in schema_data[
+                method_name] else None
 
-        if _script_suggestions is not None:
-            script_suggestions.update(_script_suggestions)
+            if _script_suggestions is not None:
+                script_suggestions.update(_script_suggestions)
 
-    if script_suggestions:
-        scripts = []
-        for script_suggestion in script_suggestions:
-            _script = cea.scripts.by_name(script_suggestion, plugins=config.plugins)
-            scripts.append({"label": _script.label, "name": _script.name})
+        if script_suggestions:
+            scripts = []
+            for script_suggestion in script_suggestions:
+                _script = cea.scripts.by_name(script_suggestion, plugins=config.plugins)
+                scripts.append({"label": _script.label, "name": _script.name})
 
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail={"message": "Missing input files",
-                                    "script_suggestions": list(scripts)})
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail={"message": "Missing input files",
+                                        "script_suggestions": list(scripts)})
 
-    # Collision warnings from the check-inputs path (Run button confirmation)
-    warnings = []
-    for field_name in ('network-name', 'what-if-name'):
-        if field_name in payload:
-            warnings.extend(
-                _collect_field_warnings(tool_name, field_name, payload[field_name], config)
-            )
-    return {"warnings": warnings} if warnings else None
+        # Collision warnings from the check-inputs path (Run button confirmation)
+        warnings = []
+        for field_name in ('network-name', 'what-if-name'):
+            if field_name in payload:
+                warnings.extend(
+                    _collect_field_warnings(tool_name, field_name, payload[field_name], config)
+                )
+        return {"warnings": warnings} if warnings else None
+    finally:
+        config.scenario = original_scenario
 
 
 def _collect_field_warnings(tool_name, parameter_name, value, config):

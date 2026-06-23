@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Optional, Annotated
+from typing import Any
 
 import cea.inputlocator
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
 
@@ -30,22 +30,17 @@ from cea.datamanagement.district_pathways.pathway_timeline import (
     validate_baked_state,
     validate_pathway_log,
 )
-from cea.interfaces.dashboard.dependencies import CEAConfig, CEASeverDemoAuthCheck, CEAProjectRoot
-from cea.interfaces.dashboard.api.utils import ScenarioQuery
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEASeverDemoAuthCheck
+from cea.interfaces.dashboard.api.utils import CEAScenario
 
 
-async def _apply_parent_scenario(
-    config: CEAConfig,
-    project_root: CEAProjectRoot,
-    project: Annotated[Optional[str], Query()] = None,
-    scenario_name: Annotated[Optional[str], Query(alias='scenario_name')] = None,
-):
+async def _apply_parent_scenario(config: CEAConfig, scenario: CEAScenario):
     """Router-level dependency: apply the per-request parent scenario to config
     in memory for the duration of the request, then restore the original values.
     Never calls save() — this is a stateless, request-scoped override.
     Falls back to config.scenario when no params are provided."""
     original_scenario = str(config.scenario)
-    config.scenario = ScenarioQuery(project=project, scenario_name=scenario_name).resolve(config, project_root)
+    config.scenario = scenario
     try:
         yield
     finally:
