@@ -8,7 +8,10 @@ from pydantic import BaseModel, Field, model_validator
 from typing_extensions import Annotated
 
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot
+from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 from cea.interfaces.dashboard.utils import secure_path
+
+logger = getCEAServerLogger("cea-server-utils")
 
 
 class ScenarioQuery(BaseModel):
@@ -160,7 +163,15 @@ def get_effective_scenario(
     project_root: CEAProjectRoot,
     scenario: Annotated[ScenarioQuery, Query()],
 ) -> str:
-    return scenario.resolve(config, project_root)
+    logger.debug("Resolving scenario: %s", scenario.model_dump(exclude_none=True))
+    path = scenario.resolve(config, project_root)
+    if not os.path.isdir(path):
+        logger.error("Scenario directory not found: %s", path)
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Scenario not found.",
+        )
+    return path
 
 
 CEAScenario = Annotated[str, Depends(get_effective_scenario)]
