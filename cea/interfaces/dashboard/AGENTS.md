@@ -68,6 +68,17 @@ All transitions are auth-checked and row-locked (TOCTOU protection).
 - Keep FastAPI responses as Python objects; JSON-safe conversion too early breaks computed fields like `duration`
 - Prefer FastAPI `status.HTTP_*` constants over numeric status codes in `HTTPException` and response constructors
 
+## Logging
+
+Use `getCEAServerLogger` from `cea.interfaces.dashboard.lib.logs` — never `logging.getLogger(__name__)`.
+
+```python
+from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
+logger = getCEAServerLogger("cea-server-<module>")
+```
+
+Use a descriptive name matching the module (e.g. `"cea-server-utils"`, `"cea-server-inputs"`).
+
 ## Caching (`dependencies.py`)
 
 - `worker_processes`: `job_id → PID` (TTL-based)
