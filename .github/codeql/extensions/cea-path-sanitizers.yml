@@ -1,0 +1,10 @@
+extensions:
+  - addsTo:
+      pack: codeql/python-queries
+      extensible: neutralModel
+    data:
+      # secure_path resolves a canonical path via os.path.realpath and enforces
+      # project-root boundary checks (validate_path_within_root).  Declaring it
+      # neutral prevents CodeQL from propagating taint through its return value:
+      # any path that has passed through secure_path is considered sanitised.
+      - ["cea.interfaces.dashboard.utils", "", false, "secure_path", "()", "", "summary", "manual"]

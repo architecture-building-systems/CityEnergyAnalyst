@@ -14,7 +14,7 @@ import cea.inputlocator
 import cea.scripts
 from cea.schemas import schemas
 from .utils import deconstruct_parameters
-from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
+from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError, secure_join_under_root
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEASeverDemoAuthCheck
 from cea.interfaces.dashboard.api.utils import CEAScenario, CEAScenarioLenient
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
@@ -395,12 +395,16 @@ def _collect_field_warnings(tool_name, parameter_name, value, config):
     v = (value or '').strip()
     if not v:
         return []
-    locator = cea.inputlocator.InputLocator(config.scenario)
+    try:
+        scenario_root = config.scenario
+        locator = cea.inputlocator.InputLocator(scenario_root)
+    except OutsideProjectRootError:
+        return []
 
     if tool_name == 'network-layout' and parameter_name == 'network-name':
         folder = locator.get_thermal_network_folder_network_name_folder(v)
         try:
-            folder = secure_path(folder, root=config.scenario)
+            folder = secure_path(folder, root=scenario_root)
         except OutsideProjectRootError:
             return []
         if os.path.isdir(folder):
@@ -413,10 +417,10 @@ def _collect_field_warnings(tool_name, parameter_name, value, config):
             }]
 
     if tool_name == 'final-energy' and parameter_name == 'what-if-name':
-        folder = locator.get_analysis_folder(v)
         try:
-            folder = secure_path(folder, root=config.scenario)
-        except OutsideProjectRootError:
+            analysis_parent = secure_path(locator.get_analysis_parent_folder(), root=scenario_root)
+            folder = secure_join_under_root(analysis_parent, v)
+        except (OutsideProjectRootError, ValueError):
             return []
         if os.path.isdir(folder):
             return [{

@@ -28,7 +28,11 @@ import cea.schemas
 from cea.databases import CEADatabase, CEADatabaseException
 from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
 from cea.interfaces.dashboard.dependencies import CEASeverDemoAuthCheck
-from cea.interfaces.dashboard.utils import secure_path
+from cea.interfaces.dashboard.utils import (
+    secure_path,
+    secure_join_under_root,
+    OutsideProjectRootError,
+)
 from cea.interfaces.dashboard.api.utils import CEAScenario
 from cea.plots.supply_system.a_supply_system_map import get_building_connectivity, newer_network_layout_exists
 from cea.plots.variable_naming import get_color_array
@@ -478,7 +482,7 @@ async def upload_input_database(scenario: CEAScenario, file: UploadFile):
     locator = cea.inputlocator.InputLocator(scenario)
 
     # Create a lock file path specific to this scenario
-    scenario_id = hashlib.sha256(os.path.realpath(scenario).encode('utf-8')).hexdigest()
+    scenario_id = hashlib.sha256(scenario.encode('utf-8')).hexdigest()
     lock_file_path = os.path.join(tempfile.gettempdir(), f'cea_db_upload_{scenario_id}.lock')
 
     def do_upload():
@@ -513,14 +517,15 @@ async def upload_input_database(scenario: CEAScenario, file: UploadFile):
                         # Normalize and validate the path to prevent directory traversal attacks
                         member_path = os.path.normpath(adjusted_filename)
 
-                        # Construct the full target path
-                        target_path = os.path.join(temp_db_folder, member_path)
-
-                        # Verify the resolved path is within the target directory
-                        target_path_resolved = os.path.realpath(target_path)
-                        db_folder_resolved = os.path.realpath(temp_db_folder)
-
-                        if os.path.isabs(member_path) or '..' in member_path.split(os.sep) or not target_path_resolved.startswith(db_folder_resolved + os.sep):
+                        # Construct the full target path and enforce root containment
+                        if os.path.isabs(member_path) or '..' in member_path.split(os.sep):
+                            raise HTTPException(
+                                status_code=status.HTTP_400_BAD_REQUEST,
+                                detail=f'Invalid ZIP file: {adjusted_filename}',
+                            )
+                        try:
+                            target_path = secure_join_under_root(temp_db_folder, member_path)
+                        except OutsideProjectRootError:
                             raise HTTPException(
                                 status_code=status.HTTP_400_BAD_REQUEST,
                                 detail=f'Invalid ZIP file: {adjusted_filename}',

@@ -106,6 +106,10 @@ Treat the dashboard server as stateless. Do not persist request-scoped selection
 
 Both dependencies read scenario context from `X-CEA-*` headers first; if absent they fall back to query params. They enforce `project_root` boundaries in both cases; in non-local mode, absolute `X-CEA-Project` / `project` values are rejected.
 
+**Route path safety helpers** (`utils.py`):
+- Use `InputLocator(scenario)` directly in all route handlers — `CEAScenario` / `CEAScenarioLenient` already sanitise the path, and `resolve_scenario_path` applies `secure_path` to the final joined path for cross-scenario routes.
+- Use `secure_join_under_root(base, user_segment)` when appending user-provided path segments before filesystem checks.
+
 **`save()` behaviour**: `CEALocalConfig.save()` writes `~/cea.config`; `CEAStatelessConfig.save()` is a no-op. Call `config.save()` unconditionally where appropriate — it does the right thing in both modes.
 
 ## Scenario Context — Header Contract
