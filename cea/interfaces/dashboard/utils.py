@@ -22,7 +22,7 @@ def secure_join_under_root(base: Union[str, os.PathLike], *parts: Union[str, os.
 
     Useful when appending user-provided path segments to a trusted parent.
     """
-    root = secure_path(base)
+    root = os.path.realpath(base)
     candidate = os.path.realpath(os.path.join(root, *parts))
     try:
         return validate_path_within_root(candidate, root)
@@ -83,7 +83,7 @@ def resolve_scenario_path(
         project_path = os.path.join(project_root, project_path)
 
     project_path = secure_path(project_path)
-    scenario_path = secure_path(os.path.join(project_path, scenario))
+    scenario_path = secure_join_under_root(project_path, scenario)
 
     if not os.path.isdir(scenario_path):
         raise HTTPException(
