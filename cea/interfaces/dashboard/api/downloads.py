@@ -370,29 +370,30 @@ async def get_download_url(
 async def download_file(
     download_id: str,
     session: CEASession,
-    user_id: Optional[str] = None,  # From CEAUserID dependency (cookies/session)
+    user_id: CEAUserID,
     token: Optional[str] = None  # From query parameter (pre-signed URL)
 ):
     """
     Download the prepared zip file.
     Supports two authentication methods:
-    1. Session-based (cookies) via user_id dependency
-    2. Token-based (pre-signed URL) via token query parameter
+    1. Session-based (cookies) via the CEAUserID dependency
+    2. Token-based (pre-signed URL) via the token query parameter
 
+    Token takes precedence when both are present.
     File is deleted immediately after download (single-use policy).
 
     Args:
         download_id: Download ID
         session: Database session
-        user_id: Current user ID from session (optional if using token)
-        token: JWT token from pre-signed URL (optional if using session)
+        user_id: Current user ID resolved from session cookies by CEAUserID
+        token: JWT token from pre-signed URL (optional)
 
     Returns:
         File response with zip file
 
     Raises:
         HTTPException 401: If no authentication provided
-        HTTPException 403: If token invalid or user not authorized
+        HTTPException 403: If token invalid or user not authorised
         HTTPException 404: If download not found
         HTTPException 409: If download already in progress
         HTTPException 410: If download already completed
