@@ -1,10 +1,11 @@
 extensions:
   - addsTo:
-      pack: codeql/python-queries
-      extensible: neutralModel
+      pack: codeql/python-all
+      extensible: barrierModel
     data:
       # secure_path resolves a canonical path via os.path.realpath and enforces
-      # project-root boundary checks (validate_path_within_root).  Declaring it
-      # neutral prevents CodeQL from propagating taint through its return value:
-      # any path that has passed through secure_path is considered sanitised.
-      - ["cea.interfaces.dashboard.utils", "", false, "secure_path", "()", "", "summary", "manual"]
+      # project-root boundary checks (validate_path_within_root). Declaring its
+      # return value as a path-injection barrier stops CodeQL from tracing taint
+      # through it into downstream filesystem operations.
+      - ["cea.interfaces.dashboard.utils", "Member[secure_path].ReturnValue", "path-injection"]
+      - ["cea.interfaces.dashboard.utils", "Member[secure_join_under_root].ReturnValue", "path-injection"]
