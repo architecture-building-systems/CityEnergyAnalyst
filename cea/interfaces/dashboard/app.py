@@ -119,7 +119,8 @@ cors_config = CORSConfig(
     origins=origins,
     allow_credentials=allow_credentials,
     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    headers=["Content-Type", "Authorization", "X-Requested-With", "Accept"]
+    headers=["Content-Type", "Authorization", "X-Requested-With", "Accept",
+             "X-CEA-Project", "X-CEA-Scenario-Name", "X-CEA-Child-Scenario"]
 )
 
 app.add_middleware(

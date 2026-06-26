@@ -96,7 +96,7 @@ Not every user action should become a background job. Keep fast synchronous API 
 
 ## Statelessness (important for container scaling)
 
-Treat the dashboard server as stateless. Do not persist request-scoped selections (e.g. scenario) to `config` or any server-side store. Pass context per request — accept it as a query parameter and apply it in memory for that request only; never call `save()` on it.
+Treat the dashboard server as stateless. Do not persist request-scoped selections (e.g. scenario) to `config` or any server-side store. Pass context per request via `X-CEA-*` headers (preferred) or query params (deprecated compat); never call `save()` on it.
 
 **Config is per-request**: `get_cea_config()` creates a fresh instance on every request (local: `CEALocalConfig` from disk, non-local: `CEAStatelessConfig` from `DEFAULT_CONFIG`). There is no shared config singleton — mutations are request-scoped and need no snapshot/restore.
 
@@ -104,27 +104,27 @@ Treat the dashboard server as stateless. Do not persist request-scoped selection
 - `CEAScenario` enforces that the resolved scenario directory exists (use for endpoints that read/write scenario files).
 - `CEAScenarioLenient` resolves and validates path boundaries but does not require directory existence (use for metadata/config endpoints).
 
-Both dependencies enforce `project_root` boundaries when present; in non-local mode, absolute `project` query values are rejected.
+Both dependencies read scenario context from `X-CEA-*` headers first; if absent they fall back to query params. They enforce `project_root` boundaries in both cases; in non-local mode, absolute `X-CEA-Project` / `project` values are rejected.
 
 **`save()` behaviour**: `CEALocalConfig.save()` writes `~/cea.config`; `CEAStatelessConfig.save()` is a no-op. Call `config.save()` unconditionally where appropriate — it does the right thing in both modes.
 
-## Architectural Debt: Query-Param Scenario Passing
+## Scenario Context — Header Contract
 
-**Current API pattern** (temporary):
-```
-PUT /tools/{tool}/save-config?scenario=MyScenario&project=project
-```
+Scenario context travels as HTTP request headers. Query params (`project`, `scenario_name`, `scenario_path`) are deprecated compat, accepted during frontend migration.
 
-**Planned refactor** (blocked by projects table):
-```
-PUT /projects/{project_id}/scenarios/{scenario_name}/tools/{tool}/config
-```
+| Header | Purpose |
+|---|---|
+| `X-CEA-Project` | Project directory (relative under `project_root` in non-local mode) |
+| `X-CEA-Scenario-Name` | Bare scenario name — always the parent scenario |
+| `X-CEA-Child-Scenario` | Logical pathway child token `<pathway_name>/<year>`; requires the two above |
 
-**Why query params exist**: Scenarios are filesystem paths (contain `/`); cannot be safely embedded in URL paths. Refactor requires a projects table mapping `project_id → project_path` (both local and non-local modes).
+**Resolution priority**: header values (if any header present) > query params > `config.scenario`.
 
-**Pathway child scenarios**: Use dedicated `?child_scenario=subpath` parameter (e.g., `pathway_output/year_2050/scenario`), validated to prevent directory escaping.
+**Child scenario**: `X-CEA-Child-Scenario: <pathway_name>/<year>` is a logical token — the backend resolves it to a filesystem path via `InputLocator.get_state_in_time_scenario_folder(pathway_name, year)`. No filesystem path is sent by the client; the physical layout (`outputs/pathways/<name>/state_<year>`) stays an implementation detail.
 
-**See also**: TODO comments in `cea/interfaces/dashboard/api/utils.py` and `api/tools.py` for refactor details.
+**Canvas compare mode**: send per-request `headers` on each Axios call to target different scenarios concurrently — one global header/cookie cannot express this, which is why headers (not cookies) were chosen.
+
+**Future phase (separate plan)**: URL path hierarchy `PUT /projects/{id}/scenarios/{name}/...` requires a `project_id → project_path` mapping table (works for local and non-local modes). Deferred: no `project_id` migration needed until online multi-user requires stable IDs.
 
 ## Docker
 
