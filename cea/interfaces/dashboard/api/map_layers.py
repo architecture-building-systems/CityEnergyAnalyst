@@ -12,10 +12,14 @@ router = APIRouter()
 
 
 class LayerParams(BaseModel):
+    model_config = {"extra": "forbid"}
+
     parameters: dict
 
 
 class DeleteChoiceParams(BaseModel):
+    model_config = {"extra": "forbid"}
+
     value: str
 
 

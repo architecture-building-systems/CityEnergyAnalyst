@@ -6,8 +6,6 @@ import os
 from collections import defaultdict
 from itertools import groupby
 from typing import Dict, Any, List, Optional
-import logging
-
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 
@@ -19,9 +17,10 @@ from .utils import deconstruct_parameters
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEASeverDemoAuthCheck
 from cea.interfaces.dashboard.api.utils import CEAScenario, CEAScenarioLenient
+from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 
 router = APIRouter()
-logger = logging.getLogger(__name__)
+logger = getCEAServerLogger("cea-server-tools")
 
 
 

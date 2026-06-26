@@ -1,3 +1,4 @@
+import hashlib
 import io
 import json
 import os
@@ -477,7 +478,8 @@ async def upload_input_database(scenario: CEAScenario, file: UploadFile):
     locator = cea.inputlocator.InputLocator(scenario)
 
     # Create a lock file path specific to this scenario
-    lock_file_path = os.path.join(tempfile.gettempdir(), f'cea_db_upload_{hash(scenario)}.lock')
+    scenario_id = hashlib.sha256(os.path.realpath(scenario).encode('utf-8')).hexdigest()
+    lock_file_path = os.path.join(tempfile.gettempdir(), f'cea_db_upload_{scenario_id}.lock')
 
     def do_upload():
         """Perform the upload operation with file-based locking"""

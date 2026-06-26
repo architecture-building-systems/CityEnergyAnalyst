@@ -6,6 +6,7 @@ from aiocache.serializers import PickleSerializer
 from cea.interfaces.dashboard.lib.cache.base import AsyncDictCache
 from cea.interfaces.dashboard.lib.cache.settings import CACHE_NAME, cache_settings, DEFAULT_CACHE_TTL
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
+from cea.interfaces.dashboard.settings import get_settings
 
 logger = getCEAServerLogger("cea-cache")
 
@@ -74,6 +75,11 @@ async def init_cache():
         await asyncio.wait_for(cache.exists("_startup"), timeout=5.0)
         logger.info("Redis cache connected")
     except Exception as e:
+        worker_count = get_settings().workers or 1
+        if worker_count > 1:
+            raise RuntimeError(
+                "Redis cache is required when multiple dashboard workers are configured."
+            ) from e
         logger.warning(f"Redis cache unreachable ({e}), falling back to SimpleMemoryCache")
         if hasattr(cache, 'close'):
             try:

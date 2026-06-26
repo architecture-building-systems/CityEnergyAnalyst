@@ -96,7 +96,7 @@ Not every user action should become a background job. Keep fast synchronous API 
 
 ## Statelessness (important for container scaling)
 
-Treat the dashboard server as stateless. Do not persist request-scoped selections (e.g. scenario) to `config` or any server-side store. Pass context per request via `X-CEA-*` headers (preferred) or query params (deprecated compat); never call `save()` on it.
+Treat the dashboard server as stateless. Do not persist request-scoped selections (e.g. scenario) to `config` or any server-side store. Pass context per request via `X-CEA-*` headers (preferred) or query params (deprecated compat); do not use `config.save()` to persist request-scoped scenario selection.
 
 **Config is per-request**: `get_cea_config()` creates a fresh instance on every request (local: `CEALocalConfig` from disk, non-local: `CEAStatelessConfig` from `DEFAULT_CONFIG`). There is no shared config singleton — mutations are request-scoped and need no snapshot/restore.
 
