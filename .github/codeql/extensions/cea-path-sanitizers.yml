@@ -9,3 +9,6 @@ extensions:
       # through it into downstream filesystem operations.
       - ["cea.interfaces.dashboard.utils", "Member[secure_path].ReturnValue", "path-injection"]
       - ["cea.interfaces.dashboard.utils", "Member[secure_join_under_root].ReturnValue", "path-injection"]
+      # validate_path_within_root resolves to realpath and verifies the result
+      # stays within the given root — its return value is a canonical safe path.
+      - ["cea.utilities", "Member[validate_path_within_root].ReturnValue", "path-injection"]
