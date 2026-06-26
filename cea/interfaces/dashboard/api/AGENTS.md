@@ -26,9 +26,22 @@ return await run_in_threadpool(get_pathway_timeline, config, pathway_name)
 detail={"message": str(exc), "state_kind": "stock", "requires_edit": True}
 ```
 
+### DO: Guard user-derived path segments before filesystem checks
+```python
+candidate = os.path.realpath(os.path.join(base_dir, user_value))
+if os.path.commonpath((base_dir, candidate)) != base_dir:
+	return []
+```
+
 ### DO: Reserve `/api/pathways/*` for dashboard-specific pathway UX
 ```python
 # Timeline/editor actions should not be routed through `/api/tools/*`.
+```
+
+### DO: Use InputLocator directly for CEAScenario-derived paths
+```python
+locator = cea.inputlocator.InputLocator(scenario)  # scenario: CEAScenario already sanitised
+folder = secure_join_under_root(parent_folder, user_segment)
 ```
 
 ### DON'T: Bake or simulate directly inside route handlers

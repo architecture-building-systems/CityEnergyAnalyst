@@ -15,6 +15,20 @@ class OutsideProjectRootError(Exception):
         super().__init__(f"Path `{path}` is not a valid path.")
         self.path = path
 
+
+
+def secure_join_under_root(base: Union[str, os.PathLike], *parts: Union[str, os.PathLike]) -> str:
+    """Join path components and enforce containment under ``base``.
+
+    Useful when appending user-provided path segments to a trusted parent.
+    """
+    root = os.path.realpath(base)
+    candidate = os.path.realpath(os.path.join(root, *parts))
+    try:
+        return validate_path_within_root(candidate, root)
+    except ValueError:
+        raise OutsideProjectRootError(os.path.join(str(base), *map(str, parts)))
+
 def secure_path(path: Union[str, os.PathLike], root: Union[str, os.PathLike, None] = None) -> str:
     """
     Validates and sanitizes a file path to prevent directory traversal attacks.
@@ -69,7 +83,7 @@ def resolve_scenario_path(
         project_path = os.path.join(project_root, project_path)
 
     project_path = secure_path(project_path)
-    scenario_path = os.path.join(project_path, scenario)
+    scenario_path = secure_join_under_root(project_path, scenario)
 
     if not os.path.isdir(scenario_path):
         raise HTTPException(

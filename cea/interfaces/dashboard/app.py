@@ -12,7 +12,7 @@ import cea.interfaces.dashboard.plots.routes as plots
 import cea.interfaces.dashboard.server as server
 from cea.interfaces.dashboard.lib.database.models import create_db_and_tables
 from cea.interfaces.dashboard.lib.database.session import close_db_connection
-from cea.interfaces.dashboard.lib.cache.provider import cleanup_cache_connections
+from cea.interfaces.dashboard.lib.cache.provider import cleanup_cache_connections, init_cache
 from cea.interfaces.dashboard.lib.cors import CORSConfig
 from cea.interfaces.dashboard.lib.logs import logger, getCEAServerLogger
 from cea.interfaces.dashboard.lib.socketio import socket_app
@@ -66,6 +66,8 @@ async def lifespan(_: FastAPI):
     # Setup zombie process reaping
     setup_sigchld_handler()
 
+    await init_cache()
+
     try:
         # FIXME: sqlite not working with async adapter
         await create_db_and_tables()
@@ -117,7 +119,8 @@ cors_config = CORSConfig(
     origins=origins,
     allow_credentials=allow_credentials,
     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    headers=["Content-Type", "Authorization", "X-Requested-With", "Accept"]
+    headers=["Content-Type", "Authorization", "X-Requested-With", "Accept",
+             "X-CEA-Project", "X-CEA-Scenario-Name", "X-CEA-Child-Scenario"]
 )
 
 app.add_middleware(
