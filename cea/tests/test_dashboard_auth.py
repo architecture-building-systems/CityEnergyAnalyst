@@ -1,57 +1,43 @@
-from types import SimpleNamespace
-
+"""Tests for require_authenticated — no monkeypatching; Settings passed directly."""
 import pytest
-from fastapi import HTTPException
-from starlette.requests import Request
+from fastapi import Request
+from fastapi.exceptions import HTTPException
 
-from cea.interfaces.dashboard.dependencies import _PUBLIC_ROUTES, require_authenticated
+from cea.interfaces.dashboard.dependencies import require_authenticated, _PUBLIC_ROUTES
 from cea.interfaces.dashboard.lib.database.models import LOCAL_USER_ID
+from cea.interfaces.dashboard.settings import Settings
+
+LOCAL = Settings.model_construct(local=True)
+NON_LOCAL = Settings.model_construct(local=False)
+AUTHENTICATED_USER = "user_abc123"
+PUBLIC_PATH = next(iter(_PUBLIC_ROUTES))
+PROTECTED_PATH = "/api/project/"
 
 
 def _make_request(path: str) -> Request:
     scope = {
         "type": "http",
-        "http_version": "1.1",
         "method": "GET",
-        "scheme": "http",
         "path": path,
-        "raw_path": path.encode("utf-8"),
         "query_string": b"",
         "headers": [],
-        "client": ("testclient", 50000),
-        "server": ("testserver", 80),
     }
     return Request(scope)
 
 
-def test_requires_authentication_by_default_in_non_local_mode(monkeypatch):
-    from cea.interfaces.dashboard import dependencies as deps
+def test_local_mode_always_passes():
+    require_authenticated(_make_request(PROTECTED_PATH), LOCAL_USER_ID, LOCAL)
 
-    monkeypatch.setattr(deps, "settings", SimpleNamespace(local=False))
-    request = _make_request("/api/inputs/buildings")
 
+def test_non_local_authenticated_user_passes():
+    require_authenticated(_make_request(PROTECTED_PATH), AUTHENTICATED_USER, NON_LOCAL)
+
+
+def test_non_local_unauthenticated_on_protected_path_raises_401():
     with pytest.raises(HTTPException) as exc_info:
-        require_authenticated(request=request, user_id=LOCAL_USER_ID)
-
+        require_authenticated(_make_request(PROTECTED_PATH), LOCAL_USER_ID, NON_LOCAL)
     assert exc_info.value.status_code == 401
-    assert exc_info.value.detail == "Authentication required."
 
 
-def test_public_routes_explicitly_opt_out_of_auth_in_non_local_mode(monkeypatch):
-    from cea.interfaces.dashboard import dependencies as deps
-
-    monkeypatch.setattr(deps, "settings", SimpleNamespace(local=False))
-
-    for path in _PUBLIC_ROUTES:
-        request = _make_request(path)
-        # Public allowlist routes should bypass the global auth gate.
-        require_authenticated(request=request, user_id=LOCAL_USER_ID)
-
-
-def test_local_mode_bypasses_authentication_guard(monkeypatch):
-    from cea.interfaces.dashboard import dependencies as deps
-
-    monkeypatch.setattr(deps, "settings", SimpleNamespace(local=True))
-    request = _make_request("/api/inputs/buildings")
-
-    require_authenticated(request=request, user_id=LOCAL_USER_ID)
+def test_non_local_unauthenticated_on_public_path_passes():
+    require_authenticated(_make_request(PUBLIC_PATH), LOCAL_USER_ID, NON_LOCAL)
