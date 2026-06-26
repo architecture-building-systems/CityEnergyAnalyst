@@ -24,7 +24,7 @@ from cea.datamanagement.district_pathways.pathway_status import (
 )
 from cea.inputlocator import InputLocator
 from cea.interfaces.dashboard.api.pathways import router as pathways_router
-from cea.interfaces.dashboard.dependencies import check_auth_for_demo, get_cea_config
+from cea.interfaces.dashboard.dependencies import require_authenticated, get_cea_config
 
 InputLocator._cleanup_temp_directory = lambda self: None  # type: ignore[method-assign]
 
@@ -50,7 +50,7 @@ def pathway_api_fixture():
     app = FastAPI()
     app.include_router(pathways_router, prefix="/api/pathways")
     app.dependency_overrides[get_cea_config] = lambda: config
-    app.dependency_overrides[check_auth_for_demo] = lambda: None
+    app.dependency_overrides[require_authenticated] = lambda: None
 
     yield {
         "client": TestClient(app),

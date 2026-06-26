@@ -198,18 +198,35 @@ def get_auth_client(request: Request) -> Optional[AuthClient]:
     return None
 
 
-def check_auth_for_demo(request: Request, user_id: CEAUserID):
-    """Check if user is authorized when not in local mode"""
-    # Pass if local mode
+# Routes publicly accessible without authentication in non-local mode.
+# Every other route is gated by require_authenticated (applied at app level).
+_PUBLIC_ROUTES: frozenset = frozenset({
+    "/api/user/session/refresh",  # token refresh — must work with an expired access token
+    "/api/user/logout",           # session teardown — should work even if token is stale
+    "/server/alive",              # health check — monitoring must not need a session
+    "/server/version",            # version info — safe to expose publicly
+})
+
+
+def require_authenticated(request: Request, user_id: CEAUserID):
+    """App-level auth guard: every route requires an authenticated user in non-local mode.
+
+    In local (single-user desktop) mode this is a no-op — all routes are open.
+    In non-local mode any caller that resolves to LOCAL_USER_ID (the anonymous
+    sentinel returned when no valid session token is present) receives 401.
+
+    Routes in _PUBLIC_ROUTES are explicitly excluded (session and health-check
+    endpoints).  No proxy is assumed — the server self-enforces auth.
+    """
     if settings.local:
         return
-
-    # Check if user is authorized
+    if request.url.path in _PUBLIC_ROUTES:
+        return
     if user_id == LOCAL_USER_ID:
-        logger.info(f"Unauthorized access \"{request.method} {request.url.path}\": `{user_id}`")
+        logger.info(f"Unauthenticated access \"{request.method} {request.url.path}\"")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Unauthorized",
+            detail="Authentication required.",
         )
 
 def get_limits(user: CEAUser) -> LimitSettings:
@@ -239,4 +256,4 @@ CEAServerSettings = Annotated[Settings, Depends(get_settings)]
 CEAAuthClient = Annotated[AuthClient, Depends(get_auth_client)]
 CEAServerLimits = Annotated[LimitSettings, Depends(get_limits)]
 
-CEASeverDemoAuthCheck = Depends(check_auth_for_demo)
+RequireAuthenticated = Depends(require_authenticated)

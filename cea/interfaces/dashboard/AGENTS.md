@@ -11,6 +11,31 @@ The dashboard UI (React frontend) is in a **separate repository** — not here.
 
 ---
 
+# API Auth
+
+Route dependencies declare **security intent**; the deployment mode decides how
+it is proven.
+
+**No proxy is assumed.** The server runs locally or online and self-enforces auth
+in both cases. Never rely on a gateway or reverse proxy to pre-filter requests.
+
+**Default auth:** `require_authenticated` runs as an app-level dependency on every
+route. In non-local mode it rejects unauthenticated callers (those that resolve to
+`LOCAL_USER_ID`). No per-route annotation needed — add new routes freely and they
+get auth for free.
+
+**Public exceptions** are listed in `_PUBLIC_ROUTES` in `dependencies.py`:
+session refresh, logout, and health-check endpoints. New public routes must be
+added there explicitly (fail-secure by default).
+
+| Primitive | When to use |
+|---|---|
+| `require_authenticated` | App-level. Do not add to individual routes. |
+| `CEAUser` / `CEAUserID` | Routes that need to know *who* the caller is (ownership, quotas). |
+| `require_public_demo_read(demo_id)` | Path-param dependency for anonymous read of allowlisted demo ids. Used on `/api/demo/*` routes (Phase 2). |
+
+---
+
 # Dashboard Job System
 
 ## Architecture

@@ -18,7 +18,9 @@ return await run_in_threadpool(get_pathway_timeline, config, pathway_name)
 
 ### DO: Treat any route that writes logs or status files as a normal authenticated write
 ```python
-@router.post("/{pathway_name}/years/{year}/validate-state", dependencies=[CEASeverDemoAuthCheck])
+@router.post("/{pathway_name}/years/{year}/validate-state")
+# No per-route auth annotation needed — require_authenticated runs app-wide.
+# Add to _PUBLIC_ROUTES in dependencies.py only if the route must be publicly accessible.
 ```
 
 ### DO: Preserve structured 409 payloads for stock-only edit rules

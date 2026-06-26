@@ -15,7 +15,7 @@ import cea.scripts
 from cea.schemas import schemas
 from .utils import deconstruct_parameters
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError, secure_join_under_root
-from cea.interfaces.dashboard.dependencies import CEAConfig, CEASeverDemoAuthCheck
+from cea.interfaces.dashboard.dependencies import CEAConfig
 from cea.interfaces.dashboard.api.utils import CEAScenario, CEAScenarioLenient
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 
@@ -169,7 +169,7 @@ async def get_tool_properties(config: CEAConfig, tool_name: str, scenario: CEASc
     )
 
 
-@router.post('/{tool_name}/default', dependencies=[CEASeverDemoAuthCheck])
+@router.post('/{tool_name}/default')
 async def restore_default_config(config: CEAConfig, tool_name: str):
     """Restore the default configuration values for the CEA"""
     default_config = cea.config.Configuration(config_file=cea.config.DEFAULT_CONFIG)
@@ -200,7 +200,7 @@ async def restore_default_config(config: CEAConfig, tool_name: str):
     return 'Success'
 
 
-@router.post('/{tool_name}/save-config', dependencies=[CEASeverDemoAuthCheck])
+@router.post('/{tool_name}/save-config')
 async def save_tool_config(config: CEAConfig, tool_name: str, payload: Dict[str, Any]):
     """
     Save the configuration for this tool to the configuration file.

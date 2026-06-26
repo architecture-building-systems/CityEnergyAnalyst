@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 import os
 import signal
 
-from fastapi import FastAPI, status, Request
+from fastapi import FastAPI, Depends, status, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -16,6 +16,7 @@ from cea.interfaces.dashboard.lib.cache.provider import cleanup_cache_connection
 from cea.interfaces.dashboard.lib.cors import CORSConfig
 from cea.interfaces.dashboard.lib.logs import logger, getCEAServerLogger
 from cea.interfaces.dashboard.lib.socketio import socket_app
+from cea.interfaces.dashboard.dependencies import require_authenticated
 from cea.interfaces.dashboard.settings import get_settings
 
 zombie_logger = getCEAServerLogger("cea-server-zombie")
@@ -95,7 +96,7 @@ async def lifespan(_: FastAPI):
     await cleanup_cache_connections()
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, dependencies=[Depends(require_authenticated)])
 socket_app.other_asgi_app = app
 
 # Setup CORS
