@@ -8,7 +8,7 @@ import geopandas as gpd
 import pandas as pd
 import pytest
 import yaml
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
 from shapely.geometry import Polygon
 
@@ -47,7 +47,7 @@ def pathway_api_fixture():
     _write_demo_pathway(locator)
     _write_demo_templates(locator)
 
-    app = FastAPI()
+    app = FastAPI(dependencies=[Depends(require_authenticated)])
     app.include_router(pathways_router, prefix="/api/pathways")
     app.dependency_overrides[get_cea_config] = lambda: config
     app.dependency_overrides[require_authenticated] = lambda: None
