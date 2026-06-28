@@ -158,7 +158,7 @@ The user describing a feature may not be a software engineer and won't catch an 
 
 ## Statelessness (important for container scaling)
 
-Treat the dashboard server as stateless. Do not persist request-scoped selections (e.g. scenario) to `config` or any server-side store. Pass context per request via `X-CEA-*` headers (preferred) or query params (deprecated compat); do not use `config.save()` to persist request-scoped scenario selection.
+Treat the dashboard server as stateless. Do not persist request-scoped selections (e.g. scenario) to `config` or any server-side store. Pass context per request via `X-CEA-*` headers; do not use `config.save()` to persist request-scoped scenario selection.
 
 **Config is per-request**: `get_cea_config()` creates a fresh instance on every request (local: `CEALocalConfig` from disk, non-local: `CEAStatelessConfig` from `DEFAULT_CONFIG`). There is no shared config singleton — mutations are request-scoped and need no snapshot/restore.
 
@@ -166,7 +166,7 @@ Treat the dashboard server as stateless. Do not persist request-scoped selection
 - `CEAScenario` enforces that the resolved scenario directory exists (use for endpoints that read/write scenario files).
 - `CEAScenarioLenient` resolves and validates path boundaries but does not require directory existence (use for metadata/config endpoints).
 
-Both dependencies read scenario context from `X-CEA-*` headers first; if absent they fall back to query params. They enforce `project_root` boundaries in both cases; in non-local mode, absolute `X-CEA-Project` / `project` values are rejected.
+Both dependencies read scenario context from `X-CEA-*` headers. In local mode, falls back to `config.scenario` if no headers are present. In non-local mode, missing headers return 400 — `config.scenario` resolves to `DEFAULT_CONFIG` which is meaningless in a stateless context. They enforce `project_root` boundaries; in non-local mode, absolute `X-CEA-Project` values are rejected.
 
 **Route path safety helpers** (`utils.py`):
 - Use `InputLocator(scenario)` directly in route handlers — `CEAScenario` / `CEAScenarioLenient` already sanitise the path.
@@ -177,7 +177,7 @@ Both dependencies read scenario context from `X-CEA-*` headers first; if absent 
 
 ## Scenario Context — Header Contract
 
-Scenario context travels as HTTP request headers. Query params (`project`, `scenario_name`, `scenario_path`) are deprecated compat, accepted during frontend migration.
+Scenario context travels as `X-CEA-*` request headers. Falls back to `config.scenario` when no headers are present.
 
 | Header | Purpose |
 |---|---|
@@ -185,7 +185,7 @@ Scenario context travels as HTTP request headers. Query params (`project`, `scen
 | `X-CEA-Scenario-Name` | Bare scenario name — always the parent scenario |
 | `X-CEA-Child-Scenario` | Logical pathway child token `<pathway_name>/<year>`; requires the two above |
 
-**Resolution priority**: header values (if any header present) > query params > `config.scenario`.
+**Resolution priority**: `X-CEA-*` headers > `config.scenario` (local mode only — non-local returns 400 when headers are absent).
 
 **Child scenario**: `X-CEA-Child-Scenario: <pathway_name>/<year>` is a logical token — the backend resolves it to a filesystem path via `InputLocator.get_state_in_time_scenario_folder(pathway_name, year)`. No filesystem path is sent by the client; the physical layout (`outputs/pathways/<name>/state_<year>`) stays an implementation detail.
 

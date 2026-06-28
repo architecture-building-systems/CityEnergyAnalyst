@@ -4,8 +4,7 @@ the Canvas Builder and OverviewCard ribbon.
 
 Endpoint:
   GET /api/kpis/?feature=&whatif=
-    Scenario is resolved from X-CEA-* headers (preferred) or
-    ScenarioQuery params (deprecated compat). Returns every KPI in
+    Scenario is resolved from X-CEA-* headers. Returns every KPI in
     the requested ``feature`` for the given scenario. Each KPI
     either reports its ``value`` + ``unit`` (cache hit or
     just-recomputed) or carries ``available: false`` with ``reason``
