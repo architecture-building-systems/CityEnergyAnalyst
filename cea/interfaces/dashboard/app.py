@@ -140,6 +140,17 @@ app.include_router(api.router, prefix='/api')
 app.include_router(plots.router, prefix='/plots')
 app.include_router(server.router, prefix='/server')
 
+# Mount the public demo sub-app when demo scenarios are configured.
+# The sub-app is a standalone FastAPI instance and does NOT inherit the
+# require_authenticated dependency above — the anonymous boundary is structural.
+if get_settings().public_demo_scenarios:
+    from cea.interfaces.dashboard.api.demo import app as demo_app
+    app.mount("/api/demo", demo_app)
+    logger.info(
+        "Public demo sub-app mounted at /api/demo (%d scenario(s))",
+        len(get_settings().public_demo_scenarios),
+    )
+
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):

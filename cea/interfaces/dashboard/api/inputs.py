@@ -85,7 +85,7 @@ NETWORK_KEYS = ['dc', 'dh']
 
 @router.get("/")
 async def get_keys():
-    return {'buildingProperties': INPUT_KEYS, 'geoJSONs': GEOJSON_KEYS}
+    return {'buildingProperties': list(INPUT_KEYS), 'geoJSONs': GEOJSON_KEYS}
 
 
 @router.get('/building-properties/{db}')

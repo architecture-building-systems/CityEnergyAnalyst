@@ -32,7 +32,25 @@ added there explicitly (fail-secure by default).
 |---|---|
 | `require_authenticated` | App-level. Do not add to individual routes. |
 | `CEAUser` / `CEAUserID` | Routes that need to know *who* the caller is (ownership, quotas). |
-| `require_public_demo_read(demo_id)` | Path-param dependency for anonymous read of allowlisted demo ids. Used on `/api/demo/*` routes (Phase 2). |
+| `require_public_demo_read(demo_id)` | Path-param dependency for anonymous read of allowlisted demo ids. Used in `api/demo.py`. |
+
+**Public demo sub-app** — `api/demo.py` is a standalone `FastAPI()` instance mounted
+at `/api/demo` by `app.py` when `Settings.public_demo_scenarios` is non-empty. Because
+it is a sub-app (not a router), it does **not** inherit the main app's
+`require_authenticated` dependency — the anonymous boundary is structural, not a code
+branch. No edit to `require_authenticated` or `_PUBLIC_ROUTES` is needed.
+
+`Settings.public_demo_scenarios` (`Dict[str, str]`, default `{}`):
+- Env: `CEA_PUBLIC_DEMO_SCENARIOS="demo1:/abs/path/scenario1,demo2:/abs/path/scenario2"`
+- JSON format also accepted: `'{"demo1": "/abs/path"}'`
+- Empty → sub-app not mounted → zero overhead (local mode never needs this).
+
+The sub-app resolves scenario paths exclusively through `require_public_demo_read`,
+which checks `demo_id` against the allowlist. No arbitrary filesystem paths are
+accepted. No write verbs are defined — the surface is read-only by construction.
+
+**Topology**: built in-process now; can be promoted to a standalone service with no
+code change (deploy `demo_app` alone, gateway `/api/demo/*` to it).
 
 ---
 

@@ -1,6 +1,6 @@
 from functools import lru_cache
 import os
-from typing import Optional
+from typing import Dict, Optional
 
 from pydantic import field_validator, model_validator, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -46,6 +46,15 @@ class Settings(BaseSettings):
     # Local only settings
     config_path: Optional[str] = "~/cea.config"
 
+    public_demo_scenarios: Dict[str, str] = Field(
+        default_factory=dict,
+        description=(
+            "Map of demo_id -> absolute scenario path for public read-only demo access. "
+            "Env: CEA_PUBLIC_DEMO_SCENARIOS='demo1:/abs/path1,demo2:/abs/path2' (or JSON). "
+            "Empty (default) means the /api/demo sub-app is not mounted."
+        ),
+    )
+
     @field_validator('log_level', mode='before')
     @classmethod
     def validate_log_level(cls, v):
@@ -60,6 +69,29 @@ class Settings(BaseSettings):
     @classmethod
     def normalise_cors_origin(cls, v):
         return v.strip() if isinstance(v, str) else v
+    
+    @field_validator('public_demo_scenarios', mode='before')
+    @classmethod
+    def parse_demo_scenarios(cls, v):
+        """Accept 'id:path,id:path' strings from env vars (or dicts from code)."""
+        if isinstance(v, str):
+            v = v.strip()
+            if not v:
+                return {}
+            result = {}
+            for item in v.split(","):
+                item = item.strip()
+                if not item:
+                    continue
+                if ":" not in item:
+                    raise ValueError(
+                        f"Invalid demo scenario entry '{item}'. "
+                        "Expected format: 'demo_id:/abs/path/to/scenario'."
+                    )
+                demo_id, path = item.split(":", 1)
+                result[demo_id.strip()] = path.strip()
+            return result
+        return v
 
     @model_validator(mode='after')
     def validate_cors_origin(self):
