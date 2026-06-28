@@ -103,7 +103,7 @@ app.include_router(
 
 
 # ── Map layers ─────────────────────────────────────────────────────────────
-# GET catalog + POST-as-read parameter queries (choices, range, generate,
+# GET catalogue + POST-as-read parameter queries (choices, range, generate,
 # check). choice/delete is a genuine write — excluded.
 
 app.include_router(
