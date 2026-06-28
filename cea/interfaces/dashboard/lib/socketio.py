@@ -5,7 +5,6 @@ import socketio
 
 from socketio.exceptions import ConnectionRefusedError
 
-from cea.interfaces.dashboard.dependencies import settings
 from cea.interfaces.dashboard.lib.auth import CEAAuthError
 from cea.interfaces.dashboard.lib.auth.providers import StackAuth
 from cea.interfaces.dashboard.lib.cache.settings import cache_settings
@@ -28,9 +27,22 @@ def _get_cors_origin():
 def _get_client_manager():
     if cache_settings.host and cache_settings.port:
         try:
+            redis_options = {
+                # redis-py 8.0+ defaults socket_timeout to 5s (changed from None in v6).
+                # Pub/sub listen() is a blocking generator that indefinitely waits for messages.
+                # With socket_timeout=5, any idle period >5s raises TimeoutError and triggers reconnect loops.
+                # socket_timeout=None = indefinite wait (correct for blocking pub/sub operations).
+                # socket_connect_timeout=5 = still bounds initial connection (prevents hung connections).
+                # health_check_interval=30 = periodic PING to detect dead connections without timeouts.
+                'socket_timeout': None,
+                'socket_connect_timeout': 5,
+                'health_check_interval': 30,
+            }
             mgr = socketio.AsyncRedisManager(f'redis://{cache_settings.host}:{cache_settings.port}',
                                              write_only=False,  # Ensure reading is enabled
                                              channel='socketio',  # Use a consistent channel name
+                                             logger=logger,
+                                             redis_options=redis_options,
                                              )
             logger.info(f'Using Redis as message broker [{cache_settings.host}:{cache_settings.port}]')
             return mgr
@@ -102,7 +114,7 @@ def cookie_string_to_dict(cookie_string: str) -> Dict[str, str]:
 
 @sio.event
 async def connect(sid, environ, auth):
-    if settings.local:
+    if get_settings().local:
         await sio.enter_room(sid, f"user-{LOCAL_USER_ID}")
         return True
 

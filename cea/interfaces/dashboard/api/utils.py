@@ -1,49 +1,142 @@
+# Scenario context is passed via X-CEA-* request headers (preferred) or query params (deprecated
+# compat, accepted during frontend migration). Header names: X-CEA-Project, X-CEA-Scenario-Name,
+# X-CEA-Child-Scenario (logical token "<pathway_name>/<year>"). If no header or query param is
+# supplied the endpoint falls back to config.scenario.
+# Future phase (separate plan): PUT /projects/{id}/scenarios/{name}/... — requires a projects
+# table mapping project_id → path for both local and non-local modes. See AGENTS.md for details.
+
 import os
 from typing import Optional
 
 import cea.config
 import cea.inputlocator
-from fastapi import HTTPException, status
-from pydantic import BaseModel, Field, model_validator
+from fastapi import Depends, Header, HTTPException, Query, status
+from pydantic import BaseModel, Field, ValidationError, model_validator
+from typing_extensions import Annotated
 
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot
+from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 from cea.interfaces.dashboard.utils import secure_path
+
+logger = getCEAServerLogger("cea-server-utils")
+
+_CHILD_SCENARIO_SEP = "/"
+
+
+def _parse_child_scenario_token(token: str) -> tuple:
+    """Parse a logical child-scenario token ``<pathway_name>/<year>`` into its components.
+
+    Returns ``(pathway_name, year_int)``. Raises ``ValueError`` on malformed input.
+    """
+    parts = token.split(_CHILD_SCENARIO_SEP, 1)
+    if len(parts) != 2:
+        raise ValueError(
+            f"Invalid child_scenario '{token}': expected '<pathway_name>/<year>'."
+        )
+    pathway_name, year_str = parts
+    if not pathway_name:
+        raise ValueError(
+            f"Invalid child_scenario '{token}': pathway_name must not be empty."
+        )
+    try:
+        year = int(year_str)
+    except ValueError:
+        raise ValueError(
+            f"Invalid child_scenario '{token}': year must be an integer, got '{year_str}'."
+        )
+    return pathway_name, year
 
 
 class ScenarioQuery(BaseModel):
     """
-    Two mutually exclusive ways to identify a scenario for per-request override:
-    - scenario_path: full absolute path (used for pathway child states)
-    - project + scenario_name: normal scenario (must be provided together)
-    If neither is provided the endpoint falls back to config.scenario.
+    Ways to identify a scenario for a request.
+
+    Normal scenario:
+        project + scenario_name (must be provided together)
+
+    Pathway child scenario (layers on top of normal):
+        project + scenario_name + child_scenario (logical token: ``<pathway_name>/<year>``)
+        The backend resolves the child path via InputLocator — no filesystem path in the request.
+
+    If no params are provided the endpoint falls back to config.scenario.
     """
     model_config = {"extra": "forbid"}
 
-    scenario_path: Optional[str] = Field(None, description="Full path to scenario (pathway mode)")
     project: Optional[str] = Field(None, description="Project directory; must be paired with scenario_name")
     scenario_name: Optional[str] = Field(None, description="Scenario name; must be paired with project")
+    child_scenario: Optional[str] = Field(
+        None,
+        description="Logical pathway child token '<pathway_name>/<year>'; requires project + scenario_name",
+    )
 
     @model_validator(mode='after')
     def validate_groups(self) -> 'ScenarioQuery':
-        if self.scenario_path is not None and (self.project is not None or self.scenario_name is not None):
-            raise ValueError("scenario_path is mutually exclusive with project and scenario_name")
-        if (self.project is None) != (self.scenario_name is None):
+        has_project_pair = self.project is not None and self.scenario_name is not None
+        has_partial_pair = (self.project is None) != (self.scenario_name is None)
+
+        if has_partial_pair:
             raise ValueError("project and scenario_name must be provided together")
+        if self.child_scenario is not None and not has_project_pair:
+            raise ValueError("child_scenario requires project and scenario_name")
         return self
+
+    @classmethod
+    def from_headers(cls, cea_headers: 'CEAScenarioHeaders') -> Optional['ScenarioQuery']:
+        """Build a ``ScenarioQuery`` from X-CEA-* headers, or ``None`` if all are absent."""
+        if cea_headers.x_cea_project is None and cea_headers.x_cea_scenario_name is None and cea_headers.x_cea_child_scenario is None:
+            return None
+        try:
+            return cls(
+                project=cea_headers.x_cea_project,
+                scenario_name=cea_headers.x_cea_scenario_name,
+                child_scenario=cea_headers.x_cea_child_scenario,
+            )
+        except ValidationError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="; ".join(e["msg"] for e in exc.errors()),
+            ) from exc
 
     def resolve(self, config, project_root=None) -> str:
         """Return the effective scenario path for this request.
 
-        Priority: scenario_path > project+scenario_name > config.scenario.
+        Uses project+scenario_name if provided (with optional child_scenario refinement), else config.scenario.
         Never mutates config.
         """
-        if self.scenario_path is not None:
-            return secure_path(self.scenario_path)
         if self.project is not None and self.scenario_name is not None:
             p = self.project
-            if project_root is not None and not p.startswith(project_root):
+            if project_root is not None:
+                if os.path.isabs(p):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="project must be a relative path when project_root is enforced.",
+                    )
                 p = os.path.join(project_root, p)
-            return os.path.join(secure_path(p), validate_scenario_name(self.scenario_name))
-        return str(config.scenario)
+            project_path = secure_path(p, root=project_root)
+            parent_path = os.path.join(project_path, validate_scenario_name(self.scenario_name))
+            parent_path = secure_path(parent_path, root=project_root)
+
+            if self.child_scenario is not None:
+                try:
+                    pathway_name, year = _parse_child_scenario_token(self.child_scenario)
+                except ValueError as exc:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+                    ) from exc
+                from cea.datamanagement.district_pathways.pathway_state import validate_pathway_name
+                try:
+                    pathway_name = validate_pathway_name(pathway_name)
+                except ValueError as exc:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+                    ) from exc
+                locator = cea.inputlocator.InputLocator(parent_path)
+                child_path = locator.get_state_in_time_scenario_folder(pathway_name, year)
+                return secure_path(child_path, root=project_root)
+
+            return parent_path
+
+        return secure_path(str(config.scenario), root=project_root)
 
 
 def validate_scenario_name(scenario_name: str) -> str:
@@ -151,3 +244,51 @@ def _should_validate(p: cea.config.Parameter) -> bool:
 
     # By default, no explicit validation needed
     return False
+
+
+class CEAScenarioHeaders(BaseModel):
+    x_cea_project: Optional[str] = None
+    x_cea_scenario_name: Optional[str] = None
+    x_cea_child_scenario: Optional[str] = None
+
+
+def _get_effective_scenario(
+    config: CEAConfig,
+    project_root: CEAProjectRoot,
+    scenario: Annotated[ScenarioQuery, Query()],
+    require_exists: bool,
+    cea_headers: CEAScenarioHeaders,
+) -> str:
+    header_query = ScenarioQuery.from_headers(cea_headers)
+    effective = header_query if header_query is not None else scenario
+    logger.debug("Resolving scenario: %s", effective.model_dump(exclude_none=True))
+    path = effective.resolve(config, project_root)
+    if require_exists and not os.path.isdir(path):
+        logger.error("Scenario directory not found: %s", path)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Scenario not found.",
+        )
+    return path
+
+
+def get_effective_scenario(
+    config: CEAConfig,
+    project_root: CEAProjectRoot,
+    scenario: Annotated[ScenarioQuery, Query()],
+    cea_headers: Annotated[CEAScenarioHeaders, Header()],
+) -> str:
+    return _get_effective_scenario(config, project_root, scenario, require_exists=True, cea_headers=cea_headers)
+
+
+def get_effective_scenario_lenient(
+    config: CEAConfig,
+    project_root: CEAProjectRoot,
+    scenario: Annotated[ScenarioQuery, Query()],
+    cea_headers: Annotated[CEAScenarioHeaders, Header()],
+) -> str:
+    return _get_effective_scenario(config, project_root, scenario, require_exists=False, cea_headers=cea_headers)
+
+
+CEAScenario = Annotated[str, Depends(get_effective_scenario)]
+CEAScenarioLenient = Annotated[str, Depends(get_effective_scenario_lenient)]

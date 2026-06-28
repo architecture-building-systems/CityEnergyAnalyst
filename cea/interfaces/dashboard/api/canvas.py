@@ -47,7 +47,8 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 import cea.inputlocator
-from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot
+from cea.interfaces.dashboard.api.utils import CEAScenario
+from cea.interfaces.dashboard.dependencies import CEAConfig
 from cea.interfaces.dashboard.lib.canvas_capture import capture_canvas_data
 from cea.interfaces.dashboard.lib.canvas_storage import (
     CanvasMeta,
@@ -64,7 +65,6 @@ from cea.interfaces.dashboard.lib.canvas_storage import (
     sanitize_canvas_name,
     write_canvas,
 )
-from cea.interfaces.dashboard.utils import resolve_scenario_path
 
 
 __author__ = "Zhongming Shi"
@@ -107,11 +107,6 @@ class SparseWriteRequest(BaseModel):
 # ── Helpers ─────────────────────────────────────────────────────
 
 
-def _locator_for(project_root, project: str, scenario: str) -> cea.inputlocator.InputLocator:
-    scenario_path = resolve_scenario_path(project_root, project, scenario)
-    return cea.inputlocator.InputLocator(scenario_path)
-
-
 def _safe_name(name: str) -> str:
     """Sanitize a path-segment name from a URL before any filesystem
     use. Rejects path-traversal characters (``\\ / .. *``) and reserved
@@ -145,21 +140,15 @@ def _require_saved(locator: cea.inputlocator.InputLocator, name: str) -> str:
 
 
 @router.get('/')
-async def get_saved_canvases(
-    project_root: CEAProjectRoot,
-    project: str,
-    scenario: str,
-) -> List[str]:
+async def get_saved_canvases(scenario: CEAScenario) -> List[str]:
     """Return the display names of every saved canvas in the scenario."""
-    locator = _locator_for(project_root, project, scenario)
+    locator = cea.inputlocator.InputLocator(scenario)
     return await run_in_threadpool(list_saved_canvases, locator)
 
 
 @router.post('/')
 async def create_canvas(
-    project_root: CEAProjectRoot,
-    project: str,
-    scenario: str,
+    scenario: CEAScenario,
     body: CreateCanvasRequest,
 ) -> dict:
     """Create a fresh canvas folder.
@@ -168,7 +157,7 @@ async def create_canvas(
     saved canvas already exists under the same sanitised name; 400
     on illegal name.
     """
-    locator = _locator_for(project_root, project, scenario)
+    locator = cea.inputlocator.InputLocator(scenario)
 
     def _do() -> str:
         try:
@@ -192,25 +181,18 @@ async def create_canvas(
 
 
 @router.get('/{name}')
-async def get_saved_canvas(
-    project_root: CEAProjectRoot,
-    project: str,
-    scenario: str,
-    name: str,
-) -> CanvasState:
+async def get_saved_canvas(scenario: CEAScenario, name: str) -> CanvasState:
     """Read a saved canvas's full state (canvas + layout +
     feature_card YAMLs)."""
     name = _safe_name(name)
-    locator = _locator_for(project_root, project, scenario)
+    locator = cea.inputlocator.InputLocator(scenario)
     folder = _require_saved(locator, name)
     return await run_in_threadpool(read_canvas, locator, folder)
 
 
 @router.put('/{name}')
 async def update_saved_canvas(
-    project_root: CEAProjectRoot,
-    project: str,
-    scenario: str,
+    scenario: CEAScenario,
     name: str,
     body: SparseWriteRequest,
 ) -> dict:
@@ -222,7 +204,7 @@ async def update_saved_canvas(
       - toggling a navigator switch lands as ``{ canvas: … }``
     """
     name = _safe_name(name)
-    locator = _locator_for(project_root, project, scenario)
+    locator = cea.inputlocator.InputLocator(scenario)
     folder = _require_saved(locator, name)
     await run_in_threadpool(
         write_canvas,
@@ -236,15 +218,10 @@ async def update_saved_canvas(
 
 
 @router.delete('/{name}')
-async def delete_saved_canvas(
-    project_root: CEAProjectRoot,
-    project: str,
-    scenario: str,
-    name: str,
-) -> dict:
+async def delete_saved_canvas(scenario: CEAScenario, name: str) -> dict:
     """Permanently remove a saved canvas folder. No-op if missing."""
     name = _safe_name(name)
-    locator = _locator_for(project_root, project, scenario)
+    locator = cea.inputlocator.InputLocator(scenario)
     folder = locator.get_saved_canvas_folder(name)
     await run_in_threadpool(delete_canvas_folder, folder)
     return {'ok': True}
@@ -252,9 +229,7 @@ async def delete_saved_canvas(
 
 @router.post('/{name}/duplicate')
 async def duplicate_saved_canvas(
-    project_root: CEAProjectRoot,
-    project: str,
-    scenario: str,
+    scenario: CEAScenario,
     name: str,
     body: DuplicateCanvasRequest,
 ) -> dict:
@@ -269,7 +244,7 @@ async def duplicate_saved_canvas(
     400 — illegal target name.
     """
     name = _safe_name(name)
-    locator = _locator_for(project_root, project, scenario)
+    locator = cea.inputlocator.InputLocator(scenario)
     _require_saved(locator, name)
 
     def _do() -> str:
@@ -300,9 +275,7 @@ async def duplicate_saved_canvas(
 @router.get('/{name}/export')
 async def export_canvas(
     config: CEAConfig,
-    project_root: CEAProjectRoot,
-    project: str,
-    scenario: str,
+    scenario: CEAScenario,
     name: str,
 ) -> StreamingResponse:
     """Capture every plot card to HTML, then stream a zip of the
@@ -315,7 +288,7 @@ async def export_canvas(
     the original CEA scenario.
     """
     name = _safe_name(name)
-    locator = _locator_for(project_root, project, scenario)
+    locator = cea.inputlocator.InputLocator(scenario)
     folder = _require_saved(locator, name)
 
     # `capture_canvas_data` mutates `config.project` and
@@ -357,9 +330,7 @@ async def export_canvas(
 
 @router.post('/import')
 async def import_canvas(
-    project_root: CEAProjectRoot,
-    project: str,
-    scenario: str,
+    scenario: CEAScenario,
     file: UploadFile = File(...),
     as_name: Optional[str] = Query(None, alias='as'),
 ) -> dict:
@@ -376,7 +347,7 @@ async def import_canvas(
     400 — malformed zip / missing canvas marker / illegal name.
     409 — a saved canvas with the same target name already exists.
     """
-    locator = _locator_for(project_root, project, scenario)
+    locator = cea.inputlocator.InputLocator(scenario)
     payload = await file.read()
 
     def _do() -> str:

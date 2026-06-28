@@ -1,16 +1,13 @@
 from functools import lru_cache
 import os
-from typing import Optional
+from typing import Annotated, Dict, Optional
 
 from pydantic import field_validator, model_validator, Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 from cea.interfaces.dashboard.constants import ENV_VAR_PREFIX
 from cea.interfaces.dashboard.lib.cache.settings import cache_settings
 from cea.interfaces.dashboard.lib.database.settings import database_settings
-from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
-
-logger = getCEAServerLogger("cea-server-settings")
 
 
 class StackAuthSettings(BaseSettings):
@@ -41,6 +38,7 @@ class Settings(BaseSettings):
     project_root: Optional[str] = None
 
     local: bool = Field(default=True, description="Run in local mode. Writes to local file")
+    log_level: str = Field(default="INFO", description="Log level for the server (DEBUG, INFO, WARNING, ERROR).")
     cors_origin: str = Field(default="*", description="CORS origin(s) allowed to access the API. Use '*' for all origins (not recommended for production). For multiple origins, provide a comma-separated list (e.g. 'http://localhost:3000,https://mydomain.com')")
 
     workers: Optional[int] = Field(default=None, description="Number of workers")
@@ -48,10 +46,63 @@ class Settings(BaseSettings):
     # Local only settings
     config_path: Optional[str] = "~/cea.config"
 
+    public_demo_scenarios: Annotated[Dict[str, str], NoDecode] = Field(
+        default_factory=dict,
+        description=(
+            "Map of demo_id -> absolute scenario path for public read-only demo access. "
+            "Env: CEA_PUBLIC_DEMO_SCENARIOS='demo1:/abs/path1,demo2:/abs/path2' (or JSON). "
+            "Empty (default) means the /api/demo sub-app is not mounted."
+        ),
+    )
+
+    @field_validator('log_level', mode='before')
+    @classmethod
+    def validate_log_level(cls, v):
+        import logging
+        upper = str(v).upper()
+        if upper not in logging.getLevelNamesMapping():
+            valid = ', '.join(sorted(logging.getLevelNamesMapping()))
+            raise ValueError(f"Invalid log_level '{v}'. Must be one of: {valid}")
+        return upper
+
     @field_validator('cors_origin', mode='before')
     @classmethod
     def normalise_cors_origin(cls, v):
         return v.strip() if isinstance(v, str) else v
+    
+    @field_validator('public_demo_scenarios', mode='before')
+    @classmethod
+    def parse_demo_scenarios(cls, v):
+        """Accept 'id:path,id:path' strings or JSON objects from env vars (or dicts from code)."""
+        if isinstance(v, str):
+            import json
+            v = v.strip()
+            if not v:
+                return {}
+            if v.startswith("{"):
+                try:
+                    return json.loads(v)
+                except json.JSONDecodeError as e:
+                    raise ValueError(f"Invalid JSON for public_demo_scenarios: {e}") from e
+            result = {}
+            for item in v.split(","):
+                item = item.strip()
+                if not item:
+                    continue
+                if ":" not in item:
+                    raise ValueError(
+                        f"Invalid demo scenario entry '{item}'. "
+                        "Expected format: 'demo_id:/abs/path/to/scenario'."
+                    )
+                demo_id, path = (part.strip() for part in item.split(":", 1))
+                if not demo_id or not path or not os.path.isabs(path):
+                    raise ValueError(
+                        f"Invalid demo scenario entry '{item}'. "
+                        "Expected non-empty demo_id and absolute scenario path."
+                    )
+                result[demo_id] = path
+            return result
+        return v
 
     @model_validator(mode='after')
     def validate_cors_origin(self):
@@ -69,11 +120,6 @@ class Settings(BaseSettings):
                     f"Wildcard CORS origin ('*') is not allowed in non-local mode. "
                     f"Please set {(ENV_VAR_PREFIX + 'cors_origin').upper()} to your frontend URL(s)."
                 )
-            # Wildcard is the expected default for local mode — log at DEBUG only.
-            logger.debug(
-                "Using wildcard CORS origin ('*'). This is only safe for local development. "
-                "For production, set CEA_CORS_ORIGIN to specific domain(s)."
-            )
             return self
 
         # Validate each origin in comma-separated list

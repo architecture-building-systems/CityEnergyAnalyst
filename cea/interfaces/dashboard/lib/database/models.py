@@ -78,12 +78,6 @@ class User(SQLModel, table=True):
     id: str = Field(default_factory=lambda: uuid.uuid4().hex, primary_key=True)
 
 
-class Config(SQLModel, table=True):
-    id: str = Field(default_factory=lambda: uuid.uuid4().hex, primary_key=True)
-    config: dict = Field(sa_type=JSON, nullable=False)
-    user_id: str = Field(foreign_key=f"{user_table_ref}.id", index=True)
-
-
 class Project(SQLModel, table=True):
     id: str = Field(default_factory=lambda: uuid.uuid4().hex, primary_key=True)
     uri: str = Field(nullable=False, index=True)

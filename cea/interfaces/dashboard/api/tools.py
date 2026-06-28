@@ -1,30 +1,26 @@
+# TODO: Refactor to PUT /projects/{project_id}/scenarios/{scenario_name}/tools/{tool}/config
+# Requires: projects table mapping project_id → project_path (local + non-local compatible).
+# Pathway children use ?child_scenario=subpath. See AGENTS.md.
+
 import os
 from collections import defaultdict
 from itertools import groupby
 from typing import Dict, Any, List, Optional
-import logging
-
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
-from typing import Annotated
 
 import cea.config
 import cea.inputlocator
 import cea.scripts
 from cea.schemas import schemas
-from .utils import (
-    deconstruct_parameters,
-    split_scenario_subpath,
-    validate_scenario_name,
-    validate_scenario_name_or_subpath,
-    ScenarioQuery,
-)
-from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
-from cea.interfaces.dashboard.dependencies import CEAConfig, CEADatabaseConfig, CEASeverDemoAuthCheck, CEAProjectRoot
-from cea.datamanagement.district_pathways.pathway_timeline import PathwayChildScenario
+from .utils import deconstruct_parameters
+from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError, secure_join_under_root
+from cea.interfaces.dashboard.dependencies import CEAConfig
+from cea.interfaces.dashboard.api.utils import CEAScenario, CEAScenarioLenient
+from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 
 router = APIRouter()
-logger = logging.getLogger(__name__)
+logger = getCEAServerLogger("cea-server-tools")
 
 
 
@@ -146,54 +142,40 @@ async def get_tool_list(config: CEAConfig) -> Dict[str, List[ToolDescription]]:
     return result
 
 
-@router.get('/{tool_name}')
-async def get_tool_properties(config: CEAConfig, project_root: CEAProjectRoot, tool_name: str,
-                              scenario: Annotated[ScenarioQuery, Query()]) -> ToolProperties:
+def _build_tool_properties(tool_name: str, config) -> ToolProperties:
     # TODO: Add plugin support
-    original_scenario = str(config.scenario)
-    try:
-        if scenario.scenario_path is not None:
-            config.scenario = secure_path(scenario.scenario_path)
+    script = cea.scripts.by_name(tool_name, plugins=config.plugins)
+    parameters = []
+    categories = defaultdict(list)
+    for _, parameter in config.matching_parameters(script.parameters):
+        parameter_dict = deconstruct_parameters(parameter, config)
+        if parameter.category:
+            categories[parameter.category].append(parameter_dict)
         else:
-            if scenario.project is not None:
-                project = scenario.project
-                if project_root is not None and not project.startswith(project_root):
-                    project = os.path.join(project_root, project)
-                config.project = secure_path(project)
-            if scenario.scenario_name is not None:
-                config.scenario_name = validate_scenario_name(scenario.scenario_name)
-
-        script = cea.scripts.by_name(tool_name, plugins=config.plugins)
-
-        parameters = []
-        categories = defaultdict(list)
-        for _, parameter in config.matching_parameters(script.parameters):
-            parameter_dict = deconstruct_parameters(parameter, config)
-
-            if parameter.category:
-                categories[parameter.category].append(parameter_dict)
-            else:
-                parameters.append(parameter_dict)
-
-        return ToolProperties(
-            name=tool_name,
-            label=script.label,
-            description=script.description,
-            short_description=script.short_description,
-            category=script.category,
-            categorical_parameters=categories,
-            parameters=parameters,
-        )
-    finally:
-        config.scenario = original_scenario
+            parameters.append(parameter_dict)
+    return ToolProperties(
+        name=tool_name,
+        label=script.label,
+        description=script.description,
+        short_description=script.short_description,
+        category=script.category,
+        categorical_parameters=categories,
+        parameters=parameters,
+    )
 
 
-@router.post('/{tool_name}/default', dependencies=[CEASeverDemoAuthCheck])
-async def restore_default_config(config: CEAConfig, tool_name: str):
+@router.get('/{tool_name}')
+async def get_tool_properties(config: CEAConfig, tool_name: str, scenario: CEAScenarioLenient) -> ToolProperties:
+    config.scenario = scenario
+    return _build_tool_properties(tool_name, config)
+
+
+@router.post('/{tool_name}/default')
+async def restore_default_config(config: CEAConfig, tool_name: str, scenario: CEAScenarioLenient) -> ToolProperties:
     """Restore the default configuration values for the CEA"""
+    config.scenario = scenario
     default_config = cea.config.Configuration(config_file=cea.config.DEFAULT_CONFIG)
-    # Ensure that parameters that depend on scenario files will be parsed correctly
-    default_config.scenario = config.scenario
+    default_config.scenario = scenario
 
     candidates = []
     set_empty = []
@@ -214,20 +196,17 @@ async def restore_default_config(config: CEAConfig, tool_name: str):
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={'message': 'Validation failed', 'field_errors': e.args[0]})
 
-    if isinstance(config, CEADatabaseConfig):
-        await config.save()
-    else:
-        config.save()
-
-    return 'Success'
+    config.save()
+    return _build_tool_properties(tool_name, config)
 
 
-@router.post('/{tool_name}/save-config', dependencies=[CEASeverDemoAuthCheck])
-async def save_tool_config(config: CEAConfig, tool_name: str, payload: Dict[str, Any]):
+@router.post('/{tool_name}/save-config')
+async def save_tool_config(config: CEAConfig, tool_name: str, payload: Dict[str, Any], scenario: CEAScenarioLenient):
     """
     Save the configuration for this tool to the configuration file.
     Validates all parameters before saving and returns field-level errors if validation fails.
     """
+    config.scenario = scenario
     field_errors = {}
 
     # Validate all parameters first
@@ -255,15 +234,12 @@ async def save_tool_config(config: CEAConfig, tool_name: str, payload: Dict[str,
             value = payload[parameter.name]
             parameter.set(value)
 
-    if isinstance(config, CEADatabaseConfig):
-        await config.save()
-    else:
-        config.save()
+    config.save()
     return 'Success'
 
 
 @router.post('/{tool_name}/validate-field')
-async def validate_field(config: CEAConfig, tool_name: str, payload: Dict[str, Any]):
+async def validate_field(config: CEAConfig, tool_name: str, payload: Dict[str, Any], scenario: CEAScenarioLenient):
     """
     Validate a single field value using the parameter's encode() method.
 
@@ -272,6 +248,7 @@ async def validate_field(config: CEAConfig, tool_name: str, payload: Dict[str, A
     - value: the value to validate
     - form_values: dict of current form values to set on config before validation
     """
+    config.scenario = scenario
     parameter_name = payload.get('parameter_name')
     value = payload.get('value')
     form_values = payload.get('form_values', {})
@@ -311,7 +288,7 @@ async def validate_field(config: CEAConfig, tool_name: str, payload: Dict[str, A
 
 
 @router.post('/{tool_name}/parameter-metadata')
-async def get_parameter_metadata(config: CEAConfig, tool_name: str, payload: Dict[str, Any]):
+async def get_parameter_metadata(config: CEAConfig, tool_name: str, payload: Dict[str, Any], scenario: CEAScenarioLenient):
     """
     Get updated parameter metadata based on current form values.
     Does NOT save to config - uses temporary in-memory config state.
@@ -323,6 +300,7 @@ async def get_parameter_metadata(config: CEAConfig, tool_name: str, payload: Dic
     - form_values: dict of current form values
     - affected_parameters: optional list of parameter names to get metadata for
     """
+    config.scenario = scenario
     form_values = payload.get('form_values', {})
     affected_parameters = payload.get('affected_parameters', None)
 
@@ -364,37 +342,8 @@ async def get_parameter_metadata(config: CEAConfig, tool_name: str, payload: Dic
 
 
 @router.post('/{tool_name}/check')
-async def check_tool_inputs(
-    config: CEAConfig,
-    project_root: CEAProjectRoot,
-    tool_name: str,
-    payload: Dict[str, Any],
-    project: Optional[str] = None,
-    scenario_name: Optional[str] = None,
-):
-    # Optional `project` + `scenario_name` query params let the
-    # caller validate inputs against a *different* scenario than
-    # the project store's active one. Used by the Canvas Builder's
-    # compare-mode per-column edit so the validation runs against
-    # the column's scenario (and pulls *its* choices for things
-    # like `what-if-name`) rather than whichever scenario the
-    # project store happens to be on. Mirrors the same override
-    # pattern in `get_tool_properties` above, including the
-    # pathway-viewer guard.
-    in_child_scenario = PathwayChildScenario.is_valid(config.scenario)
-    if not in_child_scenario:
-        if project is not None:
-            if project_root is not None and not project.startswith(project_root):
-                project = os.path.join(project_root, project)
-            config.project = secure_path(project)
-        if scenario_name is not None:
-            # See `get_tool_properties` for the path-handling rationale.
-            scenario_name = validate_scenario_name_or_subpath(scenario_name)
-            project_dir, scenario_name = split_scenario_subpath(
-                scenario_name, config.project,
-            )
-            config.project = secure_path(project_dir)
-            config.scenario_name = scenario_name
+async def check_tool_inputs(config: CEAConfig, tool_name: str, payload: Dict[str, Any], scenario: CEAScenario):
+    config.scenario = scenario
     candidates = [
         (parameter, payload[parameter.name])
         for parameter in parameters_for_script(tool_name, config)
@@ -411,7 +360,7 @@ async def check_tool_inputs(
 
     script_suggestions = set()
 
-    for method_name, path in script.missing_input_files(config):
+    for method_name, _ in script.missing_input_files(config):
         _script_suggestions = schema_data[method_name]['created_by'] if 'created_by' in schema_data[
             method_name] else None
 
@@ -449,12 +398,16 @@ def _collect_field_warnings(tool_name, parameter_name, value, config):
     v = (value or '').strip()
     if not v:
         return []
-    locator = cea.inputlocator.InputLocator(config.scenario)
+    try:
+        scenario_root = config.scenario
+        locator = cea.inputlocator.InputLocator(scenario_root)
+    except OutsideProjectRootError:
+        return []
 
     if tool_name == 'network-layout' and parameter_name == 'network-name':
         folder = locator.get_thermal_network_folder_network_name_folder(v)
         try:
-            folder = secure_path(folder, root=config.scenario)
+            folder = secure_path(folder, root=scenario_root)
         except OutsideProjectRootError:
             return []
         if os.path.isdir(folder):
@@ -467,10 +420,10 @@ def _collect_field_warnings(tool_name, parameter_name, value, config):
             }]
 
     if tool_name == 'final-energy' and parameter_name == 'what-if-name':
-        folder = locator.get_analysis_folder(v)
         try:
-            folder = secure_path(folder, root=config.scenario)
-        except OutsideProjectRootError:
+            analysis_parent = secure_path(locator.get_analysis_parent_folder(), root=scenario_root)
+            folder = secure_join_under_root(analysis_parent, v)
+        except (OutsideProjectRootError, ValueError):
             return []
         if os.path.isdir(folder):
             return [{

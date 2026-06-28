@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Optional, Annotated
+from typing import Any
 
 import cea.inputlocator
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
 
@@ -30,26 +30,12 @@ from cea.datamanagement.district_pathways.pathway_timeline import (
     validate_baked_state,
     validate_pathway_log,
 )
-from cea.interfaces.dashboard.dependencies import CEAConfig, CEASeverDemoAuthCheck, CEAProjectRoot
-from cea.interfaces.dashboard.api.utils import ScenarioQuery
+from cea.interfaces.dashboard.dependencies import CEAConfig
+from cea.interfaces.dashboard.api.utils import CEAScenario
 
 
-async def _apply_parent_scenario(
-    config: CEAConfig,
-    project_root: CEAProjectRoot,
-    project: Annotated[Optional[str], Query()] = None,
-    scenario_name: Annotated[Optional[str], Query(alias='scenario_name')] = None,
-):
-    """Router-level dependency: apply the per-request parent scenario to config
-    in memory for the duration of the request, then restore the original values.
-    Never calls save() — this is a stateless, request-scoped override.
-    Falls back to config.scenario when no params are provided."""
-    original_scenario = str(config.scenario)
-    config.scenario = ScenarioQuery(project=project, scenario_name=scenario_name).resolve(config, project_root)
-    try:
-        yield
-    finally:
-        config.scenario = original_scenario
+async def _apply_parent_scenario(config: CEAConfig, scenario: CEAScenario):
+    config.scenario = scenario
 
 
 router = APIRouter(dependencies=[Depends(_apply_parent_scenario)])
@@ -87,7 +73,7 @@ async def get_overview(config: CEAConfig) -> dict[str, Any]:
     return await run_in_threadpool(get_pathway_overview, config)
 
 
-@router.post("/", dependencies=[CEASeverDemoAuthCheck])
+@router.post("/")
 async def post_pathway(config: CEAConfig, payload: CreatePathwayPayload) -> dict[str, Any]:
     try:
         return await run_in_threadpool(create_pathway, config, payload.pathway_name)
@@ -103,7 +89,7 @@ async def post_pathway(config: CEAConfig, payload: CreatePathwayPayload) -> dict
         ) from exc
 
 
-@router.post("/{pathway_name}/duplicate", dependencies=[CEASeverDemoAuthCheck])
+@router.post("/{pathway_name}/duplicate")
 async def duplicate_pathway(
     config: CEAConfig, pathway_name: str, payload: DuplicatePathwayPayload
 ) -> dict[str, Any]:
@@ -200,7 +186,7 @@ async def get_template_usage(config: CEAConfig, template_name: str) -> dict[str,
     return {"usage": usage}
 
 
-@router.delete("/templates/{template_name}", dependencies=[CEASeverDemoAuthCheck])
+@router.delete("/templates/{template_name}")
 async def delete_template(
     config: CEAConfig,
     template_name: str,
@@ -333,7 +319,7 @@ async def get_timeline(config: CEAConfig, pathway_name: str) -> dict[str, Any]:
         ) from exc
 
 
-@router.post("/{pathway_name}/years/{year}", dependencies=[CEASeverDemoAuthCheck])
+@router.post("/{pathway_name}/years/{year}")
 async def post_year(config: CEAConfig, pathway_name: str, year: int) -> dict[str, Any]:
     try:
         return await run_in_threadpool(create_pathway_year, config, pathway_name, year)
@@ -391,7 +377,7 @@ async def get_editor_options(
         ) from exc
 
 
-@router.post("/{pathway_name}/years/{year}/building-events", dependencies=[CEASeverDemoAuthCheck])
+@router.post("/{pathway_name}/years/{year}/building-events")
 async def post_building_events(
     config: CEAConfig,
     pathway_name: str,
@@ -419,7 +405,7 @@ async def post_building_events(
         ) from exc
 
 
-@router.post("/{pathway_name}/years/{year}/apply-templates", dependencies=[CEASeverDemoAuthCheck])
+@router.post("/{pathway_name}/years/{year}/apply-templates")
 async def post_apply_templates(
     config: CEAConfig,
     pathway_name: str,
@@ -446,7 +432,7 @@ async def post_apply_templates(
         ) from exc
 
 
-@router.put("/{pathway_name}/years/{year}/yaml", dependencies=[CEASeverDemoAuthCheck])
+@router.put("/{pathway_name}/years/{year}/yaml")
 async def put_year_yaml(
     config: CEAConfig,
     pathway_name: str,
@@ -473,7 +459,7 @@ async def put_year_yaml(
         ) from exc
 
 
-@router.delete("/{pathway_name}/years/{year}", dependencies=[CEASeverDemoAuthCheck])
+@router.delete("/{pathway_name}/years/{year}")
 async def delete_year(config: CEAConfig, pathway_name: str, year: int) -> dict[str, Any]:
     try:
         return await run_in_threadpool(delete_or_clear_state, config, pathway_name, year)
@@ -504,7 +490,7 @@ async def delete_year(config: CEAConfig, pathway_name: str, year: int) -> dict[s
         ) from exc
 
 
-@router.post("/{pathway_name}/years/{year}/validate-state", dependencies=[CEASeverDemoAuthCheck])
+@router.post("/{pathway_name}/years/{year}/validate-state")
 async def post_validate_state(
     config: CEAConfig,
     pathway_name: str,
