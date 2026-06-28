@@ -3,12 +3,14 @@ KPIs API — registry-driven Key Performance Indicators surfaced in
 the Canvas Builder and OverviewCard ribbon.
 
 Endpoint:
-  GET /api/kpis/?project=&scenario=&feature=&whatif=
-    Returns every KPI in the requested ``feature`` for the given
-    scenario. Each KPI either reports its ``value`` + ``unit`` (cache
-    hit or just-recomputed) or carries ``available: false`` with
-    ``reason`` + ``upstream_tool`` so the frontend can prompt the
-    user to run that tool first.
+  GET /api/kpis/?feature=&whatif=
+    Scenario is resolved from X-CEA-* headers (preferred) or
+    ScenarioQuery params (deprecated compat). Returns every KPI in
+    the requested ``feature`` for the given scenario. Each KPI
+    either reports its ``value`` + ``unit`` (cache hit or
+    just-recomputed) or carries ``available: false`` with ``reason``
+    + ``upstream_tool`` so the frontend can prompt the user to run
+    that tool first.
 
 The endpoint is a thin wrapper around :func:`cea.kpi.cache.compute_kpi_cached`:
 the cache layer owns the three-hash freshness gate, status-file
@@ -22,9 +24,8 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, status
 
 import cea.inputlocator
-from cea.interfaces.dashboard.dependencies import CEAProjectRoot
+from cea.interfaces.dashboard.api.utils import CEAScenario
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
-from cea.interfaces.dashboard.utils import resolve_scenario_path
 from cea.kpi.cache import compute_kpi_cached
 from cea.kpi.exceptions import KPIDefinitionError, KPINotAvailable
 from cea.kpi.option_generators import run_generator
@@ -81,9 +82,7 @@ async def get_kpi_registry():
 
 @router.get("/")
 async def get_kpis(
-    project_root: CEAProjectRoot,
-    project: str,
-    scenario: str,
+    scenario_path: CEAScenario,
     feature: str,
     whatif: Optional[str] = None,
 ):
@@ -98,7 +97,6 @@ async def get_kpis(
     Truly broken KPIs (registry / formula errors) raise 500; those
     are bugs to fix in the yml, not user-facing states.
     """
-    scenario_path = resolve_scenario_path(project_root, project, scenario)
 
     # Surface a tight error if the feature doesn't exist in the
     # registry — easier to debug than an empty array. Feature is
@@ -166,7 +164,7 @@ async def get_kpis(
         "kpis": kpi_payloads,
         "metadata": {
             "feature": feature,
-            "scenario": scenario,
+            "scenario": scenario_path,
             "whatif": whatif,
             "all_fresh": all_fresh,
         },
@@ -200,10 +198,8 @@ def _parse_locator_args(raw: Optional[str]) -> Optional[dict]:
 
 @router.get("/{kpi_id}/parameters")
 async def get_kpi_parameters(
-    project_root: CEAProjectRoot,
     kpi_id: str,
-    project: str,
-    scenario: str,
+    scenario_path: CEAScenario,
     args: Optional[str] = None,
 ):
     """Return resolved choice lists for every parameter the KPI
@@ -243,7 +239,6 @@ async def get_kpi_parameters(
         )
     kpi = registry[kpi_id]
 
-    scenario_path = resolve_scenario_path(project_root, project, scenario)
     locator = cea.inputlocator.InputLocator(scenario_path)
     draft = _parse_locator_args(args) or {}
 
@@ -277,10 +272,8 @@ async def get_kpi_parameters(
 
 @router.get("/{kpi_id}/value")
 async def get_kpi_value(
-    project_root: CEAProjectRoot,
     kpi_id: str,
-    project: str,
-    scenario: str,
+    scenario_path: CEAScenario,
     locator_args: Optional[str] = None,
     whatif: Optional[str] = None,
 ):
@@ -293,7 +286,6 @@ async def get_kpi_value(
     (e.g. mono vs amorphous solar) get distinct values without
     the bulk endpoint's "share fetch across feature" assumption.
     """
-    scenario_path = resolve_scenario_path(project_root, project, scenario)
     args_override = _parse_locator_args(locator_args)
 
     registry = load_registry()
