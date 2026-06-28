@@ -19,7 +19,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 import cea.config
 import cea.inputlocator
 import cea.scripts
-from cea.interfaces.dashboard.api.utils import CEAScenario, CEAScenarioLenient, validate_scenario_name_or_subpath
+from cea.interfaces.dashboard.api.utils import CEAScenario, validate_scenario_name_or_subpath
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 from cea.interfaces.dashboard.lib.plot_dispatch import render_plot_html
@@ -338,7 +338,7 @@ async def get_report_plot(
 @router.post("/plot-custom", response_class=HTMLResponse)
 async def get_custom_plot(
     config: CEAConfig,
-    effective_scenario: CEAScenarioLenient,
+    effective_scenario: CEAScenario,
     payload: dict,
 ):
     """Render a plot using the visualisation system with custom parameters.
@@ -374,6 +374,11 @@ async def get_custom_plot(
         )
 
     if scenario:
+        if not isinstance(scenario, str):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="scenario must be a string",
+            )
         # Resolve the payload scenario against the project directory of the
         # effective scenario (from headers or config). Supports bare names and
         # relative sub-paths (e.g. canvas pathway-single child states).
