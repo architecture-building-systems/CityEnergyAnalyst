@@ -19,10 +19,11 @@ from fastapi.responses import HTMLResponse, JSONResponse
 import cea.config
 import cea.inputlocator
 import cea.scripts
+from cea.interfaces.dashboard.api.utils import CEAScenario, CEAScenarioLenient, validate_scenario_name_or_subpath
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 from cea.interfaces.dashboard.lib.plot_dispatch import render_plot_html
-from cea.interfaces.dashboard.utils import resolve_scenario_path, secure_path
+from cea.interfaces.dashboard.utils import secure_join_under_root, secure_path
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
 logger = getCEAServerLogger("cea-server-reports")
@@ -30,18 +31,11 @@ logger = getCEAServerLogger("cea-server-reports")
 router = APIRouter()
 
 
-_resolve_scenario_path = resolve_scenario_path
-
-
-
-
-
 
 @router.get("/whatifs")
-async def get_whatifs(project_root: CEAProjectRoot, project: str, scenario: str):
+async def get_whatifs(scenario: CEAScenario):
     """List what-if names that have final-energy results in the given scenario."""
-    scenario_path = _resolve_scenario_path(project_root, project, scenario)
-    locator = cea.inputlocator.InputLocator(scenario_path)
+    locator = cea.inputlocator.InputLocator(scenario)
 
     analysis_parent = locator.get_analysis_parent_folder()
     if not os.path.isdir(analysis_parent):
@@ -266,9 +260,7 @@ SUPPORTED_FEATURES = list(FEATURE_SUMMARY_MAP.keys())
 
 @router.get("/summary")
 async def get_summary(
-    project_root: CEAProjectRoot,
-    project: str,
-    scenario: str,
+    scenario: CEAScenario,
     feature: str,
     whatif: Optional[str] = None,
 ):
@@ -279,8 +271,7 @@ async def get_summary(
             detail=f"Unsupported feature: {feature}. Supported: {SUPPORTED_FEATURES}",
         )
 
-    scenario_path = _resolve_scenario_path(project_root, project, scenario)
-    locator = cea.inputlocator.InputLocator(scenario_path)
+    locator = cea.inputlocator.InputLocator(scenario)
 
     summary_fn = FEATURE_SUMMARY_MAP[feature]
     return summary_fn(locator, whatif)
@@ -289,9 +280,7 @@ async def get_summary(
 @router.get("/plot", response_class=HTMLResponse)
 async def get_report_plot(
     config: CEAConfig,
-    project_root: CEAProjectRoot,
-    project: str,
-    scenario: str,
+    scenario: CEAScenario,
     feature: str,
     whatif: Optional[str] = None,
 ):
@@ -301,7 +290,7 @@ async def get_report_plot(
     """
     from cea.visualisation.plot_main import plot_all
 
-    scenario_path = _resolve_scenario_path(project_root, project, scenario)
+    scenario_path = scenario
 
     # Feature-to-plot-section mapping
     feature_map = {
@@ -322,12 +311,10 @@ async def get_report_plot(
     # Build context dict for plot_all
     context = {"feature": plot_feature}
 
-    # Override scenario in config temporarily
-    original_scenario = config.scenario
-    try:
-        config.project = os.path.dirname(scenario_path)
-        config.scenario_name = os.path.basename(scenario_path)
+    config.project = os.path.dirname(scenario_path)
+    config.scenario_name = os.path.basename(scenario_path)
 
+    try:
         whatif_override = [whatif] if whatif else None
         fig = plot_all(config, scenario_path, context, hide_title=False,
                        whatif_names_override=whatif_override)
@@ -346,16 +333,12 @@ async def get_report_plot(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error generating plot: {e}",
         )
-    finally:
-        # Restore original scenario
-        config.project = os.path.dirname(original_scenario)
-        config.scenario_name = os.path.basename(original_scenario)
 
 
 @router.post("/plot-custom", response_class=HTMLResponse)
 async def get_custom_plot(
     config: CEAConfig,
-    project_root: CEAProjectRoot,
+    effective_scenario: CEAScenarioLenient,
     payload: dict,
 ):
     """Render a plot using the visualisation system with custom parameters.
@@ -391,21 +374,21 @@ async def get_custom_plot(
         )
 
     if scenario:
-        # Pass the scenario string through verbatim so deep child
-        # paths (canvas pathway-single columns target child states by
-        # their relative path under the parent scenario, e.g.
-        # `<scenario>/outputs/pathways/<name>/state_<year>`) resolve
-        # against the active project. Mirrors how `/api/inputs/all-
-        # inputs` handles the same input.
-        scenario_path = _resolve_scenario_path(
-            project_root,
-            config.project,
-            scenario,
+        # Resolve the payload scenario against the project directory of the
+        # effective scenario (from headers or config). Supports bare names and
+        # relative sub-paths (e.g. canvas pathway-single child states).
+        project_path = os.path.dirname(effective_scenario)
+        scenario_path = secure_join_under_root(
+            project_path, validate_scenario_name_or_subpath(scenario)
         )
+        if not os.path.isdir(scenario_path):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Scenario not found: {scenario}",
+            )
     else:
-        scenario_path = config.scenario
+        scenario_path = effective_scenario
 
-    original_scenario = config.scenario
     try:
         html = render_plot_html(
             config,
@@ -469,11 +452,10 @@ async def get_custom_plot(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error generating plot: {e}",
         )
-    finally:
-        config.project = os.path.dirname(original_scenario)
-        config.scenario_name = os.path.basename(original_scenario)
 
 
+# TODO: Remove get_scenarios — duplicates GET /api/project/?project=... which already returns
+#       scenarios_list. Frontend should call that endpoint instead.
 @router.get("/scenarios")
 async def get_scenarios(project_root: CEAProjectRoot, project: str):
     """List scenarios for a project (for inter-mode comparison)."""
@@ -493,11 +475,12 @@ async def get_scenarios(project_root: CEAProjectRoot, project: str):
     return {"scenarios": scenarios}
 
 
+# TODO: Remove get_zone_geojson — duplicates GET /api/inputs/geojson/zone which already serves
+#       zone geometry via CEAScenario. Frontend should call that endpoint instead.
 @router.get("/zone-geojson")
-async def get_zone_geojson(project_root: CEAProjectRoot, project: str, scenario: str):
+async def get_zone_geojson(scenario: CEAScenario):
     """Return zone geometry as GeoJSON for map thumbnail rendering."""
-    scenario_path = _resolve_scenario_path(project_root, project, scenario)
-    locator = cea.inputlocator.InputLocator(scenario_path)
+    locator = cea.inputlocator.InputLocator(scenario)
     zone_path = locator.get_zone_geometry()
 
     if not os.path.isfile(zone_path):
