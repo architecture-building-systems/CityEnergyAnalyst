@@ -30,7 +30,7 @@ from cea.datamanagement.district_pathways.pathway_timeline import (
     validate_baked_state,
     validate_pathway_log,
 )
-from cea.interfaces.dashboard.dependencies import CEAConfig, CEASeverDemoAuthCheck
+from cea.interfaces.dashboard.dependencies import CEAConfig
 from cea.interfaces.dashboard.api.utils import CEAScenario
 
 
@@ -73,7 +73,7 @@ async def get_overview(config: CEAConfig) -> dict[str, Any]:
     return await run_in_threadpool(get_pathway_overview, config)
 
 
-@router.post("/", dependencies=[CEASeverDemoAuthCheck])
+@router.post("/")
 async def post_pathway(config: CEAConfig, payload: CreatePathwayPayload) -> dict[str, Any]:
     try:
         return await run_in_threadpool(create_pathway, config, payload.pathway_name)
@@ -89,7 +89,7 @@ async def post_pathway(config: CEAConfig, payload: CreatePathwayPayload) -> dict
         ) from exc
 
 
-@router.post("/{pathway_name}/duplicate", dependencies=[CEASeverDemoAuthCheck])
+@router.post("/{pathway_name}/duplicate")
 async def duplicate_pathway(
     config: CEAConfig, pathway_name: str, payload: DuplicatePathwayPayload
 ) -> dict[str, Any]:
@@ -186,7 +186,7 @@ async def get_template_usage(config: CEAConfig, template_name: str) -> dict[str,
     return {"usage": usage}
 
 
-@router.delete("/templates/{template_name}", dependencies=[CEASeverDemoAuthCheck])
+@router.delete("/templates/{template_name}")
 async def delete_template(
     config: CEAConfig,
     template_name: str,
@@ -319,7 +319,7 @@ async def get_timeline(config: CEAConfig, pathway_name: str) -> dict[str, Any]:
         ) from exc
 
 
-@router.post("/{pathway_name}/years/{year}", dependencies=[CEASeverDemoAuthCheck])
+@router.post("/{pathway_name}/years/{year}")
 async def post_year(config: CEAConfig, pathway_name: str, year: int) -> dict[str, Any]:
     try:
         return await run_in_threadpool(create_pathway_year, config, pathway_name, year)
@@ -377,7 +377,7 @@ async def get_editor_options(
         ) from exc
 
 
-@router.post("/{pathway_name}/years/{year}/building-events", dependencies=[CEASeverDemoAuthCheck])
+@router.post("/{pathway_name}/years/{year}/building-events")
 async def post_building_events(
     config: CEAConfig,
     pathway_name: str,
@@ -405,7 +405,7 @@ async def post_building_events(
         ) from exc
 
 
-@router.post("/{pathway_name}/years/{year}/apply-templates", dependencies=[CEASeverDemoAuthCheck])
+@router.post("/{pathway_name}/years/{year}/apply-templates")
 async def post_apply_templates(
     config: CEAConfig,
     pathway_name: str,
@@ -432,7 +432,7 @@ async def post_apply_templates(
         ) from exc
 
 
-@router.put("/{pathway_name}/years/{year}/yaml", dependencies=[CEASeverDemoAuthCheck])
+@router.put("/{pathway_name}/years/{year}/yaml")
 async def put_year_yaml(
     config: CEAConfig,
     pathway_name: str,
@@ -459,7 +459,7 @@ async def put_year_yaml(
         ) from exc
 
 
-@router.delete("/{pathway_name}/years/{year}", dependencies=[CEASeverDemoAuthCheck])
+@router.delete("/{pathway_name}/years/{year}")
 async def delete_year(config: CEAConfig, pathway_name: str, year: int) -> dict[str, Any]:
     try:
         return await run_in_threadpool(delete_or_clear_state, config, pathway_name, year)
@@ -490,7 +490,7 @@ async def delete_year(config: CEAConfig, pathway_name: str, year: int) -> dict[s
         ) from exc
 
 
-@router.post("/{pathway_name}/years/{year}/validate-state", dependencies=[CEASeverDemoAuthCheck])
+@router.post("/{pathway_name}/years/{year}/validate-state")
 async def post_validate_state(
     config: CEAConfig,
     pathway_name: str,

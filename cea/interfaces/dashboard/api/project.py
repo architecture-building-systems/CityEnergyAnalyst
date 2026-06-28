@@ -26,7 +26,7 @@ from cea.datamanagement.databases_verification import verify_input_geometry_zone
 from cea.datamanagement.surroundings_helper import generate_empty_surroundings
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot, CEAProjectInfo, \
     create_project, CEAUserID, \
-    CEASeverDemoAuthCheck, CEAServerLimits
+    CEAServerLimits
 from cea.interfaces.dashboard.lib.database.session import SessionDep
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 from cea.interfaces.dashboard.settings import get_settings
@@ -258,7 +258,7 @@ async def get_project_info(project_root: CEAProjectRoot, project: str) -> Projec
     return ProjectInfo(**project_info)
 
 
-@router.post('/', dependencies=[CEASeverDemoAuthCheck])
+@router.post('/')
 async def create_new_project(project_root: CEAProjectRoot, new_project: NewProject,
                              user_id: CEAUserID, session: SessionDep, limit_settings: CEAServerLimits):
     """
@@ -381,7 +381,7 @@ async def get_state_folder(
 
 # TODO: Rename this endpoint once the old one is removed
 # Temporary endpoint to prevent breaking existing frontend
-@router.post('/scenario/v2', dependencies=[CEASeverDemoAuthCheck])
+@router.post('/scenario/v2')
 async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: Annotated[CreateScenario, Form()],
                                  limit_settings: CEAServerLimits):
     project_path = scenario_form.project
@@ -709,7 +709,7 @@ async def put(config: CEAConfig, scenario: str, payload: Dict[str, Any]):
         )
 
 
-@router.delete('/', dependencies=[CEASeverDemoAuthCheck])
+@router.delete('/')
 async def delete_project(project_root: CEAProjectRoot, project_info: ProjectPath):
     """Delete project"""
     project_path = project_info.project
@@ -736,7 +736,7 @@ async def delete_project(project_root: CEAProjectRoot, project_info: ProjectPath
                    'Try and refresh the page again.',
         )
 
-@router.delete('/scenario', dependencies=[CEASeverDemoAuthCheck])
+@router.delete('/scenario')
 async def delete_scenario(project_root: CEAProjectRoot, scenario_info: ScenarioPath):
     """Delete scenario from project"""
     project_path = scenario_info.project
@@ -769,7 +769,7 @@ async def delete_scenario(project_root: CEAProjectRoot, scenario_info: ScenarioP
 
 
 
-@router.post('/scenario/{scenario}/duplicate', dependencies=[CEASeverDemoAuthCheck])
+@router.post('/scenario/{scenario}/duplicate')
 async def duplicate_scenario(project_info: CEAProjectInfo, scenario: str, new_scenario_info: NewScenarioInfo):
     """Duplicate Scenario"""
     scenario_path = secure_path(os.path.join(project_info.project, scenario))

@@ -11,6 +11,49 @@ The dashboard UI (React frontend) is in a **separate repository** — not here.
 
 ---
 
+# API Auth
+
+Route dependencies declare **security intent**; the deployment mode decides how
+it is proven.
+
+**No proxy is assumed.** The server runs locally or online and self-enforces auth
+in both cases. Never rely on a gateway or reverse proxy to pre-filter requests.
+
+**Default auth:** `require_authenticated` runs as an app-level dependency on every
+route. In non-local mode it rejects unauthenticated callers (those that resolve to
+`LOCAL_USER_ID`). No per-route annotation needed — add new routes freely and they
+get auth for free.
+
+**Public exceptions** are listed in `_PUBLIC_ROUTES` in `dependencies.py`:
+session refresh, logout, and health-check endpoints. New public routes must be
+added there explicitly (fail-secure by default).
+
+| Primitive | When to use |
+|---|---|
+| `require_authenticated` | App-level. Do not add to individual routes. |
+| `CEAUser` / `CEAUserID` | Routes that need to know *who* the caller is (ownership, quotas). |
+| `require_public_demo_read(demo_id)` | Path-param dependency for anonymous read of allowlisted demo ids. Used in `api/demo.py`. |
+
+**Public demo sub-app** — `api/demo.py` is a standalone `FastAPI()` instance mounted
+at `/api/demo` by `app.py` when `Settings.public_demo_scenarios` is non-empty. Because
+it is a sub-app (not a router), it does **not** inherit the main app's
+`require_authenticated` dependency — the anonymous boundary is structural, not a code
+branch. No edit to `require_authenticated` or `_PUBLIC_ROUTES` is needed.
+
+`Settings.public_demo_scenarios` (`Dict[str, str]`, default `{}`):
+- Env: `CEA_PUBLIC_DEMO_SCENARIOS="demo1:/abs/path/scenario1,demo2:/abs/path/scenario2"`
+- JSON format also accepted: `'{"demo1": "/abs/path"}'`
+- Empty → sub-app not mounted → zero overhead (local mode never needs this).
+
+The sub-app resolves scenario paths exclusively through `require_public_demo_read`,
+which checks `demo_id` against the allowlist. No arbitrary filesystem paths are
+accepted. No write verbs are defined — the surface is read-only by construction.
+
+**Topology**: built in-process now; can be promoted to a standalone service with no
+code change (deploy `demo_app` alone, gateway `/api/demo/*` to it).
+
+---
+
 # Dashboard Job System
 
 ## Architecture
@@ -107,8 +150,9 @@ Treat the dashboard server as stateless. Do not persist request-scoped selection
 Both dependencies read scenario context from `X-CEA-*` headers first; if absent they fall back to query params. They enforce `project_root` boundaries in both cases; in non-local mode, absolute `X-CEA-Project` / `project` values are rejected.
 
 **Route path safety helpers** (`utils.py`):
-- Use `InputLocator(scenario)` directly in all route handlers — `CEAScenario` / `CEAScenarioLenient` already sanitise the path, and `resolve_scenario_path` applies `secure_path` to the final joined path for cross-scenario routes.
+- Use `InputLocator(scenario)` directly in route handlers — `CEAScenario` / `CEAScenarioLenient` already sanitise the path.
 - Use `secure_join_under_root(base, user_segment)` when appending user-provided path segments before filesystem checks.
+- See `api/AGENTS.md` for the full DO/DON'T pattern.
 
 **`save()` behaviour**: `CEALocalConfig.save()` writes `~/cea.config`; `CEAStatelessConfig.save()` is a no-op. Call `config.save()` unconditionally where appropriate — it does the right thing in both modes.
 

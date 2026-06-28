@@ -21,16 +21,16 @@ from cea.plots.cache import PlotCache
 
 IGNORE_CONFIG_SECTIONS = {"server", "development", "schemas"}
 
-settings = get_settings()
-
 
 class CEALocalConfig(cea.config.Configuration):
-    def __init__(self, config_file: str = settings.config_path):
+    def __init__(self, config_file: str):
+        self._config_path = config_file
         super().__init__(os.path.expanduser(config_file))
 
-    def save(self, config_file: str = settings.config_path) -> None:
-        logger.info(f"Saving config to {config_file}")
-        super().save(os.path.expanduser(config_file))
+    def save(self, config_file: str = None) -> None:
+        path = config_file if config_file is not None else self._config_path
+        logger.info(f"Saving config to {path}")
+        super().save(os.path.expanduser(path))
 
 
 class CEAStatelessConfig(cea.config.Configuration):
@@ -50,7 +50,7 @@ class CEAStatelessConfig(cea.config.Configuration):
         logger.debug("save() is a no-op in non-local (stateless) mode")
 
 
-def get_cea_config() -> cea.config.Configuration:
+def get_cea_config(settings: CEAServerSettings) -> cea.config.Configuration:
     """Return a config instance for this request.
 
     Local mode: disk-backed CEALocalConfig (reads/writes ~/cea.config, keeps
@@ -60,7 +60,7 @@ def get_cea_config() -> cea.config.Configuration:
     if settings.local:
         if settings.config_path is None:
             raise ValueError("No config provided")
-        return CEALocalConfig()
+        return CEALocalConfig(settings.config_path)
     return CEAStatelessConfig()
 
 
@@ -121,14 +121,14 @@ async def get_streams() -> AsyncDictCache:
     return await get_dict_cache("streams", default_ttl=STREAM_CACHE_TTL)
 
 
-def get_server_url():
+def get_server_url(settings: CEAServerSettings) -> str:
     host = settings.host
     port = settings.port
     worker_url = f"http://{host}:{port}/server"
     return worker_url
 
 
-def get_project_root(user_id: CEAUserID) -> Optional[str]:
+def get_project_root(user_id: CEAUserID, settings: CEAServerSettings) -> Optional[str]:
     """Get the project root for the current user"""
     project_root = settings.project_root
 
@@ -142,7 +142,7 @@ def get_project_root(user_id: CEAUserID) -> Optional[str]:
     return project_root
 
 
-def get_user_id(auth_client: CEAAuthClient) -> str:
+def get_user_id(auth_client: CEAAuthClient, settings: CEAServerSettings) -> str:
     # Return local user if local mode
     if settings.local:
         logger.info(f"Using `{LOCAL_USER_ID}`")
@@ -160,7 +160,7 @@ def get_user_id(auth_client: CEAAuthClient) -> str:
     return LOCAL_USER_ID
 
 
-def get_user(auth_client: CEAAuthClient) -> Dict[str, str]:
+def get_user(auth_client: CEAAuthClient, settings: CEAServerSettings) -> Dict[str, str]:
     if settings.local:
         return {'id': LOCAL_USER_ID}
 
@@ -186,7 +186,7 @@ def get_user(auth_client: CEAAuthClient) -> Dict[str, str]:
     return {'id': LOCAL_USER_ID}
 
 
-def get_auth_client(request: Request) -> Optional[AuthClient]:
+def get_auth_client(request: Request, settings: CEAServerSettings) -> Optional[AuthClient]:
     if settings.local:
         return None
 
@@ -198,18 +198,48 @@ def get_auth_client(request: Request) -> Optional[AuthClient]:
     return None
 
 
-def check_auth_for_demo(request: Request, user_id: CEAUserID):
-    """Check if user is authorized when not in local mode"""
-    # Pass if local mode
+# Routes publicly accessible without authentication in non-local mode.
+# Every other route is gated by require_authenticated (applied at app level).
+_PUBLIC_ROUTES: frozenset = frozenset({
+    "/api/user/session/refresh",  # token refresh — must work with an expired access token
+    "/api/user/logout",           # session teardown — should work even if token is stale
+    "/server/alive",              # health check — monitoring must not need a session
+    "/server/version",            # version info — safe to expose publicly
+})
+
+# Path prefixes exempt from session auth. The route handler is responsible for
+# its own auth when its path matches one of these prefixes.
+_PUBLIC_ROUTE_PREFIXES: tuple = (
+    "/api/downloads/",  # pre-signed token downloads — anchor tags don't send cookies
+)
+
+
+def require_authenticated(request: Request, user_id: CEAUserID, settings: CEAServerSettings):
+    """App-level auth guard: every route requires an authenticated user in non-local mode.
+
+    In local (single-user desktop) mode this is a no-op — all routes are open.
+    In non-local mode any caller that resolves to LOCAL_USER_ID (the anonymous
+    sentinel returned when no valid session token is present) receives 401.
+
+    Routes in _PUBLIC_ROUTES / _PUBLIC_ROUTE_PREFIXES are explicitly excluded.
+    No proxy is assumed — the server self-enforces auth.
+    """
     if settings.local:
         return
-
-    # Check if user is authorized
+    if request.url.path in _PUBLIC_ROUTES:
+        return
+    if request.url.path.startswith(_PUBLIC_ROUTE_PREFIXES):
+        return
     if user_id == LOCAL_USER_ID:
-        logger.info(f"Unauthorized access \"{request.method} {request.url.path}\": `{user_id}`")
+        # FIXME: LOCAL_USER_ID is overloaded — it is the sentinel for both the
+        # local-desktop user (harmless; local mode exits above) and anonymous
+        # callers in non-local mode. Rename / split these two concepts so the
+        # guard here is unambiguous.
+        safe_path = request.url.path.replace("\r", "\\r").replace("\n", "\\n")
+        logger.info('Unauthenticated access "%s %s"', request.method, safe_path)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Unauthorized",
+            detail="Authentication required.",
         )
 
 def get_limits(user: CEAUser) -> LimitSettings:
@@ -239,4 +269,3 @@ CEAServerSettings = Annotated[Settings, Depends(get_settings)]
 CEAAuthClient = Annotated[AuthClient, Depends(get_auth_client)]
 CEAServerLimits = Annotated[LimitSettings, Depends(get_limits)]
 
-CEASeverDemoAuthCheck = Depends(check_auth_for_demo)

@@ -21,7 +21,7 @@ from sqlmodel import select, desc
 from starlette.datastructures import UploadFile as _UploadFile
 
 from cea.interfaces.dashboard.dependencies import CEAServerUrl, CEAWorkerProcesses, CEAProjectID, CEAServerSettings, \
-    CEAUserID, CEASeverDemoAuthCheck, CEAStreams
+    CEAUserID, CEAStreams
 from cea.interfaces.dashboard.lib.database.models import JobInfo, JobState, get_current_time
 from cea.interfaces.dashboard.lib.database.session import SessionDep
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
@@ -159,7 +159,7 @@ def cleanup_job_temp_files(job_id: str):
         logger.error(f"Error cleaning up temp files for job {job_id}: {e}")
 
 
-@router.get("/", dependencies=[CEASeverDemoAuthCheck])
+@router.get("/")
 @router.get("/list")
 async def get_jobs(
     session: SessionDep,
@@ -208,7 +208,7 @@ async def get_job_info(session: SessionDep, job_id: str) -> JobInfoResponse:
     return JobInfoResponse.from_job_info(job, stdout=job.stdout, stderr=job.stderr)
 
 
-@router.post("/new", dependencies=[CEASeverDemoAuthCheck])
+@router.post("/new")
 async def create_new_job(request: Request, session: SessionDep, project_id: CEAProjectID, user_id: CEAUserID,
                          settings: CEAServerSettings) -> JobInfoResponse:
     """Post a new job to the list of jobs to complete"""
@@ -378,7 +378,7 @@ async def set_job_error(session: SessionDep, job_id: str, error: JobError, strea
     return job_payload
 
 
-@router.post('/start/{job_id}', dependencies=[CEASeverDemoAuthCheck])
+@router.post('/start/{job_id}')
 async def start_job(session: SessionDep, worker_processes: CEAWorkerProcesses, server_url: CEAServerUrl, job_id: str,
                     user_id: CEAUserID, settings: CEAServerSettings):
     """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
@@ -438,7 +438,7 @@ async def start_job(session: SessionDep, worker_processes: CEAWorkerProcesses, s
     return job_id
 
 
-@router.post("/cancel/{job_id}", dependencies=[CEASeverDemoAuthCheck])
+@router.post("/cancel/{job_id}")
 async def cancel_job(session: SessionDep, job_id: str, user_id: CEAUserID,
                      worker_processes: CEAWorkerProcesses, streams: CEAStreams) -> JobInfoResponse:
     # Lock the row to prevent concurrent modifications (TOCTOU protection)
@@ -550,7 +550,7 @@ async def kill_job(session, job_id: str, worker_processes, streams) -> JobInfoRe
     return job_payload
 
 
-@router.delete("/{job_id}", dependencies=[CEASeverDemoAuthCheck])
+@router.delete("/{job_id}")
 async def delete_job(session: SessionDep, job_id: str, user_id: CEAUserID) -> JobInfoResponse:
     """
     Mark a job as deleted (soft delete). The job row is not removed from the database,

@@ -5,7 +5,6 @@ import socketio
 
 from socketio.exceptions import ConnectionRefusedError
 
-from cea.interfaces.dashboard.dependencies import settings
 from cea.interfaces.dashboard.lib.auth import CEAAuthError
 from cea.interfaces.dashboard.lib.auth.providers import StackAuth
 from cea.interfaces.dashboard.lib.cache.settings import cache_settings
@@ -115,7 +114,7 @@ def cookie_string_to_dict(cookie_string: str) -> Dict[str, str]:
 
 @sio.event
 async def connect(sid, environ, auth):
-    if settings.local:
+    if get_settings().local:
         await sio.enter_room(sid, f"user-{LOCAL_USER_ID}")
         return True
 

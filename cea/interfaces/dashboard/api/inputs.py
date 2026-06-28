@@ -27,7 +27,7 @@ from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 import cea.schemas
 from cea.databases import CEADatabase, CEADatabaseException
 from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
-from cea.interfaces.dashboard.dependencies import CEASeverDemoAuthCheck
+
 from cea.interfaces.dashboard.utils import (
     secure_path,
     secure_join_under_root,
@@ -85,7 +85,7 @@ NETWORK_KEYS = ['dc', 'dh']
 
 @router.get("/")
 async def get_keys():
-    return {'buildingProperties': INPUT_KEYS, 'geoJSONs': GEOJSON_KEYS}
+    return {'buildingProperties': list(INPUT_KEYS), 'geoJSONs': GEOJSON_KEYS}
 
 
 @router.get('/building-properties/{db}')
@@ -166,7 +166,7 @@ class InputForm(BaseModel):
     schedules: Dict[str, Any] = Field(default_factory=dict)
 
 
-@router.put('/all-inputs', dependencies=[CEASeverDemoAuthCheck])
+@router.put('/all-inputs')
 async def save_all_inputs(scenario: CEAScenario, form: InputForm):
     locator = cea.inputlocator.InputLocator(scenario)
 
@@ -460,7 +460,7 @@ async def get_input_database_data(scenario: CEAScenario):
     return cea_db.to_dict()
 
 
-@router.put('/databases', dependencies=[CEASeverDemoAuthCheck])
+@router.put('/databases')
 async def put_input_database_data(scenario: CEAScenario, payload: Dict[str, Any]):
     locator = cea.inputlocator.InputLocator(scenario)
     try:
@@ -477,7 +477,7 @@ async def put_input_database_data(scenario: CEAScenario, payload: Dict[str, Any]
         )
 
 
-@router.post('/databases/upload', dependencies=[CEASeverDemoAuthCheck])
+@router.post('/databases/upload')
 async def upload_input_database(scenario: CEAScenario, file: UploadFile):
     locator = cea.inputlocator.InputLocator(scenario)
 
@@ -588,7 +588,7 @@ async def upload_input_database(scenario: CEAScenario, file: UploadFile):
 
     return await run_in_threadpool(do_upload)
 
-@router.get('/databases/download', dependencies=[CEASeverDemoAuthCheck])
+@router.get('/databases/download')
 async def download_input_database(scenario: CEAScenario):
     locator = cea.inputlocator.InputLocator(scenario)
     filename = 'database.zip'

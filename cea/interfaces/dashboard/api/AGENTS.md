@@ -11,6 +11,25 @@
 - `POST /api/pathways/{pathway_name}/years/{year}/validate-state` - Manual baked-state validation.
 
 ## Key Patterns
+### DO: Use CEAScenario / CEAScenarioLenient for any route that reads a scenario
+`CEAScenario` handles header parsing (`X-CEA-Project`, `X-CEA-Scenario-Name`, `X-CEA-Child-Scenario`),
+project-root boundary enforcement, and path sanitisation in one dependency. Never accept raw
+`project: str` + `scenario: str` query params and call `resolve_scenario_path` manually — that
+pattern bypasses the header contract and duplicates security logic.
+
+Use `CEAScenario` when the scenario directory must exist; `CEAScenarioLenient` when it may not
+(e.g. metadata/config endpoints). Both enforce path boundaries.
+
+```python
+# DO
+async def get_data(scenario: CEAScenario):
+    locator = cea.inputlocator.InputLocator(scenario)
+
+# DON'T
+async def get_data(project_root: CEAProjectRoot, project: str, scenario: str):
+    scenario_path = resolve_scenario_path(project_root, project, scenario)
+```
+
 ### DO: Keep routes thin and delegate to pathway domain helpers
 ```python
 return await run_in_threadpool(get_pathway_timeline, config, pathway_name)
@@ -18,7 +37,9 @@ return await run_in_threadpool(get_pathway_timeline, config, pathway_name)
 
 ### DO: Treat any route that writes logs or status files as a normal authenticated write
 ```python
-@router.post("/{pathway_name}/years/{year}/validate-state", dependencies=[CEASeverDemoAuthCheck])
+@router.post("/{pathway_name}/years/{year}/validate-state")
+# No per-route auth annotation needed — require_authenticated runs app-wide.
+# Add to _PUBLIC_ROUTES in dependencies.py only if the route must be publicly accessible.
 ```
 
 ### DO: Preserve structured 409 payloads for stock-only edit rules
