@@ -269,4 +269,3 @@ CEAServerSettings = Annotated[Settings, Depends(get_settings)]
 CEAAuthClient = Annotated[AuthClient, Depends(get_auth_client)]
 CEAServerLimits = Annotated[LimitSettings, Depends(get_limits)]
 
-RequireAuthenticated = Depends(require_authenticated)
