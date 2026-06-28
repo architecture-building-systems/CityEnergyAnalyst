@@ -207,6 +207,12 @@ _PUBLIC_ROUTES: frozenset = frozenset({
     "/server/version",            # version info — safe to expose publicly
 })
 
+# Path prefixes exempt from session auth. The route handler is responsible for
+# its own auth when its path matches one of these prefixes.
+_PUBLIC_ROUTE_PREFIXES: tuple = (
+    "/api/downloads/",  # pre-signed token downloads — anchor tags don't send cookies
+)
+
 
 def require_authenticated(request: Request, user_id: CEAUserID, settings: CEAServerSettings):
     """App-level auth guard: every route requires an authenticated user in non-local mode.
@@ -215,15 +221,22 @@ def require_authenticated(request: Request, user_id: CEAUserID, settings: CEASer
     In non-local mode any caller that resolves to LOCAL_USER_ID (the anonymous
     sentinel returned when no valid session token is present) receives 401.
 
-    Routes in _PUBLIC_ROUTES are explicitly excluded (session and health-check
-    endpoints).  No proxy is assumed — the server self-enforces auth.
+    Routes in _PUBLIC_ROUTES / _PUBLIC_ROUTE_PREFIXES are explicitly excluded.
+    No proxy is assumed — the server self-enforces auth.
     """
     if settings.local:
         return
     if request.url.path in _PUBLIC_ROUTES:
         return
+    if request.url.path.startswith(_PUBLIC_ROUTE_PREFIXES):
+        return
     if user_id == LOCAL_USER_ID:
-        logger.info(f"Unauthenticated access \"{request.method} {request.url.path}\"")
+        # FIXME: LOCAL_USER_ID is overloaded — it is the sentinel for both the
+        # local-desktop user (harmless; local mode exits above) and anonymous
+        # callers in non-local mode. Rename / split these two concepts so the
+        # guard here is unambiguous.
+        safe_path = request.url.path.replace("\r", "\\r").replace("\n", "\\n")
+        logger.info('Unauthenticated access "%s %s"', request.method, safe_path)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required.",
