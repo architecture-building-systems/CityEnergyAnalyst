@@ -142,22 +142,17 @@ async def get_tool_list(config: CEAConfig) -> Dict[str, List[ToolDescription]]:
     return result
 
 
-@router.get('/{tool_name}')
-async def get_tool_properties(config: CEAConfig, tool_name: str, scenario: CEAScenarioLenient) -> ToolProperties:
+def _build_tool_properties(tool_name: str, config) -> ToolProperties:
     # TODO: Add plugin support
-    config.scenario = scenario
     script = cea.scripts.by_name(tool_name, plugins=config.plugins)
-
     parameters = []
     categories = defaultdict(list)
     for _, parameter in config.matching_parameters(script.parameters):
         parameter_dict = deconstruct_parameters(parameter, config)
-
         if parameter.category:
             categories[parameter.category].append(parameter_dict)
         else:
             parameters.append(parameter_dict)
-
     return ToolProperties(
         name=tool_name,
         label=script.label,
@@ -169,11 +164,18 @@ async def get_tool_properties(config: CEAConfig, tool_name: str, scenario: CEASc
     )
 
 
-@router.post('/{tool_name}/default')
-async def restore_default_config(config: CEAConfig, tool_name: str, scenario: CEAScenarioLenient):
-    """Restore the default configuration values for the CEA"""
-    # Bind the request scenario so scenario-dependent parameters parse correctly
+@router.get('/{tool_name}')
+async def get_tool_properties(config: CEAConfig, tool_name: str, scenario: CEAScenarioLenient) -> ToolProperties:
     config.scenario = scenario
+    return _build_tool_properties(tool_name, config)
+
+
+@router.post('/{tool_name}/default')
+async def restore_default_config(config: CEAConfig, tool_name: str, scenario: CEAScenarioLenient) -> ToolProperties:
+    """Restore the default configuration values for the CEA"""
+    config.scenario = scenario
+    default_config = cea.config.Configuration(config_file=cea.config.DEFAULT_CONFIG)
+    default_config.scenario = scenario
 
     candidates = []
     set_empty = []
@@ -182,7 +184,7 @@ async def restore_default_config(config: CEAConfig, tool_name: str, scenario: CE
         if parameter.name == 'scenario':
             continue
 
-        default_value = config.sections[parameter.section.name].parameters[parameter.name].get()
+        default_value = default_config.sections[parameter.section.name].parameters[parameter.name].get()
         # Set empty string for non-nullable parameters with empty default values, bypassing validation
         if not default_value and default_value is not False and default_value != 0 and not parameter.nullable:
             set_empty.append(parameter)
@@ -195,8 +197,7 @@ async def restore_default_config(config: CEAConfig, tool_name: str, scenario: CE
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={'message': 'Validation failed', 'field_errors': e.args[0]})
 
     config.save()
-
-    return 'Success'
+    return _build_tool_properties(tool_name, config)
 
 
 @router.post('/{tool_name}/save-config')
