@@ -170,11 +170,10 @@ async def get_tool_properties(config: CEAConfig, tool_name: str, scenario: CEASc
 
 
 @router.post('/{tool_name}/default')
-async def restore_default_config(config: CEAConfig, tool_name: str):
+async def restore_default_config(config: CEAConfig, tool_name: str, scenario: CEAScenarioLenient):
     """Restore the default configuration values for the CEA"""
-    default_config = cea.config.Configuration(config_file=cea.config.DEFAULT_CONFIG)
-    # Ensure that parameters that depend on scenario files will be parsed correctly
-    default_config.scenario = config.scenario
+    # Bind the request scenario so scenario-dependent parameters parse correctly
+    config.scenario = scenario
 
     candidates = []
     set_empty = []
@@ -183,7 +182,7 @@ async def restore_default_config(config: CEAConfig, tool_name: str):
         if parameter.name == 'scenario':
             continue
 
-        default_value = default_config.sections[parameter.section.name].parameters[parameter.name].get()
+        default_value = config.sections[parameter.section.name].parameters[parameter.name].get()
         # Set empty string for non-nullable parameters with empty default values, bypassing validation
         if not default_value and default_value is not False and default_value != 0 and not parameter.nullable:
             set_empty.append(parameter)
@@ -201,11 +200,12 @@ async def restore_default_config(config: CEAConfig, tool_name: str):
 
 
 @router.post('/{tool_name}/save-config')
-async def save_tool_config(config: CEAConfig, tool_name: str, payload: Dict[str, Any]):
+async def save_tool_config(config: CEAConfig, tool_name: str, payload: Dict[str, Any], scenario: CEAScenarioLenient):
     """
     Save the configuration for this tool to the configuration file.
     Validates all parameters before saving and returns field-level errors if validation fails.
     """
+    config.scenario = scenario
     field_errors = {}
 
     # Validate all parameters first
@@ -238,7 +238,7 @@ async def save_tool_config(config: CEAConfig, tool_name: str, payload: Dict[str,
 
 
 @router.post('/{tool_name}/validate-field')
-async def validate_field(config: CEAConfig, tool_name: str, payload: Dict[str, Any]):
+async def validate_field(config: CEAConfig, tool_name: str, payload: Dict[str, Any], scenario: CEAScenarioLenient):
     """
     Validate a single field value using the parameter's encode() method.
 
@@ -247,6 +247,7 @@ async def validate_field(config: CEAConfig, tool_name: str, payload: Dict[str, A
     - value: the value to validate
     - form_values: dict of current form values to set on config before validation
     """
+    config.scenario = scenario
     parameter_name = payload.get('parameter_name')
     value = payload.get('value')
     form_values = payload.get('form_values', {})
@@ -286,7 +287,7 @@ async def validate_field(config: CEAConfig, tool_name: str, payload: Dict[str, A
 
 
 @router.post('/{tool_name}/parameter-metadata')
-async def get_parameter_metadata(config: CEAConfig, tool_name: str, payload: Dict[str, Any]):
+async def get_parameter_metadata(config: CEAConfig, tool_name: str, payload: Dict[str, Any], scenario: CEAScenarioLenient):
     """
     Get updated parameter metadata based on current form values.
     Does NOT save to config - uses temporary in-memory config state.
@@ -298,6 +299,7 @@ async def get_parameter_metadata(config: CEAConfig, tool_name: str, payload: Dic
     - form_values: dict of current form values
     - affected_parameters: optional list of parameter names to get metadata for
     """
+    config.scenario = scenario
     form_values = payload.get('form_values', {})
     affected_parameters = payload.get('affected_parameters', None)
 
