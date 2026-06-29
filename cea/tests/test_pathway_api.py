@@ -53,7 +53,10 @@ def pathway_api_fixture():
     app.dependency_overrides[require_authenticated] = lambda: None
 
     yield {
-        "client": TestClient(app),
+        "client": TestClient(app, headers={
+            "X-CEA-Project": str(project_root),
+            "X-CEA-Scenario-Name": config.scenario_name,
+        }),
         "config": config,
         "locator": locator,
     }
