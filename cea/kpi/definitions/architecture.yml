@@ -1,0 +1,104 @@
+# Building-architecture KPIs.
+#
+# Source CSV: scenario/outputs/data/demand/Total_demand.csv
+# (one row per building, produced by `cea demand`). The CSV
+# carries the per-building floor-area columns derived from
+# `zone.shp` + the archetypes mapper, so the KPIs read the
+# building geometry through the demand tool's totals output
+# rather than re-walking the shapefile. Tool dependency:
+# `cea demand` must have run.
+#
+# Picker grouping uses the new `building-architecture` plot key —
+# a matching top-level "Building Architecture" entry was added
+# to `features/plots/constants.js` so KPI authors and the picker
+# stay in lock-step (the group has no plots yet; it's a
+# KPI-first surface).
+
+feature: architecture
+
+kpis:
+  - id: architecture.total_gfa_m2
+    label: Total Gross Floor Area
+    category: building-architecture
+    unit: m²
+    better_direction: neutral
+    headline: true
+    info_note: |
+      Total gross floor area across every building in the zone.
+      Drives most district-level normalisations (intensity per
+      GFA, capacity per GFA).
+
+      GFA = Σ(GFA_m2)
+        in [m²]
+    description: >
+      District footprint at the zone level. Pair with the
+      conditioned-share KPI to see how much of that footprint is
+      actually heated/cooled.
+    source:
+      locator: get_total_demand
+      formula:
+        kind: aggregate
+        op: sum
+        of: { kind: column, name: GFA_m2 }
+
+  - id: architecture.conditioned_floor_area_m2
+    label: Conditioned Floor Area
+    category: building-architecture
+    unit: m²
+    better_direction: neutral
+    info_note: |
+      Floor area that is heated and/or cooled (Af). Excludes
+      unconditioned circulation, basements, and service spaces.
+
+      Conditioned = Σ(Af_m2)
+        in [m²]
+    source:
+      locator: get_total_demand
+      formula:
+        kind: aggregate
+        op: sum
+        of: { kind: column, name: Af_m2 }
+
+  - id: architecture.conditioned_share_pct
+    label: Conditioned Share
+    category: building-architecture
+    unit: '%'
+    better_direction: neutral
+    info_note: |
+      Share of total GFA that is heated/cooled. Lower districts
+      (warehouses, parking) sit nearer 0; office-heavy zones
+      approach 100.
+
+      Share = Σ(Af_m2) ÷ Σ(GFA_m2) × 100
+        in [%]
+    source:
+      locator: get_total_demand
+      formula:
+        kind: share_of
+        part:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: Af_m2 }
+        whole:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: GFA_m2 }
+
+  - id: architecture.total_roof_area_m2
+    label: Total Roof Area
+    category: building-architecture
+    unit: m²
+    better_direction: neutral
+    info_note: |
+      Total horizontal roof footprint across every building.
+      Caps the rooftop-PV potential and the urban-heat / albedo
+      surface.
+
+      Roof = Σ(Aroof_m2)
+        in [m²]
+    source:
+      locator: get_total_demand
+      formula:
+        kind: aggregate
+        op: sum
+        of: { kind: column, name: Aroof_m2 }

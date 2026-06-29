@@ -185,11 +185,18 @@ class PlotEntry(_Allowed):
 
 class CardConfig(_Allowed):
     """One card's content — type, feature, plot configs, layer info."""
-    type: str  # 'plot' | 'kpi' | 'map'
+    type: str  # 'plot' | 'kpi' | 'map' | 'text' | 'divider'
     feature: Optional[str] = None
     plots: List[PlotEntry] = Field(default_factory=list)
     category: Optional[str] = None
     layer: Optional[str] = None
+    # KPI cards bind to a single registry id (e.g.
+    # ``demand.eui_kwh_m2``). ``None`` for non-KPI cards. Older
+    # canvases (pre-KPI feature) load fine because the field
+    # defaults — `_Allowed`'s `extra='allow'` would have passed it
+    # through anyway, but the explicit declaration documents the
+    # contract.
+    kpi_id: Optional[str] = None
 
 
 class FeatureCardFile(BaseModel):

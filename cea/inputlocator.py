@@ -243,6 +243,19 @@ class InputLocator(object):
             self.get_district_pathway_state_status_folder(pathway_name),
             f'state_{year_of_state}.json',
         )
+
+    def get_kpi_folder(self):
+        """Returns the folder that holds KPI cache state.
+
+        `scenario/outputs/kpis`"""
+        return os.path.join(self.scenario, 'outputs', 'kpis')
+
+    def get_kpi_status_file(self):
+        """Returns the JSON cache file recording per-KPI value +
+        the three hashes that gate freshness.
+
+        `scenario/outputs/kpis/kpi_status.json`"""
+        return os.path.join(self.get_kpi_folder(), 'kpi_status.json')
     
     def get_district_pathway_emissions_timeline_path(self, pathway_name: str):
         """Returns the district-level pathway emissions timeline CSV file.
@@ -1477,6 +1490,58 @@ class InputLocator(object):
     def get_thermal_network_plant_heat_requirement_file(self, network_type, network_name):
         """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_plant_thermal_load_kW.csv"""
         return self._get_thermal_network_results_file_path(network_type, network_name, "plant_thermal_load_kW.csv")
+
+    # ── Per-phase result files inside a phasing plan ──────────────
+    # The three helpers below extend the existing ``_phasing_*``
+    # locator family (see e.g.
+    # ``get_thermal_network_phasing_plant_heat_requirement_file``
+    # and ``get_thermal_network_phasing_massflow_edges_file``
+    # below) with the three per-phase CSVs the network KPIs
+    # depend on but that didn't have a locator yet:
+    # ``metadata_edges.csv`` (pipe lengths), the total-thermal-
+    # loss CSV, and the plant-pumping-load CSV. Each phase's
+    # outputs are copied into
+    # ``phasing-plans/{plan_name}/{network_type}/{phase}/{network_type}_{phase}_*.csv``
+    # by ``save_phase_results`` in
+    # ``cea/technologies/thermal_network/common/phasing.py``.
+    #
+    # ``..._plant_heat_requirement_file`` is intentionally absent
+    # from this group — the existing
+    # ``get_thermal_network_phasing_plant_heat_requirement_file``
+    # already covers that path.
+
+    def get_thermal_network_phasing_edge_list_file(
+        self, network_type, plan_name, phase,
+    ):
+        """phasing-plans/{plan_name}/{network_type}/{phase}/{network_type}_{phase}_metadata_edges.csv"""
+        return os.path.join(
+            self.get_thermal_network_phasing_plan_phase_folder(
+                network_type, plan_name, phase,
+            ),
+            f"{network_type}_{phase}_metadata_edges.csv",
+        )
+
+    def get_thermal_network_phasing_total_thermal_loss_file(
+        self, network_type, plan_name, phase,
+    ):
+        """phasing-plans/{plan_name}/{network_type}/{phase}/{network_type}_{phase}_total_thermal_loss_edges_kW.csv"""
+        return os.path.join(
+            self.get_thermal_network_phasing_plan_phase_folder(
+                network_type, plan_name, phase,
+            ),
+            f"{network_type}_{phase}_total_thermal_loss_edges_kW.csv",
+        )
+
+    def get_thermal_network_phasing_energy_pumping_requirements_file(
+        self, network_type, plan_name, phase,
+    ):
+        """phasing-plans/{plan_name}/{network_type}/{phase}/{network_type}_{phase}_plant_pumping_load_kW.csv"""
+        return os.path.join(
+            self.get_thermal_network_phasing_plan_phase_folder(
+                network_type, plan_name, phase,
+            ),
+            f"{network_type}_{phase}_plant_pumping_load_kW.csv",
+        )
 
     # THERMAL NETWORK PHASING
     def get_thermal_network_phasing_folder(self, network_type, plan_name):

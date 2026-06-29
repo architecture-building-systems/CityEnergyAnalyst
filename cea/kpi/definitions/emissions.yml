@@ -1,0 +1,92 @@
+# Emissions KPIs — operational only.
+#
+# Source CSV: outputs/data/analysis/{whatif_name}/emissions/
+#               emissions_buildings.csv
+# (one row per building or plant, produced by `cea emissions`
+# under the active what-if). Column meanings live in
+# cea/schemas.yml under `get_emissions_whatif_buildings_file`.
+#
+# Migration note: previously this yml read from the legacy
+# `get_lca_operation` locator (no whatif support, per-carrier
+# breakdown across `*_hs_ghg_ton` / `*_ww_ghg_ton` columns). The
+# whatif file rolls every carrier up into a single
+# `operation_kgCO2e` column — already in kgCO2e (not tons), so
+# the ×1000 conversion the old formula carried is gone. The
+# four carrier-share KPIs (grid_electricity / heating / dhw /
+# fossil_fuel share) had to be dropped: the rolled-up column
+# loses the breakdown they computed against. They return when
+# either (a) the whatif emissions file gains per-carrier
+# columns, or (b) the resolver gains a per-row filter primitive
+# and we read the timeline file instead.
+#
+# Picker grouping uses the `operational-emissions` plot key so
+# the entry lands under "Life Cycle Analysis → GHG Emissions"
+# alongside the matching plot card family.
+
+feature: emissions
+
+kpis:
+  - id: emissions.annual_operational_kgco2e
+    label: Annual Operational Emissions
+    category: operational-emissions
+    unit: kgCO2e/yr
+    better_direction: lower
+    headline: true
+    info_note: |
+      Total annual operational emissions across every building
+      and plant in the district under the active what-if.
+
+      Annual = Σ(operation_kgCO2e)
+        in [kgCO2e/yr]
+    description: >
+      Sum of operational GHG emissions per building/plant from
+      the what-if's emissions analysis. Already in kgCO2e in the
+      whatif file, so no unit conversion is applied.
+    source:
+      locator: get_emissions_whatif_buildings_file
+      locator_args:
+        whatif_name: ""
+      parameters:
+        whatif_name:
+          label: What-if scenario
+          options_generator: whatif_names
+          default: ""
+          description: Which what-if folder to read emissions outputs from.
+      formula:
+        kind: aggregate
+        op: sum
+        of: { kind: column, name: operation_kgCO2e }
+
+  - id: emissions.intensity_kgco2_m2
+    label: Operational Emissions Intensity
+    category: operational-emissions
+    unit: kgCO2e/m²/yr
+    better_direction: lower
+    info_note: |
+      Annual operational emissions per unit gross floor area.
+      Normalises across district size so what-if comparisons
+      stay meaningful regardless of how much floor area each
+      configuration carries.
+
+      Intensity = Σ(operation_kgCO2e) ÷ Σ(GFA_m²)
+        in [kgCO2e/m²/yr]
+    source:
+      locator: get_emissions_whatif_buildings_file
+      locator_args:
+        whatif_name: ""
+      parameters:
+        whatif_name:
+          label: What-if scenario
+          options_generator: whatif_names
+          default: ""
+          description: Which what-if folder to read emissions outputs from.
+      formula:
+        kind: divide
+        numerator:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: operation_kgCO2e }
+        denominator:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: GFA_m2 }

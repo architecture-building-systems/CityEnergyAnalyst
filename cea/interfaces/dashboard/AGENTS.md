@@ -137,9 +137,28 @@ Retry: `emit_with_retry()` (3 retries, exponential backoff).
 
 Not every user action should become a background job. Keep fast synchronous API routes for lightweight, reusable domain operations. Promote an action to a native job when the user experience depends on persistent Job Info logs, streamed stdout/stderr, or parity with long-running workflow actions. In both cases, keep the business logic in shared service functions so API routes and jobs call the same implementation.
 
+## Prefer pull over push
+
+When a consumer needs fresh data, it should fetch and compute on demand rather than relying on a producer to push updates at the right moment. Push-based side effects (post-job hooks, event handlers, eager refreshes) couple producers to consumers, run unconditionally regardless of who needs the result, and compound under concurrency.
+
+Before adding a push mechanism, ask: does the consumer already recompute correctly when it reads? If yes, the push is redundant — decline to add it.
+
+## Framing
+
+Users describe requirements in UI and event terms: "after X finishes", "when the user clicks Y", "the panel should refresh when Z". These are valid UX descriptions but are not backend specifications — translate them before deciding on an implementation.
+
+For any trigger-phrased request:
+1. Identify the **invariant** the user actually wants: "the panel always shows current data" rather than "refresh after job completion".
+2. Check whether the invariant is already satisfied by the existing read path.
+3. Only if it isn't, consider a push mechanism — and evaluate it against scalability first: does it run unconditionally for every event regardless of who needs the result? Does it compound under concurrent users or jobs?
+
+UI language hides scalability assumptions that hold for a single local user but break under concurrent load. A feature that "works fine" with one user triggering one job can become a bottleneck when 20 jobs complete simultaneously or when the server runs across multiple containers. Reframe the requirement as an invariant first, then choose the implementation.
+
+The user describing a feature may not be a software engineer and won't catch an architectural shortcut. When a request is ambiguous, prefer the more separated/conservative design and explain the tradeoff in plain language rather than guessing.
+
 ## Statelessness (important for container scaling)
 
-Treat the dashboard server as stateless. Do not persist request-scoped selections (e.g. scenario) to `config` or any server-side store. Pass context per request via `X-CEA-*` headers (preferred) or query params (deprecated compat); do not use `config.save()` to persist request-scoped scenario selection.
+Treat the dashboard server as stateless. Do not persist request-scoped selections (e.g. scenario) to `config` or any server-side store. Pass context per request via `X-CEA-*` headers; do not use `config.save()` to persist request-scoped scenario selection.
 
 **Config is per-request**: `get_cea_config()` creates a fresh instance on every request (local: `CEALocalConfig` from disk, non-local: `CEAStatelessConfig` from `DEFAULT_CONFIG`). There is no shared config singleton — mutations are request-scoped and need no snapshot/restore.
 
@@ -147,7 +166,7 @@ Treat the dashboard server as stateless. Do not persist request-scoped selection
 - `CEAScenario` enforces that the resolved scenario directory exists (use for endpoints that read/write scenario files).
 - `CEAScenarioLenient` resolves and validates path boundaries but does not require directory existence (use for metadata/config endpoints).
 
-Both dependencies read scenario context from `X-CEA-*` headers first; if absent they fall back to query params. They enforce `project_root` boundaries in both cases; in non-local mode, absolute `X-CEA-Project` / `project` values are rejected.
+Both dependencies read scenario context from `X-CEA-*` headers. In local mode, falls back to `config.scenario` if no headers are present. In non-local mode, missing headers return 400 — `config.scenario` resolves to `DEFAULT_CONFIG` which is meaningless in a stateless context. They enforce `project_root` boundaries; in non-local mode, absolute `X-CEA-Project` values are rejected.
 
 **Route path safety helpers** (`utils.py`):
 - Use `InputLocator(scenario)` directly in route handlers — `CEAScenario` / `CEAScenarioLenient` already sanitise the path.
@@ -158,7 +177,7 @@ Both dependencies read scenario context from `X-CEA-*` headers first; if absent 
 
 ## Scenario Context — Header Contract
 
-Scenario context travels as HTTP request headers. Query params (`project`, `scenario_name`, `scenario_path`) are deprecated compat, accepted during frontend migration.
+Scenario context travels as `X-CEA-*` request headers. Falls back to `config.scenario` when no headers are present.
 
 | Header | Purpose |
 |---|---|
@@ -166,7 +185,7 @@ Scenario context travels as HTTP request headers. Query params (`project`, `scen
 | `X-CEA-Scenario-Name` | Bare scenario name — always the parent scenario |
 | `X-CEA-Child-Scenario` | Logical pathway child token `<pathway_name>/<year>`; requires the two above |
 
-**Resolution priority**: header values (if any header present) > query params > `config.scenario`.
+**Resolution priority**: `X-CEA-*` headers > `config.scenario` (local mode only — non-local returns 400 when headers are absent).
 
 **Child scenario**: `X-CEA-Child-Scenario: <pathway_name>/<year>` is a logical token — the backend resolves it to a filesystem path via `InputLocator.get_state_in_time_scenario_folder(pathway_name, year)`. No filesystem path is sent by the client; the physical layout (`outputs/pathways/<name>/state_<year>`) stays an implementation detail.
 
@@ -174,6 +193,22 @@ Scenario context travels as HTTP request headers. Query params (`project`, `scen
 
 **Future phase (separate plan)**: URL path hierarchy `PUT /projects/{id}/scenarios/{name}/...` requires a `project_id → project_path` mapping table (works for local and non-local modes). Deferred: no `project_id` migration needed until online multi-user requires stable IDs.
 
-## Docker
+## State Ownership
 
-Server runs as PID 1 with a `SIGCHLD` handler (`setup_sigchld_handler` in `app.py`) that reaps zombie workers via `os.waitpid(-1, WNOHANG)`. Tini not required but easy to re-enable.
+Use this to decide where state lives before implementing any feature.
+
+**The boundary rule**: if removing the server-side state would break correctness for a *different* client (a second browser tab, a CLI user, a different container), it belongs on the backend. If it only affects the current user's current view, it belongs on the frontend.
+
+### Backend owns
+- **Persisted domain state** — scenario files, input/output data, pathway YAML, job logs, status files; anything that must survive a page reload or server restart
+- **Derived reads requiring disk or computation** — KPI results, geometry queries, timeline data; computed on demand from files, never cached server-side between requests
+- **Authentication and session tokens** — access/refresh tokens, cookie management
+- **Job lifecycle** — queuing, worker process management, stdout/stderr streaming
+
+### Frontend owns (lives in the GUI repo — see Frontend Code above; not actionable in this repo)
+- **UI state** — which panel is open, active tab, scroll position, expanded/collapsed sections
+- **Form state** — draft values typed but not yet submitted
+- **Selection state** — which scenario, pathway, or year is active in the UI (per Statelessness)
+- **Sequence orchestration** — calling routes in the correct order for multi-step flows
+- **Optimistic updates** — reflecting a write in the UI before the server confirms
+- **Refetch logic** — when to re-fetch after a write (per Prefer pull over push)
