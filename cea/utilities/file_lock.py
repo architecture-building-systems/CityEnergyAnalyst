@@ -60,14 +60,19 @@ class FileLock:
         # matters. Truncation is the cheapest way to ensure the
         # file exists.
         self.lock_file = open(self.lock_file_path, "w")
-        if sys.platform == "win32":
-            import msvcrt
+        try:
+            if sys.platform == "win32":
+                import msvcrt
 
-            msvcrt.locking(self.lock_file.fileno(), msvcrt.LK_LOCK, 1)
-        else:
-            import fcntl
+                msvcrt.locking(self.lock_file.fileno(), msvcrt.LK_LOCK, 1)
+            else:
+                import fcntl
 
-            fcntl.flock(self.lock_file.fileno(), fcntl.LOCK_EX)
+                fcntl.flock(self.lock_file.fileno(), fcntl.LOCK_EX)
+        except Exception:
+            self.lock_file.close()
+            self.lock_file = None
+            raise
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
