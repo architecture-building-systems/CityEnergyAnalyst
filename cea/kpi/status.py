@@ -120,9 +120,10 @@ def clear_kpi(
     drops the just-computed value).
     """
     path = InputLocator(scenario).get_kpi_status_file()
-    if not os.path.isfile(path):
-        return
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     with FileLock(kpi_status_lock_path(scenario)):
+        if not os.path.isfile(path):
+            return
         current = read_status(scenario)
         kpis = current.get("kpis", {})
         if kpi_id is not None:
