@@ -47,6 +47,7 @@ import cea.inputlocator
 
 from .canvas_storage import CanvasState
 from .plot_dispatch import render_plot_html
+from cea.interfaces.dashboard.utils import secure_join_under_root
 
 
 __author__ = "Zhongming Shi"
@@ -216,7 +217,7 @@ def _capture_plot_card(
     data_folder = locator.get_canvas_card_data_folder(canvas_folder, card_id)
     os.makedirs(data_folder, exist_ok=True)
 
-    scenario_path = os.path.join(project_root, scenario)
+    scenario_path = secure_join_under_root(project_root, scenario)
     for i, plot in enumerate(card.plots):
         script = plot.plot_config.get('script') if plot.plot_config else None
         params = plot.plot_config.get('parameters', {}) if plot.plot_config else {}
@@ -300,7 +301,7 @@ def _capture_kpi_card(
     if not kpi_id or not scenario:
         return
 
-    scenario_path = os.path.join(project_root, scenario)
+    scenario_path = secure_join_under_root(project_root, scenario)
     data_folder = locator.get_canvas_card_data_folder(canvas_folder, card_id)
     os.makedirs(data_folder, exist_ok=True)
 
