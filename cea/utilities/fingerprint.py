@@ -86,50 +86,51 @@ def hash_folder(
     raises if ``path`` doesn't exist.
     """
     extra = frozenset(ignored_files)
-    digest = hashlib.sha256()
+    outer = hashlib.sha256()
     for root, dirs, files in os.walk(path):
         dirs.sort()
-        rel_root = os.path.relpath(root, path)
-        digest.update(rel_root.replace("\\", "/").encode("utf-8"))
         for file_name in sorted(files):
             if _is_ignored_hash_file(file_name, extra=extra):
                 continue
             file_path = os.path.join(root, file_name)
             rel_path = os.path.relpath(file_path, path).replace("\\", "/")
-            digest.update(rel_path.encode("utf-8"))
+            inner = hashlib.sha256()
+            inner.update(rel_path.encode("utf-8"))
             with open(file_path, "rb") as handle:
                 while True:
                     chunk = handle.read(_HASH_CHUNK_BYTES)
                     if not chunk:
                         break
-                    digest.update(chunk)
-    return digest.hexdigest()
+                    inner.update(chunk)
+            outer.update(inner.digest())
+    return outer.hexdigest()
 
 
 def hash_files(paths: Sequence[str]) -> str:
     """SHA256 fingerprint over an explicit list of files.
 
     The list is sorted so call order doesn't matter. Each file
-    contributes its absolute path (as the canonical key) followed by
-    its bytes. Missing files contribute an explicit ``<missing>``
-    marker rather than raising — callers checking "did anything
-    change?" want to see "this file disappeared" as a state change,
-    not as an exception.
+    contributes its own inner digest (path + content) into an outer
+    digest. Missing files contribute an explicit ``<missing>`` marker
+    rather than raising — callers checking "did anything change?" want
+    to see "this file disappeared" as a state change, not as an
+    exception.
     """
-    digest = hashlib.sha256()
+    outer = hashlib.sha256()
     for file_path in sorted(paths):
-        canonical = file_path.replace("\\", "/")
-        digest.update(canonical.encode("utf-8"))
+        inner = hashlib.sha256()
+        inner.update(file_path.replace("\\", "/").encode("utf-8"))
         if not os.path.isfile(file_path):
-            digest.update(b"<missing>")
-            continue
-        with open(file_path, "rb") as handle:
-            while True:
-                chunk = handle.read(_HASH_CHUNK_BYTES)
-                if not chunk:
-                    break
-                digest.update(chunk)
-    return digest.hexdigest()
+            inner.update(b"<missing>")
+        else:
+            with open(file_path, "rb") as handle:
+                while True:
+                    chunk = handle.read(_HASH_CHUNK_BYTES)
+                    if not chunk:
+                        break
+                    inner.update(chunk)
+        outer.update(inner.digest())
+    return outer.hexdigest()
 
 
 def hash_payload(obj: Any) -> str:
