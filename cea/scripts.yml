@@ -1109,18 +1109,6 @@ Visualisation:
       - [get_building_architecture]
       - [get_zone_geometry]
 
-  - name: plot-operational-emissions
-    label: Plot - Operational Emissions
-    short_description: Plot bar chart of building operational emissions
-    description: This Feature plots bar chart of the results of operational emissions
-    interfaces: [cli, dashboard]
-    module: cea.visualisation.plot_main
-    parameters: ['general:scenario', plots-general, plots-include-plants-buildings, plots-operational-emissions, plots-building-filter]
-    input-files:
-      - [get_emissions_whatif_buildings_file, 'plots-operational-emissions:what-if-name']
-      - [get_building_architecture]
-      - [get_zone_geometry]
-
   - name: plot-comfort-chart
     label: Plot - Building Comfort Chart
     short_description: Plot comfort and discomfort hours for buildings
