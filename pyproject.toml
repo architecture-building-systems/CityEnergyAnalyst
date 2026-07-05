@@ -129,15 +129,14 @@ lint.ignore = [
     "E741", # ambiguous variable name (l, O, I)
 ]
 
-[tool.pixi.system-requirements]
-macos = "14.0"
-libc = {family = "glibc", version = "2.39"} # TODO: Lower to "2.17" after publishing manylinux_2_17 wheels for linux-64 and linux-aarch64
-
 [tool.pixi.workspace]
 channels = ["conda-forge"]
+# TODO: Lower glibc to "2.17" after publishing manylinux_2_17 wheels for linux-64 and linux-aarch64
 platforms = [
-    "linux-64", "linux-aarch64",
-    "osx-64", "osx-arm64",
+    { platform = "linux-64", glibc = "2.39" },
+    { platform = "linux-aarch64", glibc = "2.39" },
+    { platform = "osx-64", macos = "14.0" },
+    { platform = "osx-arm64", macos = "14.0" },
     "win-64"
 ]
 
