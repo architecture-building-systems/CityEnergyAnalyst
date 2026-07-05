@@ -107,10 +107,6 @@ if cors_origin == "*":
     origins = ["*"]
     # Disable credentials with wildcard origin for security
     allow_credentials = False
-    logger.warning(
-        "CORS: Using wildcard origin ('*') with credentials disabled. "
-        "Only use this in local development."
-    )
 else:
     origins = [o.strip() for o in cors_origin.split(",")]
     allow_credentials = True
