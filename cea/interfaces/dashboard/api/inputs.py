@@ -120,11 +120,11 @@ async def get_input_geojson(scenario: CEAScenario, kind: str):
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f'Invalid database for geojson: {location}',
             )
-        return df_to_json(location)[0]
+        return df_to_json(location, root=scenario)[0]
     elif kind in NETWORK_KEYS:
         return get_network(scenario, kind)[0]
     elif kind == 'streets':
-        return df_to_json(locator.get_street_network())[0]
+        return df_to_json(locator.get_street_network(), root=scenario)[0]
 
 
 @router.get('/building-properties')
@@ -142,11 +142,11 @@ async def get_all_inputs(scenario: CEAScenario):
         store['geojsons'] = {}
         store['connected_buildings'] = {'dc': [], 'dh': []}
         store['crs'] = {}
-        store['geojsons']['zone'], store['crs']['zone'] = df_to_json(locator.get_zone_geometry())
+        store['geojsons']['zone'], store['crs']['zone'] = df_to_json(locator.get_zone_geometry(), root=scenario)
         store['geojsons']['surroundings'], store['crs']['surroundings'] = df_to_json(
-            locator.get_surroundings_geometry())
-        store['geojsons']['trees'], store['crs']['trees'] = df_to_json(locator.get_tree_geometry())
-        store['geojsons']['streets'], store['crs']['streets'] = df_to_json(locator.get_street_network())
+            locator.get_surroundings_geometry(), root=scenario)
+        store['geojsons']['trees'], store['crs']['trees'] = df_to_json(locator.get_tree_geometry(), root=scenario)
+        store['geojsons']['streets'], store['crs']['streets'] = df_to_json(locator.get_street_network(), root=scenario)
         # store['geojsons']['dc'], store['connected_buildings']['dc'], store['crs']['dc'] = get_network(config, 'dc')
         # store['geojsons']['dh'], store['connected_buildings']['dh'],  store['crs']['dh'] = get_network(config, 'dh')
         store['geojsons']['dc'] = None
@@ -373,11 +373,11 @@ def get_network(scenario: str, network_type):
         edges = locator.get_network_layout_edges_shapefile(network_type, network_name)
         nodes = locator.get_network_layout_nodes_shapefile(network_type, network_name)
 
-        network_json, crs = df_to_json(edges)
+        network_json, crs = df_to_json(edges, root=scenario)
         if network_json is None:
             return None, [], None
 
-        nodes_json, _ = df_to_json(nodes)
+        nodes_json, _ = df_to_json(nodes, root=scenario)
         network_json['features'].extend(nodes_json['features'])
         network_json['properties'] = {'connected_buildings': connected_buildings}
         return network_json, connected_buildings, crs
@@ -389,11 +389,11 @@ def get_network(scenario: str, network_type):
         return None, [], None
 
 
-def df_to_json(file_location):
+def df_to_json(file_location, root=None):
     from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
 
     try:
-        file_location = secure_path(file_location)
+        file_location = secure_path(file_location, root=root)
         if not os.path.exists(file_location):
             raise FileNotFoundError(f"File not found: {file_location}")
 
