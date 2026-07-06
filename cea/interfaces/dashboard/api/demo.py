@@ -5,8 +5,8 @@ Mounted at /api/demo by app.py when public_demo_scenarios is configured.
 This is a standalone FastAPI app and does NOT inherit the main app's
 require_authenticated dependency — the anonymous boundary is structural.
 
-Routes wrap the normal API routers (inputs, map-layers, canvas, reports)
-rather than duplicating their logic. The key mechanism is two
+Routes wrap the normal API routers (inputs, map-layers, canvas, reports,
+tools) rather than duplicating their logic. The key mechanism is two
 dependency_overrides that replace get_effective_scenario /
 get_effective_scenario_lenient with require_public_demo_read, which reads
 {demo_id} from the URL path and checks it against the configured allowlist.
@@ -35,6 +35,7 @@ import cea.interfaces.dashboard.api.canvas as canvas_module
 import cea.interfaces.dashboard.api.inputs as inputs_module
 import cea.interfaces.dashboard.api.map_layers as map_layers_module
 import cea.interfaces.dashboard.api.reports as reports_module
+import cea.interfaces.dashboard.api.tools as tools_module
 from cea.interfaces.dashboard.api.utils import (
     get_effective_scenario,
     get_effective_scenario_lenient,
@@ -134,6 +135,18 @@ app.include_router(
 app.include_router(
     _filter_routes(reports_module.router, exclude_paths={"/scenarios"}),
     prefix="/scenarios/{demo_id}/reports",
+    dependencies=_demo_guard,
+)
+
+
+# ── Tools ──────────────────────────────────────────────────────────────────
+# All GET routes: / for the tool catalogue, /{tool_name} for its parameters
+# (resolved against the allowlisted scenario via CEAScenarioLenient). Write
+# routes (save-config, validate-field, etc.) are excluded.
+
+app.include_router(
+    _filter_routes(tools_module.router, allowed_methods={"GET"}),
+    prefix="/scenarios/{demo_id}/tools",
     dependencies=_demo_guard,
 )
 
