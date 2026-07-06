@@ -6,7 +6,7 @@ This is a standalone FastAPI app and does NOT inherit the main app's
 require_authenticated dependency — the anonymous boundary is structural.
 
 Routes wrap the normal API routers (inputs, map-layers, canvas, reports,
-tools) rather than duplicating their logic. The key mechanism is two
+tools, kpis) rather than duplicating their logic. The key mechanism is two
 dependency_overrides that replace get_effective_scenario /
 get_effective_scenario_lenient with require_public_demo_read, which reads
 {demo_id} from the URL path and checks it against the configured allowlist.
@@ -33,6 +33,7 @@ from fastapi.routing import APIRoute
 
 import cea.interfaces.dashboard.api.canvas as canvas_module
 import cea.interfaces.dashboard.api.inputs as inputs_module
+import cea.interfaces.dashboard.api.kpis as kpis_module
 import cea.interfaces.dashboard.api.map_layers as map_layers_module
 import cea.interfaces.dashboard.api.reports as reports_module
 import cea.interfaces.dashboard.api.tools as tools_module
@@ -147,6 +148,18 @@ app.include_router(
 app.include_router(
     _filter_routes(tools_module.router, allowed_methods={"GET"}),
     prefix="/scenarios/{demo_id}/tools",
+    dependencies=_demo_guard,
+)
+
+
+# ── KPIs ───────────────────────────────────────────────────────────────────
+# All GET routes: /registry (static catalogue), / (bulk KPI values),
+# /{kpi_id}/parameters, /{kpi_id}/value — all resolved against the
+# allowlisted scenario via CEAScenario. No write routes exist.
+
+app.include_router(
+    _filter_routes(kpis_module.router),
+    prefix="/scenarios/{demo_id}/kpis",
     dependencies=_demo_guard,
 )
 
