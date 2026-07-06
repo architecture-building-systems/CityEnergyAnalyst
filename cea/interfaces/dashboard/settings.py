@@ -169,11 +169,20 @@ class Settings(BaseSettings):
         """
         Write settings to env variables in the format {ENV_VAR_PREFIX}{KEY}={VALUE}
         """
-        # Set environment variables 
+        import json
+
+        # Set environment variables
         for key, value in self.__dict__.items():
             if value is not None:
                 env_var_name = f"{ENV_VAR_PREFIX}{key.upper()}"
-                os.environ[env_var_name] = str(value)
+                # dict/list values must round-trip through parsing (e.g. worker
+                # subprocesses re-reading Settings() from env) — str() on a dict
+                # produces a Python repr with single quotes, which is not valid
+                # JSON and fails re-parsing.
+                if isinstance(value, (dict, list)):
+                    os.environ[env_var_name] = json.dumps(value)
+                else:
+                    os.environ[env_var_name] = str(value)
 
 
 @lru_cache
