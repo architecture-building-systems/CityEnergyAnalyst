@@ -113,7 +113,7 @@ app.include_router(
         allowed_methods={"GET", "POST"},
         exclude_paths={"/{layer_category}/{layer_name}/{parameter}/choice/delete"},
     ),
-    prefix="/scenarios/{demo_id}/map-layers",
+    prefix="/scenarios/{demo_id}/map_layers",
     dependencies=_demo_guard,
 )
 

@@ -130,10 +130,10 @@ def test_demo_sub_app_has_no_write_routes():
 
     mutating_methods = {"PUT", "PATCH", "DELETE"}
     allowed_post_paths = {
-        "/scenarios/{demo_id}/map-layers/{layer_category}/{layer_name}/{parameter}/choices",
-        "/scenarios/{demo_id}/map-layers/{layer_category}/{layer_name}/{parameter}/range",
-        "/scenarios/{demo_id}/map-layers/{layer_category}/{layer_name}/generate",
-        "/scenarios/{demo_id}/map-layers/{layer_category}/{layer_name}/check",
+        "/scenarios/{demo_id}/map_layers/{layer_category}/{layer_name}/{parameter}/choices",
+        "/scenarios/{demo_id}/map_layers/{layer_category}/{layer_name}/{parameter}/range",
+        "/scenarios/{demo_id}/map_layers/{layer_category}/{layer_name}/generate",
+        "/scenarios/{demo_id}/map_layers/{layer_category}/{layer_name}/check",
     }
 
     bad_routes = []
