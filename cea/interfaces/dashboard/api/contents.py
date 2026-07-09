@@ -17,6 +17,7 @@ from cea.datamanagement.format_helper.cea4_migrate_db import migrate_cea3_to_cea
 from cea.datamanagement.format_helper.cea4_verify import cea4_verify
 from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
 from cea.interfaces.dashboard.api.project import get_project_choices
+from cea.interfaces.dashboard.api.utils import CEAProjectLenient
 from cea.interfaces.dashboard.dependencies import CEAProjectRoot, CEAServerLimits
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 from cea.interfaces.dashboard.settings import get_settings
@@ -136,7 +137,6 @@ async def get_contents(project_root: CEAProjectRoot, content_type: ContentType,
 class UploadScenario(BaseModel):
     file: UploadFile
     type: Literal["current", "existing", "new"]
-    project: str
 
 
 VALID_EXTENSIONS = {".shp", ".dbf", ".prj", ".cpg", ".shx",
@@ -167,7 +167,7 @@ def filter_valid_files(file_list: List[str]) -> List[str]:
 
 @router.post("/scenario/upload")
 async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root: CEAProjectRoot,
-                          limit_settings: CEAServerLimits) -> UploadScenarioResult:
+                          project: CEAProjectLenient, limit_settings: CEAServerLimits) -> UploadScenarioResult:
     # Validate file is a zip
     if form.file.filename is None or not form.file.filename.endswith('.zip'):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File must be a ZIP archive")
@@ -178,16 +178,8 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File too large")
 
     # TODO: Catch HTTPException(s) at app level to logger errors
-    # Ensure project root
-    if project_root is None or project_root == "":
-        logger.error("Unable to determine project path")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Project root not defined",
-        )
-
-    project_name = form.project.strip()
-    project_path = Path(secure_path(Path(project_root, project_name).resolve()))
+    project_name = os.path.basename(project)
+    project_path = Path(project)
 
     settings = get_settings()
     if not settings.local:

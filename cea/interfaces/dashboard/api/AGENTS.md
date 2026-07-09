@@ -50,8 +50,8 @@ Never have a route call another route, or store intermediate state for another r
 ### DO: Use CEAScenario / CEAScenarioLenient for any route that reads a scenario
 `CEAScenario` handles header parsing (`X-CEA-Project`, `X-CEA-Scenario-Name`, `X-CEA-Child-Scenario`),
 project-root boundary enforcement, and path sanitisation in one dependency. Never accept raw
-`project: str` + `scenario: str` query params and call `resolve_scenario_path` manually — that
-pattern bypasses the header contract and duplicates security logic.
+`project: str` + `scenario: str` query/body params and hand-roll the join — that pattern bypasses
+the header contract and duplicates security logic.
 
 Use `CEAScenario` when the scenario directory must exist; `CEAScenarioLenient` when it may not
 (e.g. metadata/config endpoints). Both enforce path boundaries.
@@ -63,7 +63,26 @@ async def get_data(scenario: CEAScenario):
 
 # DON'T
 async def get_data(project_root: CEAProjectRoot, project: str, scenario: str):
-    scenario_path = resolve_scenario_path(project_root, project, scenario)
+    scenario_path = secure_path(os.path.join(project_root, project, scenario))
+```
+
+### DO: Use CEAProject / CEAProjectLenient for any route that operates on a project as a whole
+Same idea as `CEAScenario`, one level up — for routes that list/create/delete a project or a
+scenario within it (not read an existing scenario's files). `CEAProject` requires the project
+directory to exist (404 otherwise); `CEAProjectLenient` doesn't (e.g. scenario upload where the
+project may be new). See `project.py::delete_project`, `::duplicate_scenario` for examples.
+
+```python
+# DO
+async def delete_project(project: CEAProject):
+    shutil.rmtree(project)
+
+# DON'T
+async def delete_project(project_root: CEAProjectRoot, body: ProjectPath):
+    project_path = body.project
+    if project_root is not None and not project_path.startswith(project_root):
+        project_path = os.path.join(project_root, project_path)
+    project = secure_path(project_path)
 ```
 
 ### DO: Keep routes thin and delegate to pathway domain helpers

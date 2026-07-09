@@ -43,6 +43,7 @@ from cea.interfaces.dashboard.api.utils import (
 )
 from cea.interfaces.dashboard.dependencies import CEAServerSettings
 
+# TODO: Cache responses for public demo scenarios (e.g. /scenarios/{demo_id}/inputs) to reduce load on the CEAConfig
 app = FastAPI(title="CEA Demo", description="Public read-only demo scenarios.")
 
 
@@ -131,10 +132,12 @@ app.include_router(
 
 
 # ── Reports ────────────────────────────────────────────────────────────────
-# GET routes only. /scenarios excluded — uses CEAProjectRoot + project, not CEAScenario.
+# GET routes only. All remaining routes are resolved against the allowlisted
+# scenario via CEAScenario (the legacy CEAProjectRoot + project /scenarios
+# route was removed — see GET /api/project/).
 
 app.include_router(
-    _filter_routes(reports_module.router, exclude_paths={"/scenarios"}),
+    _filter_routes(reports_module.router),
     prefix="/scenarios/{demo_id}/reports",
     dependencies=_demo_guard,
 )

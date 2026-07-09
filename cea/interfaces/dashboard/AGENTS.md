@@ -168,6 +168,12 @@ Treat the dashboard server as stateless. Do not persist request-scoped selection
 
 Both dependencies read scenario context from `X-CEA-*` headers. In local mode, falls back to `config.scenario` if no headers are present. In non-local mode, missing headers return 400 — `config.scenario` resolves to `DEFAULT_CONFIG` which is meaningless in a stateless context. They enforce `project_root` boundaries; in non-local mode, absolute `X-CEA-Project` values are rejected.
 
+**Project dependencies** (`api/utils.py`): the project-level counterpart to `CEAScenario` for routes that operate on a project as a whole (list/delete a project, create/delete/duplicate/rename a scenario, upload, prepare a download) rather than an existing scenario.
+- `CEAProject` requires the resolved project directory to exist (404 if not).
+- `CEAProjectLenient` resolves and boundary-checks the path without requiring existence (use where the project may not exist yet, e.g. scenario upload with `type="new"`).
+
+Same header (`X-CEA-Project`), same local-mode `config.project` fallback, same absolute-path rejection in non-local mode. Never accept a raw `project: str` query/body/form param and hand-roll `os.path.join(project_root, project)` + `secure_path(...)` — that duplicates this dependency and is easy to get inconsistent (e.g. forgetting `root=project_root`, or not rejecting absolute paths).
+
 **Route path safety helpers** (`utils.py`):
 - Use `InputLocator(scenario)` directly in route handlers — `CEAScenario` / `CEAScenarioLenient` already sanitise the path.
 - Use `secure_join_under_root(base, user_segment)` when appending user-provided path segments before filesystem checks.
