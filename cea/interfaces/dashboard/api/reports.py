@@ -21,7 +21,10 @@ import cea.scripts
 from cea.interfaces.dashboard.api.utils import CEAScenario, validate_scenario_name_or_subpath
 from cea.interfaces.dashboard.dependencies import CEAConfig
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
-from cea.interfaces.dashboard.lib.plot_dispatch import render_plot_html
+from cea.interfaces.dashboard.lib.plot_dispatch import (
+    NotAPlotScriptError,
+    render_plot_html,
+)
 from cea.interfaces.dashboard.utils import secure_join_under_root
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
@@ -402,6 +405,11 @@ async def get_custom_plot(
             feature_label=feature_label,
         )
         return HTMLResponse(html, 200)
+    except NotAPlotScriptError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Not a plot script: {e}",
+        )
     except FileNotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

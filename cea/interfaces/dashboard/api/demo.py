@@ -133,12 +133,14 @@ app.include_router(
 
 
 # ── Reports ────────────────────────────────────────────────────────────────
-# GET routes only. All remaining routes are resolved against the allowlisted
-# scenario via CEAScenario (the legacy CEAProjectRoot + project /scenarios
-# route was removed — see GET /api/project/).
+# GET routes only, plus POST /plot-custom: render_plot_html() (plot_dispatch.py)
+# validates that the requested script is category="Visualisation",
+# interfaces includes "dashboard", and module is under cea.visualisation.* —
+# so an anonymous caller can only ever dispatch a genuine plot script, never
+# an arbitrary registered CEA script.
 
 app.include_router(
-    _filter_routes(reports_module.router),
+    _filter_routes(reports_module.router, allowed_methods={"GET", "POST"}),
     prefix="/scenarios/{demo_id}/reports",
     dependencies=_demo_guard,
 )
