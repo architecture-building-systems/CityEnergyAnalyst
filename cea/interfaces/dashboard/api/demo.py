@@ -100,7 +100,7 @@ def _filter_routes(
 # All GET routes from inputs.router; PUT / POST (save, upload) excluded.
 
 app.include_router(
-    _filter_routes(inputs_module.router),
+    _filter_routes(inputs_module.router, allowed_methods={"GET"}),
     prefix="/scenarios/{demo_id}/inputs",
     dependencies=_demo_guard,
 )
@@ -126,7 +126,11 @@ app.include_router(
 # via capture_canvas_data(config, ...) which needs a full CEAConfig object.
 
 app.include_router(
-    _filter_routes(canvas_module.router, exclude_paths={"/{name}/export"}),
+    _filter_routes(
+        canvas_module.router,
+        allowed_methods={"GET"},
+        exclude_paths={"/{name}/export"},
+    ),
     prefix="/scenarios/{demo_id}/canvas",
     dependencies=_demo_guard,
 )
@@ -164,7 +168,7 @@ app.include_router(
 # allowlisted scenario via CEAScenario. No write routes exist.
 
 app.include_router(
-    _filter_routes(kpis_module.router),
+    _filter_routes(kpis_module.router, allowed_methods={"GET"}),
     prefix="/scenarios/{demo_id}/kpis",
     dependencies=_demo_guard,
 )
