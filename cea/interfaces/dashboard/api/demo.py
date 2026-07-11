@@ -6,7 +6,7 @@ This is a standalone FastAPI app and does NOT inherit the main app's
 require_authenticated dependency — the anonymous boundary is structural.
 
 Routes wrap the normal API routers (inputs, map-layers, canvas, reports,
-tools, kpis) rather than duplicating their logic. The key mechanism is two
+tools, kpis, pathways) rather than duplicating their logic. The key mechanism is two
 dependency_overrides that replace get_effective_scenario /
 get_effective_scenario_lenient with require_public_demo_read, which reads
 {demo_id} from the URL path and checks it against the configured allowlist.
@@ -35,6 +35,7 @@ import cea.interfaces.dashboard.api.canvas as canvas_module
 import cea.interfaces.dashboard.api.inputs as inputs_module
 import cea.interfaces.dashboard.api.kpis as kpis_module
 import cea.interfaces.dashboard.api.map_layers as map_layers_module
+import cea.interfaces.dashboard.api.pathways as pathways_module
 import cea.interfaces.dashboard.api.reports as reports_module
 import cea.interfaces.dashboard.api.tools as tools_module
 from cea.interfaces.dashboard.api.utils import (
@@ -163,6 +164,19 @@ app.include_router(
 app.include_router(
     _filter_routes(kpis_module.router),
     prefix="/scenarios/{demo_id}/kpis",
+    dependencies=_demo_guard,
+)
+
+
+# ── Pathways ───────────────────────────────────────────────────────────────
+# GET routes only: pathway/template listing, overview, timeline, geojson,
+# editor options, building lifecycle. Write routes (create/duplicate
+# pathway, post-year, building-events, apply-templates, yaml save, delete,
+# validate) are excluded.
+
+app.include_router(
+    _filter_routes(pathways_module.router, allowed_methods={"GET"}),
+    prefix="/scenarios/{demo_id}/pathways",
     dependencies=_demo_guard,
 )
 
