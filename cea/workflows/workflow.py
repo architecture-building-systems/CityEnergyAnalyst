@@ -6,6 +6,7 @@ Run a workflow.yml file - this is like a cea-aware "batch" file for running mult
 import os
 import sys
 import datetime
+import tempfile
 import cea.config
 import cea.inputlocator
 import cea.api
@@ -56,7 +57,7 @@ def run_with_trace(config, script, **kwargs):
 
 def main(config: cea.config.Configuration):
     workflow_yml = config.workflow.workflow
-    resume_yml = config.workflow.resume_file
+    resume_yml = config.workflow.resume_file or os.path.join(tempfile.gettempdir(), "resume-workflow.yml")
     resume_mode_on = config.workflow.resume
     trace_input = config.workflow.trace_input
 
@@ -67,6 +68,13 @@ def main(config: cea.config.Configuration):
 
     if not os.path.exists(workflow_yml):
         raise cea.ConfigError("Workflow YAML file not found: {workflow}".format(workflow=workflow_yml))
+
+    # Fail fast, before running any step, if the resume file can't be written.
+    try:
+        write_resume_info(resume_yml, resume_dict, workflow_yml, resume_step)
+    except IOError as e:
+        raise cea.ConfigError("Could not write resume file: {resume_yml} ({error})".format(
+            resume_yml=resume_yml, error=e))
 
     with open(workflow_yml, 'r') as workflow_fp:
         workflow = yaml.safe_load(workflow_fp)

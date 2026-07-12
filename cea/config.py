@@ -11,7 +11,6 @@ import io
 import json
 import os
 import re
-import tempfile
 from typing import Dict, List, Union, Any, Generator, Tuple, Optional, cast
 import warnings
 
@@ -527,36 +526,6 @@ class FileParameter(Parameter):
         # Always replace references and return a canonical path
         return self.replace_references(value)
 
-
-class ResumeFileParameter(FileParameter):
-    """Path to the workflow:resume-file - this is generally ${TEMP}/resume-workflow.yml. Makes sure it is writeable"""
-
-    def encode(self, value):
-        return self._check_path(str(value))
-
-    @staticmethod
-    def _check_path(path):
-        """Make sure I can read/write that file"""
-        if not path:
-            path = os.path.join(tempfile.gettempdir(), "resume-workflow.yml")
-        try:
-            if os.path.exists(path):
-                # make sure we can write to this file
-                with open(path, "r") as fp:
-                    contents = fp.read()
-            else:
-                contents = json.dumps(dict())
-
-            with open(path, "w") as fp:
-                fp.write(contents)
-
-        except IOError:
-            # let's just assume we can always write to the temp folder...
-            path = os.path.join(tempfile.gettempdir(), "resume-workflow.yml")
-        return path
-
-    def decode(self, value):
-        return self._check_path(str(value))
 
 class InputFileParameter(FileParameter):
     """A parameter that describes a user provided input file."""
