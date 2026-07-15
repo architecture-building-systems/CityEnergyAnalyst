@@ -142,7 +142,7 @@ def get_project_root(user_id: CEAUserID, settings: CEAServerSettings) -> Optiona
     return project_root
 
 
-def get_user_id(request: Request, auth_client: CEAAuthClient, settings: CEAServerSettings) -> str:
+def get_user_id(request: Request, settings: CEAServerSettings) -> str:
     # Return local user if local mode
     if settings.local:
         logger.info(f"Using `{LOCAL_USER_ID}`")
@@ -158,7 +158,10 @@ def get_user_id(request: Request, auth_client: CEAAuthClient, settings: CEAServe
         if worker_user_id is not None:
             return worker_user_id
 
-    # Try to get user id from request cookie
+    # Resolve cookie-based auth directly (not as a Depends param) so worker
+    # requests -- which never carry cookies -- don't unconditionally trigger
+    # get_auth_client()'s "Unable to determine auth client" log on every call.
+    auth_client = get_auth_client(request, settings)
     if auth_client is not None:
         try:
             return auth_client.get_user_id()
