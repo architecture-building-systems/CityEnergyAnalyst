@@ -59,6 +59,11 @@ def _resolve_scenario_from_headers(cea_headers: 'CEAScenarioHeaders', config, pr
 
     if project is not None and scenario_name is not None:
         p = project
+        if os.path.isabs(p) and not isinstance(config, CEALocalConfig):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="project must be a relative path in non-local mode.",
+            )
         if project_root is not None:
             if os.path.isabs(p):
                 raise HTTPException(
@@ -109,6 +114,11 @@ def _resolve_project_from_headers(cea_headers: 'CEAScenarioHeaders', config, pro
 
     if project is not None:
         p = project
+        if os.path.isabs(p) and not isinstance(config, CEALocalConfig):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="project must be a relative path in non-local mode.",
+            )
         if project_root is not None:
             if os.path.isabs(p):
                 raise HTTPException(

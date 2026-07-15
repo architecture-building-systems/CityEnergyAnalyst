@@ -62,11 +62,22 @@ def test_absolute_project_rejected_when_root_enforced():
     assert exc_info.value.status_code == 400
 
 
-def test_absolute_project_allowed_when_no_root_enforced(monkeypatch):
+def test_absolute_project_rejected_in_non_local_mode_when_no_root_enforced():
+    # config=None is not a CEALocalConfig instance, i.e. non-local mode. Absolute
+    # paths must be rejected regardless of whether project_root is configured.
+    with pytest.raises(HTTPException) as exc_info:
+        api_utils._resolve_project_from_headers(
+            _headers("/abs/path"), config=None, project_root=None
+        )
+    assert exc_info.value.status_code == 400
+
+
+def test_absolute_project_allowed_in_local_mode_when_no_root_enforced(monkeypatch):
     monkeypatch.setattr(api_utils, "secure_path", lambda path, root=None: path)
+    config = _fake_local_config("/home/user/projects/demo")
 
     result = api_utils._resolve_project_from_headers(
-        _headers("/abs/path"), config=None, project_root=None
+        _headers("/abs/path"), config=config, project_root=None
     )
 
     assert result == "/abs/path"
