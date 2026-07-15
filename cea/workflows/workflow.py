@@ -57,7 +57,10 @@ def run_with_trace(config, script, **kwargs):
 
 def main(config: cea.config.Configuration):
     workflow_yml = config.workflow.workflow
-    resume_yml = config.workflow.resume_file or os.path.join(tempfile.gettempdir(), "resume-workflow.yml")
+    resume_yml = config.workflow.resume_file
+    if not resume_yml:
+        fd, resume_yml = tempfile.mkstemp(prefix="cea-resume-", suffix=".yml")
+        os.close(fd)
     resume_mode_on = config.workflow.resume
     trace_input = config.workflow.trace_input
 
@@ -73,8 +76,7 @@ def main(config: cea.config.Configuration):
     try:
         write_resume_info(resume_yml, resume_dict, workflow_yml, resume_step)
     except IOError as e:
-        raise cea.ConfigError("Could not write resume file: {resume_yml} ({error})".format(
-            resume_yml=resume_yml, error=e))
+        raise cea.ConfigError(f"Could not write resume file: {resume_yml} ({e})")
 
     with open(workflow_yml, 'r') as workflow_fp:
         workflow = yaml.safe_load(workflow_fp)
