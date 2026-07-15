@@ -163,6 +163,11 @@ class Settings(BaseSettings):
                 raise ValueError(
                     f"JWT secret not set. Please set {(ENV_VAR_PREFIX + 'jwt_secret').upper()}."
                 )
+            if len(self.jwt_secret.encode()) < 32:
+                raise ValueError(
+                    f"JWT secret is too short. Please set {(ENV_VAR_PREFIX + 'jwt_secret').upper()} "
+                    "to a value of at least 32 bytes."
+                )
         return self
 
     @model_validator(mode='after')
