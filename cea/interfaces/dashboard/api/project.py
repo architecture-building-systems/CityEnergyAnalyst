@@ -641,8 +641,13 @@ async def put(config: CEAConfig, project: CEAProject, scenario: str, payload: Di
 
 
 @router.delete('/')
-async def delete_project(project: CEAProject):
+async def delete_project(project: CEAProject, project_root: CEAProjectRoot):
     """Delete project"""
+    if project_root is not None and os.path.realpath(project) == os.path.realpath(project_root):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete the project root directory.",
+        )
     try:
         # TODO: Check for any current open scenarios or jobs
         shutil.rmtree(project)
@@ -691,6 +696,7 @@ async def delete_scenario(project: CEAProject, body: DeleteScenarioBody):
 @router.post('/scenario/{scenario}/duplicate')
 async def duplicate_scenario(project: CEAProject, scenario: str, new_scenario_info: NewScenarioInfo):
     """Duplicate Scenario"""
+    scenario = validate_scenario_name(scenario)
     scenario_path = secure_path(os.path.join(project, scenario))
 
     if not os.path.exists(scenario_path):
