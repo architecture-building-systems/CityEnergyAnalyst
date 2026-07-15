@@ -124,7 +124,9 @@ def test_demo_sub_app_has_no_write_routes():
     POST is allowed only for map-layer parameter queries (choices, range,
     generate, check) which use a request body for filter params — same
     pattern as the normal routes. canvas/export is excluded because it
-    re-renders plot cards via CEAConfig. Any other POST is unexpected.
+    re-renders plot cards via CEAConfig. reports/plot-custom is allowed
+    because plot_dispatch restricts it to genuine Visualisation-category
+    dashboard scripts (see plot_dispatch.py). Any other POST is unexpected.
     """
     from cea.interfaces.dashboard.api.demo import app as demo_app
 
@@ -134,6 +136,7 @@ def test_demo_sub_app_has_no_write_routes():
         "/scenarios/{demo_id}/map_layers/{layer_category}/{layer_name}/{parameter}/range",
         "/scenarios/{demo_id}/map_layers/{layer_category}/{layer_name}/generate",
         "/scenarios/{demo_id}/map_layers/{layer_category}/{layer_name}/check",
+        "/scenarios/{demo_id}/reports/plot-custom",
     }
 
     bad_routes = []
