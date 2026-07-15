@@ -77,7 +77,7 @@ def verify_download_token(token: str, download_id: str) -> Optional[str]:
             algorithms=['HS256'],
             options={
                 'verify_exp': True,  # Verify expiration
-                'require_exp': True,  # Require expiration claim
+                'require': ['exp'],  # Require expiration claim
             }
         )
 
@@ -161,7 +161,7 @@ def verify_worker_token(token: str, job_id: str) -> Optional[str]:
             algorithms=['HS256'],
             options={
                 'verify_exp': True,
-                'require_exp': True,
+                'require': ['exp'],
             }
         )
 
