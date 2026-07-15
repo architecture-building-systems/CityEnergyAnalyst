@@ -22,12 +22,12 @@ from starlette.datastructures import UploadFile as _UploadFile
 
 from cea.interfaces.dashboard.dependencies import CEAServerUrl, CEAWorkerProcesses, CEAProjectID, CEAServerSettings, \
     CEAUserID, CEAStreams
+from cea.interfaces.dashboard.lib.auth import create_worker_token
 from cea.interfaces.dashboard.lib.database.models import JobInfo, JobState, get_current_time
 from cea.interfaces.dashboard.lib.database.session import SessionDep
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 from cea.interfaces.dashboard.lib.socketio import emit_with_retry
 
-# FIXME: Add auth checks after giving workers access token
 router = APIRouter()
 logger = getCEAServerLogger("cea-server-jobs")
 
@@ -432,7 +432,12 @@ async def start_job(session: SessionDep, worker_processes: CEAWorkerProcesses, s
     # Use validated parameters in command
     command = [sys.executable, "-m", "cea.worker", "--suppress-warnings", job_id, str(server_url)]
     logger.debug(f"command: {command}")
-    process = subprocess.Popen(command)
+
+    # Pass the worker's auth token via env var, not argv: argv ends up in `ps` output
+    # and in the debug log line above, while env vars do not.
+    worker_token = create_worker_token(job_id, job.created_by)
+    worker_env = {**os.environ, "CEA_WORKER_TOKEN": worker_token}
+    process = subprocess.Popen(command, env=worker_env)
 
     await worker_processes.set(job_id, process.pid)
     return job_id

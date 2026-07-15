@@ -117,3 +117,84 @@ def verify_download_token(token: str, download_id: str) -> Optional[str]:
     except Exception as e:
         logger.error(f"Error verifying token: {e}")
         return None
+
+
+def create_worker_token(job_id: str, user_id: str, expires_in_seconds: int = 60 * 60 * 24) -> str:
+    """
+    Create a job-scoped JWT token so a ``cea-worker`` subprocess can authenticate its
+    callbacks (``/jobs/started``, ``/jobs/success``, ``/jobs/error``, ``/streams/write``)
+    without the browser session cookies it has no access to.
+
+    Args:
+        job_id: Job ID the token is scoped to
+        user_id: User ID who created the job (the worker acts on their behalf)
+        expires_in_seconds: Token expiration time (default: 24 hours, to outlast long-running simulations)
+
+    Returns:
+        JWT token string
+    """
+    now = datetime.now(timezone.utc)
+    expiration = now + timedelta(seconds=expires_in_seconds)
+
+    payload = {
+        'job_id': job_id,
+        'user_id': user_id,
+        'iat': now,
+        'exp': expiration,
+        'type': 'worker'
+    }
+
+    token = jwt.encode(payload, get_jwt_secret(), algorithm='HS256')
+    logger.debug(f"Created worker token for job {job_id}, expires in {expires_in_seconds}s")
+
+    return token
+
+
+def verify_worker_token(token: str, job_id: str) -> Optional[str]:
+    """
+    Verify a worker token and return the user_id if valid.
+
+    Args:
+        token: JWT token string
+        job_id: Expected job ID
+
+    Returns:
+        User ID if token is valid, None otherwise
+    """
+    try:
+        payload = jwt.decode(
+            token,
+            get_jwt_secret(),
+            algorithms=['HS256'],
+            options={
+                'verify_exp': True,
+                'require_exp': True,
+            }
+        )
+
+        if payload.get('type') != 'worker':
+            logger.warning(f"Invalid token type: {payload.get('type')}")
+            return None
+
+        if payload.get('job_id') != job_id:
+            logger.warning(
+                f"Token job_id mismatch: expected {job_id}, got {payload.get('job_id')}"
+            )
+            return None
+
+        user_id = payload.get('user_id')
+        if not user_id:
+            logger.warning("Token missing user_id claim")
+            return None
+
+        return user_id
+
+    except jwt.ExpiredSignatureError:
+        logger.debug(f"Worker token expired for job {job_id}")
+        return None
+    except jwt.InvalidTokenError as e:
+        logger.warning(f"Invalid worker token for job {job_id}: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"Error verifying worker token: {e}")
+        return None

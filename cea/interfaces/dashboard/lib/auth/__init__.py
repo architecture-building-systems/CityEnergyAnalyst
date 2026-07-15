@@ -2,6 +2,8 @@ from cea import CEAException
 from cea.interfaces.dashboard.lib.auth.tokens import (
     create_download_token,
     verify_download_token,
+    create_worker_token,
+    verify_worker_token,
     get_jwt_secret
 )
 
@@ -9,6 +11,8 @@ __all__ = [
     'CEAAuthError',
     'create_download_token',
     'verify_download_token',
+    'create_worker_token',
+    'verify_worker_token',
     'get_jwt_secret'
 ]
 

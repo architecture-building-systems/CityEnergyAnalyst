@@ -9,7 +9,7 @@ from sqlmodel import select
 from typing_extensions import Annotated
 
 import cea.config
-from cea.interfaces.dashboard.lib.auth import CEAAuthError
+from cea.interfaces.dashboard.lib.auth import CEAAuthError, verify_worker_token
 from cea.interfaces.dashboard.lib.auth.providers import StackAuth, AuthClient
 from cea.interfaces.dashboard.lib.cache.base import AsyncDictCache
 from cea.interfaces.dashboard.lib.cache.provider import get_dict_cache
@@ -142,11 +142,21 @@ def get_project_root(user_id: CEAUserID, settings: CEAServerSettings) -> Optiona
     return project_root
 
 
-def get_user_id(auth_client: CEAAuthClient, settings: CEAServerSettings) -> str:
+def get_user_id(request: Request, auth_client: CEAAuthClient, settings: CEAServerSettings) -> str:
     # Return local user if local mode
     if settings.local:
         logger.info(f"Using `{LOCAL_USER_ID}`")
         return LOCAL_USER_ID
+
+    # cea-worker subprocesses have no browser session cookies. They authenticate
+    # job callbacks (started/success/error, stream writes) with a job-scoped token
+    # instead, minted by start_job and matched against the {job_id} path param.
+    worker_token = request.headers.get("X-CEA-Worker-Token")
+    job_id = request.path_params.get("job_id")
+    if worker_token is not None and job_id is not None:
+        worker_user_id = verify_worker_token(worker_token, job_id)
+        if worker_user_id is not None:
+            return worker_user_id
 
     # Try to get user id from request cookie
     if auth_client is not None:

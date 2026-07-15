@@ -33,6 +33,19 @@ added there explicitly (fail-secure by default).
 | `require_authenticated` | App-level. Do not add to individual routes. |
 | `CEAUser` / `CEAUserID` | Routes that need to know *who* the caller is (ownership, quotas). |
 | `require_public_demo_read(demo_id)` | Path-param dependency for anonymous read of allowlisted demo ids. Used in `api/demo.py`. |
+| `X-CEA-Worker-Token` | Job-scoped bearer token for `cea-worker` callbacks (no session cookies available). See Worker Auth below. |
+
+**Worker auth** — `cea-worker` subprocesses call back into `/jobs/started`,
+`/jobs/success`, `/jobs/error`, and `/streams/write` with no browser session to
+present. `start_job` mints a job-scoped JWT (`create_worker_token`, in
+`lib/auth/tokens.py`) and passes it to the subprocess via the `CEA_WORKER_TOKEN`
+env var (not argv — argv is visible in `ps` and in the `command` debug log).
+The worker sends it back as `X-CEA-Worker-Token` on every callback
+(`get_worker_headers()` in `cea/worker.py`). `get_user_id` in `dependencies.py`
+checks this header against the `{job_id}` path param via `verify_worker_token`
+before falling back to cookies, so `require_authenticated` and existing
+ownership checks (`job.created_by != user_id`) work unchanged — the worker
+just resolves to the job's creator instead of `LOCAL_USER_ID`.
 
 **Public demo sub-app** — `api/demo.py` is a standalone `FastAPI()` instance mounted
 at `/api/demo` by `app.py` when `Settings.public_demo_scenarios` is non-empty. Because
