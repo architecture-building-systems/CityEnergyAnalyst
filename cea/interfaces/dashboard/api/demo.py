@@ -31,6 +31,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, status
 from fastapi.routing import APIRoute
 
+import cea.scripts
 import cea.interfaces.dashboard.api.canvas as canvas_module
 import cea.interfaces.dashboard.api.inputs as inputs_module
 import cea.interfaces.dashboard.api.kpis as kpis_module
@@ -38,11 +39,12 @@ import cea.interfaces.dashboard.api.map_layers as map_layers_module
 import cea.interfaces.dashboard.api.pathways as pathways_module
 import cea.interfaces.dashboard.api.reports as reports_module
 import cea.interfaces.dashboard.api.tools as tools_module
+from cea.interfaces.dashboard.api.tools import ToolProperties
 from cea.interfaces.dashboard.api.utils import (
     get_effective_scenario,
     get_effective_scenario_lenient,
 )
-from cea.interfaces.dashboard.dependencies import CEAServerSettings
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEAServerSettings
 
 # TODO: Cache responses for public demo scenarios (e.g. /scenarios/{demo_id}/inputs) to reduce load on the CEAConfig
 app = FastAPI(title="CEA Demo", description="Public read-only demo scenarios.")
@@ -151,15 +153,33 @@ app.include_router(
 
 
 # ── Tools ──────────────────────────────────────────────────────────────────
-# All GET routes: / for the tool catalogue, /{tool_name} for its parameters
-# (resolved against the allowlisted scenario via CEAScenarioLenient). Write
-# routes (save-config, validate-field, etc.) are excluded.
+# GET / (the tool catalogue): static metadata from scripts.yml
+# (name/label/description per dashboard-interface script), no config.scenario
+# or config.project access, no per-parameter data - safe for every tool.
+#
+# GET /{tool_name}: label/description/category only (static, from
+# scripts.yml) - parameters/categorical_parameters always forced empty for
+# every tool, never resolved.
 
 app.include_router(
-    _filter_routes(tools_module.router, allowed_methods={"GET"}),
+    _filter_routes(tools_module.router, allowed_methods={"GET"}, exclude_paths={"/{tool_name}"}),
     prefix="/scenarios/{demo_id}/tools",
     dependencies=_demo_guard,
 )
+
+
+@app.get("/scenarios/{demo_id}/tools/{tool_name}", dependencies=_demo_guard)
+async def get_demo_tool_properties(config: CEAConfig, tool_name: str) -> ToolProperties:
+    script = cea.scripts.by_name(tool_name, plugins=config.plugins)
+    return ToolProperties(
+        name=tool_name,
+        label=script.label,
+        description=script.description,
+        short_description=script.short_description,
+        category=script.category,
+        categorical_parameters={},
+        parameters=[],
+    )
 
 
 # ── KPIs ───────────────────────────────────────────────────────────────────
