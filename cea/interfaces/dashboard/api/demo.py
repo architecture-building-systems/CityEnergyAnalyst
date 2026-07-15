@@ -170,7 +170,13 @@ app.include_router(
 
 @app.get("/scenarios/{demo_id}/tools/{tool_name}", dependencies=_demo_guard)
 async def get_demo_tool_properties(config: CEAConfig, tool_name: str) -> ToolProperties:
-    script = cea.scripts.by_name(tool_name, plugins=config.plugins)
+    try:
+        script = cea.scripts.by_name(tool_name, plugins=config.plugins)
+    except cea.ScriptNotFoundException as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tool not found.",
+        ) from exc
     return ToolProperties(
         name=tool_name,
         label=script.label,
