@@ -5,7 +5,7 @@ import zipfile
 from dataclasses import dataclass, asdict
 from enum import StrEnum
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Union
 
 from fastapi import APIRouter, HTTPException, status, Form, UploadFile
 from pydantic import BaseModel
@@ -17,11 +17,11 @@ from cea.datamanagement.format_helper.cea4_migrate_db import migrate_cea3_to_cea
 from cea.datamanagement.format_helper.cea4_verify import cea4_verify
 from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
 from cea.interfaces.dashboard.api.project import get_project_choices
-from cea.interfaces.dashboard.api.utils import CEAProjectLenient
+from cea.interfaces.dashboard.api.utils import CEAProjectLenient, validate_scenario_name
 from cea.interfaces.dashboard.dependencies import CEAProjectRoot, CEAServerLimits
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 from cea.interfaces.dashboard.settings import get_settings
-from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
+from cea.interfaces.dashboard.utils import secure_path, secure_join_under_root, OutsideProjectRootError
 
 # TODO: Make this configurable
 MAX_FILE_SIZE = 1000 * 1024 * 1024  # 1GB
@@ -165,6 +165,14 @@ class UploadScenarioResult(BaseModel):
 def filter_valid_files(file_list: List[str]) -> List[str]:
     return list(filter(lambda f: Path(f).suffix in VALID_EXTENSIONS, file_list))
 
+
+def _safe_extract(zf: zipfile.ZipFile, members: List[str], target_dir: Union[str, os.PathLike]) -> None:
+    """Extract ``members`` from ``zf`` into ``target_dir``, rejecting any member whose
+    path (e.g. via ``../``) would resolve outside ``target_dir`` (zip slip)."""
+    for member in members:
+        secure_join_under_root(target_dir, member)
+        zf.extract(member, target_dir)
+
 @router.post("/scenario/upload")
 async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root: CEAProjectRoot,
                           project: CEAProjectLenient, limit_settings: CEAServerLimits) -> UploadScenarioResult:
@@ -245,21 +253,20 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
 
             # Case 1a/b: Scenario in root and name is zip name e.g. inputs/ or export/
             if len(zone_files) == 1 and zone_files[0].startswith("inputs") or len(gh_export_files) == 1 and gh_export_files[0].startswith("export"):
-                scenario_name = form.file.filename[:-4]
+                scenario_name = validate_scenario_name(form.file.filename[:-4])
                 logger.info(f"Scenario found as root, using name `{scenario_name}`")
                 # Check if scenario names already exist and rename
-                if os.path.exists(os.path.join(project_path, scenario_name)):
+                new_scenario_path = secure_join_under_root(project_path, scenario_name)
+                if os.path.exists(new_scenario_path):
                     # TODO: Find way to rename new scenario and extract
                     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Scenario `{scenario_name}` already exists in project")
                 # Create scenario directory
-                new_scenario_path = os.path.join(project_path, scenario_name)
                 os.makedirs(new_scenario_path, exist_ok=True)
 
                 logger.info(f"Extracting to {new_scenario_path}")
                 # Extract only valid files with extensions
-                for path in filter_valid_files(paths):
-                    zf.extract(path, new_scenario_path)
-                
+                _safe_extract(zf, filter_valid_files(paths), new_scenario_path)
+
                 upload_result.scenarios.append(
                     UploadScenarioResult.Info(name=scenario_name,status=UploadScenarioResult.Info.Status.PENDING))
 
@@ -273,15 +280,15 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
 
                 # Case 2.1a/b: Scenario names are the first level folder names e.g. scenario/inputs/.. or scenario/export/..
                 if parts[1] == "inputs" or parts[1] == "export":
-                    scenario_name = parts[0]
+                    scenario_name = validate_scenario_name(parts[0])
                 # Case 2.2a/b: Project name is the first level folder name e.g. project/scenario/inputs/.. or project/scenario/export/..
                 elif parts[2] == "inputs" or parts[2] == "export":
-                    scenario_name = parts[1]
+                    scenario_name = validate_scenario_name(parts[1])
                 else:
                     continue
 
                 scenario_names.add(scenario_name)
-                if os.path.exists(os.path.join(project_path, scenario_name)):
+                if os.path.exists(secure_join_under_root(project_path, scenario_name)):
                     existing_scenario_names.add(scenario_name)
 
             logger.info(f"Scenario found: {scenario_names}")
@@ -306,7 +313,7 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
 
                 # Case 2: Scenario names are the first level folder names e.g. scenario/inputs/..
                 if parts[1] == "inputs" or parts[1] == "export":
-                    scenario_name = parts[0]
+                    scenario_name = validate_scenario_name(parts[0])
                     logger.info(f"Scenario found in root, using name `{scenario_name}`")
                     # Skip if scenario has already been processed
                     if scenario_name not in scenario_names:
@@ -315,8 +322,7 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
                     scenario_files = list(filter(lambda x: x.startswith(f"{scenario_name}/"), paths))
 
                     logger.info(f"Extracting to {project_path}")
-                    for path in filter_valid_files(scenario_files):
-                        zf.extract(path, project_path)
+                    _safe_extract(zf, filter_valid_files(scenario_files), project_path)
 
                     scenario_names.remove(scenario_name)
                     upload_result.scenarios.append(
@@ -324,8 +330,8 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
 
                 # Case 3: Project name is the first level folder name e.g. project/scenario/inputs/..
                 if parts[2] == "inputs" or parts[2] == "export":
-                    project_name = parts[0]
-                    scenario_name = parts[1]
+                    project_name = validate_scenario_name(parts[0])
+                    scenario_name = validate_scenario_name(parts[1])
                     logger.info(f"Scenario found in a project folder, using name `{scenario_name}`")
                     # Skip if scenario has already been processed
                     if scenario_name not in scenario_names:
@@ -336,10 +342,9 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
                     # Extract to temp first
                     with tempfile.TemporaryDirectory() as tmpdir:
                         logger.info(f"Extracting to {tmpdir}")
-                        for path in filter_valid_files(scenario_files):
-                            zf.extract(path, tmpdir)
+                        _safe_extract(zf, filter_valid_files(scenario_files), tmpdir)
                         # Move scenario from temp to project
-                        temp_scenario_path = os.path.join(tmpdir, project_name, scenario_name)
+                        temp_scenario_path = secure_join_under_root(tmpdir, project_name, scenario_name)
                         logger.info(f"Moving {temp_scenario_path} to {project_path}")
                         shutil.move(temp_scenario_path, project_path)
                         
@@ -349,7 +354,7 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
                     
         # Validate all scenarios
         for scenario in upload_result.scenarios:
-            scenario_path = os.path.join(project_path, scenario.name)
+            scenario_path = secure_join_under_root(project_path, scenario.name)
             try:
                 migrate_cea3_to_cea4(scenario_path)
                 errors = cea4_verify(scenario_path)
