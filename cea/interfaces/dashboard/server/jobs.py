@@ -380,12 +380,12 @@ async def set_job_error(session: SessionDep, job_id: str, error: JobError, strea
 
 @router.post('/start/{job_id}')
 async def start_job(session: SessionDep, worker_processes: CEAWorkerProcesses, server_url: CEAServerUrl, job_id: str,
-                    user_id: CEAUserID, settings: CEAServerSettings):
+                    user_id: CEAUserID):
     """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
 
     # Validate job_id is a valid UUID
     try:
-        uuid.UUID(job_id)
+        validated_job_id = str(uuid.UUID(job_id))
     except ValueError:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid job_id format. Must be a valid UUID.")
 
@@ -430,17 +430,17 @@ async def start_job(session: SessionDep, worker_processes: CEAWorkerProcesses, s
         )
 
     # Use validated parameters in command
-    command = [sys.executable, "-m", "cea.worker", "--suppress-warnings", job_id, str(server_url)]
+    command = [sys.executable, "-m", "cea.worker", "--suppress-warnings", validated_job_id, str(server_url)]
     logger.debug(f"command: {command}")
 
     # Pass the worker's auth token via env var, not argv: argv ends up in `ps` output
     # and in the debug log line above, while env vars do not.
-    worker_token = create_worker_token(job_id, job.created_by)
+    worker_token = create_worker_token(validated_job_id, job.created_by)
     worker_env = {**os.environ, "CEA_WORKER_TOKEN": worker_token}
     process = subprocess.Popen(command, env=worker_env)
 
-    await worker_processes.set(job_id, process.pid)
-    return job_id
+    await worker_processes.set(validated_job_id, process.pid)
+    return validated_job_id
 
 
 @router.post("/cancel/{job_id}")
