@@ -544,8 +544,9 @@ async def delete_download(
     Returns:
         Success message
     """
+    # Lock row for update to prevent racing an in-flight download_file transfer
     result = await session.execute(
-        select(Download).where(Download.id == download_id)
+        select(Download).where(Download.id == download_id).with_for_update()
     )
     download = result.scalar_one_or_none()
 

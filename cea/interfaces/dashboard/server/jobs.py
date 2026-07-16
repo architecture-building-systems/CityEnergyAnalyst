@@ -289,7 +289,11 @@ async def create_new_job(request: Request, session: SessionDep, project_id: CEAP
 
 @router.post("/started/{job_id}")
 async def set_job_started(session: SessionDep, job_id: str, user_id: CEAUserID) -> JobInfoResponse:
-    job = await session.get(JobInfo, job_id)
+    # Lock the row to prevent concurrent modifications (TOCTOU protection)
+    result = await session.execute(
+        select(JobInfo).where(JobInfo.id == job_id).with_for_update()
+    )
+    job = result.scalar_one_or_none()
     if not job:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
 
@@ -321,7 +325,11 @@ async def set_job_started(session: SessionDep, job_id: str, user_id: CEAUserID) 
 @router.post("/success/{job_id}")
 async def set_job_success(session: SessionDep, job_id: str, user_id: CEAUserID, streams: CEAStreams,
                           worker_processes: CEAWorkerProcesses, output: JobOutput) -> JobInfoResponse:
-    job = await session.get(JobInfo, job_id)
+    # Lock the row to prevent concurrent modifications (TOCTOU protection)
+    result = await session.execute(
+        select(JobInfo).where(JobInfo.id == job_id).with_for_update()
+    )
+    job = result.scalar_one_or_none()
     if not job:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
 
@@ -368,7 +376,11 @@ async def set_job_error(session: SessionDep, job_id: str, user_id: CEAUserID, er
     message = error.message
     stacktrace = error.stacktrace
 
-    job = await session.get(JobInfo, job_id)
+    # Lock the row to prevent concurrent modifications (TOCTOU protection)
+    result = await session.execute(
+        select(JobInfo).where(JobInfo.id == job_id).with_for_update()
+    )
+    job = result.scalar_one_or_none()
     if not job:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
 

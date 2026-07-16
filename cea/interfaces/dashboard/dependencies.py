@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Optional, Dict
 
 from fastapi import Depends, Request, HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import select
 from typing_extensions import Annotated
 
@@ -99,8 +100,14 @@ async def get_project_id(session: SessionDep, owner_id: CEAUserID,
 
     # If project not found, create a new one
     if not project:
-        logger.info(f"Creating project in database: {project_uri}")
-        project = await create_project(project_uri, owner_id, session)
+        try:
+            logger.info(f"Creating project in database: {project_uri}")
+            project = await create_project(project_uri, owner_id, session)
+        except IntegrityError:
+            # Lost a race with a concurrent request creating the same project (uri is unique)
+            await session.rollback()
+            result = await session.execute(select(Project).where(Project.uri == project_uri))
+            project = result.scalar_one()
 
     return project.id
 
