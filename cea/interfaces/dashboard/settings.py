@@ -1,5 +1,7 @@
 from functools import lru_cache
+import logging
 import os
+import secrets
 from typing import Annotated, Dict, Optional
 
 from pydantic import field_validator, model_validator, Field
@@ -8,6 +10,8 @@ from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 from cea.interfaces.dashboard.constants import ENV_VAR_PREFIX
 from cea.interfaces.dashboard.lib.cache.settings import cache_settings
 from cea.interfaces.dashboard.lib.database.settings import database_settings
+
+logger = logging.getLogger(__name__)
 
 
 class StackAuthSettings(BaseSettings):
@@ -42,6 +46,13 @@ class Settings(BaseSettings):
     cors_origin: str = Field(default="*", description="CORS origin(s) allowed to access the API. Use '*' for all origins (not recommended for production). For multiple origins, provide a comma-separated list (e.g. 'http://localhost:3000,https://mydomain.com')")
 
     workers: Optional[int] = Field(default=None, description="Number of workers")
+
+    jwt_secret: Optional[str] = Field(
+        default=None,
+        description=(
+            "Secret key used to sign/verify JWTs (pre-signed download links, cea-worker callback tokens)."
+        ),
+    )
 
     # Local only settings
     config_path: Optional[str] = "~/cea.config"
@@ -147,6 +158,28 @@ class Settings(BaseSettings):
 
             if self.project_root is None:
                 raise ValueError(f"Project root not set. Please set {(ENV_VAR_PREFIX + 'project_root').upper()}.")
+
+            if not self.jwt_secret:
+                raise ValueError(
+                    f"JWT secret not set. Please set {(ENV_VAR_PREFIX + 'jwt_secret').upper()}."
+                )
+            if len(self.jwt_secret.encode()) < 32:
+                raise ValueError(
+                    f"JWT secret is too short. Please set {(ENV_VAR_PREFIX + 'jwt_secret').upper()} "
+                    "to a value of at least 32 bytes."
+                )
+        return self
+
+    @model_validator(mode='after')
+    def generate_local_jwt_secret(self):
+        """
+        Generate a random JWT secret for local mode if one isn't configured.
+        """
+        if self.local and not self.jwt_secret:
+            self.jwt_secret = secrets.token_urlsafe(32)
+            logger.warning(
+                "CEA_JWT_SECRET not set; generated a random secret for this local session."
+            )
         return self
 
     @model_validator(mode='after')
@@ -169,11 +202,20 @@ class Settings(BaseSettings):
         """
         Write settings to env variables in the format {ENV_VAR_PREFIX}{KEY}={VALUE}
         """
-        # Set environment variables 
+        import json
+
+        # Set environment variables
         for key, value in self.__dict__.items():
             if value is not None:
                 env_var_name = f"{ENV_VAR_PREFIX}{key.upper()}"
-                os.environ[env_var_name] = str(value)
+                # dict/list values must round-trip through parsing (e.g. worker
+                # subprocesses re-reading Settings() from env) — str() on a dict
+                # produces a Python repr with single quotes, which is not valid
+                # JSON and fails re-parsing.
+                if isinstance(value, (dict, list)):
+                    os.environ[env_var_name] = json.dumps(value)
+                else:
+                    os.environ[env_var_name] = str(value)
 
 
 @lru_cache

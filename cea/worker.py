@@ -37,6 +37,15 @@ from cea.interfaces.dashboard.server.jobs import JobInfo
 logger = logging.getLogger(__name__)
 
 
+def get_worker_headers() -> dict:
+    """Auth headers for callbacks to the server, if the server issued a worker token
+    (non-local mode only; local mode's require_authenticated is a no-op)."""
+    token = os.environ.get("CEA_WORKER_TOKEN")
+    if token:
+        return {"X-CEA-Worker-Token": token}
+    return {}
+
+
 def signal_handler(signum, _):
     """
     Handle termination signals (SIGTERM, SIGINT) for immediate shutdown.
@@ -186,7 +195,7 @@ def stream_poster(jobid, server, queue):
 
     while msg is not EOFError:
         msg = consume_nowait(queue, msg)
-        put_with_retry(f"{server}/streams/write/{jobid}", data=msg)
+        put_with_retry(f"{server}/streams/write/{jobid}", data=msg, headers=get_worker_headers())
         msg = queue.get(block=True, timeout=None)  # block until next message
 
 
@@ -267,7 +276,7 @@ def close_streams(timeout: float = 5.0):
 
 
 def fetch_job(jobid: str, server) -> JobInfo:
-    response = requests.get(f"{server}/jobs/{jobid}")
+    response = requests.get(f"{server}/jobs/{jobid}", headers=get_worker_headers())
     job = response.json()
     return JobInfo(**job)
 
@@ -310,19 +319,19 @@ def read_parameters(job: JobInfo):
 
 
 def post_started(jobid, server):
-    post_with_retry(f"{server}/jobs/started/{jobid}")
+    post_with_retry(f"{server}/jobs/started/{jobid}", headers=get_worker_headers())
 
 
 def post_success(jobid: str, server: str, output: Any = None):
     # Close streams before sending success (longer timeout for normal completion)
     close_streams(timeout=5.0)
-    post_with_retry(f"{server}/jobs/success/{jobid}", json={"output": output})
+    post_with_retry(f"{server}/jobs/success/{jobid}", json={"output": output}, headers=get_worker_headers())
 
 
 def post_error(message: str, stacktrace: str, jobid: str, server: str):
     # Close streams before sending error (longer timeout for normal error handling)
     close_streams(timeout=5.0)
-    post_with_retry(f"{server}/jobs/error/{jobid}", json={"message": message, "stacktrace": stacktrace})
+    post_with_retry(f"{server}/jobs/error/{jobid}", json={"message": message, "stacktrace": stacktrace}, headers=get_worker_headers())
 
 
 def worker(jobid: str, server: str, suppress_warnings: bool = False):

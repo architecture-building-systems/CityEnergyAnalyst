@@ -65,6 +65,31 @@ def suppress_browser_autopopup():
 _BODY_RE = re.compile(r"<body[^>]*>(.*)</body>", re.DOTALL | re.IGNORECASE)
 
 
+class NotAPlotScriptError(Exception):
+    """Raised when `script_name` doesn't resolve to a genuine plot script.
+
+    Kept a plain exception (not HTTPException) — this module has no FastAPI
+    dependency; callers translate it to whatever error shape they need
+    (route handlers raise HTTPException, canvas_capture just logs it).
+    """
+
+
+def _is_safe_plot_script(script) -> bool:
+    """Whether `script` is a genuine, dashboard-invocable plot script.
+
+    `cea.scripts.by_name()` only checks that the name is registered — any
+    script in `scripts.yml` (data import, simulation, network layout, ...)
+    would otherwise pass through to `script_module.main(config)` below.
+    All three checks must agree so a single miscategorised entry in
+    `scripts.yml` can't turn this dispatcher into a generic script runner.
+    """
+    return (
+        script.category == "Visualisation"
+        and "dashboard" in script.interfaces
+        and script.module.startswith("cea.visualisation.")
+    )
+
+
 def render_plot_html(
     config,
     *,
@@ -100,6 +125,8 @@ def render_plot_html(
     parameters = parameters or {}
 
     script = cea.scripts.by_name(script_name, plugins=config.plugins)
+    if not _is_safe_plot_script(script):
+        raise NotAPlotScriptError(script_name)
 
     config.project = os.path.dirname(scenario_path)
     config.scenario_name = os.path.basename(scenario_path)

@@ -5,7 +5,6 @@ Endpoints:
   GET /api/reports/whatifs         — list what-if names available in a scenario
   GET /api/reports/summary        — KPI summary for a scenario + what-if + feature
   GET /api/reports/plot           — plot HTML div for a scenario + what-if + feature
-  GET /api/reports/scenarios      — list scenarios for a project (cross-scenario access)
 """
 
 import os
@@ -20,10 +19,13 @@ import cea.config
 import cea.inputlocator
 import cea.scripts
 from cea.interfaces.dashboard.api.utils import CEAScenario, validate_scenario_name_or_subpath
-from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot
+from cea.interfaces.dashboard.dependencies import CEAConfig
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
-from cea.interfaces.dashboard.lib.plot_dispatch import render_plot_html
-from cea.interfaces.dashboard.utils import secure_join_under_root, secure_path
+from cea.interfaces.dashboard.lib.plot_dispatch import (
+    NotAPlotScriptError,
+    render_plot_html,
+)
+from cea.interfaces.dashboard.utils import secure_join_under_root
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
 logger = getCEAServerLogger("cea-server-reports")
@@ -403,6 +405,11 @@ async def get_custom_plot(
             feature_label=feature_label,
         )
         return HTMLResponse(html, 200)
+    except NotAPlotScriptError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Not a plot script: {e}",
+        )
     except FileNotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -457,27 +464,6 @@ async def get_custom_plot(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error generating plot: {e}",
         )
-
-
-# TODO: Remove get_scenarios — duplicates GET /api/project/?project=... which already returns
-#       scenarios_list. Frontend should call that endpoint instead.
-@router.get("/scenarios")
-async def get_scenarios(project_root: CEAProjectRoot, project: str):
-    """List scenarios for a project (for inter-mode comparison)."""
-    project_path = project
-    if project_root is not None and not project_path.startswith(project_root):
-        project_path = os.path.join(project_root, project_path)
-
-    project_path = secure_path(project_path)
-
-    if not os.path.isdir(project_path):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Project not found: {project}",
-        )
-
-    scenarios = cea.config.get_scenarios_list(project_path)
-    return {"scenarios": scenarios}
 
 
 # TODO: Remove get_zone_geojson — duplicates GET /api/inputs/geojson/zone which already serves

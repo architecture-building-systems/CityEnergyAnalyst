@@ -11,9 +11,9 @@ from sqlmodel import select
 from starlette.responses import FileResponse
 from starlette.background import BackgroundTask
 
+from cea.interfaces.dashboard.api.utils import CEAProject
 from cea.interfaces.dashboard.dependencies import (
     CEAProjectID,
-    CEAProjectRoot,
     CEAUserID
 )
 from cea.interfaces.dashboard.lib.database.session import SessionDep as CEASession
@@ -29,14 +29,12 @@ from cea.interfaces.dashboard.server.downloads import (
     DownloadStartedEvent,
     OutputFileType
 )
-from cea.interfaces.dashboard.utils import secure_path
 
 router = APIRouter()
 
 
 class PrepareDownloadRequest(BaseModel):
     """Request model for preparing a download."""
-    project: str
     scenarios: List[str]
     input_files: bool = False
     output_files: List[OutputFileType] = []
@@ -86,7 +84,7 @@ class DownloadUrlResponse(BaseModel):
 @router.post("/prepare", response_model=DownloadResponse)
 async def prepare_download(
     request: PrepareDownloadRequest,
-    project_root: CEAProjectRoot,
+    project_path: CEAProject,
     user_id: CEAUserID,
     session: CEASession
 ):
@@ -99,7 +97,7 @@ async def prepare_download(
 
     Args:
         request: Download request parameters
-        project_root: Project root directory
+        project_path: Resolved project directory (from X-CEA-Project header)
         user_id: Current user ID
         session: Database session
 
@@ -122,22 +120,6 @@ async def prepare_download(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No files selected for download"
-        )
-
-    # Ensure project root
-    if project_root is None or project_root == "":
-        logger.error("Unable to determine project path")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Project root not defined",
-        )
-
-    project_path = secure_path(os.path.join(project_root, request.project), root=project_root)
-
-    if not os.path.exists(project_path):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project path does not exist"
         )
 
     # Get project id (verify ownership)

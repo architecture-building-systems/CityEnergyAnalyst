@@ -1,6 +1,6 @@
-# Scenario context is passed via X-CEA-* request headers. Header names: X-CEA-Project,
+# Scenario/project context is passed via X-CEA-* request headers. Header names: X-CEA-Project,
 # X-CEA-Scenario-Name, X-CEA-Child-Scenario (logical token "<pathway_name>/<year>"). If no
-# header is supplied the endpoint falls back to config.scenario.
+# header is supplied the endpoint falls back to config.scenario / config.project (local mode only).
 # Future phase (separate plan): PUT /projects/{id}/scenarios/{name}/... — requires a projects
 # table mapping project_id → path for both local and non-local modes. See AGENTS.md for details.
 
@@ -59,6 +59,11 @@ def _resolve_scenario_from_headers(cea_headers: 'CEAScenarioHeaders', config, pr
 
     if project is not None and scenario_name is not None:
         p = project
+        if os.path.isabs(p) and not isinstance(config, CEALocalConfig):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="project must be a relative path in non-local mode.",
+            )
         if project_root is not None:
             if os.path.isabs(p):
                 raise HTTPException(
@@ -96,6 +101,39 @@ def _resolve_scenario_from_headers(cea_headers: 'CEAScenarioHeaders', config, pr
             detail="Scenario context required: send X-CEA-Project and X-CEA-Scenario-Name headers.",
         )
     return secure_path(str(config.scenario), root=project_root)
+
+
+def _resolve_project_from_headers(cea_headers: 'CEAScenarioHeaders', config, project_root) -> str:
+    """Return the effective project path from the X-CEA-Project header.
+
+    Falls back to config.project in local mode only. Non-local mode requires
+    an explicit header — config.project would resolve to DEFAULT_CONFIG's path
+    which is meaningless in a stateless cloud context.
+    """
+    project = cea_headers.x_cea_project
+
+    if project is not None:
+        p = project
+        if os.path.isabs(p) and not isinstance(config, CEALocalConfig):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="project must be a relative path in non-local mode.",
+            )
+        if project_root is not None:
+            if os.path.isabs(p):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="project must be a relative path when project_root is enforced.",
+                )
+            p = os.path.join(project_root, p)
+        return secure_path(p, root=project_root)
+
+    if not isinstance(config, CEALocalConfig):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Project context required: send an X-CEA-Project header.",
+        )
+    return secure_path(str(config.project), root=project_root)
 
 
 def validate_scenario_name(scenario_name: str) -> str:
@@ -246,3 +284,40 @@ def get_effective_scenario_lenient(
 
 CEAScenario = Annotated[str, Depends(get_effective_scenario)]
 CEAScenarioLenient = Annotated[str, Depends(get_effective_scenario_lenient)]
+
+
+def _get_effective_project(
+    config: CEAConfig,
+    project_root: CEAProjectRoot,
+    require_exists: bool,
+    cea_headers: CEAScenarioHeaders,
+) -> str:
+    path = _resolve_project_from_headers(cea_headers, config, project_root)
+    logger.debug("Resolving project: %s", path)
+    if require_exists and not os.path.isdir(path):
+        logger.error("Project directory not found: %s", path)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found.",
+        )
+    return path
+
+
+def get_effective_project(
+    config: CEAConfig,
+    project_root: CEAProjectRoot,
+    cea_headers: Annotated[CEAScenarioHeaders, Header()],
+) -> str:
+    return _get_effective_project(config, project_root, require_exists=True, cea_headers=cea_headers)
+
+
+def get_effective_project_lenient(
+    config: CEAConfig,
+    project_root: CEAProjectRoot,
+    cea_headers: Annotated[CEAScenarioHeaders, Header()],
+) -> str:
+    return _get_effective_project(config, project_root, require_exists=False, cea_headers=cea_headers)
+
+
+CEAProject = Annotated[str, Depends(get_effective_project)]
+CEAProjectLenient = Annotated[str, Depends(get_effective_project_lenient)]

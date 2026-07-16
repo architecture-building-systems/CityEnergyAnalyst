@@ -14,7 +14,6 @@ from shapely.geometry import Polygon
 
 import cea.api
 import cea.config
-from cea.config import Configuration
 from cea.datamanagement.district_pathways.pathway_state import (
     DistrictEvolutionPathway,
 )
@@ -24,18 +23,28 @@ from cea.datamanagement.district_pathways.pathway_status import (
 )
 from cea.inputlocator import InputLocator
 from cea.interfaces.dashboard.api.pathways import router as pathways_router
-from cea.interfaces.dashboard.dependencies import require_authenticated, get_cea_config
+import cea.interfaces.dashboard.utils as dashboard_utils
+from cea.interfaces.dashboard.dependencies import CEALocalConfig, require_authenticated, get_cea_config
+from cea.interfaces.dashboard.settings import Settings, get_settings
 
 InputLocator._cleanup_temp_directory = lambda self: None  # type: ignore[method-assign]
 
 
 @pytest.fixture
-def pathway_api_fixture():
+def pathway_api_fixture(monkeypatch):
+    # Force local mode with no enforced project_root, regardless of the
+    # developer's real .env.local (e.g. CEA_LOCAL=false, CEA_PROJECT_ROOT=...).
+    # secure_path() reads settings via a module-level get_settings() call
+    # rather than FastAPI DI, so the FastAPI dependency_overrides below don't
+    # reach it — it needs its own patch.
+    test_settings = Settings(local=True, project_root=None)
+    monkeypatch.setattr(dashboard_utils, "get_settings", lambda: test_settings)
+
     repo_root = Path(__file__).resolve().parents[2]
     project_root = repo_root / ".tmp-pathway-api" / uuid4().hex
     project_root.mkdir(parents=True, exist_ok=True)
 
-    config = Configuration(cea.config.DEFAULT_CONFIG)
+    config = CEALocalConfig(cea.config.DEFAULT_CONFIG)
     config.project = str(project_root)
     config.scenario_name = "baseline"
 
@@ -51,6 +60,7 @@ def pathway_api_fixture():
     app.include_router(pathways_router, prefix="/api/pathways")
     app.dependency_overrides[get_cea_config] = lambda: config
     app.dependency_overrides[require_authenticated] = lambda: None
+    app.dependency_overrides[get_settings] = lambda: test_settings
 
     yield {
         "client": TestClient(app, headers={

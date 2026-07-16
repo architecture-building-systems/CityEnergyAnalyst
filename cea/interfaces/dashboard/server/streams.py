@@ -42,7 +42,6 @@ async def write_stream(session: SessionDep, streams: CEAStreams, job_id: str, re
     stream.append(message)
     await streams.set(job_id, stream)
 
-    # TODO: Get user id from request from worker
     job = await session.get(JobInfo, job_id)
     if job is None:
         return
