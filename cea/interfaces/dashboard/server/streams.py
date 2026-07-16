@@ -29,7 +29,7 @@ async def read_stream(session: SessionDep, streams: CEAStreams, job_id: str, use
         logger.warning(f"User {user_id} attempted to read stream for job {job_id} owned by {job.created_by}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not authorized to read this job's output"
+            detail="You are not authorised to read this job's output"
         )
 
     stdout = await streams.get(job_id)
@@ -52,7 +52,7 @@ async def write_stream(session: SessionDep, streams: CEAStreams, job_id: str, us
         logger.warning(f"User {user_id} attempted to write stream for job {job_id} owned by {job.created_by}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not authorized to update this job's output"
+            detail="You are not authorised to update this job's output"
         )
 
     body = await request.body()

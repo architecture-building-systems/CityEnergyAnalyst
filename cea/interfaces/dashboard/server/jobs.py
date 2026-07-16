@@ -212,7 +212,7 @@ async def get_job_info(session: SessionDep, job_id: str, user_id: CEAUserID) -> 
         logger.warning(f"User {user_id} attempted to view job {job_id} owned by {job.created_by}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not authorized to view this job"
+            detail="You are not authorised to view this job"
         )
 
     return JobInfoResponse.from_job_info(job, stdout=job.stdout, stderr=job.stderr)
@@ -298,7 +298,7 @@ async def set_job_started(session: SessionDep, job_id: str, user_id: CEAUserID) 
         logger.warning(f"User {user_id} attempted to start-report job {job_id} owned by {job.created_by}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not authorized to update this job"
+            detail="You are not authorised to update this job"
         )
 
     try:
@@ -330,7 +330,7 @@ async def set_job_success(session: SessionDep, job_id: str, user_id: CEAUserID, 
         logger.warning(f"User {user_id} attempted to success-report job {job_id} owned by {job.created_by}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not authorized to update this job"
+            detail="You are not authorised to update this job"
         )
 
     try:
@@ -377,7 +377,7 @@ async def set_job_error(session: SessionDep, job_id: str, user_id: CEAUserID, er
         logger.warning(f"User {user_id} attempted to error-report job {job_id} owned by {job.created_by}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not authorized to update this job"
+            detail="You are not authorised to update this job"
         )
 
     try:
