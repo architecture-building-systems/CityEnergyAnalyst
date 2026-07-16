@@ -277,6 +277,7 @@ def close_streams(timeout: float = 5.0):
 
 def fetch_job(jobid: str, server) -> JobInfo:
     response = requests.get(f"{server}/jobs/{jobid}", headers=get_worker_headers())
+    response.raise_for_status()
     job = response.json()
     return JobInfo(**job)
 

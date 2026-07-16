@@ -383,9 +383,9 @@ async def start_job(session: SessionDep, worker_processes: CEAWorkerProcesses, s
                     user_id: CEAUserID):
     """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
 
-    # Validate job_id is a valid UUID
+    # Validate job_id is a valid UUID, normalized to the same hex format as JobInfo.id
     try:
-        validated_job_id = str(uuid.UUID(job_id))
+        validated_job_id = uuid.UUID(job_id).hex
     except ValueError:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid job_id format. Must be a valid UUID.")
 
