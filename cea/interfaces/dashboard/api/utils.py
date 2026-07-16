@@ -13,7 +13,9 @@ from fastapi import Depends, Header, HTTPException, status
 from pydantic import BaseModel
 from typing_extensions import Annotated
 
-from cea.interfaces.dashboard.dependencies import CEAConfig, CEALocalConfig, CEAProjectRoot
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEALocalConfig, CEAProjectRoot, CEAUserID, \
+    get_or_create_project_id
+from cea.interfaces.dashboard.lib.database.session import SessionDep
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 from cea.interfaces.dashboard.utils import secure_path
 
@@ -321,3 +323,17 @@ def get_effective_project_lenient(
 
 CEAProject = Annotated[str, Depends(get_effective_project)]
 CEAProjectLenient = Annotated[str, Depends(get_effective_project_lenient)]
+
+
+async def get_project_id(
+    project_path: CEAProjectLenient,
+    owner_id: CEAUserID,
+    session: SessionDep,
+) -> str:
+    """Resolve the DB project id for the request's effective project (X-CEA-Project header,
+    falling back to config.project in local mode only — see _resolve_project_from_headers).
+    Creates the Project row the first time this project path is seen."""
+    return await get_or_create_project_id(project_path, owner_id, session)
+
+
+CEAProjectID = Annotated[str, Depends(get_project_id)]

@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Optional, Dict
 
 from fastapi import Depends, Request, HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import select
 from typing_extensions import Annotated
 
@@ -87,20 +88,27 @@ async def create_project(project_uri: str, owner_id: CEAUserID, session: Session
     return project
 
 
-async def get_project_id(session: SessionDep, owner_id: CEAUserID,
-                         project_root: CEAProjectRoot, project_info: CEAProjectInfo):
-    """Get the project ID from the project URI."""
-    project_uri = project_info.project
-    if project_root is not None:
-        project_uri = os.path.join(project_root, project_uri)
+async def get_or_create_project_id(project_uri: str, owner_id: CEAUserID, session: SessionDep) -> str:
+    """Look up the Project row for a resolved project URI, creating it if this is the first
+    time it's seen.
 
+    Callers must resolve ``project_uri`` themselves (e.g. via the request-scoped
+    ``X-CEA-Project`` header through ``CEAProjectID`` in ``api/utils.py``) — this helper does
+    no path resolution of its own.
+    """
     result = await session.execute(select(Project).where(Project.uri == project_uri))
     project = result.scalar()
 
     # If project not found, create a new one
     if not project:
-        logger.info(f"Creating project in database: {project_uri}")
-        project = await create_project(project_uri, owner_id, session)
+        try:
+            logger.info(f"Creating project in database: {project_uri}")
+            project = await create_project(project_uri, owner_id, session)
+        except IntegrityError:
+            # Lost a race with a concurrent request creating the same project (uri is unique)
+            await session.rollback()
+            result = await session.execute(select(Project).where(Project.uri == project_uri))
+            project = result.scalar_one()
 
     return project.id
 
@@ -308,7 +316,6 @@ CEAUserID = Annotated[str, Depends(get_user_id)]
 CEAUser = Annotated[dict, Depends(get_user)]
 CEAConfig = Annotated[cea.config.Configuration, Depends(get_cea_config)]
 CEAProjectInfo = Annotated[ProjectInfo, Depends(get_project_info)]
-CEAProjectID = Annotated[str, Depends(get_project_id)]
 CEAPlotCache = Annotated[dict, Depends(get_plot_cache)]
 CEAWorkerProcesses = Annotated[AsyncDictCache, Depends(get_worker_processes)]
 CEAStreams = Annotated[AsyncDictCache, Depends(get_streams)]

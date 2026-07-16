@@ -123,7 +123,10 @@ async def enforce_user_download_limit(session: AsyncSession, user_id: str, limit
         user_id: User ID to check
         limit: Maximum number of active downloads per user
     """
-    # Query user's active downloads (not yet downloaded)
+    # Query user's active downloads (not yet downloaded). Locked, and left uncommitted
+    # here so the lock is held through create_download's insert -- otherwise a
+    # concurrent request can slip in between this delete and that insert and still
+    # push the user over the limit (TOCTOU).
     result = await session.execute(
         select(Download)
         .where(
@@ -131,6 +134,7 @@ async def enforce_user_download_limit(session: AsyncSession, user_id: str, limit
             Download.state != DownloadState.DOWNLOADED
         )
         .order_by(Download.created_at.desc())
+        .with_for_update()
     )
     downloads = result.scalars().all()
 
@@ -142,8 +146,6 @@ async def enforce_user_download_limit(session: AsyncSession, user_id: str, limit
         for download in to_delete:
             await cleanup_download(session, download)
             await session.delete(download)
-
-        await session.commit()
 
 
 async def cleanup_download(session: AsyncSession, download: Download):

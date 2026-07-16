@@ -9,18 +9,19 @@ import subprocess
 import sys
 import tempfile
 import uuid
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Annotated
 from urllib.parse import urlparse
 
 import psutil
 import sqlalchemy.exc
-from fastapi import APIRouter, HTTPException, status, Request, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import undefer_group
 from sqlmodel import select, desc
 from starlette.datastructures import UploadFile as _UploadFile
 
-from cea.interfaces.dashboard.dependencies import CEAServerUrl, CEAWorkerProcesses, CEAProjectID, CEAServerSettings, \
+from cea.interfaces.dashboard.api.utils import CEAProjectID
+from cea.interfaces.dashboard.dependencies import CEAServerUrl, CEAWorkerProcesses, CEAServerSettings, \
     CEAUserID, CEAStreams
 from cea.interfaces.dashboard.lib.auth import create_worker_token
 from cea.interfaces.dashboard.lib.database.models import JobInfo, JobState, get_current_time
@@ -159,23 +160,68 @@ def cleanup_job_temp_files(job_id: str):
         logger.error(f"Error cleaning up temp files for job {job_id}: {e}")
 
 
+def _normalize_job_id(job_id: str) -> str:
+    """Validate job_id is a UUID and normalize it to the hex format JobInfo.id is stored in."""
+    try:
+        return uuid.UUID(job_id).hex
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid job_id format. Must be a valid UUID.")
+
+
+def _authorize_job_access(job: JobInfo | None, job_id: str, user_id: str) -> JobInfo:
+    """Raise 404/403 if job is missing or not owned by user_id, else return it."""
+    if not job:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
+    if job.created_by != user_id:
+        logger.warning(f"User {user_id} attempted to access job {job_id} owned by {job.created_by}")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorised to access this job"
+        )
+    return job
+
+
+async def locked_owned_job(session: SessionDep, job_id: str, user_id: CEAUserID) -> JobInfo:
+    """
+    Dependency: resolve path param {job_id} to its JobInfo row, verifying user_id
+    owns it (404 if missing, 403 if owned by someone else).
+
+    Takes a SELECT ... FOR UPDATE row lock (TOCTOU protection) -- every route using
+    this dependency mutates job state within the same request/transaction.
+    """
+    normalized_id = _normalize_job_id(job_id)
+    try:
+        result = await session.execute(
+            select(JobInfo).where(JobInfo.id == normalized_id).with_for_update()
+        )
+    except sqlalchemy.exc.OperationalError as e:
+        logger.error(e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database error")
+    job = result.scalar_one_or_none()
+    return _authorize_job_access(job, normalized_id, user_id)
+
+
+LockedOwnedJob = Annotated[JobInfo, Depends(locked_owned_job)]
+
+
 @router.get("/")
 @router.get("/list")
 async def get_jobs(
     session: SessionDep,
     project_id: CEAProjectID,
+    user_id: CEAUserID,
     limit: int = Query(50, ge=1, le=500, description="Number of jobs to return (most recent first)"),
     offset: int = Query(0, ge=0, description="Number of jobs to skip"),
     state: int | None = Query(None, description="Filter by job state (0=PENDING, 1=STARTED, 2=SUCCESS, 3=ERROR, 4=CANCELED, 5=KILLED)"),
     exclude_deleted: bool = Query(True, description="Exclude deleted jobs from results")
 ) -> List[JobInfo]:
     """
-    Get a paginated list of jobs for the current project with optional filtering.
+    Get a paginated list of jobs for the current user and project with optional filtering.
 
     Returns jobs ordered by creation time (most recent first), paginated by `limit` and `offset`.
     Jobs are filtered by deleted_at field rather than state to preserve completion states.
     """
-    query = select(JobInfo).where(JobInfo.project_id == project_id)
+    query = select(JobInfo).where(JobInfo.project_id == project_id, JobInfo.created_by == user_id)
 
     # Filter by state if specified
     if state is not None:
@@ -200,11 +246,12 @@ async def get_jobs(
 
 
 @router.get("/{job_id}")
-async def get_job_info(session: SessionDep, job_id: str) -> JobInfoResponse:
+async def get_job_info(session: SessionDep, job_id: str, user_id: CEAUserID) -> JobInfoResponse:
     """Return a JobInfo by id"""
-    job = await session.get(JobInfo, job_id, options=[undefer_group('logs')])
-    if not job:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
+    normalized_id = _normalize_job_id(job_id)
+    job = await session.get(JobInfo, normalized_id, options=[undefer_group('logs')])
+    job = _authorize_job_access(job, normalized_id, user_id)
+
     return JobInfoResponse.from_job_info(job, stdout=job.stdout, stderr=job.stderr)
 
 
@@ -278,11 +325,7 @@ async def create_new_job(request: Request, session: SessionDep, project_id: CEAP
 
 
 @router.post("/started/{job_id}")
-async def set_job_started(session: SessionDep, job_id: str) -> JobInfoResponse:
-    job = await session.get(JobInfo, job_id)
-    if not job:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
-
+async def set_job_started(session: SessionDep, job: LockedOwnedJob) -> JobInfoResponse:
     try:
         job.state = JobState.STARTED
         job.start_time = get_current_time()
@@ -301,18 +344,14 @@ async def set_job_started(session: SessionDep, job_id: str) -> JobInfoResponse:
 
 
 @router.post("/success/{job_id}")
-async def set_job_success(session: SessionDep, job_id: str, streams: CEAStreams,
-                          worker_processes: CEAWorkerProcesses, output: JobOutput) -> JobInfoResponse:
-    job = await session.get(JobInfo, job_id)
-    if not job:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
-
+async def set_job_success(session: SessionDep, job: LockedOwnedJob,
+                          streams: CEAStreams, worker_processes: CEAWorkerProcesses, output: JobOutput) -> JobInfoResponse:
     try:
         job.state = JobState.SUCCESS
         job.error = None
         job.end_time = get_current_time()
 
-        stdout_capture = await streams.pop(job_id, [])
+        stdout_capture = await streams.pop(job.id, [])
         stdout_text = "".join(stdout_capture) if stdout_capture else None
         job.stdout = stdout_text
         await session.commit()
@@ -337,21 +376,17 @@ async def set_job_success(session: SessionDep, job_id: str, streams: CEAStreams,
 
 
 @router.post("/error/{job_id}")
-async def set_job_error(session: SessionDep, job_id: str, error: JobError, streams: CEAStreams,
-                        worker_processes: CEAWorkerProcesses) -> JobInfoResponse:
+async def set_job_error(session: SessionDep, job: LockedOwnedJob,
+                        error: JobError, streams: CEAStreams, worker_processes: CEAWorkerProcesses) -> JobInfoResponse:
     message = error.message
     stacktrace = error.stacktrace
-
-    job = await session.get(JobInfo, job_id)
-    if not job:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
 
     try:
         job.state = JobState.ERROR
         job.error = message
         job.end_time = get_current_time()
 
-        stdout_capture = await streams.pop(job_id, [])
+        stdout_capture = await streams.pop(job.id, [])
         stdout_text = "".join(stdout_capture) if stdout_capture else None
         job.stdout = stdout_text
         job.stderr = stacktrace
@@ -373,21 +408,15 @@ async def set_job_error(session: SessionDep, job_id: str, error: JobError, strea
     event_payload = job_payload.to_event_payload()
     await emit_with_retry("cea-worker-error", event_payload, room=f"user-{job.created_by}")
 
-    logger.warning(f"Error found in job {job_id}: {message}")
+    logger.warning(f"Error found in job {job.id}: {message}")
     logger.error(f"stacktrace:\n{stacktrace}")
     return job_payload
 
 
 @router.post('/start/{job_id}')
-async def start_job(session: SessionDep, worker_processes: CEAWorkerProcesses, server_url: CEAServerUrl, job_id: str,
-                    user_id: CEAUserID):
+async def start_job(worker_processes: CEAWorkerProcesses, server_url: CEAServerUrl,
+                    job: LockedOwnedJob):
     """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
-
-    # Validate job_id is a valid UUID, normalized to the same hex format as JobInfo.id
-    try:
-        validated_job_id = uuid.UUID(job_id).hex
-    except ValueError:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid job_id format. Must be a valid UUID.")
 
     # Validate server_url is a valid HTTP/HTTPS URL
     try:
@@ -398,23 +427,6 @@ async def start_job(session: SessionDep, worker_processes: CEAWorkerProcesses, s
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid server_url. Missing hostname.")
     except Exception:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid server_url format.")
-
-    # Lock the row to prevent concurrent modifications (TOCTOU protection)
-    result = await session.execute(
-        select(JobInfo).where(JobInfo.id == job_id).with_for_update()
-    )
-    job = result.scalar_one_or_none()
-
-    if not job:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
-
-    # Authorization check: only job creator can start
-    if job.created_by != user_id:
-        logger.warning(f"User {user_id} attempted to start job {job_id} owned by {job.created_by}")
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not authorized to start this job"
-        )
 
     # Validate job state: must be PENDING and not deleted
     if job.state != JobState.PENDING:
@@ -430,39 +442,22 @@ async def start_job(session: SessionDep, worker_processes: CEAWorkerProcesses, s
         )
 
     # Use validated parameters in command
-    command = [sys.executable, "-m", "cea.worker", "--suppress-warnings", validated_job_id, str(server_url)]
+    command = [sys.executable, "-m", "cea.worker", "--suppress-warnings", job.id, str(server_url)]
     logger.debug(f"command: {command}")
 
     # Pass the worker's auth token via env var, not argv: argv ends up in `ps` output
     # and in the debug log line above, while env vars do not.
-    worker_token = create_worker_token(validated_job_id, job.created_by)
+    worker_token = create_worker_token(job.id, job.created_by)
     worker_env = {**os.environ, "CEA_WORKER_TOKEN": worker_token}
     process = subprocess.Popen(command, env=worker_env)
 
-    await worker_processes.set(validated_job_id, process.pid)
-    return validated_job_id
+    await worker_processes.set(job.id, process.pid)
+    return job.id
 
 
 @router.post("/cancel/{job_id}")
-async def cancel_job(session: SessionDep, job_id: str, user_id: CEAUserID,
+async def cancel_job(session: SessionDep, job: LockedOwnedJob,
                      worker_processes: CEAWorkerProcesses, streams: CEAStreams) -> JobInfoResponse:
-    # Lock the row to prevent concurrent modifications (TOCTOU protection)
-    result = await session.execute(
-        select(JobInfo).where(JobInfo.id == job_id).with_for_update()
-    )
-    job = result.scalar_one_or_none()
-
-    if not job:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
-
-    # Authorization check: only job creator can cancel
-    if job.created_by != user_id:
-        logger.warning(f"User {user_id} attempted to cancel job {job_id} owned by {job.created_by}")
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not authorized to cancel this job"
-        )
-
     # Validate state: can only cancel PENDING or STARTED jobs (protected by row lock)
     if job.state not in (JobState.PENDING, JobState.STARTED):
         raise HTTPException(
@@ -483,7 +478,7 @@ async def cancel_job(session: SessionDep, job_id: str, user_id: CEAUserID,
         job.end_time = get_current_time()
 
         # Save any remaining stream output before clearing
-        stdout_capture = await streams.pop(job_id, [])
+        stdout_capture = await streams.pop(job.id, [])
         stdout_text = "".join(stdout_capture) if stdout_capture else None
         job.stdout = stdout_text
 
@@ -491,7 +486,7 @@ async def cancel_job(session: SessionDep, job_id: str, user_id: CEAUserID,
         await session.refresh(job)
 
         # Terminate worker process gracefully to allow cleanup functions to run
-        await cleanup_worker_process(job_id, worker_processes, force=False)
+        await cleanup_worker_process(job.id, worker_processes, force=False)
 
         # Clean up temporary files for this job
         cleanup_job_temp_files(job.id)
@@ -556,7 +551,7 @@ async def kill_job(session, job_id: str, worker_processes, streams) -> JobInfoRe
 
 
 @router.delete("/{job_id}")
-async def delete_job(session: SessionDep, job_id: str, user_id: CEAUserID) -> JobInfoResponse:
+async def delete_job(session: SessionDep, job: LockedOwnedJob, user_id: CEAUserID) -> JobInfoResponse:
     """
     Mark a job as deleted (soft delete). The job row is not removed from the database,
     and the original completion state (SUCCESS/ERROR/CANCELED/KILLED) is preserved.
@@ -564,27 +559,6 @@ async def delete_job(session: SessionDep, job_id: str, user_id: CEAUserID) -> Jo
 
     Uses row-level locking to prevent TOCTOU race conditions.
     """
-    try:
-        # Lock the row to prevent concurrent modifications (TOCTOU protection)
-        result = await session.execute(
-            select(JobInfo).where(JobInfo.id == job_id).with_for_update()
-        )
-        job = result.scalar_one_or_none()
-    except sqlalchemy.exc.OperationalError as e:
-        logger.error(e)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database error")
-
-    if not job:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
-
-    # Authorization check: only job creator can delete
-    if job.created_by != user_id:
-        logger.warning(f"User {user_id} attempted to delete job {job_id} owned by {job.created_by}")
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not authorized to delete this job"
-        )
-
     if job.state == JobState.STARTED:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Job is still running")
 
