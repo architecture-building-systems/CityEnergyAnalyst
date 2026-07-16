@@ -11,9 +11,8 @@ from sqlmodel import select
 from starlette.responses import FileResponse
 from starlette.background import BackgroundTask
 
-from cea.interfaces.dashboard.api.utils import CEAProject
+from cea.interfaces.dashboard.api.utils import CEAProject, CEAProjectID
 from cea.interfaces.dashboard.dependencies import (
-    CEAProjectID,
     CEAUserID
 )
 from cea.interfaces.dashboard.lib.database.session import SessionDep as CEASession

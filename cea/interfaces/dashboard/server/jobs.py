@@ -20,7 +20,8 @@ from sqlalchemy.orm import undefer_group
 from sqlmodel import select, desc
 from starlette.datastructures import UploadFile as _UploadFile
 
-from cea.interfaces.dashboard.dependencies import CEAServerUrl, CEAWorkerProcesses, CEAProjectID, CEAServerSettings, \
+from cea.interfaces.dashboard.api.utils import CEAProjectID
+from cea.interfaces.dashboard.dependencies import CEAServerUrl, CEAWorkerProcesses, CEAServerSettings, \
     CEAUserID, CEAStreams
 from cea.interfaces.dashboard.lib.auth import create_worker_token
 from cea.interfaces.dashboard.lib.database.models import JobInfo, JobState, get_current_time
