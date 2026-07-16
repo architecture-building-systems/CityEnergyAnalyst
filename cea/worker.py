@@ -257,22 +257,22 @@ def configure_streams(jobid, server):
 
 def close_streams(timeout: float = 5.0):
     """
-    Close and flush all streams properly with timeout.
+    Close and flush JobServerStream-wrapped stdout/stderr with a timeout.
+
+    Only closes streams actually wrapped by ``configure_streams`` -- if a
+    failure happens before that (e.g. ``fetch_job`` raising), sys.stdout/stderr
+    are still the process's real stdio objects and must not be closed, or any
+    later write (including the interpreter's own shutdown flush) would raise
+    ValueError: I/O operation on closed file.
 
     Args:
         timeout: Maximum time in seconds to wait for each stream to close (default: 5.0)
     """
-    # Check if stdout is a JobServerStream and close with timeout
     if isinstance(sys.stdout, JobServerStream):
         sys.stdout.close(timeout=timeout)
-    elif hasattr(sys.stdout, 'close'):
-        sys.stdout.close()
 
-    # Check if stderr is a JobServerStream and close with timeout
     if isinstance(sys.stderr, JobServerStream):
         sys.stderr.close(timeout=timeout)
-    elif hasattr(sys.stderr, 'close'):
-        sys.stderr.close()
 
 
 def fetch_job(jobid: str, server) -> JobInfo:
