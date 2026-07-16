@@ -74,6 +74,7 @@ async def test_set_job_error_serialises_deferred_logs_without_lazy_loading(monke
         response = await jobs.set_job_error(
             session,
             job_id,
+            "localuser",
             jobs.JobError(message="mesh failed", stacktrace="traceback"),
             DummyStreams(["stdout line"]),
             DummyWorkerProcesses(),
@@ -114,6 +115,7 @@ async def test_set_job_success_keeps_datetime_fields_for_response_serialisation(
         response = await jobs.set_job_success(
             session,
             job_id,
+            "localuser",
             DummyStreams(["stdout line"]),
             DummyWorkerProcesses(),
             jobs.JobOutput(output={"status": "ok"}),

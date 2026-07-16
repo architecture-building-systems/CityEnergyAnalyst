@@ -164,18 +164,19 @@ def cleanup_job_temp_files(job_id: str):
 async def get_jobs(
     session: SessionDep,
     project_id: CEAProjectID,
+    user_id: CEAUserID,
     limit: int = Query(50, ge=1, le=500, description="Number of jobs to return (most recent first)"),
     offset: int = Query(0, ge=0, description="Number of jobs to skip"),
     state: int | None = Query(None, description="Filter by job state (0=PENDING, 1=STARTED, 2=SUCCESS, 3=ERROR, 4=CANCELED, 5=KILLED)"),
     exclude_deleted: bool = Query(True, description="Exclude deleted jobs from results")
 ) -> List[JobInfo]:
     """
-    Get a paginated list of jobs for the current project with optional filtering.
+    Get a paginated list of jobs for the current user and project with optional filtering.
 
     Returns jobs ordered by creation time (most recent first), paginated by `limit` and `offset`.
     Jobs are filtered by deleted_at field rather than state to preserve completion states.
     """
-    query = select(JobInfo).where(JobInfo.project_id == project_id)
+    query = select(JobInfo).where(JobInfo.project_id == project_id, JobInfo.created_by == user_id)
 
     # Filter by state if specified
     if state is not None:
@@ -200,11 +201,20 @@ async def get_jobs(
 
 
 @router.get("/{job_id}")
-async def get_job_info(session: SessionDep, job_id: str) -> JobInfoResponse:
+async def get_job_info(session: SessionDep, job_id: str, user_id: CEAUserID) -> JobInfoResponse:
     """Return a JobInfo by id"""
     job = await session.get(JobInfo, job_id, options=[undefer_group('logs')])
     if not job:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
+
+    # Authorization check: only job creator (or the job's own worker callback) can view
+    if job.created_by != user_id:
+        logger.warning(f"User {user_id} attempted to view job {job_id} owned by {job.created_by}")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to view this job"
+        )
+
     return JobInfoResponse.from_job_info(job, stdout=job.stdout, stderr=job.stderr)
 
 
@@ -278,10 +288,18 @@ async def create_new_job(request: Request, session: SessionDep, project_id: CEAP
 
 
 @router.post("/started/{job_id}")
-async def set_job_started(session: SessionDep, job_id: str) -> JobInfoResponse:
+async def set_job_started(session: SessionDep, job_id: str, user_id: CEAUserID) -> JobInfoResponse:
     job = await session.get(JobInfo, job_id)
     if not job:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
+
+    # Authorization check: only the job's own worker (or its creator) can report state
+    if job.created_by != user_id:
+        logger.warning(f"User {user_id} attempted to start-report job {job_id} owned by {job.created_by}")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to update this job"
+        )
 
     try:
         job.state = JobState.STARTED
@@ -301,11 +319,19 @@ async def set_job_started(session: SessionDep, job_id: str) -> JobInfoResponse:
 
 
 @router.post("/success/{job_id}")
-async def set_job_success(session: SessionDep, job_id: str, streams: CEAStreams,
+async def set_job_success(session: SessionDep, job_id: str, user_id: CEAUserID, streams: CEAStreams,
                           worker_processes: CEAWorkerProcesses, output: JobOutput) -> JobInfoResponse:
     job = await session.get(JobInfo, job_id)
     if not job:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
+
+    # Authorization check: only the job's own worker (or its creator) can report state
+    if job.created_by != user_id:
+        logger.warning(f"User {user_id} attempted to success-report job {job_id} owned by {job.created_by}")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to update this job"
+        )
 
     try:
         job.state = JobState.SUCCESS
@@ -337,7 +363,7 @@ async def set_job_success(session: SessionDep, job_id: str, streams: CEAStreams,
 
 
 @router.post("/error/{job_id}")
-async def set_job_error(session: SessionDep, job_id: str, error: JobError, streams: CEAStreams,
+async def set_job_error(session: SessionDep, job_id: str, user_id: CEAUserID, error: JobError, streams: CEAStreams,
                         worker_processes: CEAWorkerProcesses) -> JobInfoResponse:
     message = error.message
     stacktrace = error.stacktrace
@@ -345,6 +371,14 @@ async def set_job_error(session: SessionDep, job_id: str, error: JobError, strea
     job = await session.get(JobInfo, job_id)
     if not job:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
+
+    # Authorization check: only the job's own worker (or its creator) can report state
+    if job.created_by != user_id:
+        logger.warning(f"User {user_id} attempted to error-report job {job_id} owned by {job.created_by}")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to update this job"
+        )
 
     try:
         job.state = JobState.ERROR
