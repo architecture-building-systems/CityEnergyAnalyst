@@ -30,7 +30,7 @@ from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot, CEA
 from cea.interfaces.dashboard.lib.database.session import SessionDep
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 from cea.interfaces.dashboard.settings import get_settings
-from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
+from cea.interfaces.dashboard.utils import secure_path, secure_join_under_root, OutsideProjectRootError
 from cea.interfaces.dashboard.api.utils import CEAScenario, CEAProject, validate_scenario_name
 from cea.utilities.dbf import dbf_to_dataframe
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system, raster_to_WSG_and_UTM
@@ -697,7 +697,7 @@ async def delete_scenario(project: CEAProject, body: DeleteScenarioBody):
 async def duplicate_scenario(project: CEAProject, scenario: str, new_scenario_info: NewScenarioInfo):
     """Duplicate Scenario"""
     scenario = validate_scenario_name(scenario)
-    scenario_path = secure_path(os.path.join(project, scenario))
+    scenario_path = secure_join_under_root(project, scenario)
 
     if not os.path.exists(scenario_path):
         raise HTTPException(
@@ -705,10 +705,9 @@ async def duplicate_scenario(project: CEAProject, scenario: str, new_scenario_in
             detail='Scenario does not exist.',
         )
 
-    new_scenario_name = new_scenario_info.name
-    validate_scenario_name(new_scenario_name)
+    new_scenario_name = validate_scenario_name(new_scenario_info.name)
 
-    new_path = secure_path(os.path.join(project, new_scenario_name))
+    new_path = secure_join_under_root(project, new_scenario_name)
     try:
         # TODO: Check for any current open scenarios or jobs
         # TODO: Copy only necessary files
