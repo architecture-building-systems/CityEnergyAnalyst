@@ -71,10 +71,10 @@ async def test_set_job_error_serialises_deferred_logs_without_lazy_loading(monke
     monkeypatch.setattr(jobs, "emit_with_retry", AsyncMock(return_value=True))
 
     async with db_session() as session:
+        job = await session.get(JobInfo, job_id)
         response = await jobs.set_job_error(
             session,
-            job_id,
-            "localuser",
+            job,
             jobs.JobError(message="mesh failed", stacktrace="traceback"),
             DummyStreams(["stdout line"]),
             DummyWorkerProcesses(),
@@ -112,10 +112,10 @@ async def test_set_job_success_keeps_datetime_fields_for_response_serialisation(
     monkeypatch.setattr(jobs, "emit_with_retry", AsyncMock(return_value=True))
 
     async with db_session() as session:
+        job = await session.get(JobInfo, job_id)
         response = await jobs.set_job_success(
             session,
-            job_id,
-            "localuser",
+            job,
             DummyStreams(["stdout line"]),
             DummyWorkerProcesses(),
             jobs.JobOutput(output={"status": "ok"}),
