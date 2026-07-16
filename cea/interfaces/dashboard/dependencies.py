@@ -171,11 +171,18 @@ def get_user_id(request: Request, settings: CEAServerSettings) -> str:
     job_id = request.path_params.get("job_id")
     if job_id is not None and route_key in _WORKER_CALLBACK_ROUTES:
         if worker_token is None:
-            logger.warning(f"Worker callback for job {job_id} on {route_key} had no X-CEA-Worker-Token header")
+            logger.warning(
+                f"Worker callback for job {job_id} on {route_key} had no X-CEA-Worker-Token header. "
+                f"Header keys present: {list(request.headers.keys())}"
+            )
         else:
             worker_user_id = verify_worker_token(worker_token, job_id)
             if worker_user_id is not None:
                 return worker_user_id
+            logger.warning(
+                f"Worker callback for job {job_id} on {route_key} presented a token that failed verification "
+                f"(token prefix: {worker_token[:12]}...)"
+            )
 
     # Resolve cookie-based auth directly (not as a Depends param) so worker
     # requests -- which never carry cookies -- don't unconditionally trigger
