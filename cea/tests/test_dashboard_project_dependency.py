@@ -6,6 +6,8 @@ join/absolute-path/fallback logic in _resolve_project_from_headers from the
 pre-existing, shared secure_path/global-Settings containment machinery (which
 CEAScenario already relies on and is out of scope for this change).
 """
+import os
+
 import pytest
 from fastapi import HTTPException
 
@@ -49,9 +51,10 @@ def test_relative_project_joined_with_root(monkeypatch):
         _headers("my-project"), config=None, project_root="/data/projects"
     )
 
-    assert captured["path"] == "/data/projects/my-project"
+    expected = os.path.join("/data/projects", "my-project")
+    assert captured["path"] == expected
     assert captured["root"] == "/data/projects"
-    assert result == "/data/projects/my-project"
+    assert result == expected
 
 
 def test_absolute_project_rejected_when_root_enforced():
