@@ -102,6 +102,7 @@ cea = [
     "schemas.yml",
     "scripts.yml",
     "workflows/*.yml",
+    "kpi/definitions/*.yml",
 
     # Data files
     "examples/*.zip",
