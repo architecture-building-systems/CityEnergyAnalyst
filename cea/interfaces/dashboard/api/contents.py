@@ -259,7 +259,7 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
                 new_scenario_path = secure_join_under_root(project_path, scenario_name)
                 if os.path.exists(new_scenario_path):
                     # TODO: Find way to rename new scenario and extract
-                    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Scenario `{scenario_name}` already exists in project")
+                    raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Scenario `{scenario_name}` already exists in project")
                 # Create scenario directory
                 os.makedirs(new_scenario_path, exist_ok=True)
 
@@ -294,7 +294,7 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
             logger.info(f"Scenario found: {scenario_names}")
             if len(existing_scenario_names):
                 # TODO: Find way to rename new scenario and extract
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT,
                                     detail=f"Scenarios {existing_scenario_names} already exists in project")
             
             # Recheck number of scenarios after extraction
@@ -375,6 +375,8 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
                 scenario.status = UploadScenarioResult.Info.Status.FAILED
                 scenario.message = "Unknown error when migrating scenario"
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
