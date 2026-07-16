@@ -265,6 +265,14 @@ async def create_new_project(project_root: CEAProjectRoot, new_project: NewProje
         try:
             # Add project to database
             await create_project(project, user_id, session)
+        except sqlalchemy.exc.IntegrityError as e:
+            # Project uri already exists (e.g. concurrent request created it first) -- leave
+            # the folder in place since another request may still be using it
+            logger.error(e)
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Project already exists",
+            )
         except sqlalchemy.exc.SQLAlchemyError as e:
             # Remove folder if failed to create in database
             logger.error(e)
