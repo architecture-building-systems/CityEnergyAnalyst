@@ -195,7 +195,11 @@ def get_user_id(request: Request, settings: CEAServerSettings) -> str:
             logger.error(e)
             # raise Exception("Unable to verify user token")
 
-    logger.info(f"Unable to determine current user, using `{LOCAL_USER_ID}`")
+    logger.info(
+        f"Unable to determine current user, using `{LOCAL_USER_ID}`. "
+        f"path={request.url.path!r} route_key={route_key!r} job_id={job_id!r} "
+        f"has_worker_token={worker_token is not None} header_keys={list(request.headers.keys())!r}"
+    )
     return LOCAL_USER_ID
 
 
