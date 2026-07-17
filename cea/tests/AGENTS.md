@@ -40,6 +40,11 @@ _set_state_wall_thickness(locator, "demo", 2040, 0.15)
 cea.api.pathway_validate_all_states(...)
 ```
 
+### DO: Test dashboard middleware fallbacks with direct ASGI stubs when backend failures are the behaviour under test
+```python
+# Simulate cache.get / RedLock / cache.set failures without depending on Redis.
+```
+
 ### DON'T: Depend on the developer's real projects or config
 ```python
 # Bad: tests must create their own pathway folders and logs.
