@@ -142,6 +142,11 @@ def get_project_root(user_id: CEAUserID, settings: CEAServerSettings) -> Optiona
 
     # Use user ID as project root for non-local mode
     if not settings.local:
+        if user_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication required.",
+            )
         if project_root is None:
             raise ValueError("Project root not set. Unable to determine project root.")
         project_root = os.path.join(os.path.normpath(project_root), user_id)
@@ -170,7 +175,7 @@ _WORKER_CALLBACK_ROUTES: frozenset = frozenset({
 })
 
 
-def get_user_id(request: Request, settings: CEAServerSettings) -> str:
+def get_user_id(request: Request, settings: CEAServerSettings) -> Optional[str]:
     # Return local user if local mode
     if settings.local:
         logger.info(f"Using `{LOCAL_USER_ID}`")
@@ -207,14 +212,9 @@ def get_user_id(request: Request, settings: CEAServerSettings) -> str:
             return auth_client.get_user_id()
         except CEAAuthError as e:
             logger.error(e)
-            # raise Exception("Unable to verify user token")
 
-    logger.info(
-        f"Unable to determine current user, using `{LOCAL_USER_ID}`. "
-        f"path={request.url.path!r} route_key={route_key!r} job_id={job_id!r} "
-        f"has_worker_token={worker_token is not None} header_keys={list(request.headers.keys())!r}"
-    )
-    return LOCAL_USER_ID
+    # No valid session
+    return None
 
 
 def get_user(auth_client: CEAAuthClient, settings: CEAServerSettings) -> Dict[str, str]:
@@ -239,8 +239,11 @@ def get_user(auth_client: CEAAuthClient, settings: CEAServerSettings) -> Dict[st
                 detail=str(e),
             )
 
-    logger.info(f"Unable to determine current user, using `{LOCAL_USER_ID}`")
-    return {'id': LOCAL_USER_ID}
+    # No valid session
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Authentication required.",
+    )
 
 
 def get_auth_client(request: Request, settings: CEAServerSettings) -> Optional[AuthClient]:
@@ -275,8 +278,8 @@ def require_authenticated(request: Request, user_id: CEAUserID, settings: CEASer
     """App-level auth guard: every route requires an authenticated user in non-local mode.
 
     In local (single-user desktop) mode this is a no-op — all routes are open.
-    In non-local mode any caller that resolves to LOCAL_USER_ID (the anonymous
-    sentinel returned when no valid session token is present) receives 401.
+    In non-local mode any caller that resolves to None (no valid session token
+    present) receives 401.
 
     Routes in _PUBLIC_ROUTES / _PUBLIC_ROUTE_PREFIXES are explicitly excluded.
     No proxy is assumed — the server self-enforces auth.
@@ -287,11 +290,7 @@ def require_authenticated(request: Request, user_id: CEAUserID, settings: CEASer
         return
     if request.url.path.startswith(_PUBLIC_ROUTE_PREFIXES):
         return
-    if user_id == LOCAL_USER_ID:
-        # FIXME: LOCAL_USER_ID is overloaded — it is the sentinel for both the
-        # local-desktop user (harmless; local mode exits above) and anonymous
-        # callers in non-local mode. Rename / split these two concepts so the
-        # guard here is unambiguous.
+    if user_id is None:
         safe_path = request.url.path.replace("\r", "\\r").replace("\n", "\\n")
         logger.info('Unauthenticated access "%s %s"', request.method, safe_path)
         raise HTTPException(
@@ -312,7 +311,7 @@ def get_limits(user: CEAUser) -> LimitSettings:
     return limits
 
 
-CEAUserID = Annotated[str, Depends(get_user_id)]
+CEAUserID = Annotated[Optional[str], Depends(get_user_id)]
 CEAUser = Annotated[dict, Depends(get_user)]
 CEAConfig = Annotated[cea.config.Configuration, Depends(get_cea_config)]
 CEAProjectInfo = Annotated[ProjectInfo, Depends(get_project_info)]

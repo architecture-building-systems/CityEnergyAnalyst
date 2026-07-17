@@ -697,7 +697,6 @@ def test_global_auth_guard_not_weakened():
     from fastapi.exceptions import HTTPException
 
     from cea.interfaces.dashboard.dependencies import require_authenticated
-    from cea.interfaces.dashboard.lib.database.models import LOCAL_USER_ID
 
     non_local = Settings.model_construct(local=False)
     scope = {
@@ -706,5 +705,5 @@ def test_global_auth_guard_not_weakened():
     }
     request = Request(scope)
     with pytest.raises(HTTPException) as exc_info:
-        require_authenticated(request, LOCAL_USER_ID, non_local)
+        require_authenticated(request, None, non_local)
     assert exc_info.value.status_code == 401
