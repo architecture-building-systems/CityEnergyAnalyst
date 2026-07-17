@@ -52,3 +52,4 @@ cea.api.pathway_validate_all_states(...)
 
 ## Related Files
 - `test_pathway_api.py` - API-level coverage for overview rows, stock/manual/mixed classification, editor endpoints, and stale-status detection.
+- `paths.py` - Shared repo/examples/workflows filesystem anchors; use instead of `__file__`-relative math.

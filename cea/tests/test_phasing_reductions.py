@@ -200,11 +200,11 @@ class TestPipeCostDatabase:
             THERMAL_GRID_DN_COL,
             THERMAL_GRID_COST_COL,
         )
+        from cea.tests.paths import REPO_ROOT
 
-        repo_root = _os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
         for region in ('CH', 'DE', 'SG'):
             path = _os.path.join(
-                repo_root, 'databases', region, 'COMPONENTS', 'DISTRIBUTION', 'THERMAL_GRID.csv'
+                str(REPO_ROOT), 'databases', region, 'COMPONENTS', 'DISTRIBUTION', 'THERMAL_GRID.csv'
             )
             if not _os.path.exists(path):
                 continue

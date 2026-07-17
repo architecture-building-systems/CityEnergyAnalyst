@@ -26,6 +26,7 @@ from cea.interfaces.dashboard.api.pathways import router as pathways_router
 import cea.interfaces.dashboard.utils as dashboard_utils
 from cea.interfaces.dashboard.dependencies import CEALocalConfig, require_authenticated, get_cea_config
 from cea.interfaces.dashboard.settings import Settings, get_settings
+from cea.tests.paths import REPO_ROOT
 
 InputLocator._cleanup_temp_directory = lambda self: None  # type: ignore[method-assign]
 
@@ -40,8 +41,7 @@ def pathway_api_fixture(monkeypatch):
     test_settings = Settings(local=True, project_root=None)
     monkeypatch.setattr(dashboard_utils, "get_settings", lambda: test_settings)
 
-    repo_root = Path(__file__).resolve().parents[2]
-    project_root = repo_root / ".tmp-pathway-api" / uuid4().hex
+    project_root = REPO_ROOT / ".tmp-pathway-api" / uuid4().hex
     project_root.mkdir(parents=True, exist_ok=True)
 
     config = CEALocalConfig(cea.config.DEFAULT_CONFIG)

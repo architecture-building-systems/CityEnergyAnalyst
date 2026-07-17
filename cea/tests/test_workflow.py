@@ -7,6 +7,7 @@ from typing import List
 
 import cea.config
 from cea.workflows.workflow import main as workflow_main
+from cea.tests.paths import WORKFLOWS_DIR
 import io
 import threading
 
@@ -91,7 +92,7 @@ def _run_workflow_with_prefix(config: cea.config.Configuration):
 class TestWorkflows(unittest.TestCase):
     @staticmethod
     def get_test_workflows() -> List[str]:
-        dirname = os.path.join(os.path.realpath(os.path.dirname(__file__)), "workflows")
+        dirname = str(WORKFLOWS_DIR)
         workflows = [workflow for workflow in glob.glob(os.path.join(dirname, "*.yml"))]
 
         return [os.path.join(dirname, workflow) for workflow in workflows]

@@ -9,6 +9,7 @@ import pytest
 import cea.config
 import cea.inputlocator
 from cea.analysis.heat.main import main as anthropogenic_heat_main
+from cea.tests.paths import reference_case_baseline
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
@@ -30,7 +31,7 @@ def test_anthropogenic_heat_reference_case(config):
     2. Demand to be calculated first
     """
     # Set up configuration
-    config.scenario = os.path.join(os.path.dirname(__file__), '..', 'examples', 'reference-case-open', 'baseline')
+    config.scenario = reference_case_baseline()
     config.anthropogenic_heat.network_types = ['DH', 'DC']
 
     # Run anthropogenic-heat
@@ -95,7 +96,7 @@ def test_anthropogenic_heat_reference_case(config):
 @pytest.mark.skip(reason="Requires reference case to be extracted and demand to be run")
 def test_anthropogenic_heat_dh_only(config):
     """Test anthropogenic-heat with DH only"""
-    config.scenario = os.path.join(os.path.dirname(__file__), '..', 'examples', 'reference-case-open', 'baseline')
+    config.scenario = reference_case_baseline()
     config.anthropogenic_heat.network_types = ['DH']
 
     anthropogenic_heat_main(config)
@@ -110,7 +111,7 @@ def test_anthropogenic_heat_dh_only(config):
 @pytest.mark.skip(reason="Requires reference case to be extracted and demand to be run")
 def test_anthropogenic_heat_dc_only(config):
     """Test anthropogenic-heat with DC only"""
-    config.scenario = os.path.join(os.path.dirname(__file__), '..', 'examples', 'reference-case-open', 'baseline')
+    config.scenario = reference_case_baseline()
     config.anthropogenic_heat.network_types = ['DC']
 
     anthropogenic_heat_main(config)
@@ -128,7 +129,7 @@ def test_anthropogenic_heat_dc_only(config):
 @pytest.mark.skip(reason="Requires reference case to be extracted and demand to be run")
 def test_anthropogenic_heat_standalone_only(config):
     """Test anthropogenic-heat with no networks (standalone only)"""
-    config.scenario = os.path.join(os.path.dirname(__file__), '..', 'examples', 'reference-case-open', 'baseline')
+    config.scenario = reference_case_baseline()
     config.anthropogenic_heat.network_types = []
 
     anthropogenic_heat_main(config)

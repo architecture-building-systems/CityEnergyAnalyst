@@ -9,6 +9,7 @@ import pytest
 import cea.config
 import cea.inputlocator
 from cea.analysis.costs.main import main as baseline_costs_main
+from cea.tests.paths import reference_case_baseline
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
@@ -30,7 +31,7 @@ def test_baseline_costs_reference_case(config):
     2. Demand to be calculated first
     """
     # Set up configuration
-    config.scenario = os.path.join(os.path.dirname(__file__), '..', 'examples', 'reference-case-open', 'baseline')
+    config.scenario = reference_case_baseline()
     config.system_costs.network_types = ['DH', 'DC']
 
     # Run baseline-costs
@@ -69,7 +70,7 @@ def test_baseline_costs_reference_case(config):
 @pytest.mark.skip(reason="Requires reference case to be extracted and demand to be run")
 def test_baseline_costs_dh_only(config):
     """Test baseline-costs with DH only"""
-    config.scenario = os.path.join(os.path.dirname(__file__), '..', 'examples', 'reference-case-open', 'baseline')
+    config.scenario = reference_case_baseline()
     config.system_costs.network_types = ['DH']
 
     baseline_costs_main(config)
@@ -86,7 +87,7 @@ def test_baseline_costs_dh_only(config):
 @pytest.mark.skip(reason="Requires reference case to be extracted and demand to be run")
 def test_baseline_costs_dc_only(config):
     """Test baseline-costs with DC only"""
-    config.scenario = os.path.join(os.path.dirname(__file__), '..', 'examples', 'reference-case-open', 'baseline')
+    config.scenario = reference_case_baseline()
     config.system_costs.network_types = ['DC']
 
     baseline_costs_main(config)
