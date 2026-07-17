@@ -12,14 +12,14 @@ from cea.interfaces.dashboard.lib.database.models import LOCAL_USER_ID
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 from cea.interfaces.dashboard.settings import get_settings
 
-logger = getCEAServerLogger("cea-server-socketio")
+logger = getCEAServerLogger("cea-socketio")
 
 class _RedisManagerLogger:
     """Downgrades python-socketio's INFO-level manager logs (e.g. "backend
     initialized") to DEBUG."""
 
     def __init__(self):
-        self._wrapped = getCEAServerLogger("cea-server-socketio-redis")
+        self._wrapped = getCEAServerLogger("cea-socketio-redis")
 
     def info(self, msg, *args, **kwargs):
         self._wrapped.debug(msg, *args, **kwargs)
