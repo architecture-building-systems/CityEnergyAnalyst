@@ -14,6 +14,19 @@ from cea.interfaces.dashboard.settings import get_settings
 
 logger = getCEAServerLogger("cea-server-socketio")
 
+class _RedisManagerLogger:
+    """Downgrades python-socketio's INFO-level manager logs (e.g. "backend
+    initialized") to DEBUG."""
+
+    def __init__(self):
+        self._wrapped = getCEAServerLogger("cea-server-socketio-redis")
+
+    def info(self, msg, *args, **kwargs):
+        self._wrapped.debug(msg, *args, **kwargs)
+
+    def __getattr__(self, name):
+        return getattr(self._wrapped, name)
+
 
 def _get_cors_origin():
     cors_origin = get_settings().cors_origin
@@ -41,7 +54,7 @@ def _get_client_manager():
             mgr = socketio.AsyncRedisManager(f'redis://{cache_settings.host}:{cache_settings.port}',
                                              write_only=False,  # Ensure reading is enabled
                                              channel='socketio',  # Use a consistent channel name
-                                             logger=logger,
+                                             logger=_RedisManagerLogger(),
                                              redis_options=redis_options,
                                              )
             logger.debug(f'Using Redis as message broker [{cache_settings.host}:{cache_settings.port}]')
