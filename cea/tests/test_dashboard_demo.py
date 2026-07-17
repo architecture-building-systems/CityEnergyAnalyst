@@ -572,6 +572,124 @@ def test_demo_sub_app_has_no_write_routes():
     )
 
 
+# Path/handler-name fragments that mark a route as expensive, write-adjacent, or
+# otherwise unsuited to an anonymous surface even though it may pass the GET-only
+# filter (e.g. /databases/download - see download_input_database in inputs.py,
+# which zips and reads back the whole db4 folder on every call).
+_SUSPICIOUS_ROUTE_KEYWORDS = ("download", "upload", "export", "delete", "zip", "dump", "backup")
+
+
+def test_demo_sub_app_has_no_suspicious_named_routes():
+    """Keyword tripwire for GET routes that are technically read-only but do
+    real, repeatable work (file generation, archiving, etc.) - the kind of
+    route _filter_routes' method/path filtering won't catch on its own since
+    it only excludes by verb or by an already-known path.
+
+    A match means a route was added to one of the wrapped routers (inputs,
+    map_layers, canvas, reports, tools, kpis, pathways) and nothing excluded it
+    from the demo mount. Review it and either exclude it via the relevant
+    _filter_routes call above, or - if it's genuinely cheap and safe for an
+    anonymous caller - rename it or narrow this keyword list with a comment
+    explaining why.
+    """
+    from cea.interfaces.dashboard.api.demo import app as demo_app
+
+    matches = []
+    for route in demo_app.routes:
+        if not (hasattr(route, "path") and hasattr(route, "endpoint")):
+            continue
+        if not route.path.startswith("/scenarios"):
+            continue
+        haystack = f"{route.path} {route.endpoint.__name__}".lower()
+        if any(keyword in haystack for keyword in _SUSPICIOUS_ROUTE_KEYWORDS):
+            matches.append(route.path)
+
+    assert matches == [], (
+        f"Route(s) with a suspicious name are reachable from the anonymous demo "
+        f"app: {matches}. Exclude via _filter_routes unless deliberately reviewed "
+        f"as safe."
+    )
+
+
+# Exact (method, path) inventory of every domain route reachable through the
+# anonymous demo app. Deliberately exhaustive rather than a smoke test: a
+# route being added or removed here must be a conscious diff in review, not a
+# side effect of an unrelated change to one of the wrapped routers.
+_EXPECTED_DEMO_ROUTES = {
+    ("GET", "/scenarios"),
+    ("GET", "/scenarios/{demo_id}/canvas/"),
+    ("GET", "/scenarios/{demo_id}/canvas/{name}"),
+    ("GET", "/scenarios/{demo_id}/inputs/"),
+    ("GET", "/scenarios/{demo_id}/inputs/all-inputs"),
+    ("GET", "/scenarios/{demo_id}/inputs/building-properties"),
+    ("GET", "/scenarios/{demo_id}/inputs/building-properties/{db}"),
+    ("GET", "/scenarios/{demo_id}/inputs/building-schedule/{building}"),
+    ("GET", "/scenarios/{demo_id}/inputs/databases"),
+    ("GET", "/scenarios/{demo_id}/inputs/databases/check"),
+    ("GET", "/scenarios/{demo_id}/inputs/geojson/{kind}"),
+    ("GET", "/scenarios/{demo_id}/kpis/"),
+    ("GET", "/scenarios/{demo_id}/kpis/registry"),
+    ("GET", "/scenarios/{demo_id}/kpis/{kpi_id}/parameters"),
+    ("GET", "/scenarios/{demo_id}/kpis/{kpi_id}/value"),
+    ("GET", "/scenarios/{demo_id}/map_layers/"),
+    ("GET", "/scenarios/{demo_id}/pathways/"),
+    ("GET", "/scenarios/{demo_id}/pathways/building-lifecycle/{building_name}"),
+    ("GET", "/scenarios/{demo_id}/pathways/overview"),
+    ("GET", "/scenarios/{demo_id}/pathways/templates"),
+    ("GET", "/scenarios/{demo_id}/pathways/templates/{template_name}"),
+    ("GET", "/scenarios/{demo_id}/pathways/templates/{template_name}/usage"),
+    ("GET", "/scenarios/{demo_id}/pathways/{pathway_name}/building-lifecycle/{building_name}"),
+    ("GET", "/scenarios/{demo_id}/pathways/{pathway_name}/timeline"),
+    ("GET", "/scenarios/{demo_id}/pathways/{pathway_name}/years/{year}/editor-options"),
+    ("GET", "/scenarios/{demo_id}/pathways/{pathway_name}/years/{year}/geojson"),
+    ("GET", "/scenarios/{demo_id}/reports/features"),
+    ("GET", "/scenarios/{demo_id}/reports/plot"),
+    ("GET", "/scenarios/{demo_id}/reports/summary"),
+    ("GET", "/scenarios/{demo_id}/reports/whatifs"),
+    ("GET", "/scenarios/{demo_id}/reports/zone-geojson"),
+    ("GET", "/scenarios/{demo_id}/tools/"),
+    ("GET", "/scenarios/{demo_id}/tools/{tool_name}"),
+    ("POST", "/scenarios/{demo_id}/map_layers/{layer_category}/{layer_name}/check"),
+    ("POST", "/scenarios/{demo_id}/map_layers/{layer_category}/{layer_name}/generate"),
+    ("POST", "/scenarios/{demo_id}/map_layers/{layer_category}/{layer_name}/{parameter}/choices"),
+    ("POST", "/scenarios/{demo_id}/map_layers/{layer_category}/{layer_name}/{parameter}/range"),
+    ("POST", "/scenarios/{demo_id}/reports/plot-custom"),
+}
+
+
+def test_demo_sub_app_route_inventory_matches_snapshot():
+    """Catches drift that test_demo_sub_app_has_no_write_routes (verb-level) and
+    test_demo_sub_app_has_no_suspicious_named_routes (keyword-level) wouldn't:
+    a route with an innocuous name and an allowed verb that simply shouldn't be
+    anonymous-readable (wrong scope, unreviewed new endpoint, etc.). Update
+    _EXPECTED_DEMO_ROUTES deliberately whenever a route is meant to be added or
+    removed from the demo surface.
+    """
+    from cea.interfaces.dashboard.api.demo import app as demo_app
+
+    actual = {
+        (method, route.path)
+        for route in demo_app.routes
+        if hasattr(route, "methods") and hasattr(route, "path")
+        if route.path.startswith("/scenarios")
+        for method in route.methods
+        if method != "HEAD"
+    }
+    added = actual - _EXPECTED_DEMO_ROUTES
+    removed = _EXPECTED_DEMO_ROUTES - actual
+    assert actual == _EXPECTED_DEMO_ROUTES, (
+        "Demo sub-app route inventory drifted from _EXPECTED_DEMO_ROUTES in this "
+        "test file.\n"
+        f"  Newly reachable (review, then add here if intended): {sorted(added)}\n"
+        f"  No longer reachable (remove from here if intended): {sorted(removed)}\n"
+        "If this is a deliberate change, update _EXPECTED_DEMO_ROUTES above to "
+        "match. If it's not - a new route in one of the wrapped routers (inputs, "
+        "map_layers, canvas, reports, tools, kpis, pathways) became reachable "
+        "unintentionally - exclude it via the relevant _filter_routes call in "
+        "demo.py instead."
+    )
+
+
 def test_global_auth_guard_not_weakened():
     """The main app's require_authenticated must still reject anonymous callers in
     non-local mode — mounting the demo sub-app must not affect this."""
