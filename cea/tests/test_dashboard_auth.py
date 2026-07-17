@@ -1,4 +1,6 @@
 """Tests for require_authenticated and get_project_root — no monkeypatching; Settings passed directly."""
+import os
+
 import pytest
 from fastapi import Request
 from fastapi.exceptions import HTTPException
@@ -53,4 +55,5 @@ def test_get_project_root_rejects_no_session_in_non_local_mode():
 
 
 def test_get_project_root_joins_user_id_in_non_local_mode():
-    assert get_project_root(AUTHENTICATED_USER, NON_LOCAL_WITH_ROOT) == "/data/projects/user_abc123"
+    expected = os.path.join("/data/projects", "user_abc123")
+    assert get_project_root(AUTHENTICATED_USER, NON_LOCAL_WITH_ROOT) == expected
