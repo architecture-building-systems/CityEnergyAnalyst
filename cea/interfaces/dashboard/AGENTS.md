@@ -1,5 +1,14 @@
 # Dashboard
 
+## Startup boundaries
+
+- `bootstrap.initialize_dashboard()` prepares shared state (database migration and
+  download recovery) once before workers start. Keep it outside FastAPI lifespan.
+- `dashboard.main()` runs that bootstrap after resolving/exporting settings and
+  before `uvicorn.run()`.
+- `app.lifespan()` is per-worker only: cache setup, process cleanup, and resource
+  teardown. Do not add shared initialization there.
+
 ## Frontend Code
 
 The dashboard UI (React frontend) is in a **separate repository** — not here.

@@ -10,9 +10,8 @@ from fastapi.responses import JSONResponse
 import cea.interfaces.dashboard.api as api
 import cea.interfaces.dashboard.plots.routes as plots
 import cea.interfaces.dashboard.server as server
-from cea.interfaces.dashboard.lib.database.models import create_db_and_tables
 from cea.interfaces.dashboard.lib.database.session import close_db_connection
-from cea.interfaces.dashboard.lib.cache.provider import cleanup_cache_connections, get_cache, init_cache
+from cea.interfaces.dashboard.lib.cache.provider import cleanup_cache_connections, init_cache
 from cea.interfaces.dashboard.lib.cors import CORSConfig
 from cea.interfaces.dashboard.lib.logs import logger, getCEAServerLogger
 from cea.interfaces.dashboard.lib.socketio import socket_app
@@ -68,42 +67,6 @@ async def lifespan(_: FastAPI):
     setup_sigchld_handler()
 
     await init_cache()
-
-    # With multiple uvicorn workers, each worker process runs this lifespan
-    # independently, so DB migrations and download cleanup would otherwise run
-    # once per worker concurrently (racy SQLite writes, duplicate cleanup
-    # queries). Redis is required whenever workers > 1 (see
-    # Settings.validate_multi_worker_mode), so an atomic add() doubles as a
-    # cheap leader election: only the worker that wins it runs startup-only
-    # work. In single-worker/local mode the cache is process-local, so this
-    # worker always wins and behaviour is unchanged.
-    try:
-        is_startup_leader = await get_cache().add("dashboard:startup-lock", True, ttl=60)
-    except ValueError:
-        # Key already exists: another worker holds the lock and is running startup tasks.
-        is_startup_leader = False
-    except Exception as e:
-        logger.warning(f"Startup lock unavailable ({e}), running startup tasks unconditionally")
-        is_startup_leader = True
-
-    if is_startup_leader:
-        try:
-            # FIXME: sqlite not working with async adapter
-            await create_db_and_tables()
-        except Exception as e:
-            logger.error(f"Failed to create database tables: {e}")
-
-        # Cleanup old and stale downloads on startup
-        try:
-            from cea.interfaces.dashboard.server.downloads import cleanup_old_downloads, cleanup_stale_downloads
-            from cea.interfaces.dashboard.lib.database.session import get_session_context
-            async with get_session_context() as session:
-                await cleanup_old_downloads(session)
-                await cleanup_stale_downloads(session)
-        except Exception as e:
-            logger.error(f"Failed to cleanup downloads: {e}")
-    else:
-        logger.debug("Another worker is handling startup DB init/cleanup; skipping")
 
     yield
 

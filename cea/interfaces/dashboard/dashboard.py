@@ -1,9 +1,11 @@
+import asyncio
 import os
 import sys
 
 import uvicorn
 
 from cea.config import Configuration
+from cea.interfaces.dashboard.bootstrap import initialize_dashboard
 from cea.interfaces.dashboard.lib.logs import logger
 from cea.interfaces.dashboard.settings import get_settings, Settings
 
@@ -39,6 +41,7 @@ def main(config: Configuration):
 
     try:
         settings.to_env_vars()
+        asyncio.run(initialize_dashboard())
 
         uvicorn.run("cea.interfaces.dashboard.app:app",
                     reload=config.server.dev,

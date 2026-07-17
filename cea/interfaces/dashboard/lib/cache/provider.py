@@ -129,4 +129,3 @@ async def cleanup_cache_connections():
             logger.error(f"Error closing cache connections: {e}")
         finally:
             _cache_instance = None
-
