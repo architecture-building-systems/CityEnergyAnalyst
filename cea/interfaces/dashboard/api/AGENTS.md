@@ -21,6 +21,8 @@ Standard REST hygiene applies and isn't spelled out here: GET never mutates, wri
 # Good: separate routes; the client calls them in sequence
 ```
 
+**Fail open for public demo cache** — `api/demo.py` treats cache backend and lock failures as cache misses. Log read/lock/write errors, continue the downstream application without caching, and never swallow exceptions raised by the wrapped ASGI app.
+
 **Conflicts return 409** — `POST`/`PUT` create that hits an existing resource raises `409` (see `post_pathway`, `duplicate_pathway`); don't silently overwrite or duplicate. `PUT` to a known address is the idempotent update path (overwrite, return 200).
 
 ## Coordinating Sequential Steps
