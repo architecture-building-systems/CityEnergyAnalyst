@@ -37,6 +37,11 @@ def main(config: Configuration):
     # Load settings from env vars (priority) then config file
     settings = get_settings()
     load_from_config(settings, config)
+
+    # Set logger to DEBUG if dev mode is enabled, otherwise INFO
+    if config.server.dev:
+        settings.log_level = "DEBUG"
+
     logger.info(
         "Starting dashboard: host=%s port=%s workers=%s local=%s",
         settings.host,
