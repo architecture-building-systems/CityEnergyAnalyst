@@ -37,7 +37,14 @@ def main(config: Configuration):
     # Load settings from env vars (priority) then config file
     settings = get_settings()
     load_from_config(settings, config)
-    logger.info(f"Using settings: {settings}")
+    logger.info(
+        "Starting dashboard: host=%s port=%s workers=%s local=%s",
+        settings.host,
+        settings.port,
+        settings.workers or 1,
+        settings.local,
+    )
+    logger.debug(f"Using settings: {settings}")
 
     try:
         settings.to_env_vars()
