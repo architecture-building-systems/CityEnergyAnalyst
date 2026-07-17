@@ -213,15 +213,13 @@ class JobServerStream:
         self.stream_poster.daemon = True
         self.stream_poster.start()
 
-    def close(self, timeout: float = 5.0):
+    def close(self):
         """
-        Send sentinel that we're done writing and wait for thread to finish.
-
-        Since the thread is a daemon, process exit won't be blocked even if the thread
-        is still running. However, we still try to wait for it to finish cleanly.
-
-        Args:
-            timeout: Maximum time in seconds to wait for thread to finish (default: 5.0)
+        Send sentinel that we're done writing and block until the poster thread
+        finishes flushing (bounded by ``put_with_retry``'s own retry/backoff caps,
+        so this cannot hang forever). We must wait for a full flush here: the caller
+        is about to signal job completion to a server that will then terminate this
+        process, and an incomplete flush would orphan the daemon thread mid-PUT.
         """
         try:
             self.queue.put(EOFError, block=False)
@@ -229,11 +227,7 @@ class JobServerStream:
             # Queue is full, thread likely blocked - that's okay since it's daemon
             pass
 
-        self.stream_poster.join(timeout=timeout)
-
-        # If thread didn't finish in time, that's okay - it's daemon so won't block exit
-        if self.stream_poster.is_alive():
-            logger.debug(f"Stream poster thread still alive after {timeout}s, but won't block process exit (daemon thread)")
+        self.stream_poster.join()
 
     def write(self, value):
         self.queue.put_nowait(value)
@@ -255,24 +249,21 @@ def configure_streams(jobid, server):
     sys.stderr = JobServerStream(jobid, server, sys.stderr)
 
 
-def close_streams(timeout: float = 5.0):
+def close_streams():
     """
-    Close and flush JobServerStream-wrapped stdout/stderr with a timeout.
+    Close and fully flush JobServerStream-wrapped stdout/stderr.
 
     Only closes streams actually wrapped by ``configure_streams`` -- if a
     failure happens before that (e.g. ``fetch_job`` raising), sys.stdout/stderr
     are still the process's real stdio objects and must not be closed, or any
     later write (including the interpreter's own shutdown flush) would raise
     ValueError: I/O operation on closed file.
-
-    Args:
-        timeout: Maximum time in seconds to wait for each stream to close (default: 5.0)
     """
     if isinstance(sys.stdout, JobServerStream):
-        sys.stdout.close(timeout=timeout)
+        sys.stdout.close()
 
     if isinstance(sys.stderr, JobServerStream):
-        sys.stderr.close(timeout=timeout)
+        sys.stderr.close()
 
 
 def fetch_job(jobid: str, server) -> JobInfo:
@@ -324,14 +315,16 @@ def post_started(jobid, server):
 
 
 def post_success(jobid: str, server: str, output: Any = None):
-    # Close streams before sending success (longer timeout for normal completion)
-    close_streams(timeout=5.0)
+    # Close streams before sending success: the server terminates this process as soon
+    # as it sees the success POST, so an incomplete flush here would orphan the daemon
+    # stream-poster thread mid-PUT and surface as a ClientDisconnect on the server.
+    close_streams()
     post_with_retry(f"{server}/jobs/success/{jobid}", json={"output": output}, headers=get_worker_headers())
 
 
 def post_error(message: str, stacktrace: str, jobid: str, server: str):
-    # Close streams before sending error (longer timeout for normal error handling)
-    close_streams(timeout=5.0)
+    # See post_success: the server terminates this process as soon as it sees the error POST.
+    close_streams()
     post_with_retry(f"{server}/jobs/error/{jobid}", json={"message": message, "stacktrace": stacktrace}, headers=get_worker_headers())
 
 
@@ -375,9 +368,10 @@ def worker(jobid: str, server: str, suppress_warnings: bool = False):
         exc = traceback.format_exc()
         post_error(message, exc, jobid, server)
     finally:
-        # Ensure streams are always closed, even after signal
-        # Use shorter timeout (1s) for signal-triggered cleanup to prevent hanging
-        close_streams(timeout=1.0)
+        # Safety net for BaseExceptions not caught above (e.g. KeyboardInterrupt) -
+        # post_success/post_error already close streams on every other path, so this
+        # is normally a fast no-op.
+        close_streams()
 
 
 def main():
