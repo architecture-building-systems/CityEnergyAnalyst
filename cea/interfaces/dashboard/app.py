@@ -59,7 +59,7 @@ def setup_sigchld_handler():
 
     # Register SIGCHLD handler
     signal.signal(signal.SIGCHLD, sigchld_handler)
-    zombie_logger.info("SIGCHLD handler registered for automatic zombie reaping")
+    zombie_logger.debug("SIGCHLD handler registered for automatic zombie reaping")
 
 
 @asynccontextmanager
@@ -162,7 +162,7 @@ app.include_router(server.router, prefix='/server')
 if get_settings().public_demo_scenarios:
     from cea.interfaces.dashboard.api.demo import app as demo_app
     app.mount("/api/demo", demo_app)
-    logger.info(
+    logger.debug(
         "Public demo sub-app mounted at /api/demo (%d scenario(s))",
         len(get_settings().public_demo_scenarios),
     )

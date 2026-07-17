@@ -51,7 +51,7 @@ def get_cache():
             redis_args['password'] = password
 
         _cache_instance = RedisCache(serializer=PickleSerializer(), namespace=CACHE_NAME, **redis_args)
-        logger.info(f"Using RedisCache: {CACHE_NAME} [{host}:{port}]")
+        logger.debug(f"Using RedisCache: {CACHE_NAME} [{host}:{port}]")
     else:
         _cache_instance = SimpleMemoryCache(serializer=PickleSerializer(), namespace=CACHE_NAME)
         logger.debug(f"Using SimpleMemoryCache: {CACHE_NAME}")
@@ -73,7 +73,7 @@ async def init_cache():
     try:
         import asyncio
         await asyncio.wait_for(cache.exists("_startup"), timeout=5.0)
-        logger.info("Redis cache connected")
+        logger.debug("Redis cache connected")
     except Exception as e:
         worker_count = get_settings().workers or 1
         if worker_count > 1:

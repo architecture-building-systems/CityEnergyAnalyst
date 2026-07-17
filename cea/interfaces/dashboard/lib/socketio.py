@@ -44,7 +44,7 @@ def _get_client_manager():
                                              logger=logger,
                                              redis_options=redis_options,
                                              )
-            logger.info(f'Using Redis as message broker [{cache_settings.host}:{cache_settings.port}]')
+            logger.debug(f'Using Redis as message broker [{cache_settings.host}:{cache_settings.port}]')
             return mgr
         except Exception as e:
             logger.error(f"Failed to connect to Redis: {str(e)}")
