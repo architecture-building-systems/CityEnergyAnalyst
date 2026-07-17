@@ -18,6 +18,9 @@ URL shape: /api/demo/scenarios/{demo_id}/<domain>/...
 Write routes are excluded via _filter_routes. Canvas export is excluded
 because it needs CEAConfig to re-render all plot cards. Reports /scenarios
 is excluded because it uses CEAProjectRoot + project rather than CEAScenario.
+Inputs /databases/download is excluded because it zips and reads back the
+entire db4 folder on every call — real disk I/O anonymous callers could
+trigger repeatedly against a scenario that never changes.
 
 To add a new demo resource:
   1. Add an entry to CEA_PUBLIC_DEMO_SCENARIOS (or Settings.public_demo_scenarios).
@@ -107,9 +110,17 @@ def _filter_routes(
 
 # ── Inputs ─────────────────────────────────────────────────────────────────
 # All GET routes from inputs.router; PUT / POST (save, upload) excluded.
+# /databases/download excluded: it zips and reads back the entire db4 folder
+# on every call (see download_input_database in inputs.py) - real disk I/O an
+# anonymous caller could trigger repeatedly for a scenario that never changes,
+# with no cacheable benefit since the payload is a binary zip, not JSON.
 
 app.include_router(
-    _filter_routes(inputs_module.router, allowed_methods={"GET"}),
+    _filter_routes(
+        inputs_module.router,
+        allowed_methods={"GET"},
+        exclude_paths={"/databases/download"},
+    ),
     prefix="/scenarios/{demo_id}/inputs",
     dependencies=_demo_guard,
 )
@@ -238,10 +249,14 @@ async def list_demo_scenarios(settings: CEAServerSettings):
 # caching full responses here is safe in a way it wouldn't be for a live user
 # scenario (no writes ever invalidate it) - TTL alone bounds staleness.
 #
-# Implemented as pure ASGI middleware (not BaseHTTPMiddleware) so non-GET and
-# streaming responses (e.g. /databases/download) pass straight through with
-# zero buffering, and a cache hit can be served without ever calling the
-# router. Reuses the existing aiocache singleton (get_cache()) - Redis or
+# Implemented as pure ASGI middleware (not BaseHTTPMiddleware) so non-GET
+# requests pass straight through with zero buffering, and a cache hit can be
+# served without ever calling the router. Non-JSON or oversized GET responses
+# are still buffered up to MAX_CACHEABLE_BYTES before being discarded as
+# uncacheable — routes expected to return large/binary payloads (e.g. the
+# database zip download) are excluded from the demo mount entirely instead
+# (see _filter_routes calls above) so anonymous callers can't trigger that
+# I/O at all. Reuses the existing aiocache singleton (get_cache()) - Redis or
 # SimpleMemoryCache depending on deployment - rather than a new mechanism.
 
 class DemoResponseCache:
@@ -330,22 +345,34 @@ class DemoResponseCache:
 
             start: dict = {}
             chunks: list = []
+            # Determined from headers as soon as http.response.start arrives, and
+            # revoked early if the body outgrows MAX_CACHEABLE_BYTES - so a
+            # non-JSON or oversized response is never fully buffered just to be
+            # discarded afterwards.
+            cache_state = {"eligible": False, "size": 0}
 
             async def send_wrapper(message: Message) -> None:
                 if message["type"] == "http.response.start":
                     start["status"] = message["status"]
                     start["headers"] = message["headers"]
+                    cache_state["eligible"] = self._headers_cacheable(start)
                     message = {
                         **message,
                         "headers": [*message["headers"], (self.CACHE_STATUS_HEADER, b"MISS")],
                     }
-                elif message["type"] == "http.response.body":
-                    chunks.append(message.get("body", b""))
+                elif message["type"] == "http.response.body" and cache_state["eligible"]:
+                    body = message.get("body", b"")
+                    cache_state["size"] += len(body)
+                    if cache_state["size"] > self.MAX_CACHEABLE_BYTES:
+                        cache_state["eligible"] = False
+                        chunks.clear()
+                    else:
+                        chunks.append(body)
                 await send(message)
 
             await self.app(scope, receive, send_wrapper)
 
-            if self._should_store(start, chunks):
+            if cache_state["eligible"]:
                 logger.debug("demo cache MISS, storing key=%s", key)
                 try:
                     await cache.set(key, self._pack(start, chunks), ttl=self.CACHE_TTL)
@@ -361,7 +388,13 @@ class DemoResponseCache:
             exc_info = (type(exc), exc, exc.__traceback__)
             raise
         finally:
-            await lock.__aexit__(*exc_info)
+            try:
+                await lock.__aexit__(*exc_info)
+            except Exception:
+                # Response (or the original downstream exception) is already on
+                # its way to the client by this point; a release failure here
+                # (e.g. Redis blip) must not replace it - just log and move on.
+                logger.warning("demo cache unlock failed key=%s", key, exc_info=True)
 
     @staticmethod
     def _cache_key(scope: Scope) -> str:
@@ -385,7 +418,10 @@ class DemoResponseCache:
         return b""
 
     @staticmethod
-    def _should_store(start: dict, chunks: list) -> bool:
+    def _headers_cacheable(start: dict) -> bool:
+        """Cacheability decided from http.response.start alone (status, headers,
+        content-type) - before any body bytes exist. Size is bounded separately
+        as the body streams in, since it isn't known at this point."""
         if start.get("status") != 200:
             return False
         if DemoResponseCache._cache_headers(start.get("headers", [])) is None:
@@ -393,10 +429,7 @@ class DemoResponseCache:
         content_type = DemoResponseCache._header_value(
             start.get("headers", []), b"content-type"
         ).decode().lower()
-        if not content_type.startswith(DemoResponseCache.CACHEABLE_CONTENT_TYPES):
-            return False
-        size = sum(len(chunk) for chunk in chunks)
-        return size <= DemoResponseCache.MAX_CACHEABLE_BYTES
+        return content_type.startswith(DemoResponseCache.CACHEABLE_CONTENT_TYPES)
 
     @staticmethod
     def _pack(start: dict, chunks: list) -> dict:

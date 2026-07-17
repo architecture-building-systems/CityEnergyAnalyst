@@ -438,7 +438,10 @@ async def test_demo_cache_preserves_downstream_exceptions(monkeypatch):
 
 
 @pytest.mark.anyio
-async def test_demo_cache_propagates_lock_release_failures_without_rerun(monkeypatch):
+async def test_demo_cache_logs_and_swallows_lock_release_failures(monkeypatch, caplog):
+    """Unlock runs after the response is already fully sent, so a release
+    failure (e.g. a Redis blip) must be logged and swallowed, not raised -
+    raising here would replace a perfectly good response with a server error."""
     cache = _make_cache(get_side_effect=[None, None])
     monkeypatch.setattr(demo_module, "get_cache", lambda: cache)
     monkeypatch.setattr(demo_module, "RedLock", _FailingExitRedLock)
@@ -451,10 +454,71 @@ async def test_demo_cache_propagates_lock_release_failures_without_rerun(monkeyp
         await send({"type": "http.response.start", "status": 200, "headers": [(b"content-type", b"application/json")]})
         await send({"type": "http.response.body", "body": b'{"ok": true}'})
 
-    with pytest.raises(RuntimeError, match="unlock failed"):
-        await _call_demo_cache(demo_module.DemoResponseCache(app))
+    with caplog.at_level("WARNING", logger=demo_module.logger.name):
+        messages = await _call_demo_cache(demo_module.DemoResponseCache(app))
 
     assert app_called == 1
+    assert messages[0]["status"] == 200
+    assert messages[1]["body"] == b'{"ok": true}'
+    assert cache.set.await_count == 1
+    assert "unlock failed" in caplog.text
+
+
+@pytest.mark.anyio
+async def test_demo_cache_propagates_downstream_exception_over_unlock_failure(monkeypatch, caplog):
+    """A genuine downstream failure must still win even if unlock also fails -
+    the unlock failure is logged, not raised in its place."""
+    cache = _make_cache(get_side_effect=[None, None])
+    monkeypatch.setattr(demo_module, "get_cache", lambda: cache)
+    monkeypatch.setattr(demo_module, "RedLock", _FailingExitRedLock)
+
+    async def app(scope, receive, send):
+        raise ValueError("downstream failed")
+
+    with caplog.at_level("WARNING", logger=demo_module.logger.name):
+        with pytest.raises(ValueError, match="downstream failed"):
+            await _call_demo_cache(demo_module.DemoResponseCache(app))
+
+    assert "unlock failed" in caplog.text
+
+
+def test_demo_sub_app_excludes_database_download():
+    """download_input_database (inputs.py) zips and reads back the entire db4
+    folder on every call - real disk I/O, not just an uncacheable response.
+    Anonymous callers must not be able to trigger it at all, so it's excluded
+    from the demo mount entirely rather than merely left uncached."""
+    from cea.interfaces.dashboard.api.demo import app as demo_app
+
+    paths = {route.path for route in demo_app.routes if hasattr(route, "path")}
+    assert "/scenarios/{demo_id}/inputs/databases/download" not in paths
+
+
+@pytest.mark.anyio
+async def test_demo_cache_stops_buffering_once_size_limit_exceeded(monkeypatch):
+    """Cacheability is revoked as soon as the buffered body crosses
+    MAX_CACHEABLE_BYTES, so later chunks are never retained for caching - only
+    the check point moves; the client still receives the full body untouched."""
+    cache = _make_cache(get_side_effect=[None, None])
+    monkeypatch.setattr(demo_module, "get_cache", lambda: cache)
+    monkeypatch.setattr(demo_module, "RedLock", _NoopRedLock)
+    monkeypatch.setattr(demo_module.DemoResponseCache, "MAX_CACHEABLE_BYTES", 10)
+
+    async def app(scope, receive, send):
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 200,
+                "headers": [(b"content-type", b"application/json")],
+            }
+        )
+        await send({"type": "http.response.body", "body": b"0123456789", "more_body": True})
+        await send({"type": "http.response.body", "body": b"overflow"})
+
+    messages = await _call_demo_cache(demo_module.DemoResponseCache(app))
+
+    body_messages = [m for m in messages if m["type"] == "http.response.body"]
+    assert b"".join(m["body"] for m in body_messages) == b"0123456789overflow"
+    assert cache.set.await_count == 0
 
 
 def test_unknown_demo_id_returns_404_from_http():
