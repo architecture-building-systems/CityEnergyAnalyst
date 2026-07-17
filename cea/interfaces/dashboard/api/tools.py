@@ -130,7 +130,7 @@ class ToolProperties(ToolDescription):
     parameters: List[Dict]
 
 
-@router.get('/')
+@router.get('')
 async def get_tool_list(config: CEAConfig) -> Dict[str, List[ToolDescription]]:
     # TODO: Add plugin support
     tools = cea.scripts.for_interface('dashboard', plugins=config.plugins)

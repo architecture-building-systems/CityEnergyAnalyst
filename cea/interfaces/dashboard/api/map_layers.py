@@ -40,7 +40,7 @@ class LayersList(BaseModel):
     categories: List[LayerCategory]
 
 
-@router.get('/')
+@router.get('')
 async def get_layers() -> LayersList:
     layers = get_layers_grouped_by_category()
 
