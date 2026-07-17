@@ -14,7 +14,7 @@ from cea.interfaces.dashboard.lib.database.session import close_db_connection
 from cea.interfaces.dashboard.lib.cache.provider import cleanup_cache_connections, init_cache
 from cea.interfaces.dashboard.lib.cors import CORSConfig
 from cea.interfaces.dashboard.lib.logs import logger, getCEAServerLogger
-from cea.interfaces.dashboard.lib.socketio import socket_app
+from cea.interfaces.dashboard.lib.socketio import socket_app, init_socketio_manager
 from cea.interfaces.dashboard.dependencies import require_authenticated
 from cea.interfaces.dashboard.settings import get_settings
 
@@ -67,6 +67,7 @@ async def lifespan(_: FastAPI):
     setup_sigchld_handler()
 
     await init_cache()
+    init_socketio_manager()
 
     yield
 

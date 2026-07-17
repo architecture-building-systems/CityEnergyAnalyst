@@ -58,6 +58,14 @@ sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins=_get_cors_ori
 socket_app = socketio.ASGIApp(sio)
 
 
+def init_socketio_manager() -> None:
+    if client_manager is None:
+        return
+
+    sio.manager.initialize()
+    sio.manager_initialized = True
+
+
 async def emit_with_retry(event: str, data: Any, room: str | None = None, max_retries: int = 3,
                           initial_delay: float = 0.1, backoff_factor: float = 2.0):
     """
