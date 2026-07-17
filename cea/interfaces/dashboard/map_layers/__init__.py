@@ -1,5 +1,6 @@
 import os
 from collections import defaultdict
+from functools import lru_cache
 
 from typing import Dict, List, Type, Tuple
 
@@ -7,6 +8,7 @@ from cea.interfaces.dashboard.map_layers.base import MapLayer
 from cea.interfaces.dashboard.utils import find_subclasses_in_path
 
 
+@lru_cache(maxsize=1)
 def get_layers() -> List[Type[MapLayer]]:
     """Returns a list of all layers"""
     layer_classes = find_subclasses_in_path(MapLayer, os.path.dirname(__file__))
