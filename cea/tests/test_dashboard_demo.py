@@ -1,10 +1,38 @@
-"""Tests for the public demo sub-app — no monkeypatching; Settings passed directly."""
+"""Tests for the public demo sub-app."""
 import pytest
+from aiocache import SimpleMemoryCache
+from aiocache.serializers import PickleSerializer
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
+from unittest.mock import AsyncMock, Mock
 
+import cea.interfaces.dashboard.lib.cache.provider as cache_provider
+import cea.interfaces.dashboard.api.demo as demo_module
 from cea.interfaces.dashboard.api.demo import require_public_demo_read
+from cea.interfaces.dashboard.lib.cache.settings import CACHE_NAME
 from cea.interfaces.dashboard.settings import Settings
+
+
+@pytest.fixture(autouse=True)
+def _reset_demo_cache():
+    """DemoResponseCache reads/writes through the process-global cache singleton
+    (get_cache()), which outlives any single test. Its key is path+query only, with
+    no settings dimension, so a response cached under one test's settings override
+    would otherwise leak into a later test that hits the same path with a different
+    override.
+
+    Force a fresh SimpleMemoryCache per test rather than resetting to None: get_cache()
+    picks RedisCache whenever CEA_CACHE_HOST is set in the developer's ambient
+    environment (e.g. .env.local), which these tests must not depend on (see
+    cea/tests/AGENTS.md - don't depend on the developer's real config). Redis is also
+    unsafe here regardless: aiocache's Redis connection binds to whichever asyncio event
+    loop is running when first used, but each TestClient(demo_app) instantiation opens
+    its own event loop, so a connection opened under one test's loop breaks when reused
+    under a later test's (already-closed) loop.
+    """
+    cache_provider._cache_instance = SimpleMemoryCache(serializer=PickleSerializer(), namespace=CACHE_NAME)
+    yield
+    cache_provider._cache_instance = None
 
 # ---------------------------------------------------------------------------
 # Unit tests — require_public_demo_read (direct-call style, like test_dashboard_auth.py)
@@ -100,6 +128,333 @@ def test_list_demo_scenarios_empty_when_not_configured():
         assert resp.json()["scenarios"] == []
     finally:
         demo_app.dependency_overrides.pop(get_settings_fn, None)
+
+
+def test_demo_cache_hits_real_route_on_second_request():
+    """End-to-end wiring check: DemoResponseCache is installed via app.add_middleware
+    on the real demo_app, so two requests through TestClient against a real, static
+    route (reports/features - no CEAConfig/scenario needed) must transition
+    MISS -> HIT through the process cache singleton that _reset_demo_cache installs.
+
+    This is the one test that would catch a wiring mistake (middleware order, or the
+    path the middleware sees not matching what it expects once mounted) that the
+    unit tests above - which drive DemoResponseCache directly with stub ASGI apps -
+    cannot catch.
+    """
+    client, demo_app, get_settings_fn = _make_demo_client({"city-a": "/data/city_a"})
+    try:
+        first = client.get("/scenarios/city-a/reports/features")
+        assert first.status_code == 200
+        assert first.headers["x-demo-cache"] == "MISS"
+
+        second = client.get("/scenarios/city-a/reports/features")
+        assert second.status_code == 200
+        assert second.headers["x-demo-cache"] == "HIT"
+        assert second.json() == first.json()
+    finally:
+        demo_app.dependency_overrides.pop(get_settings_fn, None)
+
+
+class _NoopRedLock:
+    def __init__(self, *args, **kwargs):
+        pass
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        return False
+
+
+class _FailingRedLock:
+    def __init__(self, *args, **kwargs):
+        pass
+
+    async def __aenter__(self):
+        raise RuntimeError("lock failed")
+
+    async def __aexit__(self, exc_type, exc, tb):
+        return False
+
+
+class _FailingExitRedLock:
+    def __init__(self, *args, **kwargs):
+        pass
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        raise RuntimeError("unlock failed")
+
+
+def _make_cached_scope(path: str = "/scenarios/demo/inputs/all-inputs"):
+    return {
+        "type": "http",
+        "method": "GET",
+        "path": path,
+        "query_string": b"",
+        "headers": [],
+        "scheme": "http",
+        "http_version": "1.1",
+        "client": ("testclient", 123),
+        "server": ("testserver", 80),
+    }
+
+
+async def _call_demo_cache(middleware, scope=None):
+    messages = []
+
+    async def receive():
+        return {"type": "http.request", "body": b"", "more_body": False}
+
+    async def send(message):
+        messages.append(message)
+
+    await middleware(scope or _make_cached_scope(), receive, send)
+    return messages
+
+
+def _make_json_demo_app(body: bytes = b'{"ok": true}', *, raise_after_start: bool = False):
+    async def app(scope, receive, send):
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 200,
+                "headers": [(b"content-type", b"application/json")],
+            }
+        )
+        if raise_after_start:
+            raise ValueError("downstream failed")
+        await send({"type": "http.response.body", "body": body})
+
+    return app
+
+
+def _make_cache(get_result=None, *, get_side_effect=None, set_side_effect=None):
+    cache = Mock()
+    cache.get = AsyncMock(side_effect=get_side_effect, return_value=get_result)
+    cache.set = AsyncMock(side_effect=set_side_effect)
+    return cache
+
+
+@pytest.mark.anyio
+async def test_demo_cache_hits_when_backend_succeeds(monkeypatch):
+    cache = _make_cache(
+        get_result={"headers": [(b"content-type", b"application/json")], "body": b'{"ok": true}'}
+    )
+    monkeypatch.setattr(demo_module, "get_cache", lambda: cache)
+    monkeypatch.setattr(demo_module, "RedLock", _NoopRedLock)
+
+    app_called = False
+
+    async def app(scope, receive, send):
+        nonlocal app_called
+        app_called = True
+        await send({"type": "http.response.start", "status": 200, "headers": [(b"content-type", b"application/json")]})
+        await send({"type": "http.response.body", "body": b'{"miss": true}'})
+
+    messages = await _call_demo_cache(demo_module.DemoResponseCache(app))
+
+    assert app_called is False
+    assert messages[0]["status"] == 200
+    assert (b"x-demo-cache", b"HIT") in messages[0]["headers"]
+    assert messages[1]["body"] == b'{"ok": true}'
+    assert cache.set.await_count == 0
+
+
+@pytest.mark.anyio
+async def test_demo_cache_bypasses_when_initial_read_fails(monkeypatch):
+    cache = _make_cache(get_side_effect=RuntimeError("read failed"))
+    monkeypatch.setattr(demo_module, "get_cache", lambda: cache)
+
+    app_called = False
+
+    async def app(scope, receive, send):
+        nonlocal app_called
+        app_called = True
+        await send({"type": "http.response.start", "status": 200, "headers": [(b"content-type", b"application/json")]})
+        await send({"type": "http.response.body", "body": b'{"ok": true}'})
+
+    messages = await _call_demo_cache(demo_module.DemoResponseCache(app))
+
+    assert app_called is True
+    assert messages[0]["status"] == 200
+    assert (b"x-demo-cache", b"MISS") not in messages[0]["headers"]
+    assert messages[1]["body"] == b'{"ok": true}'
+    assert cache.set.await_count == 0
+
+
+@pytest.mark.anyio
+async def test_demo_cache_bypasses_when_lock_fails(monkeypatch):
+    cache = _make_cache(get_result=None)
+    monkeypatch.setattr(demo_module, "get_cache", lambda: cache)
+    monkeypatch.setattr(demo_module, "RedLock", _FailingRedLock)
+
+    app_called = False
+
+    async def app(scope, receive, send):
+        nonlocal app_called
+        app_called = True
+        await send({"type": "http.response.start", "status": 200, "headers": [(b"content-type", b"application/json")]})
+        await send({"type": "http.response.body", "body": b'{"ok": true}'})
+
+    messages = await _call_demo_cache(demo_module.DemoResponseCache(app))
+
+    assert app_called is True
+    assert messages[0]["status"] == 200
+    assert messages[1]["body"] == b'{"ok": true}'
+    assert cache.set.await_count == 0
+
+
+@pytest.mark.anyio
+async def test_demo_cache_swallows_set_failure_after_response(monkeypatch):
+    cache = _make_cache(get_side_effect=[None, None], set_side_effect=RuntimeError("write failed"))
+    monkeypatch.setattr(demo_module, "get_cache", lambda: cache)
+    monkeypatch.setattr(demo_module, "RedLock", _NoopRedLock)
+
+    messages = await _call_demo_cache(demo_module.DemoResponseCache(_make_json_demo_app()))
+
+    assert messages[0]["status"] == 200
+    assert (b"x-demo-cache", b"MISS") in messages[0]["headers"]
+    assert messages[1]["body"] == b'{"ok": true}'
+    assert cache.set.await_count == 1
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    "headers",
+    [
+        [
+            (b"content-type", b"application/json"),
+            (b"vary", b"accept-encoding"),
+        ],
+        [
+            (b"content-type", b"application/json"),
+            (b"cache-control", b"private, max-age=60"),
+        ],
+        [
+            (b"content-type", b"application/json"),
+            (b"cache-control", b"no-store"),
+        ],
+    ],
+)
+async def test_demo_cache_rejects_vary_and_private_or_nostore_cache_control(monkeypatch, headers):
+    cache = _make_cache(get_side_effect=[None, None])
+    monkeypatch.setattr(demo_module, "get_cache", lambda: cache)
+    monkeypatch.setattr(demo_module, "RedLock", _NoopRedLock)
+
+    async def app(scope, receive, send):
+        await send({"type": "http.response.start", "status": 200, "headers": headers})
+        await send({"type": "http.response.body", "body": b'{"ok": true}'})
+
+    messages = await _call_demo_cache(demo_module.DemoResponseCache(app))
+
+    assert messages[0]["status"] == 200
+    assert (b"x-demo-cache", b"MISS") in messages[0]["headers"]
+    assert cache.set.await_count == 0
+
+
+@pytest.mark.anyio
+async def test_demo_cache_replays_safe_response_headers(monkeypatch):
+    cache = _make_cache(
+        get_result={
+            "headers": [
+                (b"content-type", b"application/json"),
+                (b"content-encoding", b"gzip"),
+                (b"cache-control", b"public, max-age=60"),
+                (b"etag", b'"abc123"'),
+            ],
+            "body": b"compressed-body",
+        }
+    )
+    monkeypatch.setattr(demo_module, "get_cache", lambda: cache)
+
+    app_called = False
+
+    async def app(scope, receive, send):
+        nonlocal app_called
+        app_called = True
+        raise AssertionError("cache hit should not call downstream app")
+
+    messages = await _call_demo_cache(demo_module.DemoResponseCache(app))
+
+    assert app_called is False
+    assert messages[0]["status"] == 200
+    assert (b"content-type", b"application/json") in messages[0]["headers"]
+    assert (b"content-encoding", b"gzip") in messages[0]["headers"]
+    assert (b"cache-control", b"public, max-age=60") in messages[0]["headers"]
+    assert (b"etag", b'"abc123"') in messages[0]["headers"]
+    assert (b"x-demo-cache", b"HIT") in messages[0]["headers"]
+    assert messages[1]["body"] == b"compressed-body"
+    assert cache.set.await_count == 0
+
+
+@pytest.mark.anyio
+async def test_demo_cache_does_not_store_set_cookie_responses(monkeypatch):
+    cache = _make_cache(get_side_effect=[None, None])
+    monkeypatch.setattr(demo_module, "get_cache", lambda: cache)
+    monkeypatch.setattr(demo_module, "RedLock", _NoopRedLock)
+
+    async def app(scope, receive, send):
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 200,
+                "headers": [
+                    (b"content-type", b"application/json"),
+                    (b"set-cookie", b"session=abc; HttpOnly"),
+                    (b"cache-control", b"no-store"),
+                ],
+            }
+        )
+        await send({"type": "http.response.body", "body": b'{"ok": true}'})
+
+    messages = await _call_demo_cache(demo_module.DemoResponseCache(app))
+
+    assert messages[0]["status"] == 200
+    assert (b"set-cookie", b"session=abc; HttpOnly") in messages[0]["headers"]
+    assert (b"x-demo-cache", b"MISS") in messages[0]["headers"]
+    assert cache.set.await_count == 0
+
+
+@pytest.mark.anyio
+async def test_demo_cache_preserves_downstream_exceptions(monkeypatch):
+    cache = _make_cache(get_side_effect=[None, None])
+    monkeypatch.setattr(demo_module, "get_cache", lambda: cache)
+    monkeypatch.setattr(demo_module, "RedLock", _NoopRedLock)
+
+    app_called = 0
+
+    async def app(scope, receive, send):
+        nonlocal app_called
+        app_called += 1
+        raise ValueError("downstream failed")
+
+    with pytest.raises(ValueError, match="downstream failed"):
+        await _call_demo_cache(demo_module.DemoResponseCache(app))
+
+    assert app_called == 1
+
+
+@pytest.mark.anyio
+async def test_demo_cache_propagates_lock_release_failures_without_rerun(monkeypatch):
+    cache = _make_cache(get_side_effect=[None, None])
+    monkeypatch.setattr(demo_module, "get_cache", lambda: cache)
+    monkeypatch.setattr(demo_module, "RedLock", _FailingExitRedLock)
+
+    app_called = 0
+
+    async def app(scope, receive, send):
+        nonlocal app_called
+        app_called += 1
+        await send({"type": "http.response.start", "status": 200, "headers": [(b"content-type", b"application/json")]})
+        await send({"type": "http.response.body", "body": b'{"ok": true}'})
+
+    with pytest.raises(RuntimeError, match="unlock failed"):
+        await _call_demo_cache(demo_module.DemoResponseCache(app))
+
+    assert app_called == 1
 
 
 def test_unknown_demo_id_returns_404_from_http():
