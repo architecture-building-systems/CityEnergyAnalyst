@@ -82,8 +82,10 @@ async def test_set_job_error_serialises_deferred_logs_without_lazy_loading(monke
 
         assert response.state == JobState.ERROR
         assert response.error == "mesh failed"
-        assert response.stdout == "stdout line"
-        assert response.stderr == "traceback"
+        # set_job_error returns JobSummaryResponse -- stdout/stderr are never in the
+        # response/event payload, only persisted to the DB (checked below).
+        assert not hasattr(response, "stdout")
+        assert not hasattr(response, "stderr")
 
     async with db_session() as session:
         stored_job = await session.get(JobInfo, job_id, options=[undefer_group("logs")])

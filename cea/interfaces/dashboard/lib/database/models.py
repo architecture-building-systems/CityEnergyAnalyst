@@ -5,8 +5,7 @@ from enum import IntEnum
 from typing import Optional
 
 from pydantic import AwareDatetime, computed_field
-from sqlalchemy import Index, Column, Text
-from sqlalchemy.orm import deferred
+from sqlalchemy import Index
 from sqlmodel import Field, SQLModel, JSON, DateTime, BigInteger, select, inspect, text
 
 import cea.scripts
@@ -97,8 +96,8 @@ class JobInfo(SQLModel, table=True):
                                         default_factory=get_current_time)
     start_time: Optional[AwareDatetime] = Field(sa_type=DateTime(timezone=True), nullable=True, default=None)
     end_time: Optional[AwareDatetime] = Field(sa_type=DateTime(timezone=True), nullable=True, default=None)
-    stdout: Optional[str] = Field(default=None, sa_column=deferred(Column(Text), group='logs'))
-    stderr: Optional[str] = Field(default=None, sa_column=deferred(Column(Text), group='logs'))
+    stdout: Optional[str] = None
+    stderr: Optional[str] = None
     project_id: str = Field(foreign_key="project.id", index=True)
     created_by: str = Field(foreign_key=f"{user_table_ref}.id", index=True)
     deleted_at: Optional[AwareDatetime] = Field(sa_type=DateTime(timezone=True), nullable=True, default=None, index=True)

@@ -4,7 +4,6 @@ streams: maintain a list of streams containing ``cea-worker`` output for jobs.
 FIXME: when does this data get cleared?
 """
 from fastapi import APIRouter, HTTPException, Request, status
-from sqlalchemy.orm import undefer_group
 
 from cea.interfaces.dashboard.dependencies import CEAStreams, CEAUserID
 from cea.interfaces.dashboard.lib.database.models import JobInfo
@@ -19,7 +18,7 @@ router = APIRouter()
 
 @router.get("/read/{job_id}")
 async def read_stream(session: SessionDep, streams: CEAStreams, job_id: str, user_id: CEAUserID):
-    job = await session.get(JobInfo, job_id, options=[undefer_group('logs')])
+    job = await session.get(JobInfo, job_id)
     if job is None:
         logger.info(f"read_stream: job {job_id} not found")
         return ""  # Return empty string for non-existent jobs
