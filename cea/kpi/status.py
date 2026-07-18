@@ -38,16 +38,25 @@ three-hash gate at the call site.
 
 Mirrors :mod:`cea.datamanagement.district_pathways.pathway_status`'s
 shape so the two status records read consistently in tests / debug.
+
+Fail open on write: a read-only scenario (e.g. a public demo mount)
+must still let ``compute_kpi_cached`` return a freshly computed
+value even though the cache can't be persisted. ``write_kpi`` and
+``clear_kpi`` catch ``OSError`` (permission denied, read-only
+filesystem, ...), log a warning, and return instead of raising.
 """
 
 from __future__ import annotations
 
 import json
+import logging
 import os
 from typing import Any
 
 from cea.inputlocator import InputLocator
 from cea.utilities.file_lock import FileLock, kpi_status_lock_path
+
+logger = logging.getLogger(__name__)
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2026, UUEN PTE. LTD."
@@ -86,17 +95,31 @@ def write_kpi(scenario: str, kpi_id: str, payload: dict[str, Any]) -> None:
     """Insert or replace one KPI record. Other entries in the file
     are preserved. Atomic via temp-file + ``os.replace`` and
     serialised against parallel writers via the sidecar file
-    lock."""
-    path = InputLocator(scenario).get_kpi_status_file()
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with FileLock(kpi_status_lock_path(scenario)):
-        # Read inside the lock so a competing writer can't slip a
-        # newer record in between our read and our write — that
-        # would have us round-trip its update right back out.
-        current = read_status(scenario)
-        current.setdefault("schema_version", SCHEMA_VERSION)
-        current.setdefault("kpis", {})[kpi_id] = payload
-        _atomic_write_json(path, current)
+    lock.
+
+    Fails open: a read-only scenario directory (e.g. a public demo
+    mount) raises ``OSError`` somewhere in the makedirs/lock/write
+    chain — caught, logged, and swallowed so the caller still gets
+    the freshly computed value even though it couldn't be cached."""
+    try:
+        path = InputLocator(scenario).get_kpi_status_file()
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with FileLock(kpi_status_lock_path(scenario)):
+            # Read inside the lock so a competing writer can't slip a
+            # newer record in between our read and our write — that
+            # would have us round-trip its update right back out.
+            current = read_status(scenario)
+            current.setdefault("schema_version", SCHEMA_VERSION)
+            current.setdefault("kpis", {})[kpi_id] = payload
+            _atomic_write_json(path, current)
+    except OSError:
+        logger.warning(
+            "KPI cache write failed for scenario=%s kpi_id=%s; "
+            "continuing without caching",
+            scenario,
+            kpi_id,
+            exc_info=True,
+        )
 
 
 def clear_kpi(
@@ -118,38 +141,51 @@ def clear_kpi(
     (clear lands first, then a stale write reinstates the old
     record) or its write (write lands first, then the clear
     drops the just-computed value).
+
+    Fails open the same way :func:`write_kpi` does: ``OSError`` is
+    caught, logged, and swallowed rather than raised.
     """
-    path = InputLocator(scenario).get_kpi_status_file()
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with FileLock(kpi_status_lock_path(scenario)):
-        if not os.path.isfile(path):
-            return
-        current = read_status(scenario)
-        kpis = current.get("kpis", {})
-        if kpi_id is not None:
-            # The cache layer keys variants under ``<kpi_id>::<args_hash>``
-            # (per-card configurations) alongside the bare ``<kpi_id>``
-            # for the no-args path — drop both the simple key AND every
-            # compound variant so a single ``clear_kpi(kpi_id=...)`` call
-            # invalidates the whole logical KPI.
-            variant_prefix = f"{kpi_id}::"
-            for key in [
-                k
-                for k in kpis
-                if k == kpi_id or k.startswith(variant_prefix)
-            ]:
-                kpis.pop(key, None)
-        elif feature is not None:
-            # Feature-prefix sweep; compound keys still start with
-            # ``<feature>.`` so a single startswith filter catches
-            # both bare and ``::``-suffixed variants.
-            prefix = f"{feature}."
-            for key in [k for k in kpis if k.startswith(prefix)]:
-                kpis.pop(key)
-        else:
-            kpis.clear()
-        current["kpis"] = kpis
-        _atomic_write_json(path, current)
+    try:
+        path = InputLocator(scenario).get_kpi_status_file()
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with FileLock(kpi_status_lock_path(scenario)):
+            if not os.path.isfile(path):
+                return
+            current = read_status(scenario)
+            kpis = current.get("kpis", {})
+            if kpi_id is not None:
+                # The cache layer keys variants under ``<kpi_id>::<args_hash>``
+                # (per-card configurations) alongside the bare ``<kpi_id>``
+                # for the no-args path — drop both the simple key AND every
+                # compound variant so a single ``clear_kpi(kpi_id=...)`` call
+                # invalidates the whole logical KPI.
+                variant_prefix = f"{kpi_id}::"
+                for key in [
+                    k
+                    for k in kpis
+                    if k == kpi_id or k.startswith(variant_prefix)
+                ]:
+                    kpis.pop(key, None)
+            elif feature is not None:
+                # Feature-prefix sweep; compound keys still start with
+                # ``<feature>.`` so a single startswith filter catches
+                # both bare and ``::``-suffixed variants.
+                prefix = f"{feature}."
+                for key in [k for k in kpis if k.startswith(prefix)]:
+                    kpis.pop(key)
+            else:
+                kpis.clear()
+            current["kpis"] = kpis
+            _atomic_write_json(path, current)
+    except OSError:
+        logger.warning(
+            "KPI cache clear failed for scenario=%s kpi_id=%s feature=%s; "
+            "continuing without clearing",
+            scenario,
+            kpi_id,
+            feature,
+            exc_info=True,
+        )
 
 
 def _atomic_write_json(path: str, payload: dict[str, Any]) -> None:
