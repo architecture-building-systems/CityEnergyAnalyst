@@ -40,6 +40,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 import cea.scripts
 import cea.interfaces.dashboard.api.canvas as canvas_module
+import cea.interfaces.dashboard.api.databases as databases_module
 import cea.interfaces.dashboard.api.inputs as inputs_module
 import cea.interfaces.dashboard.api.kpis as kpis_module
 import cea.interfaces.dashboard.api.map_layers as map_layers_module
@@ -122,6 +123,19 @@ app.include_router(
         exclude_paths={"/databases/download"},
     ),
     prefix="/scenarios/{demo_id}/inputs",
+    dependencies=_demo_guard,
+)
+
+
+# ── Databases ──────────────────────────────────────────────────────────────
+# GET /region and /schema only: static metadata (region list, CEADatabase
+# schema) with no CEAScenario dependency - neither reads scenario data, so
+# {demo_id} is only used to gate access like every other demo route.
+# POST /validate excluded: not a genuine read.
+
+app.include_router(
+    _filter_routes(databases_module.router, allowed_methods={"GET"}),
+    prefix="/scenarios/{demo_id}/databases",
     dependencies=_demo_guard,
 )
 
