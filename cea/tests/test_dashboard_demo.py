@@ -700,7 +700,7 @@ def test_global_auth_guard_not_weakened():
 
     non_local = Settings.model_construct(local=False)
     scope = {
-        "type": "http", "method": "GET", "path": "/api/project/",
+        "type": "http", "method": "GET", "path": "/project/",
         "query_string": b"", "headers": [],
     }
     request = Request(scope)

@@ -336,7 +336,7 @@ async def get_download_url(
     expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
 
     # Build URL
-    download_url = f"/api/downloads/{download_id}?token={token}"
+    download_url = f"/downloads/{download_id}?token={token}"
 
     logger.info(f"Generated download URL for {download_id}, expires in {expires_in}s")
 

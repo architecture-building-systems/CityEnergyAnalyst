@@ -8,23 +8,23 @@ a thin HTTP-facing wrapper that exposes those primitives.
 Endpoints (all scenario-scoped via the standard
 ``?project=&scenario=`` query params, mirroring ``reports.py``):
 
-  GET    /api/canvas/                    list saved canvas names
-  POST   /api/canvas/                    create a new (empty)
+  GET    /canvas/                    list saved canvas names
+  POST   /canvas/                    create a new (empty)
                                          canvas; body `{ name }`
                                          → returns `{ name }`
                                          (sanitised); 409 if the
                                          name is taken
-  GET    /api/canvas/{name}              read state
-  PUT    /api/canvas/{name}              sparse autosave; body any
+  GET    /canvas/{name}              read state
+  PUT    /canvas/{name}              sparse autosave; body any
                                          subset of `{ canvas,
                                          layout, feature_card }`
-  DELETE /api/canvas/{name}              delete folder
-  POST   /api/canvas/{name}/duplicate    copy an existing canvas;
+  DELETE /canvas/{name}              delete folder
+  POST   /canvas/{name}/duplicate    copy an existing canvas;
                                          optional body `{ name }`
                                          picks a target name (defaults
                                          to ``"<source> (copy)"``)
-  GET    /api/canvas/{name}/export       capture-on-share + zip
-  POST   /api/canvas/import              upload a canvas zip;
+  GET    /canvas/{name}/export       capture-on-share + zip
+  POST   /canvas/import              upload a canvas zip;
                                          optional `?as=<new>`
                                          escape hatch for renaming
 

@@ -1,7 +1,7 @@
 """
 Shared plot-rendering primitive used by:
 
-  * ``/api/reports/plot-custom`` — live render for the Canvas Builder.
+  * ``/reports/plot-custom`` — live render for the Canvas Builder.
   * ``canvas_capture`` — snapshot the rendered HTML alongside the
     saved canvas so the zip export is self-contained.
 

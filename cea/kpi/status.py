@@ -29,7 +29,7 @@ by recomputing, never a hard failure.
 
 Concurrency: every read-modify-write sequence (``write_kpi``,
 ``clear_kpi``) holds a cross-process file lock on the JSON's
-sidecar so two parallel /api/kpis/ requests, two pre-warm
+sidecar so two parallel /kpis/ requests, two pre-warm
 fan-outs, or one of each cannot interleave a stale read with a
 fresh write and clobber each other's entries. Lone reads
 (``read_status``, ``read_kpi``) are uncontended and skip the

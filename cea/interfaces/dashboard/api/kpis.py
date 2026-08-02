@@ -3,7 +3,7 @@ KPIs API — registry-driven Key Performance Indicators surfaced in
 the Canvas Builder and OverviewCard ribbon.
 
 Endpoint:
-  GET /api/kpis/?feature=&whatif=
+  GET /kpis/?feature=&whatif=
     Scenario is resolved from X-CEA-* headers. Returns every KPI in
     the requested ``feature`` for the given scenario. Each KPI
     either reports its ``value`` + ``unit`` (cache hit or

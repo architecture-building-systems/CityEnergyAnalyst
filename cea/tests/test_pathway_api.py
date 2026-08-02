@@ -57,7 +57,7 @@ def pathway_api_fixture(monkeypatch):
     _write_demo_templates(locator)
 
     app = FastAPI(dependencies=[Depends(require_authenticated)])
-    app.include_router(pathways_router, prefix="/api/pathways")
+    app.include_router(pathways_router, prefix="/pathways")
     app.dependency_overrides[get_cea_config] = lambda: config
     app.dependency_overrides[require_authenticated] = lambda: None
     app.dependency_overrides[get_settings] = lambda: test_settings
@@ -77,11 +77,11 @@ def pathway_api_fixture(monkeypatch):
 def test_list_create_and_overview_pathways(pathway_api_fixture):
     client = pathway_api_fixture["client"]
 
-    response = client.get("/api/pathways/")
+    response = client.get("/pathways/")
     assert response.status_code == 200
     assert response.json() == {"pathways": ["demo"]}
 
-    overview = client.get("/api/pathways/overview")
+    overview = client.get("/pathways/overview")
     assert overview.status_code == 200
     payload = overview.json()
     assert payload["span"] == {"start_year": 2020, "end_year": 2040}
@@ -89,7 +89,7 @@ def test_list_create_and_overview_pathways(pathway_api_fixture):
     assert payload["pathways"][0]["years"] == [2020, 2030, 2040]
 
     create_response = client.post(
-        "/api/pathways/",
+        "/pathways/",
         json={"pathway_name": "new-pathway"},
     )
     assert create_response.status_code == 200
@@ -100,7 +100,7 @@ def test_get_timeline_returns_required_years_without_manual_state_field(
 ):
     client = pathway_api_fixture["client"]
 
-    response = client.get("/api/pathways/demo/timeline")
+    response = client.get("/pathways/demo/timeline")
     assert response.status_code == 200
 
     payload = response.json()
@@ -125,11 +125,11 @@ def test_post_year_rejects_empty_placeholder_for_stock_and_gap_years(pathway_api
     client = pathway_api_fixture["client"]
     locator = pathway_api_fixture["locator"]
 
-    stock_response = client.post("/api/pathways/demo/years/2020")
+    stock_response = client.post("/pathways/demo/years/2020")
     assert stock_response.status_code == 409
     assert stock_response.json()["detail"]["requires_edit"] is True
 
-    manual_response = client.post("/api/pathways/demo/years/2050")
+    manual_response = client.post("/pathways/demo/years/2050")
     assert manual_response.status_code == 409
     assert manual_response.json()["detail"]["requires_edit"] is True
 
@@ -142,7 +142,7 @@ def test_building_events_endpoint_updates_yaml(pathway_api_fixture):
     locator = pathway_api_fixture["locator"]
 
     response = client.post(
-        "/api/pathways/demo/years/2035/building-events",
+        "/pathways/demo/years/2035/building-events",
         json={
             "new_buildings": ["B2"],
             "demolished_buildings": ["B1"],
@@ -156,7 +156,7 @@ def test_building_events_endpoint_updates_yaml(pathway_api_fixture):
         "demolished_buildings": ["B1"],
     }
 
-    timeline = client.get("/api/pathways/demo/timeline").json()
+    timeline = client.get("/pathways/demo/timeline").json()
     rows = {row["year"]: row for row in timeline["years"]}
     assert rows[2035]["state_kind"] == "manual"
 
@@ -166,7 +166,7 @@ def test_apply_templates_route_merges_modifications(pathway_api_fixture):
     locator = pathway_api_fixture["locator"]
 
     response = client.post(
-        "/api/pathways/demo/years/2020/apply-templates",
+        "/pathways/demo/years/2020/apply-templates",
         json={"template_names": ["upgrade-wall"]},
     )
     assert response.status_code == 200
@@ -175,7 +175,7 @@ def test_apply_templates_route_merges_modifications(pathway_api_fixture):
     assert 2020 in log_data
     assert "STANDARD1" in log_data[2020]["modifications"]
 
-    timeline = client.get("/api/pathways/demo/timeline").json()
+    timeline = client.get("/pathways/demo/timeline").json()
     rows = {row["year"]: row for row in timeline["years"]}
     assert rows[2020]["state_kind"] == "mixed"
 
@@ -261,7 +261,7 @@ building_events:
 modifications: {}
 """
     response = client.put(
-        "/api/pathways/demo/years/2031/yaml",
+        "/pathways/demo/years/2031/yaml",
         json={"raw_yaml": raw_yaml},
     )
     assert response.status_code == 200
@@ -295,23 +295,23 @@ def test_validate_state_records_status_and_timeline_detects_log_drift(pathway_ap
         workflow=[],
     )
 
-    validate_response = client.post("/api/pathways/demo/years/2030/validate-state")
+    validate_response = client.post("/pathways/demo/years/2030/validate-state")
     assert validate_response.status_code == 200
     assert validate_response.json()["is_valid"] is True
 
-    timeline = client.get("/api/pathways/demo/timeline").json()
+    timeline = client.get("/pathways/demo/timeline").json()
     row = {item["year"]: item for item in timeline["years"]}[2030]
     assert row["status"]["validation"]["state"] == "validated"
     assert row["status"]["bake"]["state"] == "baked"
     assert row["status"]["simulation"]["state"] == "simulated"
 
     edit_response = client.post(
-        "/api/pathways/demo/years/2030/apply-templates",
+        "/pathways/demo/years/2030/apply-templates",
         json={"template_names": ["upgrade-wall"]},
     )
     assert edit_response.status_code == 200
 
-    timeline_after_edit = client.get("/api/pathways/demo/timeline").json()
+    timeline_after_edit = client.get("/pathways/demo/timeline").json()
     row_after_edit = {item["year"]: item for item in timeline_after_edit["years"]}[2030]
     assert row_after_edit["status"]["validation"]["state"] == "changed_after_validation"
     assert row_after_edit["status"]["bake"]["state"] == "changed_after_bake"
@@ -322,11 +322,11 @@ def test_delete_manual_and_clear_mixed_state(pathway_api_fixture):
     client = pathway_api_fixture["client"]
     locator = pathway_api_fixture["locator"]
 
-    manual_delete = client.delete("/api/pathways/demo/years/2030")
+    manual_delete = client.delete("/pathways/demo/years/2030")
     assert manual_delete.status_code == 200
     assert 2030 not in _read_log(locator, "demo")
 
-    mixed_clear = client.delete("/api/pathways/demo/years/2040")
+    mixed_clear = client.delete("/pathways/demo/years/2040")
     assert mixed_clear.status_code == 200
     log_data = _read_log(locator, "demo")
     assert 2040 not in log_data

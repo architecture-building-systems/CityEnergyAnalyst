@@ -2,9 +2,9 @@
 Reports API — provides data for the comparison dashboard.
 
 Endpoints:
-  GET /api/reports/whatifs         — list what-if names available in a scenario
-  GET /api/reports/summary        — KPI summary for a scenario + what-if + feature
-  GET /api/reports/plot           — plot HTML div for a scenario + what-if + feature
+  GET /reports/whatifs         — list what-if names available in a scenario
+  GET /reports/summary        — KPI summary for a scenario + what-if + feature
+  GET /reports/plot           — plot HTML div for a scenario + what-if + feature
 """
 
 import os
@@ -466,7 +466,7 @@ async def get_custom_plot(
         )
 
 
-# TODO: Remove get_zone_geojson — duplicates GET /api/inputs/geojson/zone which already serves
+# TODO: Remove get_zone_geojson — duplicates GET /inputs/geojson/zone which already serves
 #       zone geometry via CEAScenario. Frontend should call that endpoint instead.
 @router.get("/zone-geojson")
 async def get_zone_geojson(scenario: CEAScenario):

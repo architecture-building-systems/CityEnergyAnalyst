@@ -116,7 +116,7 @@ app.add_middleware(
 app.mount("/socket.io", socket_app, "socketio")
 
 # Import other routers
-app.include_router(api.router, prefix='/api')
+app.include_router(api.router)
 app.include_router(plots.router, prefix='/plots')
 app.include_router(server.router, prefix='/server')
 
@@ -125,9 +125,9 @@ app.include_router(server.router, prefix='/server')
 # require_authenticated dependency above — the anonymous boundary is structural.
 if get_settings().public_demo_scenarios:
     from cea.interfaces.dashboard.api.demo import app as demo_app
-    app.mount("/api/demo", demo_app)
+    app.mount("/demo", demo_app)
     logger.debug(
-        "Public demo sub-app mounted at /api/demo (%d scenario(s))",
+        "Public demo sub-app mounted at /demo (%d scenario(s))",
         len(get_settings().public_demo_scenarios),
     )
 

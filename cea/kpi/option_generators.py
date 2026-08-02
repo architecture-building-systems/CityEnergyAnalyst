@@ -9,7 +9,7 @@ output folders) and return a list of ``{value, label}`` dicts.
 
 Generators are registered via the ``register`` decorator below;
 :func:`run_generator` is the dispatch entry point used by the
-``/api/kpis/<id>/parameters`` endpoint.
+``/kpis/<id>/parameters`` endpoint.
 
 Adding a new generator:
 
