@@ -342,10 +342,8 @@ async def get_state_folder(
     }
 
 
-# TODO: Rename this endpoint once the old one is removed
-# Temporary endpoint to prevent breaking existing frontend
-@router.post('/scenario/v2')
-async def create_new_scenario_v2(cea_project: CEAProject, scenario_form: Annotated[CreateScenario, Form()],
+@router.post('/scenario')
+async def create_new_scenario(cea_project: CEAProject, scenario_form: Annotated[CreateScenario, Form()],
                                  limit_settings: CEAServerLimits):
     settings = get_settings()
     if not settings.local:
