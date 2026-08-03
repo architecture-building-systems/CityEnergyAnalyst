@@ -15,3 +15,8 @@ jobs:
         uses: astral-sh/ruff-action@v2
         with:
           src: ./cea
+          # Pinned to match the pixi-locked local version (see pyproject.toml's
+          # lint dependency group). pyproject.toml's [tool.ruff] doesn't set an
+          # explicit lint.select, so the active ruleset is whatever ruff's
+          # default is for a given release. Update CI version once the local version is updated.
+          version: 0.15.20
