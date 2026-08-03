@@ -619,6 +619,8 @@ _EXPECTED_DEMO_ROUTES = {
     ("GET", "/scenarios"),
     ("GET", "/scenarios/{demo_id}/canvas/"),
     ("GET", "/scenarios/{demo_id}/canvas/{name}"),
+    ("GET", "/scenarios/{demo_id}/databases/region"),
+    ("GET", "/scenarios/{demo_id}/databases/schema"),
     ("GET", "/scenarios/{demo_id}/inputs/"),
     ("GET", "/scenarios/{demo_id}/inputs/all-inputs"),
     ("GET", "/scenarios/{demo_id}/inputs/building-properties"),
