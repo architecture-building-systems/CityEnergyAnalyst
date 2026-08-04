@@ -260,6 +260,11 @@ def _demo_route_prefixes() -> list[str]:
     security control — the anonymous boundary is enforced structurally by
     require_public_demo_read regardless of what the client sends."""
     marker = "/scenarios/{demo_id}/"
+    logger.debug(
+        "Demo route prefixes all=%s",
+        [route.path for route in app.routes if isinstance(route, APIRoute)],
+    )
+    
     prefixes = {
         route.path[len(marker):].split("/", 1)[0]
         for route in app.routes
