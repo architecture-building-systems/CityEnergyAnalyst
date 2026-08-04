@@ -1,14 +1,14 @@
 # Dashboard API
 
 ## Main API
-- `GET /api/pathways/overview` - Shared span plus lightweight year lanes for all pathways.
-- `GET /api/pathways/{pathway_name}/timeline` - Detailed active-pathway rows for the timeline panel.
-- `POST /api/pathways/{pathway_name}/years/{year}` - Create a new explicit year only when it is not a stock-only state.
-- `GET /api/pathways/{pathway_name}/years/{year}/editor-options` - Building/template choices for the year editors.
-- `POST /api/pathways/{pathway_name}/years/{year}/building-events` - Save building add/remove edits.
-- `POST /api/pathways/{pathway_name}/years/{year}/apply-templates` - Apply Step 2 templates directly from the panel.
-- `PUT /api/pathways/{pathway_name}/years/{year}/yaml` - Expert-mode YAML save.
-- `POST /api/pathways/{pathway_name}/years/{year}/validate-state` - Manual baked-state validation.
+- `GET /pathways/overview` - Shared span plus lightweight year lanes for all pathways.
+- `GET /pathways/{pathway_name}/timeline` - Detailed active-pathway rows for the timeline panel.
+- `POST /pathways/{pathway_name}/years/{year}` - Create a new explicit year only when it is not a stock-only state.
+- `GET /pathways/{pathway_name}/years/{year}/editor-options` - Building/template choices for the year editors.
+- `POST /pathways/{pathway_name}/years/{year}/building-events` - Save building add/remove edits.
+- `POST /pathways/{pathway_name}/years/{year}/apply-templates` - Apply Step 2 templates directly from the panel.
+- `PUT /pathways/{pathway_name}/years/{year}/yaml` - Expert-mode YAML save.
+- `POST /pathways/{pathway_name}/years/{year}/validate-state` - Manual baked-state validation.
 
 ## Route Design Principles
 
@@ -111,9 +111,9 @@ if os.path.commonpath((base_dir, candidate)) != base_dir:
 	return []
 ```
 
-### DO: Reserve `/api/pathways/*` for dashboard-specific pathway UX
+### DO: Reserve `/pathways/*` for dashboard-specific pathway UX
 ```python
-# Timeline/editor actions should not be routed through `/api/tools/*`.
+# Timeline/editor actions should not be routed through `/tools/*`.
 ```
 
 ### DO: Use InputLocator directly for CEAScenario-derived paths

@@ -1,7 +1,7 @@
 """
 Public demo sub-app — anonymous, read-only, allowlist-scoped.
 
-Mounted at /api/demo by app.py when public_demo_scenarios is configured.
+Mounted at /demo by app.py when public_demo_scenarios is configured.
 This is a standalone FastAPI app and does NOT inherit the main app's
 require_authenticated dependency — the anonymous boundary is structural.
 
@@ -13,7 +13,7 @@ get_effective_scenario_lenient with require_public_demo_read, which reads
 This makes CEAScenario resolve to the allowlisted path instead of the
 user's project root.
 
-URL shape: /api/demo/scenarios/{demo_id}/<domain>/...
+URL shape: /demo/scenarios/{demo_id}/<domain>/...
 
 Write routes are excluded via _filter_routes. Canvas export is excluded
 because it needs CEAConfig to re-render all plot cards. Reports /scenarios
@@ -27,7 +27,7 @@ To add a new demo resource:
   2. Optionally extend the routes below to expose more data for that scenario.
 
 Topology note: this sub-app can be extracted into a standalone service with
-no code change — deploy it alone and gateway /api/demo/* to it.
+no code change — deploy it alone and gateway /demo/* to it.
 """
 from __future__ import annotations
 
@@ -247,11 +247,28 @@ app.include_router(
 
 # ── Scenario list ──────────────────────────────────────────────────────────
 
+def _demo_route_prefixes() -> list[str]:
+    """Domains the demo sub-app actually serves, derived from its own route
+    table rather than hardcoded — stays correct as routers are added/removed
+    above. Consumed by the frontend to decide which requests are demo-eligible
+    (see GUI repo's demoClient interceptor); this is a routing hint, not a
+    security control — the anonymous boundary is enforced structurally by
+    require_public_demo_read regardless of what the client sends."""
+    marker = "/scenarios/{demo_id}/"
+    prefixes = {
+        route.path[len(marker):].split("/", 1)[0]
+        for route in app.routes
+        if isinstance(route, APIRoute) and route.path.startswith(marker)
+    }
+    return sorted(f"/{p}/" for p in prefixes if p)
+
+
 @app.get("/scenarios")
 async def list_demo_scenarios(settings: CEAServerSettings):
     """List all allowlisted demo scenario ids."""
     return {
-        "scenarios": [{"id": demo_id, "name": demo_id} for demo_id in settings.public_demo_scenarios]
+        "scenarios": [{"id": demo_id, "name": demo_id} for demo_id in settings.public_demo_scenarios],
+        "route_prefixes": _demo_route_prefixes(),
     }
 
 

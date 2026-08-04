@@ -14,7 +14,7 @@ NON_LOCAL = Settings.model_construct(local=False)
 NON_LOCAL_WITH_ROOT = Settings.model_construct(local=False, project_root="/data/projects")
 AUTHENTICATED_USER = "user_abc123"
 PUBLIC_PATH = next(iter(_PUBLIC_ROUTES))
-PROTECTED_PATH = "/api/project/"
+PROTECTED_PATH = "/project/"
 
 
 def _make_request(path: str) -> Request:
@@ -47,7 +47,7 @@ def test_non_local_unauthenticated_on_public_path_passes():
 
 
 def test_get_project_root_rejects_no_session_in_non_local_mode():
-    """Anonymous callers on auth-exempt prefixes (e.g. /api/downloads/) must get a
+    """Anonymous callers on auth-exempt prefixes (e.g. /downloads/) must get a
     clean 401 here, not a TypeError from os.path.join(root, None)."""
     with pytest.raises(HTTPException) as exc_info:
         get_project_root(None, NON_LOCAL_WITH_ROOT)

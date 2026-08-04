@@ -619,6 +619,8 @@ _EXPECTED_DEMO_ROUTES = {
     ("GET", "/scenarios"),
     ("GET", "/scenarios/{demo_id}/canvas/"),
     ("GET", "/scenarios/{demo_id}/canvas/{name}"),
+    ("GET", "/scenarios/{demo_id}/databases/region"),
+    ("GET", "/scenarios/{demo_id}/databases/schema"),
     ("GET", "/scenarios/{demo_id}/inputs/"),
     ("GET", "/scenarios/{demo_id}/inputs/all-inputs"),
     ("GET", "/scenarios/{demo_id}/inputs/building-properties"),
@@ -700,7 +702,7 @@ def test_global_auth_guard_not_weakened():
 
     non_local = Settings.model_construct(local=False)
     scope = {
-        "type": "http", "method": "GET", "path": "/api/project/",
+        "type": "http", "method": "GET", "path": "/project/",
         "query_string": b"", "headers": [],
     }
     request = Request(scope)

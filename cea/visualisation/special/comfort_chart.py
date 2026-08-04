@@ -94,7 +94,7 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
         Historically this also wrote `output_path` and opened the file
         in a system browser; both side effects belong to the old CLI
         workflow and have been dropped. Canvas Builder consumes the
-        return value via `/api/reports/plot-custom`.
+        return value via `/reports/plot-custom`.
         """
         # Get all the traces directly (this works and shows curves)
         traces = self.calc_graph()

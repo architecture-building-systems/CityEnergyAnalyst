@@ -34,7 +34,11 @@ def _get_cors_origin():
     if cors_origin == '*':
         return []
 
-    return cors_origin
+    # Parse comma-separated origins into a list, matching app.py's REST CORS
+    # parsing — python-socketio treats a raw comma-joined string as a single
+    # literal origin, so without this a second origin silently breaks
+    # websocket CORS for every origin, not just the new one.
+    return [o.strip() for o in cors_origin.split(",")]
 
 
 def _get_client_manager():

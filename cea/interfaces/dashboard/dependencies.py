@@ -261,16 +261,16 @@ def get_auth_client(request: Request, settings: CEAServerSettings) -> Optional[A
 # Routes publicly accessible without authentication in non-local mode.
 # Every other route is gated by require_authenticated (applied at app level).
 _PUBLIC_ROUTES: frozenset = frozenset({
-    "/api/user/session/refresh",  # token refresh — must work with an expired access token
-    "/api/user/logout",           # session teardown — should work even if token is stale
-    "/server/alive",              # health check — monitoring must not need a session
-    "/server/version",            # version info — safe to expose publicly
+    "/user/session/refresh",  # token refresh — must work with an expired access token
+    "/user/logout",           # session teardown — should work even if token is stale
+    "/server/alive",          # health check — monitoring must not need a session
+    "/server/version",        # version info — safe to expose publicly
 })
 
 # Path prefixes exempt from session auth. The route handler is responsible for
 # its own auth when its path matches one of these prefixes.
 _PUBLIC_ROUTE_PREFIXES: tuple = (
-    "/api/downloads/",  # pre-signed token downloads — anchor tags don't send cookies
+    "/downloads/",  # pre-signed token downloads — anchor tags don't send cookies
 )
 
 

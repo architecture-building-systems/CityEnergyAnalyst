@@ -62,7 +62,7 @@ class Settings(BaseSettings):
         description=(
             "Map of demo_id -> absolute scenario path for public read-only demo access. "
             "Env: CEA_PUBLIC_DEMO_SCENARIOS='demo1:/abs/path1,demo2:/abs/path2' (or JSON). "
-            "Empty (default) means the /api/demo sub-app is not mounted."
+            "Empty (default) means the /demo sub-app is not mounted."
         ),
     )
 
