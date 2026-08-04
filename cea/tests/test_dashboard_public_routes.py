@@ -11,17 +11,23 @@ would fail until it broke in production.
 This imports the real cea.interfaces.dashboard.app module for its route table
 only - it does not start the app (no TestClient context manager, no lifespan).
 """
-from fastapi.routing import APIRoute
+from fastapi.routing import APIRoute, iter_route_contexts
 
 import cea.interfaces.dashboard.app as dashboard_app_module
 from cea.interfaces.dashboard.dependencies import _PUBLIC_ROUTES, _PUBLIC_ROUTE_PREFIXES
 
 
 def _real_route_paths() -> set[str]:
+    """Must walk routes via iter_route_contexts, not a plain isinstance(route,
+    APIRoute) scan over app.routes: fastapi>=0.137 stores each include_router()
+    call as a single lazily-resolved _IncludedRouter wrapper rather than
+    flattening its routes into app.routes, so a plain scan silently sees
+    nothing (see cea.interfaces.dashboard.api.demo._demo_route_prefixes for
+    the same fix applied to the demo sub-app)."""
     return {
-        route.path
-        for route in dashboard_app_module.app.routes
-        if isinstance(route, APIRoute)
+        ctx.path
+        for ctx in iter_route_contexts(dashboard_app_module.app.routes)
+        if isinstance(ctx.original_route, APIRoute)
     }
 
 
