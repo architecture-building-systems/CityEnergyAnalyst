@@ -487,9 +487,10 @@ def test_demo_sub_app_excludes_database_download():
     folder on every call - real disk I/O, not just an uncacheable response.
     Anonymous callers must not be able to trigger it at all, so it's excluded
     from the demo mount entirely rather than merely left uncached."""
+    from fastapi.routing import iter_route_contexts
     from cea.interfaces.dashboard.api.demo import app as demo_app
 
-    paths = {route.path for route in demo_app.routes if hasattr(route, "path")}
+    paths = {ctx.path for ctx in iter_route_contexts(demo_app.routes) if ctx.path}
     assert "/scenarios/{demo_id}/inputs/databases/download" not in paths
 
 
@@ -547,6 +548,7 @@ def test_demo_sub_app_has_no_write_routes():
     because plot_dispatch restricts it to genuine Visualisation-category
     dashboard scripts (see plot_dispatch.py). Any other POST is unexpected.
     """
+    from fastapi.routing import iter_route_contexts
     from cea.interfaces.dashboard.api.demo import app as demo_app
 
     mutating_methods = {"PUT", "PATCH", "DELETE"}
@@ -559,13 +561,13 @@ def test_demo_sub_app_has_no_write_routes():
     }
 
     bad_routes = []
-    for route in demo_app.routes:
-        if not hasattr(route, "methods"):
+    for ctx in iter_route_contexts(demo_app.routes):
+        if not ctx.methods:
             continue
-        if route.methods & mutating_methods:
-            bad_routes.append(route)
-        elif "POST" in route.methods and route.path not in allowed_post_paths:
-            bad_routes.append(route)
+        if ctx.methods & mutating_methods:
+            bad_routes.append(ctx.path)
+        elif "POST" in ctx.methods and ctx.path not in allowed_post_paths:
+            bad_routes.append(ctx.path)
 
     assert bad_routes == [], (
         f"Demo sub-app must not expose mutating routes; found: {bad_routes}"
@@ -592,17 +594,18 @@ def test_demo_sub_app_has_no_suspicious_named_routes():
     anonymous caller - rename it or narrow this keyword list with a comment
     explaining why.
     """
+    from fastapi.routing import iter_route_contexts
     from cea.interfaces.dashboard.api.demo import app as demo_app
 
     matches = []
-    for route in demo_app.routes:
-        if not (hasattr(route, "path") and hasattr(route, "endpoint")):
+    for ctx in iter_route_contexts(demo_app.routes):
+        if not (ctx.path and ctx.endpoint):
             continue
-        if not route.path.startswith("/scenarios"):
+        if not ctx.path.startswith("/scenarios"):
             continue
-        haystack = f"{route.path} {route.endpoint.__name__}".lower()
+        haystack = f"{ctx.path} {ctx.endpoint.__name__}".lower()
         if any(keyword in haystack for keyword in _SUSPICIOUS_ROUTE_KEYWORDS):
-            matches.append(route.path)
+            matches.append(ctx.path)
 
     assert matches == [], (
         f"Route(s) with a suspicious name are reachable from the anonymous demo "
@@ -666,14 +669,15 @@ def test_demo_sub_app_route_inventory_matches_snapshot():
     _EXPECTED_DEMO_ROUTES deliberately whenever a route is meant to be added or
     removed from the demo surface.
     """
+    from fastapi.routing import iter_route_contexts
     from cea.interfaces.dashboard.api.demo import app as demo_app
 
     actual = {
-        (method, route.path)
-        for route in demo_app.routes
-        if hasattr(route, "methods") and hasattr(route, "path")
-        if route.path.startswith("/scenarios")
-        for method in route.methods
+        (method, ctx.path)
+        for ctx in iter_route_contexts(demo_app.routes)
+        if ctx.path and ctx.methods
+        if ctx.path.startswith("/scenarios")
+        for method in ctx.methods
         if method != "HEAD"
     }
     added = actual - _EXPECTED_DEMO_ROUTES

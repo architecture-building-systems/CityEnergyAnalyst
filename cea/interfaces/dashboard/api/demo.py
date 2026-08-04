@@ -35,7 +35,7 @@ import hashlib
 
 from aiocache.lock import RedLock
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, status
-from fastapi.routing import APIRoute
+from fastapi.routing import APIRoute, iter_route_contexts
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 import cea.scripts
@@ -258,24 +258,25 @@ def _demo_route_prefixes() -> list[str]:
     above. Consumed by the frontend to decide which requests are demo-eligible
     (see GUI repo's demoClient interceptor); this is a routing hint, not a
     security control — the anonymous boundary is enforced structurally by
-    require_public_demo_read regardless of what the client sends."""
-    marker = "/scenarios/{demo_id}/"
+    require_public_demo_read regardless of what the client sends.
 
-    logger.debug(
-        "id(app)=%s total_routes=%d types=%s",
-        id(app),
-        len(app.routes),
-        [(type(r).__name__, getattr(r, "path", None)) for r in app.routes],
+    Must walk routes via iter_route_contexts, not a plain isinstance(route,
+    APIRoute) scan over app.routes: fastapi>=0.137 stores each
+    include_router() call as a single lazily-resolved _IncludedRouter
+    wrapper rather than flattening its routes into app.routes, so a plain
+    scan silently sees only the routes added directly with @app.get (e.g.
+    get_demo_tool_properties) and misses every included router.
+    """
+    marker = "/scenarios/{demo_id}/"
+    paths = (
+        ctx.path
+        for ctx in iter_route_contexts(app.routes)
+        if isinstance(ctx.original_route, APIRoute)
     )
-    logger.debug(
-        "Demo route prefixes all=%s",
-        [route.path for route in app.routes if isinstance(route, APIRoute)],
-    )
-    
     prefixes = {
-        route.path[len(marker):].split("/", 1)[0]
-        for route in app.routes
-        if isinstance(route, APIRoute) and route.path.startswith(marker)
+        path[len(marker):].split("/", 1)[0]
+        for path in paths
+        if path and path.startswith(marker)
     }
     return sorted(f"/{p}/" for p in prefixes if p)
 
