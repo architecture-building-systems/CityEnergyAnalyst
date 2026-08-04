@@ -36,9 +36,9 @@ dependencies = [
     # Backend dependencies
     "aiofiles",
     "aiocache[redis]",
-    "fastapi",
+    "fastapi>=0.136.3,<0.142",
     "pydantic-settings",
-    "uvicorn",
+    "uvicorn>=0.52.1,<0.53",
     "jinja2",
     "python-socketio",
     "python-multipart", # Required by fastapi for file uploads
