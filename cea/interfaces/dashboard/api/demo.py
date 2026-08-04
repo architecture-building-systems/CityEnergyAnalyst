@@ -245,7 +245,12 @@ app.include_router(
 )
 
 
-# ── Scenario list ──────────────────────────────────────────────────────────
+# ── Demo collection root ─────────────────────────────────────────────────
+# Metadata about the demo sub-app itself (allowlisted scenarios + which domains
+# it serves) - deliberately kept off the "/scenarios/..." path family below so
+# a path-based cacheability check (see DemoResponseCache.CACHEABLE_PATH_SEGMENT)
+# can tell the two apart without needing to know the mount prefix it's reached
+# through (see the mount-prefix note on that class).
 
 def _demo_route_prefixes() -> list[str]:
     """Domains the demo sub-app actually serves, derived from its own route
@@ -263,9 +268,9 @@ def _demo_route_prefixes() -> list[str]:
     return sorted(f"/{p}/" for p in prefixes if p)
 
 
-@app.get("/scenarios")
-async def list_demo_scenarios(settings: CEAServerSettings):
-    """List all allowlisted demo scenario ids."""
+@app.get("/")
+async def get_demo_collection(settings: CEAServerSettings):
+    """Allowlisted demo scenario ids, plus which domains the sub-app serves."""
     return {
         "scenarios": [{"id": demo_id, "name": demo_id} for demo_id in settings.public_demo_scenarios],
         "route_prefixes": _demo_route_prefixes(),
@@ -316,11 +321,7 @@ class DemoResponseCache:
     # Public demo responses are read-only/static for the process lifetime (fixed
     # allowlist, no writes) - TTL alone bounds staleness, no content hash needed.
     CACHE_TTL = 3600  # 1 hour
-    # /scenarios reflects settings.public_demo_scenarios (from CEA_PUBLIC_DEMO_SCENARIOS),
-    # which can change across a redeploy - unlike scenario file content, it is not fixed
-    # for the lifetime of the Redis-backed cache (which outlives any single process). It's
-    # also a trivial in-memory dict iteration, so caching it has no performance upside.
-    UNCACHEABLE_PATHS = frozenset({"/scenarios"})
+    CACHEABLE_PATH_SEGMENT = "/scenarios/"
 
     def __init__(self, app: ASGIApp) -> None:
         self.app = app
@@ -329,7 +330,7 @@ class DemoResponseCache:
         if (
             scope["type"] != "http"
             or scope["method"] != "GET"
-            or scope["path"] in self.UNCACHEABLE_PATHS
+            or self.CACHEABLE_PATH_SEGMENT not in scope["path"]
         ):
             await self.app(scope, receive, send)
             return

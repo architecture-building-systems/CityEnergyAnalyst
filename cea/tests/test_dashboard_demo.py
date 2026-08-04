@@ -112,7 +112,7 @@ def test_list_demo_scenarios_returns_configured_ids():
         {"city-a": "/data/city_a", "city-b": "/data/city_b"}
     )
     try:
-        resp = client.get("/scenarios")
+        resp = client.get("/")
         assert resp.status_code == 200
         ids = {s["id"] for s in resp.json()["scenarios"]}
         assert ids == {"city-a", "city-b"}
@@ -123,7 +123,7 @@ def test_list_demo_scenarios_returns_configured_ids():
 def test_list_demo_scenarios_empty_when_not_configured():
     client, demo_app, get_settings_fn = _make_demo_client({})
     try:
-        resp = client.get("/scenarios")
+        resp = client.get("/")
         assert resp.status_code == 200
         assert resp.json()["scenarios"] == []
     finally:
@@ -616,7 +616,6 @@ def test_demo_sub_app_has_no_suspicious_named_routes():
 # route being added or removed here must be a conscious diff in review, not a
 # side effect of an unrelated change to one of the wrapped routers.
 _EXPECTED_DEMO_ROUTES = {
-    ("GET", "/scenarios"),
     ("GET", "/scenarios/{demo_id}/canvas/"),
     ("GET", "/scenarios/{demo_id}/canvas/{name}"),
     ("GET", "/scenarios/{demo_id}/databases/region"),
