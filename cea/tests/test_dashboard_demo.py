@@ -666,14 +666,15 @@ def test_demo_sub_app_route_inventory_matches_snapshot():
     _EXPECTED_DEMO_ROUTES deliberately whenever a route is meant to be added or
     removed from the demo surface.
     """
+    from fastapi.routing import iter_route_contexts
     from cea.interfaces.dashboard.api.demo import app as demo_app
 
     actual = {
-        (method, route.path)
-        for route in demo_app.routes
-        if hasattr(route, "methods") and hasattr(route, "path")
-        if route.path.startswith("/scenarios")
-        for method in route.methods
+        (method, ctx.path)
+        for ctx in iter_route_contexts(demo_app.routes)
+        if ctx.path and ctx.methods
+        if ctx.path.startswith("/scenarios")
+        for method in ctx.methods
         if method != "HEAD"
     }
     added = actual - _EXPECTED_DEMO_ROUTES
