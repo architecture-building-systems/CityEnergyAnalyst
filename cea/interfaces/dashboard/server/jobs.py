@@ -9,7 +9,7 @@ import subprocess
 import sys
 import tempfile
 import uuid
-from typing import Dict, Any, List, Annotated
+from typing import Dict, Any, List, Annotated, Optional
 from urllib.parse import urlparse
 
 import psutil
@@ -20,8 +20,9 @@ from sqlalchemy.orm import defer
 from sqlmodel import select, desc
 from starlette.datastructures import UploadFile as _UploadFile
 
-from cea.interfaces.dashboard.api.utils import CEAProjectID
-from cea.interfaces.dashboard.dependencies import CEAServerUrl, CEAWorkerProcesses, CEAServerSettings, \
+import cea
+from cea.interfaces.dashboard.api.utils import CEAProjectID, CEAScenarioOptional, script_takes_scenario_path
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEAServerUrl, CEAWorkerProcesses, CEAServerSettings, \
     CEAUserID, CEAStreams
 from cea.interfaces.dashboard.lib.auth import create_worker_token
 from cea.interfaces.dashboard.lib.database.models import JobInfo, JobState, get_current_time
@@ -273,9 +274,39 @@ async def get_job_info(session: SessionDep, job_id: str, user_id: CEAUserID) -> 
     return JobInfoResponse.from_job_info(job)
 
 
+def resolve_job_scenario(script: str, config, scenario: Optional[str]) -> Optional[str]:
+    """Return the scenario path to use for this job, or ``None`` 
+    if the script does not take a ``ScenarioParameter`` (in which case the
+    client's ``parameters["scenario"]`` is used).
+
+    ``scenario`` is the request's header-resolved scenario context (``CEAScenarioOptional``
+    -- ``None`` when no X-CEA-Project/X-CEA-Scenario-Name pair was sent).
+
+    Raises HTTPException 422 for an unknown script name, 400 when a scenario-taking
+    script has no scenario context to resolve.
+    """
+    try:
+        needs_scenario = script_takes_scenario_path(script, config)
+    except cea.ScriptNotFoundException as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                            detail=f"Unknown script: {script}.") from e
+
+    if not needs_scenario:
+        return None
+
+    if scenario is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Scenario context required: send X-CEA-Project and X-CEA-Scenario-Name headers.",
+        )
+
+    return scenario
+
+
 @router.post("/new")
 async def create_new_job(request: Request, session: SessionDep, project_id: CEAProjectID, user_id: CEAUserID,
-                         settings: CEAServerSettings) -> JobSummaryResponse:
+                         settings: CEAServerSettings, config: CEAConfig,
+                         scenario: CEAScenarioOptional) -> JobSummaryResponse:
     """Post a new job to the list of jobs to complete"""
     content_type = request.headers.get("content-type", "")
 
@@ -310,8 +341,14 @@ async def create_new_job(request: Request, session: SessionDep, project_id: CEAP
     else:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported content type.")
 
-    if script is None:
+    if script is None or not isinstance(script, str) or not script.strip():
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Missing required field: 'script'.")
+
+    parameters = parameters or {}
+
+    # Resolve (and validate) the script's scenario requirement up front, before any temp
+    # files are created for this job -- a rejected request should leave nothing to clean up.
+    resolved_scenario = resolve_job_scenario(script, config, scenario)
 
     # Create job first with empty parameters to get job ID for temp file handling
     job = JobInfo(script=script, parameters={}, project_id=project_id, created_by=user_id)
@@ -319,6 +356,12 @@ async def create_new_job(request: Request, session: SessionDep, project_id: CEAP
     try:
         # Process parameters to handle any UploadFile instances
         parameters = await process_job_parameters(parameters, job.id)
+
+        if resolved_scenario is not None:
+            if parameters.get("scenario") not in (None, resolved_scenario):
+                logger.debug("Overriding client-supplied scenario %r with %r for job %s",
+                            parameters.get("scenario"), resolved_scenario, job.id)
+            parameters["scenario"] = resolved_scenario
 
         # FIXME: Forcing remote multiprocessing to be disabled for now,
         #  find solution for restricting number of processes per user

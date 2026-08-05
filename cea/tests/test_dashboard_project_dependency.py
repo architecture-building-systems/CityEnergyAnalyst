@@ -139,3 +139,71 @@ def test_get_effective_project_lenient_allows_missing_directory(tmp_path, monkey
     )
 
     assert result == str(missing)
+
+
+# ---------------------------------------------------------------------------
+# get_effective_scenario_optional (POST /server/jobs/new's scenario dependency --
+# like CEAScenarioLenient, but returns None instead of 400 when the request carries
+# no scenario context at all, since only some scripts need one)
+# ---------------------------------------------------------------------------
+
+
+def _scenario_headers(project=None, scenario_name=None):
+    return CEAScenarioHeaders(x_cea_project=project, x_cea_scenario_name=scenario_name)
+
+
+def _fake_local_config_with_scenario(scenario_path):
+    config = object.__new__(CEALocalConfig)
+    config.__dict__["scenario"] = scenario_path
+    return config
+
+
+def test_scenario_optional_no_headers_non_local_returns_none():
+    # config=object() is not a CEALocalConfig instance, i.e. non-local mode.
+    result = api_utils.get_effective_scenario_optional(
+        config=object(), project_root=None, cea_headers=_scenario_headers()
+    )
+    assert result is None
+
+
+def test_scenario_optional_no_headers_local_falls_back_to_config_scenario(monkeypatch):
+    monkeypatch.setattr(api_utils, "secure_path", lambda path, root=None: path)
+    config = _fake_local_config_with_scenario("/home/user/projects/demo/baseline")
+
+    result = api_utils.get_effective_scenario_optional(
+        config=config, project_root=None, cea_headers=_scenario_headers()
+    )
+
+    assert result == "/home/user/projects/demo/baseline"
+
+
+def test_scenario_optional_project_header_only_non_local_returns_none():
+    # Incomplete pair (project without scenario-name) in non-local mode is an absence
+    # of context, not an error -- must not raise.
+    result = api_utils.get_effective_scenario_optional(
+        config=object(), project_root=None, cea_headers=_scenario_headers(project="my-project")
+    )
+    assert result is None
+
+
+def test_scenario_optional_full_headers_resolves_joined_path(monkeypatch):
+    monkeypatch.setattr(api_utils, "secure_path", lambda path, root=None: path)
+
+    result = api_utils.get_effective_scenario_optional(
+        config=object(), project_root="/data/projects",
+        cea_headers=_scenario_headers(project="my-project", scenario_name="baseline"),
+    )
+
+    assert result == os.path.join("/data/projects", "my-project", "baseline")
+
+
+def test_scenario_optional_absolute_project_non_local_still_raises_400():
+    # Proves the None short-circuit didn't open a bypass around the existing
+    # absolute-path rejection -- a *malformed* header pair still raises; only
+    # *absence* of headers returns None.
+    with pytest.raises(HTTPException) as exc_info:
+        api_utils.get_effective_scenario_optional(
+            config=object(), project_root=None,
+            cea_headers=_scenario_headers(project="/abs/path", scenario_name="baseline"),
+        )
+    assert exc_info.value.status_code == 400

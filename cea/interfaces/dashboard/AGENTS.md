@@ -100,7 +100,7 @@ Client → Server (jobs.py) → Worker (cea/worker.py) → Server
 
 ## Job Lifecycle
 
-**Creation** (`POST /jobs/new`): Creates `JobInfo` UUID+PENDING, handles file uploads to `/tmp/cea_job_{job_id}_*`.
+**Creation** (`POST /jobs/new`): Creates `JobInfo` UUID+PENDING, handles file uploads to `/tmp/cea_job_{job_id}_*`. `parameters["scenario"]` is server-resolved from `X-CEA-*` headers via `resolve_job_scenario()`/`script_takes_scenario_path()` (`api/utils.py`) — never trust a client-supplied value. `scenario` is a reserved parameter name across the *entire* config schema: `general:scenario` (a `ScenarioParameter`) is the only parameter anywhere allowed to be named `scenario` — enforced by `test_only_general_scenario_is_named_scenario` (`cea/tests/test_script_parameters.py`). If you need a config value with different semantics (e.g. the name of a scenario still to be created), name it something else, e.g. `new-scenario-name`.
 
 **Start** (`POST /jobs/start/{job_id}`): Auth-checked, row-locked. Spawns `python -m cea.worker {job_id} {server_url}`.
 
@@ -218,6 +218,8 @@ Scenario context travels as `X-CEA-*` request headers. Falls back to `config.sce
 **Child scenario**: `X-CEA-Child-Scenario: <pathway_name>/<year>` is a logical token — the backend resolves it to a filesystem path via `InputLocator.get_state_in_time_scenario_folder(pathway_name, year)`. No filesystem path is sent by the client; the physical layout (`outputs/pathways/<name>/state_<year>`) stays an implementation detail.
 
 **Canvas compare mode**: send per-request `headers` on each Axios call to target different scenarios concurrently — one global header/cookie cannot express this, which is why headers (not cookies) were chosen.
+
+**Job creation** (`POST /jobs/new`): the same rule applies to the request body, not just other routes' path params. Clients must not compute a `scenario` job parameter themselves — `create_new_job` (`server/jobs.py`) resolves and overrides it from these same headers for any script whose `scenario` parameter is a `ScenarioParameter`. See `server/AGENTS.md`.
 
 **Future phase (separate plan)**: URL path hierarchy `PUT /projects/{id}/scenarios/{name}/...` requires a `project_id → project_path` mapping table (works for local and non-local modes). Deferred: no `project_id` migration needed until online multi-user requires stable IDs.
 
