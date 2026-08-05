@@ -58,8 +58,8 @@ class TestConfiguration(unittest.TestCase):
     def test_decode_fileparameter(self):
         config = cea.config.Configuration()
         scenario = config.general.scenario
-        expected_output = f"{scenario}/inputs/building-geometry/zone.shp"
-        self.assertEqual(os.path.normcase(os.path.expanduser(config.create_new_scenario.zone)),
+        expected_output = f"{scenario}/outputs/trace_inputlocator.output.yml"
+        self.assertEqual(os.path.normcase(os.path.expanduser(config.trace_inputlocator.meta_output_file)),
                          os.path.normcase(os.path.expanduser(expected_output)))
 
     def test_choice_parameter_is_single_choice(self):

@@ -25,14 +25,6 @@ cea.datamanagement.constants module
    :undoc-members:
    :show-inheritance:
 
-cea.datamanagement.create\_new\_scenario module
------------------------------------------------
-
-.. automodule:: cea.datamanagement.create_new_scenario
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 cea.datamanagement.data\_helper module
 -------------------------------------------
 

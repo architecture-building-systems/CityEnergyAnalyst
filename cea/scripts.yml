@@ -795,14 +795,6 @@ Utilities:
     module: cea.utilities.shapefile
     parameters: [ 'general:scenario', shapefile-tools]
 
-  - name: create-new-scenario
-    label: Create a New Scenario
-    short_description: Facilitate creating a new scenario
-    description: This Feature facilitate creating a new scenario.
-    interfaces: []
-    module: cea.datamanagement.create_new_scenario
-    parameters: [create-new-scenario]
-
   - name: rename-building
     label: Rename Building
     short_description: Facilitate renaming buildings in scenario
