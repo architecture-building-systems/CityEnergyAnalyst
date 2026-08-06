@@ -23,6 +23,9 @@ Client → Server (jobs.py) → Worker (cea/worker.py) → Server
 ## Job Lifecycle
 
 **Creation** (`POST /jobs/new`): Creates `JobInfo` UUID+PENDING, handles file uploads to `/tmp/cea_job_{job_id}_*`.
+- **Scenario resolution**: `parameters["scenario"]` is server-resolved from `X-CEA-*` headers via `resolve_job_scenario()`/`script_takes_scenario_path()` (`api/utils.py`).
+- **Overriding client values**: a client-supplied `parameters["scenario"]` is never trusted — the server-resolved value always wins.
+- **Reserved name**: `scenario` is reserved across the *entire* config schema; `general:scenario` (a `ScenarioParameter`) is the only parameter anywhere allowed to be named `scenario` — enforced by `test_only_general_scenario_is_named_scenario` (`cea/tests/test_script_parameters.py`). If you need a config value with different semantics (e.g. the name of a scenario still to be created), name it something else, e.g. `new-scenario-name`.
 
 **Start** (`POST /jobs/start/{job_id}`): Auth-checked, row-locked. Spawns `python -m cea.worker {job_id} {server_url}`.
 

@@ -21,6 +21,7 @@ from cea.datamanagement.district_pathways.pathway_timeline import (
     create_pathway_year,
     create_pathway,
     delete_or_clear_state,
+    delete_pathway,
     get_pathway_overview,
     get_pathway_timeline,
     get_year_editor_options,
@@ -80,6 +81,22 @@ async def post_pathway(config: CEAConfig, payload: CreatePathwayPayload) -> dict
     except FileExistsError as exc:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
+            detail=str(exc),
+        ) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+
+
+@router.delete("/{pathway_name}")
+async def delete_pathway_route(config: CEAConfig, pathway_name: str) -> dict[str, Any]:
+    try:
+        return await run_in_threadpool(delete_pathway, config, pathway_name)
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
             detail=str(exc),
         ) from exc
     except ValueError as exc:

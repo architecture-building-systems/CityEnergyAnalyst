@@ -9,6 +9,7 @@ from typing import Optional
 
 import cea.config
 import cea.inputlocator
+import cea.scripts
 from fastapi import Depends, Header, HTTPException, status
 from pydantic import BaseModel
 from typing_extensions import Annotated
@@ -245,6 +246,27 @@ def _should_validate(p: cea.config.Parameter) -> bool:
     return False
 
 
+def script_takes_scenario_path(script_name: str, config: cea.config.Configuration) -> bool:
+    """True if ``script_name`` declares a parameter named ``scenario`` that is a
+    :py:class:`cea.config.ScenarioParameter` -- i.e. the reserved "current active
+    scenario" path.
+
+    Raises cea.ScriptNotFoundException for unknown script names.
+    """
+    script = cea.scripts.by_name(script_name, plugins=config.plugins)
+    try:
+        for _, parameter in config.matching_parameters(script.parameters):
+            if parameter.name == "scenario":
+                return isinstance(parameter, cea.config.ScenarioParameter)
+    except KeyError:
+        # scripts.yml (or a plugin's) references a section/parameter this config
+        # doesn't know about -- treat as "no scenario parameter" and let the normal
+        # parameter-validation path surface the real error.
+        logger.warning("Could not expand parameters for script %s", script_name)
+        return False
+    return False
+
+
 class CEAScenarioHeaders(BaseModel):
     x_cea_project: Optional[str] = None
     x_cea_scenario_name: Optional[str] = None
@@ -286,6 +308,30 @@ def get_effective_scenario_lenient(
 
 CEAScenario = Annotated[str, Depends(get_effective_scenario)]
 CEAScenarioLenient = Annotated[str, Depends(get_effective_scenario_lenient)]
+
+
+def get_effective_scenario_optional(
+    config: CEAConfig,
+    project_root: CEAProjectRoot,
+    cea_headers: Annotated[CEAScenarioHeaders, Header()],
+) -> Optional[str]:
+    """Like ``get_effective_scenario_lenient``, but returns ``None`` instead of raising
+    400 when the request carries no scenario context at all.
+
+    For endpoints whose need for a scenario depends on the request payload rather than
+    the route itself (POST /server/jobs/new: only scripts with a ScenarioParameter need
+    one), so the caller can decide whether the absence is actually an error. Malformed
+    context (an absolute project in non-local mode, a path-traversal attempt, a bad
+    child-scenario token, ...) still raises 400 via `_resolve_scenario_from_headers` --
+    only a *missing* project/scenario-name pair in non-local mode short-circuits to None.
+    """
+    if cea_headers.x_cea_project is None or cea_headers.x_cea_scenario_name is None:
+        if not isinstance(config, CEALocalConfig):
+            return None
+    return _get_effective_scenario(config, project_root, require_exists=False, cea_headers=cea_headers)
+
+
+CEAScenarioOptional = Annotated[Optional[str], Depends(get_effective_scenario_optional)]
 
 
 def _get_effective_project(

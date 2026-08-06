@@ -100,7 +100,7 @@ Client → Server (jobs.py) → Worker (cea/worker.py) → Server
 
 ## Job Lifecycle
 
-**Creation** (`POST /jobs/new`): Creates `JobInfo` UUID+PENDING, handles file uploads to `/tmp/cea_job_{job_id}_*`.
+**Creation** (`POST /jobs/new`): Creates `JobInfo` UUID+PENDING, handles file uploads to `/tmp/cea_job_{job_id}_*`. Scenario resolution, client-value overriding, and the reserved `scenario` name are server-side contracts — see `server/AGENTS.md`.
 
 **Start** (`POST /jobs/start/{job_id}`): Auth-checked, row-locked. Spawns `python -m cea.worker {job_id} {server_url}`.
 
@@ -218,6 +218,8 @@ Scenario context travels as `X-CEA-*` request headers. Falls back to `config.sce
 **Child scenario**: `X-CEA-Child-Scenario: <pathway_name>/<year>` is a logical token — the backend resolves it to a filesystem path via `InputLocator.get_state_in_time_scenario_folder(pathway_name, year)`. No filesystem path is sent by the client; the physical layout (`outputs/pathways/<name>/state_<year>`) stays an implementation detail.
 
 **Canvas compare mode**: send per-request `headers` on each Axios call to target different scenarios concurrently — one global header/cookie cannot express this, which is why headers (not cookies) were chosen.
+
+**Job creation** (`POST /jobs/new`): the same rule applies to the request body, not just other routes' path params. Clients must not compute a `scenario` job parameter themselves — `create_new_job` (`server/jobs.py`) resolves and overrides it from these same headers for any script whose `scenario` parameter is a `ScenarioParameter`. See `server/AGENTS.md`.
 
 **Future phase (separate plan)**: URL path hierarchy `PUT /projects/{id}/scenarios/{name}/...` requires a `project_id → project_path` mapping table (works for local and non-local modes). Deferred: no `project_id` migration needed until online multi-user requires stable IDs.
 

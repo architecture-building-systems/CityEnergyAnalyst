@@ -1,8 +1,15 @@
 """Test for duplicate parameters in script definitions"""
 
 import unittest
+
+import pytest
+from fastapi import HTTPException
+
+import cea
 import cea.scripts
 import cea.config
+from cea.interfaces.dashboard.api.utils import script_takes_scenario_path
+from cea.interfaces.dashboard.server.jobs import resolve_job_scenario
 
 
 class TestScriptParameters(unittest.TestCase):
@@ -41,6 +48,57 @@ class TestScriptParameters(unittest.TestCase):
                 for param, sections in info.items():
                     error_msg += f"  - '{param}' appears in sections: {' '.join(sections)}\n"
             self.fail(error_msg)
+
+
+def test_only_general_scenario_is_named_scenario(config):
+    """`scenario` is a reserved parameter name across the entire config schema,
+    `general:scenario` (a ScenarioParameter -- the current active scenario path)
+    is the only parameter anywhere allowed to be named `scenario`.
+    """
+    offenders = []
+    for section in config.sections.values():
+        parameter = section.parameters.get('scenario')
+        if parameter is None:
+            continue
+        if section.name != 'general' or not isinstance(parameter, cea.config.ScenarioParameter):
+            offenders.append(f"{section.name}:scenario is {type(parameter).__name__}")
+
+    if offenders:
+        error_msg = "\nFound non-reserved 'scenario' parameters outside [general]:\n"
+        for entry in offenders:
+            error_msg += f"  - {entry}\n"
+        pytest.fail(error_msg)
+
+
+def test_script_takes_scenario_path(config):
+    # general:scenario -- the reserved active-scenario path
+    assert script_takes_scenario_path('demand', config) is True
+    # a script with no 'scenario' parameter at all
+    assert script_takes_scenario_path('extract-reference-case', config) is False
+
+    with pytest.raises(cea.ScriptNotFoundException):
+        script_takes_scenario_path('no-such-script', config)
+
+
+def test_resolve_job_scenario(config):
+    # scenario-taking script + resolved context -> the resolved path is forced in
+    assert resolve_job_scenario('demand', config, '/root/proj/baseline') == '/root/proj/baseline'
+
+    # scenario-taking script + no context -> 400, fail fast
+    with pytest.raises(HTTPException) as exc_info:
+        resolve_job_scenario('demand', config, None)
+    assert exc_info.value.status_code == 400
+
+    # extract-reference-case doesn't take a ScenarioParameter -- no override, and no 400
+    # even when there is no scenario context (this is the guarantee that scenario-less
+    # scripts keep working after this change)
+    assert resolve_job_scenario('extract-reference-case', config, '/root/proj/baseline') is None
+    assert resolve_job_scenario('extract-reference-case', config, None) is None
+
+    # unknown script -> 422
+    with pytest.raises(HTTPException) as exc_info:
+        resolve_job_scenario('no-such-script', config, None)
+    assert exc_info.value.status_code == 422
 
 
 if __name__ == "__main__":
