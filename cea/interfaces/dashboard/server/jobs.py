@@ -345,6 +345,8 @@ async def create_new_job(request: Request, session: SessionDep, project_id: CEAP
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Missing required field: 'script'.")
 
     parameters = parameters or {}
+    if not isinstance(parameters, dict):
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Field 'parameters' must be an object.")
 
     # Resolve (and validate) the script's scenario requirement up front, before any temp
     # files are created for this job -- a rejected request should leave nothing to clean up.

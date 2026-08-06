@@ -110,6 +110,9 @@ def test_delete_pathway_route(pathway_api_fixture):
     missing_response = client.delete("/pathways/demo")
     assert missing_response.status_code == 404
 
+    invalid_response = client.delete("/pathways/invalid*name")
+    assert invalid_response.status_code == 400
+
 
 def test_get_timeline_returns_required_years_without_manual_state_field(
     pathway_api_fixture,
