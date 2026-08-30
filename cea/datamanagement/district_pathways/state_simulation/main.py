@@ -51,6 +51,22 @@ from cea.datamanagement.district_pathways.pathway_validation import (
 )
 
 
+def _has_simulation_outputs(main_locator: InputLocator, pathway_name: str, year: int) -> bool:
+    """True if the state year still has an outputs/ folder on disk.
+
+    The simulated phase is judged from the recorded status hashes alone, never from disk
+    (see pathway_status.collect_state_phase_status). That is the right call for staleness,
+    but it means a state can read as simulated while having no results: the cleanup below
+    wipes outputs before re-running a year, so a run that then fails leaves the earlier
+    "simulated" record in place. Skipping such a year yields a pathway that reports success
+    with nothing to show, and the emissions timeline then fails on missing operational data.
+    """
+    state_folder = main_locator.get_state_in_time_scenario_folder(
+        pathway_name=pathway_name, year_of_state=int(year)
+    )
+    return os.path.isdir(os.path.join(state_folder, "outputs"))
+
+
 def _cleanup_state_outputs(state_locator: InputLocator, year: int) -> None:
     """Remove previous simulation outputs from a state folder to allow re-runs."""
     import os
@@ -178,7 +194,15 @@ def simulate_all_states(config: Configuration, pathway_name: str) -> None:
                 and phase == "simulated"
                 and not status.get("has_stale_phase")
             ):
-                skipped_years.append(int(year))
+                if _has_simulation_outputs(main_locator, pathway_name, int(year)):
+                    skipped_years.append(int(year))
+                else:
+                    print(
+                        f"State {year} is recorded as simulated but its outputs folder is "
+                        "missing; re-simulating it.",
+                        flush=True,
+                    )
+                    eligible.append(int(year))
             else:
                 eligible.append(int(year))
         years_to_simulate = eligible
@@ -323,27 +347,19 @@ def main(config: Configuration) -> None:
             f"District pathway emissions timeline saved with {len(df)} years.",
             flush=True,
         )
-    except Exception as exc:
-        # Surface the full traceback — the timeline CSV is what
-        # downstream pathway plots read, so swallowing this with
-        # only `{exc}` made the failure invisible to the user
-        # (their plot script later 404s on the missing CSV with no
-        # hint why). The state simulations themselves succeeded;
-        # we still don't re-raise, so the job overall is reported
-        # as successful and the user can retry timeline generation
-        # without re-running every state.
-        import traceback
-
+    except Exception:
+        # The timeline CSV is what the pathway plots read, so this failure has to reach the
+        # user. Reporting the job as successful without it is what sent them to the plot
+        # script, which then fails with "Pathway emissions timeline file not found" and no
+        # hint why. Re-raising costs nothing: the state years are already recorded as
+        # simulated, so re-running the pathway skips them and retries only the timeline.
         print(
-            f"Warning: Could not create pathway emissions timeline: {exc}",
+            "State simulations completed, but the pathway emissions timeline could not be "
+            "created. The state years are recorded as simulated, so re-running the pathway "
+            "will skip them and retry the timeline.",
             flush=True,
         )
-        print(traceback.format_exc(), flush=True)
-        print(
-            "State simulations completed successfully. "
-            "The emissions timeline can be generated separately once the issue is resolved.",
-            flush=True,
-        )
+        raise
 
 
 if __name__ == "__main__":

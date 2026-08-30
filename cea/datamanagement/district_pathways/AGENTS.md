@@ -36,6 +36,15 @@ record_baked_state(locator, pathway_name="demo", year=2030, ...)
 collect_state_phase_status(locator, pathway_name="demo", year=2030, ...)
 ```
 
+### DON'T: Treat a `simulated` phase as proof that results exist on disk
+`collect_state_phase_status` judges phases from the recorded hashes only — never from disk.
+A state can read `simulated` with no `outputs/` folder (cleanup wipes it before a re-run
+that then fails). Check the folder before skipping a year:
+```python
+if phase == "simulated" and not stale and _has_simulation_outputs(locator, pathway, year):
+    skip(year)  # otherwise re-simulate: skipping yields a pathway with no results
+```
+
 ### DO: Print flushed progress hints from long-running pathway entrypoints
 ```python
 print(f"Starting pathway simulation for '{pathway_name}'.", flush=True)
