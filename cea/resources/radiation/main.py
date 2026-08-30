@@ -76,14 +76,31 @@ def read_surface_properties(locator: cea.inputlocator.InputLocator) -> pd.DataFr
     return surface_properties.set_index('name').round(decimals=2)
 
 
+def buildings_to_simulate(settings, zone_building_names) -> list[str]:
+    """The buildings from ``settings.buildings`` that exist in this scenario's zone.
+
+    BuildingsParameter silently drops names that are not in the current scenario, so a
+    selection saved against a different one arrives here as an empty list. Raising beats
+    "succeeding" having simulated nothing and letting demand fail later on the missing
+    radiation files.
+    """
+    names = [name for name in settings.buildings if name in zone_building_names]
+    if not names:
+        raise cea.ConfigError(
+            f"No buildings to simulate: nothing selected in `{settings.name}:buildings` "
+            f"exists in this scenario's zone ({len(zone_building_names)} buildings). "
+            f"Leave `{settings.name}:buildings` blank to simulate all of them."
+        )
+    return names
+
+
 def run_daysim_simulation(cea_daysim: CEADaySim, zone_building_names, locator, settings, geometry_pickle_dir, num_processes):
     weather_path = locator.get_weather_file()
     # check inconsistencies and replace by max value of weather file
     weatherfile = epwreader.epw_reader(weather_path)
     max_global = weatherfile['glohorrad_Whm2'].max()
 
-    list_of_building_names = [building_name for building_name in settings.buildings
-                              if building_name in zone_building_names]
+    list_of_building_names = buildings_to_simulate(settings, zone_building_names)
     # get chunks of buildings to iterate
     chunks = [list_of_building_names[i:i + settings.n_buildings_in_chunk] for i in
               range(0, len(list_of_building_names),
@@ -133,6 +150,9 @@ def main(config: cea.config.Configuration):
     #  reference case need to be provided here
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     migrate_void_deck_data(locator)
+    # Check the selection before cleanup_output_folder deletes the previous run's results:
+    # a misconfigured selection should cost a second, not the whole radiance setup below.
+    buildings_to_simulate(config.radiation, locator.get_zone_building_names())
     # Remove stale radiation outputs from a previous run
     from cea.utilities.output_cleanup import cleanup_output_folder
     cleanup_output_folder(locator.get_solar_radiation_folder())

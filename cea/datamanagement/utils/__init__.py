@@ -17,9 +17,11 @@ def migrate_void_deck_data(locator: InputLocator) -> None:
     """
 
     zone_gdf = gpd.read_file(locator.get_zone_geometry())
-    isin_zone = "void_deck" in zone_gdf.columns
 
-    if not isin_zone:
+    # Both branches must reach disk: consumers re-read zone.shp (radiation's
+    # geometry_generator indexes the column with no default), so an in-memory value alone
+    # is invisible to them.
+    if "void_deck" not in zone_gdf.columns:
         envelope_df = pd.read_csv(locator.get_building_architecture())
 
         if "void_deck" in envelope_df.columns:
@@ -31,11 +33,13 @@ def migrate_void_deck_data(locator: InputLocator) -> None:
             zone_gdf.to_file(locator.get_zone_geometry())
 
             print("Migrated void_deck data from envelope.csv to zone.shp.")
+            # Drop the source only once the destination is on disk.
             envelope_df.drop(columns=["void_deck"], inplace=True)
             envelope_df.to_csv(locator.get_building_architecture(), index=False)
 
         else:  # cannot find void_deck anywhere, just initialize it to 0
             zone_gdf["void_deck"] = 0
+            zone_gdf.to_file(locator.get_zone_geometry())
             warnings.warn(
                 "No void_deck data found in envelope.csv, setting to 0 in zone.shp"
             )
