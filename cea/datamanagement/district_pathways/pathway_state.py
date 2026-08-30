@@ -31,6 +31,8 @@ from cea.datamanagement.district_pathways.pathway_log import (
 )
 from cea.datamanagement.district_pathways.pathway_status import (
     collect_state_phase_status,
+    state_inputs_folder_exists,
+    state_outputs_folder_exists,
     record_baked_state,
     record_simulated_state,
 )
@@ -77,8 +79,15 @@ class DistrictStateYear:
             self.pathway_name, int(self.year),
         )
 
-    def exists_on_disk(self) -> bool:
-        return os.path.exists(self.state_folder())
+    def has_inputs_on_disk(self) -> bool:
+        return state_inputs_folder_exists(
+            self.main_locator, pathway_name=self.pathway_name, year=int(self.year)
+        )
+
+    def has_outputs_on_disk(self) -> bool:
+        return state_outputs_folder_exists(
+            self.main_locator, pathway_name=self.pathway_name, year=int(self.year)
+        )
 
     def read_signature_record(self) -> dict[str, Any] | None:
         path = self.signature_path()

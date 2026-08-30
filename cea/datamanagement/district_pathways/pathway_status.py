@@ -41,7 +41,7 @@ def write_state_status(
     return current
 
 
-def _state_inputs_folder_exists(
+def state_inputs_folder_exists(
     locator: InputLocator,
     *,
     pathway_name: str,
@@ -57,7 +57,7 @@ def _state_inputs_folder_exists(
     return os.path.isdir(InputLocator(state_folder).get_input_folder())
 
 
-def _state_outputs_folder_exists(
+def state_outputs_folder_exists(
     locator: InputLocator,
     *,
     pathway_name: str,
@@ -101,7 +101,7 @@ def record_baked_state(
     built_at: str,
     source_log_hash: str,
 ) -> dict[str, Any]:
-    if not _state_inputs_folder_exists(locator, pathway_name=pathway_name, year=year):
+    if not state_inputs_folder_exists(locator, pathway_name=pathway_name, year=year):
         raise FileNotFoundError(
             f"Cannot record baked state for missing inputs folder: {pathway_name} state_{int(year)}"
         )
@@ -129,7 +129,7 @@ def record_validated_state(
     validated_at: str,
     source_log_hash: str,
 ) -> dict[str, Any]:
-    if not _state_inputs_folder_exists(locator, pathway_name=pathway_name, year=year):
+    if not state_inputs_folder_exists(locator, pathway_name=pathway_name, year=year):
         raise FileNotFoundError(
             f"Cannot record validation for missing inputs folder: {pathway_name} state_{int(year)}"
         )
@@ -161,7 +161,7 @@ def record_simulated_state(
     # Mirrors the inputs guard on `record_baked_state`: a simulation record without results
     # behind it is the state `_collect_simulation_phase` has to defend against, so refuse to
     # create one in the first place.
-    if not _state_outputs_folder_exists(locator, pathway_name=pathway_name, year=year):
+    if not state_outputs_folder_exists(locator, pathway_name=pathway_name, year=year):
         raise FileNotFoundError(
             f"Cannot record simulation for a state with no outputs folder: "
             f"{pathway_name} state_{int(year)}"
@@ -268,7 +268,7 @@ def collect_state_phase_status(
         signature=signature,
         source_log_hash=source_log_hash,
         bake=bake,
-        has_outputs=_state_outputs_folder_exists(
+        has_outputs=state_outputs_folder_exists(
             locator, pathway_name=pathway_name, year=year
         ),
     )

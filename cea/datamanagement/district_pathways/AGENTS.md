@@ -8,6 +8,7 @@
 - `validate_pathway_log_data(config, pathway_name, log_data) -> dict[str, Any]` - Validate log/schema content without touching baked state folders.
 - `create_pathway_year(config, pathway_name, year) -> dict` - Validate whether a year already exists; do not create empty placeholders.
 - `delete_pathway(config, pathway_name) -> dict[str, Any]` - Delete one whole pathway folder, including saved states and state-status artefacts.
+- `clear_state(config, pathway_name, year, *, delete_inputs, delete_outputs) -> dict[str, Any]` - Clear one state year's data. `delete_outputs` alone removes the results and leaves the state baked. `delete_inputs` removes the whole state folder (results cannot outlive their scenario, and an orphaned folder fails the integrity check) plus the year's manual content in the log; a stock-only year keeps its timeline slot.
 - `get_pathway_overview(config) -> dict` - Lightweight multi-pathway lane data for the GUI.
 - `get_pathway_timeline(config, pathway_name) -> dict` - Active-pathway timeline rows with status, YAML preview, and validation.
 - `update_year_building_events(...) -> dict` - Save explicit building add/remove edits for one year.

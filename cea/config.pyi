@@ -858,6 +858,8 @@ class PathwayStateEditSection(Section):
     """Typed section for pathway-state-edit configuration"""
     existing_pathway_names: list[str]
     year_of_state: int
+    delete_inputs: bool
+    delete_outputs: bool
     buildings_to_construct: list[str]
     buildings_to_demolish: list[str]
     raw_yaml: Any
@@ -866,6 +868,10 @@ class PathwayStateEditSection(Section):
     def __getattr__(self, item: Literal["existing_pathway_names"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["year_of_state"]) -> int: ...
+    @overload
+    def __getattr__(self, item: Literal["delete_inputs"]) -> bool: ...
+    @overload
+    def __getattr__(self, item: Literal["delete_outputs"]) -> bool: ...
     @overload
     def __getattr__(self, item: Literal["buildings_to_construct"]) -> list[str]: ...
     @overload
