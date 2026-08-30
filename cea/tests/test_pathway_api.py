@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import shutil
 from pathlib import Path
 from uuid import uuid4
@@ -304,6 +305,14 @@ def test_validate_state_records_status_and_timeline_detects_log_drift(pathway_ap
         year=2030,
         built_at="2026-02-01T00:00:00",
         source_log_hash=source_hash,
+    )
+    # A simulated state has results on disk. collect_state_phase_status reports
+    # `not_simulated` without them, so the record alone is not enough to stand in for a run.
+    os.makedirs(
+        os.path.join(
+            locator.get_state_in_time_scenario_folder("demo", 2030), "outputs"
+        ),
+        exist_ok=True,
     )
     record_simulated_state(
         locator,
