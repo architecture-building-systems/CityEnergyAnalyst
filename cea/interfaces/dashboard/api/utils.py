@@ -4,6 +4,7 @@
 # Future phase (separate plan): PUT /projects/{id}/scenarios/{name}/... — requires a projects
 # table mapping project_id → path for both local and non-local modes. See AGENTS.md for details.
 
+import configparser
 import os
 from typing import Optional
 
@@ -186,6 +187,37 @@ def split_scenario_subpath(scenario_name: str, project: str) -> tuple:
     return project, scenario_name
 
 
+def _missing_source_database(p: cea.config.Parameter, config) -> str | None:
+    """The database file this parameter needs, if it is absent from the scenario.
+
+    A parameter declares its source with `.locator` (choice parameters read their options
+    from it) or with `.requires-database` (inputs that are only meaningful when that
+    database exists, e.g. a layer thickness beside a material dropdown). A scenario whose
+    database omits the file is a normal situation, not an error — the form drops those
+    inputs and says why, rather than failing to load at all.
+    """
+    if config is None:
+        return None
+    for option in ("locator", "requires-database"):
+        try:
+            locator_name = p.config.default_config.get(
+                p.section.name, f"{p.name}.{option}"
+            )
+        except (configparser.NoSectionError, configparser.NoOptionError):
+            continue
+        locator = cea.inputlocator.InputLocator(config.scenario)
+        method = getattr(locator, locator_name, None)
+        if method is None:
+            continue
+        try:
+            path = method()
+        except Exception:
+            continue
+        if not os.path.exists(path):
+            return path
+    return None
+
+
 def deconstruct_parameters(p: cea.config.Parameter, config=None):
     params = {'name': p.name, 'type': type(p).__name__, 'nullable': p.nullable, 'help': p.help}
     try:
@@ -197,8 +229,28 @@ def deconstruct_parameters(p: cea.config.Parameter, config=None):
         print(e)
         params["value"] = ""
 
+    missing_database = _missing_source_database(p, config)
+    if missing_database is not None:
+        # The form hides these inputs and reports the missing file once, instead of the
+        # whole tool-properties request failing on the first unreadable database.
+        params["unavailable"] = {
+            "reason": f"{os.path.basename(missing_database)} is not in this scenario's database.",
+            "missing_file": missing_database,
+        }
+
     if isinstance(p, cea.config.ChoiceParameterBase):
-        params['choices'] = p._choices
+        if missing_database is not None:
+            # Already explained above; reading the options would just fail again.
+            params['choices'] = []
+        else:
+            try:
+                params['choices'] = p._choices
+            except Exception as e:
+                logger.warning("Could not build choices for %s: %s", p.fqname, e)
+                params['choices'] = []
+                params["unavailable"] = {
+                    "reason": f"Options for this input could not be read: {e}"
+                }
 
     if isinstance(p, cea.config.WeatherPathParameter):
         locator = cea.inputlocator.InputLocator(config.scenario)
