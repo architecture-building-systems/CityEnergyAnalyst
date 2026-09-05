@@ -53,4 +53,5 @@ cea.api.pathway_validate_all_states(...)
 ## Related Files
 - `test_dashboard_bootstrap.py` - Dashboard preparation and launcher ordering coverage.
 - `test_pathway_api.py` - API-level coverage for overview rows, stock/manual/mixed classification, editor endpoints, and stale-status detection.
+- `test_pathway_envelope_bake.py` - Envelope row handling when baking a state from a template: the U/GHG cache must be dropped when material layers change (issue #4059), kept when they don't.
 - `paths.py` - Shared repo/examples/workflows filesystem anchors; use instead of `__file__`-relative math.

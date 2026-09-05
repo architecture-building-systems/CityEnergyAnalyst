@@ -1257,24 +1257,34 @@ def _apply_state_construction_changes(
                         db_modified += 1
 
                 if db_modified:
-                    if is_material_promotion:
-                        # Clear stale direct-property cache; values will be re-derived from
-                        # materials by Envelope.from_locator on next load.
-                        suf = envelope_lookup._SUFFIX[envelope_db_name]
-                        derived_cols = (
-                            "U_base" if envelope_db_name == "floor" else f"U_{suf}",
-                            f"GHG_{suf}_kgCO2m2",
-                            f"GHG_biogenic_{suf}_kgCO2m2",
-                        )
-                        for c in derived_cols:
-                            if c in new_row.index:
-                                new_row[c] = None
-                        print(
-                            f"  Row '{code_new}' promoted to material-based from direct-property "
-                            f"source '{code_current}'; cleared stale {', '.join(derived_cols)} "
-                            f"(will be re-derived from materials on next load).",
-                            flush=True,
-                        )
+                    if material_fields_in_mod:
+                        # The copied cache describes the source's layers, not the new ones.
+                        # Blank it so the loader re-derives from materials — it rejects any
+                        # row whose cache has drifted from its own layers (issue #4059).
+                        derived_cols = [
+                            envelope_lookup._col(envelope_db_name, f)
+                            for f in ("U", "GHG_kgCO2m2", "GHG_biogenic_kgCO2m2")
+                        ]
+                        # ...but keep anything the recipe set itself: materials plus an
+                        # explicit U means that U.
+                        explicitly_set = {
+                            envelope_lookup._col(envelope_db_name, field)
+                            for field, value in modifications.items()
+                            if value is not None and field not in ALL_MATERIAL_FIELDS
+                        }
+                        cleared = [
+                            c
+                            for c in derived_cols
+                            if c in new_row.index and c not in explicitly_set
+                        ]
+                        if cleared:
+                            new_row[cleared] = None
+                            print(
+                                f"  Row '{code_new}' materials changed from source "
+                                f"'{code_current}'; cleared stale {', '.join(cleared)} "
+                                f"(will be re-derived from materials on next load).",
+                                flush=True,
+                            )
 
                     # Only validate 3-layer topology when the new row claims a material set;
                     # pure direct-property modifications must not be required to pass it.
