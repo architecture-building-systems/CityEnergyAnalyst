@@ -89,7 +89,15 @@ class Envelope(BaseAssemblyDatabase):
         }
 
     @classmethod
-    def from_locator(cls, locator: InputLocator):
+    def from_locator(cls, locator: InputLocator, strict: bool = True):
+        """Read the envelope tables.
+
+        With ``strict`` (the default) a row that neither derives from materials nor carries the
+        direct properties, or whose cached values contradict its materials, raises. The
+        database editor reads with ``strict=False``: refusing to load is right for a
+        simulation, but it would leave the user unable to open the only tool that can fix the
+        offending row. The problems are still reported, by the database verifier.
+        """
         frames = cls._read_mapping(locator, cls._locator_mapping())
 
         # Record original columns so saving can preserve the on-disk schema.
@@ -363,6 +371,11 @@ class Envelope(BaseAssemblyDatabase):
                     if derived is not None:
                         df.loc[code_str, col] = derived
 
+            if not strict:
+                # Leave the offending rows exactly as they are on disk: no raise, so the editor
+                # can open a database that needs fixing. The verifier still reports them.
+                return df
+
             if drift_errors:
                 raise ValueError(
                     f"Envelope cross-check failed for {kind} ({len(drift_errors)} row(s) out of tolerance):\n"
@@ -469,9 +482,9 @@ class Assemblies(BaseDatabaseCollection):
     supply: Supply
 
     @classmethod
-    def from_locator(cls, locator: InputLocator):
+    def from_locator(cls, locator: InputLocator, strict: bool = True):
         return cls(
-            envelope=Envelope.from_locator(locator),
+            envelope=Envelope.from_locator(locator, strict=strict),
             hvac=HVAC.from_locator(locator),
             supply=Supply.from_locator(locator)
         )

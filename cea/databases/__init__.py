@@ -118,11 +118,16 @@ class CEADatabase:
         return schema
 
     @classmethod
-    def from_locator(cls, locator: InputLocator) -> CEADatabase:
-        """Initialize the database by reading CSV files using the provided locator."""
+    def from_locator(cls, locator: InputLocator, strict: bool = True) -> CEADatabase:
+        """Initialize the database by reading CSV files using the provided locator.
+
+        ``strict=False`` loads envelope rows that fail their consistency checks instead of
+        raising, so the editor can open a database that needs fixing. See
+        ``Envelope.from_locator``.
+        """
         try:
             archetypes = Archetypes.from_locator(locator)
-            assemblies = Assemblies.from_locator(locator)
+            assemblies = Assemblies.from_locator(locator, strict=strict)
             components = Components.from_locator(locator)
         except Exception as e:
             raise CEADatabaseException(f"Failed to initialize CEA database: {e}") from e
