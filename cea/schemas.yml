@@ -2123,6 +2123,145 @@ get_costs_whatif_components_file:
         min: 0.0
   used_by: []
 
+get_database_components_materials:
+  created_by:
+  - database_helper
+  file_path: inputs/database/COMPONENTS/MATERIALS/MATERIALS.csv
+  file_type: csv
+  schema:
+    columns:
+      ID:
+        description: KBOB material identifier, e.g. 7.001. Dotted codes, not a number.
+        type: string
+        unit: NA
+      UUID:
+        description: KBOB record identifier.
+        type: string
+        unit: NA
+      name:
+        description: Material name. Referenced by material_name_1..3 in the ENVELOPE assemblies.
+        primary: true
+        type: string
+        unit: NA
+      name_KBOB:
+        description: Material name as published by KBOB (German).
+        type: string
+        unit: NA
+      ID_recycling:
+        description: KBOB identifier of the recycling process, e.g. 91.175.01.
+        type: string
+        unit: NA
+      recycling_method:
+        description: End-of-life treatment assumed for the recycling figures.
+        type: string
+        unit: NA
+      density:
+        description: Bulk density [kg/m3]. Some entries are ranges, e.g. "1'400 - 1'500", so this is stored as text.
+        type: string
+        unit: '[kg/m3]'
+      unit:
+        description: Reference unit for the impact figures.
+        type: string
+        unit: NA
+      thermal_conductivity:
+        description: Thermal conductivity, used to derive U-values.
+        type: float
+        unit: '[W/mK]'
+      thermal_conductivity_source:
+        description: Source of the thermal conductivity value, e.g. a SIA standard.
+        type: string
+        unit: NA
+      UBP_total:
+        description: Total environmental impact points (UBP), the Swiss ecological scarcity indicator.
+        type: float
+        unit: '[UBP]'
+      UBP_production:
+        description: Environmental impact points (UBP) from production.
+        type: float
+        unit: '[UBP]'
+      UBP_recycling:
+        description: Environmental impact points (UBP) from recycling.
+        type: float
+        unit: '[UBP]'
+      overall_energy_total:
+        description: Total primary energy demand, renewable and non-renewable.
+        type: float
+        unit: '[MJ]'
+      overall_energy_production:
+        description: Primary energy demand from production.
+        type: float
+        unit: '[MJ]'
+      overall_energy_production_in_process:
+        description: Primary energy demand from production, process share.
+        type: float
+        unit: '[MJ]'
+      overall_energy_prodution_in_material:
+        description: Primary energy demand from production, material share. Column name misspelt in the source data.
+        type: float
+        unit: '[MJ]'
+      overall_recycling:
+        description: Primary energy demand from recycling.
+        type: float
+        unit: '[MJ]'
+      renewable_energy_total:
+        description: Renewable primary energy demand.
+        type: float
+        unit: '[MJ]'
+      renewable_energy_production:
+        description: Renewable primary energy demand from production.
+        type: float
+        unit: '[MJ]'
+      renewable_energy_production_in_process:
+        description: Renewable primary energy demand from production, process share.
+        type: float
+        unit: '[MJ]'
+      renewable_energy_prodution_in_material:
+        description: Renewable primary energy demand from production, material share. Column name misspelt in the source data.
+        type: float
+        unit: '[MJ]'
+      renewable_recycling:
+        description: Renewable primary energy demand from recycling.
+        type: float
+        unit: '[MJ]'
+      unrenewable_energy_total:
+        description: Non-renewable primary energy demand.
+        type: float
+        unit: '[MJ]'
+      unrenewable_energy_production:
+        description: Non-renewable primary energy demand from production.
+        type: float
+        unit: '[MJ]'
+      unrenewable_energy_production_in_process:
+        description: Non-renewable primary energy demand from production, process share.
+        type: float
+        unit: '[MJ]'
+      unrenewable_energy_prodution_in_material:
+        description: Non-renewable primary energy demand from production, material share. Column name misspelt in the source data.
+        type: float
+        unit: '[MJ]'
+      unrenewable_recycling:
+        description: Non-renewable primary energy demand from recycling.
+        type: float
+        unit: '[MJ]'
+      GHG_emission_total:
+        description: Total greenhouse gas emissions, used to derive embodied carbon.
+        type: float
+        unit: '[kgCO2eq/kg]'
+      GHG_emission_production:
+        description: Greenhouse gas emissions from production.
+        type: float
+        unit: '[kgCO2eq/kg]'
+      GHG_emission_recycling:
+        description: Greenhouse gas emissions from recycling.
+        type: float
+        unit: '[kgCO2eq/kg]'
+      biogenic_carbon_in_product:
+        description: Biogenic carbon stored in the product.
+        type: float
+        unit: '[kgCO2eq/kg]'
+  used_by:
+  - emissions
+
 get_heat_rejection_buildings:
   created_by:
   - anthropogenic_heat

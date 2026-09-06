@@ -36,6 +36,7 @@ CONVERSION_COMPONENTS = ['ABSORPTION_CHILLERS', 'BOILERS', 'BORE_HOLES', 'COGENE
                          'THERMAL_ENERGY_STORAGES', 'UNITARY_AIR_CONDITIONERS', 'VAPOR_COMPRESSION_CHILLERS'
                          ]
 DISTRIBUTION_COMPONENTS = ['THERMAL_GRID']
+MATERIALS_COMPONENTS = ['MATERIALS']  # single sheet, kept as a list for dict_ASSEMBLIES_COMPONENTS
 dict_assembly = {'ENVELOPE_MASS': 'type_mass', 'ENVELOPE_TIGHTNESS': 'type_leak', 'ENVELOPE_FLOOR': 'type_floor',
                  'ENVELOPE_WALL': 'type_wall', 'ENVELOPE_WINDOW': 'type_win', 'ENVELOPE_SHADING': 'type_shade',
                  'ENVELOPE_ROOF': 'type_roof', 'HVAC_CONTROLLER': 'hvac_type_ctrl', 'HVAC_HOTWATER': 'hvac_type_dhw',
@@ -46,7 +47,8 @@ dict_assembly = {'ENVELOPE_MASS': 'type_mass', 'ENVELOPE_TIGHTNESS': 'type_leak'
 ASSEMBLIES_FOLDERS = ['ENVELOPE', 'HVAC', 'SUPPLY']
 COMPONENTS_FOLDERS = ['CONVERSION', 'DISTRIBUTION', 'FEEDSTOCKS']
 dict_ASSEMBLIES_COMPONENTS = {'ENVELOPE': ENVELOPE_ASSEMBLIES, 'HVAC': HVAC_ASSEMBLIES, 'SUPPLY': SUPPLY_ASSEMBLIES,
-                              'CONVERSION': CONVERSION_COMPONENTS, 'DISTRIBUTION': DISTRIBUTION_COMPONENTS, 'FEEDSTOCKS': ['ENERGY_CARRIERS']}
+                              'CONVERSION': CONVERSION_COMPONENTS, 'DISTRIBUTION': DISTRIBUTION_COMPONENTS, 'FEEDSTOCKS': ['ENERGY_CARRIERS'],
+                              'MATERIALS': MATERIALS_COMPONENTS}
 mapping_dict_db_item_to_schema_locator = {'CONSTRUCTION_TYPES': 'get_database_archetypes_construction_type',
                                           'USE_TYPES': 'get_database_archetypes_use_type',
                                           'SCHEDULES_LIBRARY': 'get_database_archetypes_schedules',
@@ -90,6 +92,7 @@ mapping_dict_db_item_to_schema_locator = {'CONSTRUCTION_TYPES': 'get_database_ar
                                           'COAL': 'get_database_components_feedstocks_coal',
                                           'DRYBIOMASS': 'get_database_components_feedstocks_drybiomass',
                                           'ENERGY_CARRIERS': 'get_database_components_feedstocks_energy_carriers',
+                                          'MATERIALS': 'get_database_components_materials',
                                           'GRID': 'get_database_components_feedstocks_grid',
                                           'HYDROGEN': 'get_database_components_feedstocks_hydrogen',
                                           'NATURALGAS': 'get_database_components_feedstocks_naturalgas',
@@ -111,6 +114,7 @@ mapping_dict_db_item_to_id_column = {'CONSTRUCTION_TYPES': 'const_type',
                                      'FEEDSTOCKS': 'hour',
                                      'FEEDSTOCKS_LIBRARY': 'hour',
                                      'ENERGY_CARRIERS': 'code',
+                                     'MATERIALS': 'name',
                                      }
 
 dict_code_to_name = {'CH':'VAPOR_COMPRESSION_CHILLERS',
@@ -168,7 +172,8 @@ def path_to_db_file_4(scenario, item, sheet_name=None):
         "CONVERSION": os.path.join(base_path, "COMPONENTS", "CONVERSION"),
         "DISTRIBUTION": os.path.join(base_path, "COMPONENTS", "DISTRIBUTION"),
         "FEEDSTOCKS": os.path.join(base_path, "COMPONENTS", "FEEDSTOCKS"),
-        "FEEDSTOCKS_LIBRARY": os.path.join(base_path, "COMPONENTS", "FEEDSTOCKS", "FEEDSTOCKS_LIBRARY")
+        "FEEDSTOCKS_LIBRARY": os.path.join(base_path, "COMPONENTS", "FEEDSTOCKS", "FEEDSTOCKS_LIBRARY"),
+        "MATERIALS": os.path.join(base_path, "COMPONENTS", "MATERIALS"),
     }
 
     # Handle special sheet names for specific categories
@@ -806,6 +811,21 @@ def cea4_verify_db(scenario, verbose=False) -> Dict[str, List[str]]:
                 if list_issues_against_csv_distribution:
                     print('! Check value(s) in THERMAL_GRID.csv:')
                     print("\n".join(f"  {item}" for item in list_issues_against_csv_distribution))
+
+    #6b. verify columns and values in MATERIALS.csv, when the scenario has one.
+    # MATERIALS is deliberately absent from COMPONENTS_FOLDERS: only the CH database ships it,
+    # so requiring it would report every DE/SG database as incomplete. Check it when present.
+    if os.path.isfile(path_to_db_file_4(scenario, 'MATERIALS', 'MATERIALS')):
+        missing_columns, issues = verify_file_against_schema_4_db(
+            scenario, 'MATERIALS', sheet_name='MATERIALS')
+        add_values_to_dict(dict_missing_db, 'MATERIALS', missing_columns)
+        add_values_to_dict(dict_missing_db, 'MATERIALS', issues)
+        if verbose:
+            if missing_columns:
+                print('! Ensure column(s) are present in MATERIALS.csv: {missing_columns}.'.format(missing_columns=', '.join(map(str, missing_columns))))
+            if issues:
+                print('! Check value(s) in MATERIALS.csv:')
+                print("\n".join(f"  {item}" for item in issues))
 
     #7. verify columns and values in .csv files for components - feedstocks
     if not dict_missing_db['FEEDSTOCKS']:
