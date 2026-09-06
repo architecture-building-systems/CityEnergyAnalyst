@@ -426,8 +426,26 @@ class data_processor:
 
         return normaliser_m2
 
+    def _plotted_entity_names(self) -> list:
+        """Entity names as they appear in the plotted results ('X'), matching the
+        derivation `process_architecture_data` already uses for the same purpose.
+
+        In what-if mode with more than one run, results carry a `<whatif_name>/<building>`
+        prefix (see a_data_loader.py) that `self.buildings` does not -- using `self.buildings`
+        directly here would build a sorting key indexed by names 'X' never matches.
+        """
+        if self.whatif_names and self.df_summary_data is not None and 'name' in self.df_summary_data.columns:
+            return list(dict.fromkeys(self.df_summary_data['name'].tolist()))
+        return list(self.buildings)
+
+    @staticmethod
+    def _base_building_name(entity_name):
+        """Strip a what-if `<whatif_name>/` prefix, if present, to recover the zone.shp
+        name that df_architecture_data is keyed by."""
+        return entity_name.split('/', 1)[-1]
+
     def _architecture_sorting_key(self, column):
-        """Sorting key taken from one architecture column, indexed by self.buildings.
+        """Sorting key taken from one architecture column, indexed by plotted entity name.
 
         `reindex` rather than `.loc[...]`: the entities being plotted come from the
         results, which legitimately contain rows with no architecture record -- district
@@ -439,10 +457,16 @@ class data_processor:
                 f"Cannot sort by '{self.x_sorted_by}': no architecture data was loaded. "
                 "Expected the selected-buildings file in the scenario's export/plots folder."
             )
-        return (self.df_architecture_data.set_index('name')[column]
-                .reindex(self.buildings).rename('sorting_key').to_frame())
+        entities = self._plotted_entity_names()
+        base_names = [self._base_building_name(e) for e in entities]
+        values = self.df_architecture_data.set_index('name')[column].reindex(base_names)
+        return pd.DataFrame(
+            {'sorting_key': values.to_numpy()}, index=pd.Index(entities, name='name')
+        )
 
     def process_sorting_key(self, df_to_plotly=None):
+        """Build the (name-indexed) sorting key `sort_df_by_sorting_key` maps 'X' through,
+        for the selected `self.x_sorted_by` option."""
         if self.x_sorted_by == 'default' and df_to_plotly is not None and 'X' in df_to_plotly.columns:
             # Sort by total bar height (sum of all numeric y-columns per building)
             numeric_cols = df_to_plotly.select_dtypes(include='number').columns.tolist()
@@ -450,9 +474,10 @@ class data_processor:
             sorting_key = totals.to_frame(name='sorting_key')
             sorting_key.index.name = 'name'
         elif self.x_sorted_by in ('default', 'building_name'):
-            # Keep self.buildings in its current order
-            sorting_key = pd.DataFrame({'sorting_key': range(len(self.buildings))},
-                                       index=pd.Index(self.buildings, name='name'))
+            # Keep the plotted entities in their current order (prefixed in what-if mode).
+            entities = self._plotted_entity_names()
+            sorting_key = pd.DataFrame({'sorting_key': range(len(entities))},
+                                       index=pd.Index(entities, name='name'))
         elif self.x_sorted_by in SORTING_KEY_COLUMNS:
             sorting_key = self._architecture_sorting_key(SORTING_KEY_COLUMNS[self.x_sorted_by])
         else:

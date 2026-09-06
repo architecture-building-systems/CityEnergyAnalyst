@@ -278,6 +278,8 @@ def process_data_by_grouping(detailed_df, architecture_df, x_to_plot, y_cost_cat
         unnormalisable: list[str] = []
 
         def _normalise(value, normaliser, name):
+            """Divide `value` by `normaliser`, or NaN it (and record `name` as
+            unnormalisable) when the normaliser is missing or not positive."""
             if normaliser is None or not normaliser > 0:
                 if name not in unnormalisable:
                     unnormalisable.append(name)
@@ -286,12 +288,14 @@ def process_data_by_grouping(detailed_df, architecture_df, x_to_plot, y_cost_cat
 
         # Get normalisation factors
         if x_to_plot in ['by_scale', 'by_energy_carrier', 'by_operation_service', 'by_component_type']:
-            # For aggregated views, use total GFA/Af across all buildings
-            # Divide all cost columns by total area
-            for col in selected_cost_cols:
-                df_agg[col] = df_agg[col].apply(
-                    lambda v: _normalise(v, total_area, 'all buildings')
-                )
+            # For aggregated views, total_area is one scalar for the whole block (not
+            # per-row like by_building_and_network below), so the normalisability check
+            # only needs to run once rather than once per cell via `_normalise`.
+            if total_area is None or not total_area > 0:
+                unnormalisable.append('all buildings')
+                df_agg[selected_cost_cols] = float('nan')
+            else:
+                df_agg[selected_cost_cols] = df_agg[selected_cost_cols] / total_area
 
         elif x_to_plot == 'by_building_and_network':
             # For building/network view, normalise per building/network
