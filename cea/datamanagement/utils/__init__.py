@@ -37,7 +37,7 @@ def migrate_void_deck_data(locator: InputLocator) -> None:
             envelope_df.drop(columns=["void_deck"], inplace=True)
             envelope_df.to_csv(locator.get_building_architecture(), index=False)
 
-        else:  # cannot find void_deck anywhere, just initialize it to 0
+        else:  # cannot find void_deck anywhere, just initialise it to 0
             zone_gdf["void_deck"] = 0
             zone_gdf.to_file(locator.get_zone_geometry())
             warnings.warn(

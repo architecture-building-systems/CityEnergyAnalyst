@@ -326,6 +326,8 @@ def sensor_generate_cea_daysim(building_names, locator, grid_size: GridSize, geo
 
 
 def run_daysim_sensor_generate(zone_building_names, locator, settings, geometry_pickle_dir, num_processes):
+    """Generate DAYSIM radiation sensors for the selected buildings
+    (`buildings_to_simulate`), one building per chunk."""
     list_of_building_names = buildings_to_simulate(settings, zone_building_names)
     # get chunks of buildings to iterate
     n_buildings_in_chunk = 1
@@ -449,6 +451,9 @@ def check_os():
         raise ValueError("Intel Macs are not supported.")
 
 def main(config):
+    """CRAX radiation entry point: validate the building selection up front (before
+    cleaning previous outputs or paying for geometry setup), then run the CRAX radiation
+    workflow for every selected building."""
     check_os()
 
     print("Creating building geometry data CSV file for CRAX")
