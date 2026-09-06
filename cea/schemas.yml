@@ -2472,6 +2472,10 @@ get_database_assemblies_envelope_floor:
         type: string
         unit: NA
         nullable: true
+        choice:
+          lookup:
+            path: get_database_components_materials
+            column: name
       thickness_1_m:
         description: Layer 1 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused.
         type: float
@@ -2483,6 +2487,10 @@ get_database_assemblies_envelope_floor:
         type: string
         unit: NA
         nullable: true
+        choice:
+          lookup:
+            path: get_database_components_materials
+            column: name
       thickness_2_m:
         description: Layer 2 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused.
         type: float
@@ -2494,6 +2502,10 @@ get_database_assemblies_envelope_floor:
         type: string
         unit: NA
         nullable: true
+        choice:
+          lookup:
+            path: get_database_components_materials
+            column: name
       thickness_3_m:
         description: Layer 3 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused.
         type: float
@@ -2570,6 +2582,10 @@ get_database_assemblies_envelope_roof:
         type: string
         unit: NA
         nullable: true
+        choice:
+          lookup:
+            path: get_database_components_materials
+            column: name
       thickness_1_m:
         description: Layer 1 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused.
         type: float
@@ -2581,6 +2597,10 @@ get_database_assemblies_envelope_roof:
         type: string
         unit: NA
         nullable: true
+        choice:
+          lookup:
+            path: get_database_components_materials
+            column: name
       thickness_2_m:
         description: Layer 2 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused.
         type: float
@@ -2592,6 +2612,10 @@ get_database_assemblies_envelope_roof:
         type: string
         unit: NA
         nullable: true
+        choice:
+          lookup:
+            path: get_database_components_materials
+            column: name
       thickness_3_m:
         description: Layer 3 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused.
         type: float
@@ -2743,6 +2767,10 @@ get_database_assemblies_envelope_wall:
         type: string
         unit: NA
         nullable: true
+        choice:
+          lookup:
+            path: get_database_components_materials
+            column: name
       thickness_1_m:
         description: Layer 1 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused.
         type: float
@@ -2754,6 +2782,10 @@ get_database_assemblies_envelope_wall:
         type: string
         unit: NA
         nullable: true
+        choice:
+          lookup:
+            path: get_database_components_materials
+            column: name
       thickness_2_m:
         description: Layer 2 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused.
         type: float
@@ -2765,6 +2797,10 @@ get_database_assemblies_envelope_wall:
         type: string
         unit: NA
         nullable: true
+        choice:
+          lookup:
+            path: get_database_components_materials
+            column: name
       thickness_3_m:
         description: Layer 3 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused.
         type: float
