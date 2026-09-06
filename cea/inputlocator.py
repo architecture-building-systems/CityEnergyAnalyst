@@ -67,6 +67,9 @@ class InputLocator(object):
 
     # SCENARIO
     def __init__(self, scenario, plugins=None):
+        """Bind this locator to `scenario`'s folder and wrap every schema-declared locator
+        method for read()/write() access. The temporary-file directory is not created here;
+        see `get_temporary_folder`."""
         if not plugins:
             plugins = []
         self.scenario = scenario
@@ -76,8 +79,10 @@ class InputLocator(object):
         self.plugins = plugins
         self.optimization_run = None
 
-        self._temp_directory = tempfile.mkdtemp()
-        atexit.register(self._cleanup_temp_directory)
+        # Created lazily (see get_temporary_folder) -- most locators never touch it, and
+        # mkdtemp()/atexit.register() on every one of the ~200+ construction sites left
+        # orphaned temp directories and an ever-growing atexit list for the process lifetime.
+        self.__temp_directory = None
 
     def __getstate__(self):
         """Make sure we can pickle an InputLocator..."""
@@ -86,10 +91,12 @@ class InputLocator(object):
             "db_path": self.db_path,
             "weather_path": self.weather_path,
             "plugins": [str(p) for p in self.plugins],
-            "_temp_directory": self._temp_directory
+            "_temp_directory": self.__temp_directory
         }
 
     def __setstate__(self, state):
+        """Restore an unpickled InputLocator, re-registering temp-directory cleanup if the
+        pickled instance had already created one (see `get_temporary_folder`)."""
         from cea.plugin import instantiate_plugin
 
         self.scenario = state["scenario"]
@@ -97,12 +104,15 @@ class InputLocator(object):
         self.weather_path = state["weather_path"]
         self.plugins = [instantiate_plugin(plugin_fqname) for plugin_fqname in state["plugins"]]
         self._wrap_locator_methods(self.plugins)
-        self._temp_directory = state["_temp_directory"]
+        self.__temp_directory = state["_temp_directory"]
+        if self.__temp_directory is not None:
+            atexit.register(self._cleanup_temp_directory)
 
     def _cleanup_temp_directory(self):
-        # Cleanup the temporary directory when the object is destroyed
-        if os.path.exists(self._temp_directory):
-            shutil.rmtree(self._temp_directory)
+        """atexit callback: remove this locator's temporary directory, if one was ever
+        created (see `get_temporary_folder`)."""
+        if self.__temp_directory is not None and os.path.exists(self.__temp_directory):
+            shutil.rmtree(self.__temp_directory)
 
     def _wrap_locator_methods(self, plugins):
         """
@@ -170,6 +180,10 @@ class InputLocator(object):
     def get_input_folder(self):
         """Returns the inputs folder of a scenario"""
         return os.path.join(self.scenario, "inputs")
+
+    def get_output_folder(self):
+        """Returns the outputs folder of a scenario"""
+        return os.path.join(self.scenario, "outputs")
 
     def get_export_folder(self):
         """Returns the export folder of a scenario"""
@@ -2223,8 +2237,16 @@ class InputLocator(object):
 
     # OTHER
     def get_temporary_folder(self):
-        """Temporary folder as returned by `tempfile`."""
-        return self._temp_directory
+        """Temporary folder as returned by `tempfile`, created on first use.
+
+        Deferred rather than created in `__init__`: most locators never call this, and
+        eagerly creating one per instance leaked a directory plus a permanent
+        `atexit` callback for every one of the many `InputLocator` instantiations
+        throughout a run."""
+        if self.__temp_directory is None:
+            self.__temp_directory = tempfile.mkdtemp()
+            atexit.register(self._cleanup_temp_directory)
+        return self.__temp_directory
 
     def get_temporary_file(self, filename):
         """Returns the path to a file in the temporary folder with the name `filename`"""
