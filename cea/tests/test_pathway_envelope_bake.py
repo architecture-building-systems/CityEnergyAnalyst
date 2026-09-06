@@ -81,7 +81,7 @@ def baked_state(monkeypatch):
                 "GHG_emission_total": 0.5,
                 "GHG_emission_production": 0.4,
                 "GHG_emission_recycling": 0.1,
-                "biogenic_carbon_in_product": 0.05,
+                "biogenic_carbon_in_product": -0.05,
             }
             for name, conductivity in (("brick", 0.6), ("insulation", 0.04), ("plaster", 0.8))
         ],
@@ -104,7 +104,7 @@ def baked_state(monkeypatch):
             "Service_Life_roof": 40,
             "U_roof": DERIVED_U,
             "GHG_roof_kgCO2m2": DERIVED_GHG,
-            "GHG_biogenic_roof_kgCO2m2": 16.0,  # 320 kg/m2 x 0.05
+            "GHG_biogenic_roof_kgCO2m2": -16.0,  # 320 kg/m2 x -0.05
         }],
     )
 

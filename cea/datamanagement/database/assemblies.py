@@ -216,22 +216,25 @@ class Envelope(BaseAssemblyDatabase):
 
         CROSS_CHECK_REL_TOLERANCE = 0.01  # 1% drift between materials-derived and on-disk
 
-        def _row_has_complete_material_set(row: pd.Series) -> bool:
-            """A row is material-complete iff all 3 layers have both name and thickness,
-            zero-thickness slots are allowed (with empty name) for up to 2 layers."""
-            non_zero_count = 0
+        def _is_blank_name(name: Any) -> bool:
+            return name is None or pd.isna(name) or str(name).strip() == ""
+
+        def _row_has_usable_material_layer(row: pd.Series) -> bool:
+            """A row is usable iff at least one layer pairs a material name with a
+            positive thickness. A slot with no thickness, or a thickness of zero, is unused --
+            the remaining slots do not have to be filled in. A positive thickness with no
+            material name is malformed, not unused: silently dropping that layer would
+            understate the construction.
+            """
+            usable_layers = 0
             for i in (1, 2, 3):
-                name = row.get(f"material_name_{i}")
-                thickness = row.get(f"thickness_{i}_m")
-                t = _to_float(thickness)
-                if t is None:
+                t = _to_float(row.get(f"thickness_{i}_m"))
+                if t is None or t <= 0:
+                    continue
+                if _is_blank_name(row.get(f"material_name_{i}")):
                     return False
-                if t > 0:
-                    if pd.isna(name) or name is None or str(name).strip() == "":
-                        return False
-                    non_zero_count += 1
-                # t == 0 is allowed regardless of name
-            return non_zero_count >= 1
+                usable_layers += 1
+            return usable_layers >= 1
 
         def _row_has_complete_direct_set(row: pd.Series, kind: str) -> bool:
             # Biogenic carbon was added after the rest of the legacy schema; v3 datasets
@@ -251,12 +254,10 @@ class Envelope(BaseAssemblyDatabase):
             for i in (1, 2, 3):
                 name = row.get(f"material_name_{i}")
                 thickness = _to_float(row.get(f"thickness_{i}_m"))
-                if thickness is None:
-                    return None
-                if thickness == 0:
-                    # Zero-thickness slot: contributes nothing; skip joining
+                if thickness is None or thickness <= 0:
+                    # Unused slot (blank or zero thickness): contributes nothing; skip joining
                     continue
-                if pd.isna(name) or name is None:
+                if _is_blank_name(name):
                     return None
                 kb_match = material_db[material_db["name"] == name]
                 if kb_match.empty:
@@ -292,10 +293,13 @@ class Envelope(BaseAssemblyDatabase):
             df = df.copy()
             derived_cols = DERIVED_COLS_BY_KIND[kind]
 
-            # Make sure derived columns exist so downstream readers never KeyError.
+            # Make sure derived columns exist so downstream readers never KeyError. Hold them
+            # as float: a column read as all-zero ints cannot take a derived value in place.
             for c in derived_cols:
                 if c not in df.columns:
                     df[c] = None
+                else:
+                    df[c] = pd.to_numeric(df[c], errors="coerce").astype(float)
 
             # Make sure material columns exist (as object/None) so per-row checks don't KeyError.
             for c in MATERIAL_COLS:
@@ -307,7 +311,7 @@ class Envelope(BaseAssemblyDatabase):
 
             for code, row in df.iterrows():
                 code_str = str(code)
-                has_materials = _row_has_complete_material_set(row)
+                has_materials = _row_has_usable_material_layer(row)
                 has_direct = _row_has_complete_direct_set(row, kind)
 
                 if not has_materials and not has_direct:
@@ -335,22 +339,24 @@ class Envelope(BaseAssemblyDatabase):
                 ghg_total, _ghg_prod, _ghg_recyc, ghg_bio = _calc_ghg(mats)
                 derived_values = (u_derived, ghg_total, ghg_bio)
 
-                # Cross-check against on-disk values when present.
-                if has_direct:
-                    for col, derived in zip(derived_cols, derived_values):
-                        if derived is None:
-                            continue
-                        disk = _to_float(row.get(col))
-                        if disk is None:
-                            continue
-                        drift = _relative_drift(disk, derived)
-                        if drift > CROSS_CHECK_REL_TOLERANCE:
-                            drift_errors.append(
-                                f"  {envelope_ref} row '{code_str}': column '{col}' "
-                                f"on-disk={disk:.4g} but derived-from-materials={derived:.4g} "
-                                f"(relative drift={drift * 100:.2f}%, tolerance {CROSS_CHECK_REL_TOLERANCE * 100:.1f}%). "
-                                f"Materials are canonical. Refresh the on-disk cache or correct the material composition."
-                            )
+                # Cross-check every on-disk value that is present, column by column. A row
+                # that fills in only some of the direct properties is not a complete direct
+                # set, but the values it does carry are still claims about this construction
+                # -- comparing only complete sets would let them be overwritten in silence.
+                for col, derived in zip(derived_cols, derived_values):
+                    if derived is None:
+                        continue
+                    disk = _to_float(row.get(col))
+                    if disk is None:
+                        continue
+                    drift = _relative_drift(disk, derived)
+                    if drift > CROSS_CHECK_REL_TOLERANCE:
+                        drift_errors.append(
+                            f"  {envelope_ref} row '{code_str}': column '{col}' "
+                            f"on-disk={disk:.4g} but derived-from-materials={derived:.4g} "
+                            f"(relative drift={drift * 100:.2f}%, tolerance {CROSS_CHECK_REL_TOLERANCE * 100:.1f}%). "
+                            f"Materials are canonical. Refresh the on-disk cache or correct the material composition."
+                        )
 
                 # Materials win: write derived values (overwriting any stale cache within tolerance).
                 for col, derived in zip(derived_cols, derived_values):
@@ -366,8 +372,9 @@ class Envelope(BaseAssemblyDatabase):
                 raise ValueError(
                     f"Envelope {kind} ({envelope_ref}) has {len(malformed)} malformed row(s) — "
                     f"each row must have either the full direct-property set "
-                    f"({', '.join(derived_cols)}) or the full material set "
-                    f"({', '.join(MATERIAL_COLS)}). Affected codes: {', '.join(malformed)}"
+                    f"({', '.join(derived_cols)}) or at least one material layer "
+                    f"(a material_name_N with a thickness_N_m greater than zero). "
+                    f"Affected codes: {', '.join(malformed)}"
                 )
 
             return df

@@ -2256,9 +2256,13 @@ get_database_components_materials:
         type: float
         unit: '[kgCO2eq/kg]'
       biogenic_carbon_in_product:
-        description: Biogenic carbon stored in the product.
+        description: Biogenic carbon stored in the product, as a negative contribution to the
+          CO2 balance. Note this is the opposite sign to the KBOB source, which publishes a
+          positive magnitude; CEA stores stored carbon as negative throughout, matching
+          GHG_biogenic_* in the envelope assemblies derived from this column.
         type: float
         unit: '[kgCO2eq/kg]'
+        max: 0.0
   used_by:
   - emissions
 
@@ -2433,7 +2437,10 @@ get_database_assemblies_envelope_floor:
     # Rows with both will be cross-checked at load (materials canonical, 1% tolerance).
     required_one_of:
       - [U_base, GHG_floor_kgCO2m2, GHG_biogenic_floor_kgCO2m2]
-      - [material_name_1, thickness_1_m, material_name_2, thickness_2_m, material_name_3, thickness_3_m]
+      - any_pair_of:
+          - [material_name_1, thickness_1_m]
+          - [material_name_2, thickness_2_m]
+          - [material_name_3, thickness_3_m]
     columns:
       description:
         description: Describes the Type of floor
@@ -2443,7 +2450,7 @@ get_database_assemblies_envelope_floor:
         description: Service life of the floor assembly
         type: float
         unit: '[yr]'
-        min: 0.0
+        exclusive_min: 0.0
       GHG_floor_kgCO2m2:
         description: Embodied emissions per m2 of floor (entire building life cycle). Derivable from the material layer set.
         type: float
@@ -2460,7 +2467,7 @@ get_database_assemblies_envelope_floor:
         description: Thermal transmittance of floor including linear losses (+10%). Defined according to ISO 13790. Derivable from the material layer set.
         type: float
         unit: '[-]'
-        min: 0.1
+        min: 0.05
         nullable: true
       code:
         description: Type of floor
@@ -2525,7 +2532,10 @@ get_database_assemblies_envelope_roof:
     # Rows with both will be cross-checked at load (materials canonical, 1% tolerance).
     required_one_of:
       - [U_roof, GHG_roof_kgCO2m2, GHG_biogenic_roof_kgCO2m2]
-      - [material_name_1, thickness_1_m, material_name_2, thickness_2_m, material_name_3, thickness_3_m]
+      - any_pair_of:
+          - [material_name_1, thickness_1_m]
+          - [material_name_2, thickness_2_m]
+          - [material_name_3, thickness_3_m]
     columns:
       description:
         description: Describes the Type of roof
@@ -2547,7 +2557,7 @@ get_database_assemblies_envelope_roof:
         description: Thermal transmittance of roof including linear losses (+10%). Defined according to ISO 13790. Derivable from the material layer set.
         type: float
         unit: '[-]'
-        min: 0.1
+        min: 0.05
         nullable: true
       a_roof:
         description: Solar absorption coefficient. Defined according to ISO 13790.
@@ -2559,7 +2569,7 @@ get_database_assemblies_envelope_roof:
         description: Service life of the roof assembly
         type: float
         unit: '[yr]'
-        min: 0.0
+        exclusive_min: 0.0
       code:
         description: Type of roof
         primary: true
@@ -2710,7 +2720,10 @@ get_database_assemblies_envelope_wall:
     # Rows with both will be cross-checked at load (materials canonical, 1% tolerance).
     required_one_of:
       - [U_wall, GHG_wall_kgCO2m2, GHG_biogenic_wall_kgCO2m2]
-      - [material_name_1, thickness_1_m, material_name_2, thickness_2_m, material_name_3, thickness_3_m]
+      - any_pair_of:
+          - [material_name_1, thickness_1_m]
+          - [material_name_2, thickness_2_m]
+          - [material_name_3, thickness_3_m]
     columns:
       description:
         description: Describes the Type of wall
@@ -2732,7 +2745,7 @@ get_database_assemblies_envelope_wall:
         description: Thermal transmittance of walls including linear losses (+10%). Defined according to ISO 13790. Derivable from the material layer set.
         type: float
         unit: '[-]'
-        min: 0.1
+        min: 0.05
         nullable: true
       a_wall:
         description: Solar absorption coefficient. Defined according to ISO 13790.
@@ -2761,7 +2774,7 @@ get_database_assemblies_envelope_wall:
         description: Service life of the wall assembly
         type: float
         unit: '[yr]'
-        min: 0.0
+        exclusive_min: 0.0
       material_name_1:
         description: Layer 1 material name; must match a `name` in MATERIALS.csv. Required when the material layer set is used.
         type: string

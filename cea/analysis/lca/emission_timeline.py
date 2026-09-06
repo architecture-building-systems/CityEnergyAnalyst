@@ -599,7 +599,7 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
             emission=production_per_area * area, lifetime=lifetime, col=f"production_{key}_kgCO2e"
         )
         self._log_emission_with_lifetime(
-            emission=-biogenic_per_area * area,
+            emission=biogenic_per_area * area,
             lifetime=lifetime,
             col=f"biogenic_{key}_kgCO2e",
         )

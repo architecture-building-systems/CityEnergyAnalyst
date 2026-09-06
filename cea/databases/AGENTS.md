@@ -79,6 +79,17 @@ refs = assemblies['primary_components']  # e.g., "BO5"
 # Don't treat SUPPLY_ELECTRICITY.csv and GRID.csv as duplicates
 ```
 
+## Sign Conventions
+
+**Biogenic carbon is negative everywhere.** Stored carbon reduces the CO2 balance, so it is
+negative in `COMPONENTS/MATERIALS/MATERIALS.csv` (`biogenic_carbon_in_product`, enforced by
+`max: 0.0`) and negative in the envelope assemblies derived from it (`GHG_biogenic_*_kgCO2m2`).
+This is the opposite sign to the KBOB source, which publishes a positive magnitude.
+
+Consumers must pass the value through -- never negate it. A compensating negation inverts
+storage into emission with no error to reveal it; `cea/tests/test_biogenic_sign_convention.py`
+fails if one is reintroduced.
+
 ## Related Files
 - `cea/schemas.yml` - Database schema definitions
 - `cea/demand/building_properties/building_supply_systems.py` - ASSEMBLIES usage
