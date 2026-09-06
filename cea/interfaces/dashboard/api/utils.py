@@ -187,38 +187,54 @@ def split_scenario_subpath(scenario_name: str, project: str) -> tuple:
     return project, scenario_name
 
 
-def _missing_source_database(p: cea.config.Parameter, config) -> str | None:
+def _missing_source_database(
+    p: cea.config.Parameter, config, locator: cea.inputlocator.InputLocator | None = None
+) -> str | None:
     """The database file this parameter needs, if it is absent from the scenario.
 
-    A parameter declares its source with `.locator` (choice parameters read their options
-    from it) or with `.requires-database` (inputs that are only meaningful when that
-    database exists, e.g. a layer thickness beside a material dropdown). A scenario whose
-    database omits the file is a normal situation, not an error — the form drops those
-    inputs and says why, rather than failing to load at all.
+    Only `.requires-database` is checked here (inputs that are only meaningful when that
+    database exists, e.g. a layer thickness beside a material dropdown) -- not `.locator`.
+    `.locator` names the method `ChoiceParameterBase`/`ColumnChoicesMixin` calls to build
+    a parameter's own choices, sometimes with required `.kwargs` (see `type-pvpanel`); it
+    is not always a zero-argument call, and not always a file (e.g. a pathway container
+    folder that legitimately does not exist yet on a fresh scenario). A choice parameter's
+    own `_choices` failing is already reported by the caller below. A scenario whose
+    `.requires-database` file is missing is a normal situation, not an error -- the form
+    drops those inputs and says why, rather than failing to load at all.
     """
     if config is None:
         return None
-    for option in ("locator", "requires-database"):
-        try:
-            locator_name = p.config.default_config.get(
-                p.section.name, f"{p.name}.{option}"
-            )
-        except (configparser.NoSectionError, configparser.NoOptionError):
-            continue
+    try:
+        locator_name = p.config.default_config.get(
+            p.section.name, f"{p.name}.requires-database"
+        )
+    except (configparser.NoSectionError, configparser.NoOptionError):
+        return None
+    if locator is None:
         locator = cea.inputlocator.InputLocator(config.scenario)
-        method = getattr(locator, locator_name, None)
-        if method is None:
-            continue
-        try:
-            path = method()
-        except Exception:
-            continue
-        if not os.path.exists(path):
-            return path
+    method = getattr(locator, locator_name, None)
+    if method is None:
+        return None
+    try:
+        path = method()
+    except Exception as e:
+        logger.warning(
+            "Could not resolve %s.requires-database (%s) for %s: %s",
+            p.name, locator_name, p.fqname, e,
+        )
+        return None
+    if not os.path.exists(path):
+        return path
     return None
 
 
-def deconstruct_parameters(p: cea.config.Parameter, config=None):
+def deconstruct_parameters(
+    p: cea.config.Parameter, config=None, locator: cea.inputlocator.InputLocator | None = None
+):
+    """Serialise one config Parameter into the GUI's parameter-metadata dict: current
+    value, choices (if any), and an `unavailable` reason when its source database is
+    missing or its choices failed to load. `locator`, if given, is reused for the
+    `.requires-database` check instead of constructing a new one per parameter."""
     params = {'name': p.name, 'type': type(p).__name__, 'nullable': p.nullable, 'help': p.help}
     try:
         if isinstance(p, cea.config.BuildingsParameter):
@@ -229,13 +245,18 @@ def deconstruct_parameters(p: cea.config.Parameter, config=None):
         print(e)
         params["value"] = ""
 
-    missing_database = _missing_source_database(p, config)
+    missing_database = _missing_source_database(p, config, locator)
     if missing_database is not None:
         # The form hides these inputs and reports the missing file once, instead of the
-        # whole tool-properties request failing on the first unreadable database.
+        # whole tool-properties request failing on the first unreadable database. The path
+        # is scenario-relative: it is sent to the browser, and an absolute server
+        # filesystem path has no business there.
+        relative_missing_database = (
+            os.path.relpath(missing_database, config.scenario) if config else missing_database
+        )
         params["unavailable"] = {
             "reason": f"{os.path.basename(missing_database)} is not in this scenario's database.",
-            "missing_file": missing_database,
+            "missing_file": relative_missing_database,
         }
 
     if isinstance(p, cea.config.ChoiceParameterBase):
@@ -249,7 +270,8 @@ def deconstruct_parameters(p: cea.config.Parameter, config=None):
                 logger.warning("Could not build choices for %s: %s", p.fqname, e)
                 params['choices'] = []
                 params["unavailable"] = {
-                    "reason": f"Options for this input could not be read: {e}"
+                    "reason": f"Options for this input could not be read: {e}",
+                    "missing_file": None,
                 }
 
     if isinstance(p, cea.config.WeatherPathParameter):

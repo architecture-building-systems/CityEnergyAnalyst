@@ -143,12 +143,18 @@ async def get_tool_list(config: CEAConfig) -> Dict[str, List[ToolDescription]]:
 
 
 def _build_tool_properties(tool_name: str, config) -> ToolProperties:
+    """Build the GUI-facing parameter metadata for one tool: every matching config
+    parameter, deconstructed (value, choices, availability) and grouped by category."""
     # TODO: Add plugin support
     script = cea.scripts.by_name(tool_name, plugins=config.plugins)
     parameters = []
     categories = defaultdict(list)
+    # Built once per request rather than once per parameter -- InputLocator construction is
+    # not free (it wraps every locator method against schemas.yml), and a tool can have
+    # dozens of parameters checked against it.
+    locator = cea.inputlocator.InputLocator(config.scenario)
     for _, parameter in config.matching_parameters(script.parameters):
-        parameter_dict = deconstruct_parameters(parameter, config)
+        parameter_dict = deconstruct_parameters(parameter, config, locator)
         if parameter.category:
             categories[parameter.category].append(parameter_dict)
         else:

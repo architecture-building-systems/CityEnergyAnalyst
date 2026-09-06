@@ -483,6 +483,9 @@ async def delete_year(
     delete_inputs: bool = True,
     delete_outputs: bool = True,
 ) -> dict[str, Any]:
+    """Clear a state year's data (`clear_state`). Does not 409 for a stock year --
+    clearing inputs there only removes the regenerable bake, not the stock year itself; the
+    response's `state_kind` tells the caller which case occurred."""
     try:
         return await run_in_threadpool(
             clear_state,
