@@ -63,4 +63,8 @@ InputLocator._cleanup_temp_directory = lambda self: None
 - `test_pathway_envelope_bake.py` - Envelope row handling when baking a state from a template: the U/GHG cache must be dropped when material layers change (issue #4059), kept when they don't.
 - `test_inputlocator_temp_directory.py` - One temp directory per run, shared across pickled
   copies and deleted only by the process that created it. Creation stays lazy.
+- `test_envelope_layer_rules.py` - When U/GHG may be blank: one material layer (name + thickness > 0)
+  is enough; service life must always be positive; partial direct values are still cross-checked.
+- `test_biogenic_sign_convention.py` - Biogenic carbon is negative at every level, and no consumer
+  may negate it. Scans shipped databases and the source tree.
 - `paths.py` - Shared repo/examples/workflows filesystem anchors; use instead of `__file__`-relative math.

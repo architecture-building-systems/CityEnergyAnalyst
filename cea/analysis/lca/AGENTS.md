@@ -84,6 +84,8 @@ Indexed by `period` (`Y_XXXX`), columns:
 
 **Embodied** (3 types × 10 components = 30 columns):
 - `{emission}_{component}_kgCO2e` where emission ∈ {`production`, `biogenic`, `demolition`}
+  - `biogenic` values are negative (stored carbon): the database column is already negative,
+    so it is logged as-is. Do not negate it -- see `cea/databases/AGENTS.md`.
 - Components: `wall_ag`, `wall_bg`, `wall_part`, `win_ag`, `roof`, `upperside`, `underside`, `floor`, `base`, `technical_systems`
 
 **Operational** (6 columns):

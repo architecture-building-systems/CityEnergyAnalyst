@@ -1570,7 +1570,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
                         _, demo_old, _ = _envelope_intensities_per_m2(self.envelope_lookup, code=old_code)
                         self.add_phase_component(year=year, phase="demolition", component="win_ag", value_kgco2e=demo_old * area_win)
                         self.add_phase_component(year=year, phase="production", component="win_ag", value_kgco2e=prod_new * area_win)
-                        self.add_phase_component(year=year, phase="biogenic", component="win_ag", value_kgco2e=(-bio_new) * area_win)
+                        self.add_phase_component(year=year, phase="biogenic", component="win_ag", value_kgco2e=bio_new * area_win)
                     self.add_note(year=int(year), message=f"Window code changed: {old_code} -> {new_code}")
                     self.window_code = new_code
                     win_lt_any = self.envelope_lookup.get_item_value(str(self.window_code), "Service_Life")
@@ -1698,7 +1698,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
                 prod, demo, bio = _envelope_intensities_per_m2(self.envelope_lookup, code=self.window_code)
                 self.add_phase_component(year=year, phase="demolition", component=comp, value_kgco2e=demo * area)
                 self.add_phase_component(year=year, phase="production", component=comp, value_kgco2e=prod * area)
-                self.add_phase_component(year=year, phase="biogenic", component=comp, value_kgco2e=(-bio) * area)
+                self.add_phase_component(year=year, phase="biogenic", component=comp, value_kgco2e=bio * area)
                 continue
 
             active = _active_layers(layers)
@@ -1707,7 +1707,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
                     prod, demo, bio = _material_intensity_per_m2(materials, layer)
                     self.add_phase_component(year=year, phase="demolition", component=comp, value_kgco2e=demo * area)
                     self.add_phase_component(year=year, phase="production", component=comp, value_kgco2e=prod * area)
-                    self.add_phase_component(year=year, phase="biogenic", component=comp, value_kgco2e=(-bio) * area)
+                    self.add_phase_component(year=year, phase="biogenic", component=comp, value_kgco2e=bio * area)
                 continue
 
             # Not resolvable to layered materials and not covered by an alternative model.
@@ -1742,7 +1742,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
             if src_component == "win":
                 prod, _, bio = _envelope_intensities_per_m2(self.envelope_lookup, code=self.window_code)
                 self.add_phase_component(year=year, phase="production", component=comp, value_kgco2e=prod * area)
-                self.add_phase_component(year=year, phase="biogenic", component=comp, value_kgco2e=(-bio) * area)
+                self.add_phase_component(year=year, phase="biogenic", component=comp, value_kgco2e=bio * area)
                 continue
 
             layers = current_layers.get(src_component, _empty_layers())
@@ -1754,7 +1754,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
                         continue
                     prod, _, bio = _material_intensity_per_m2(materials, layer)
                     self.add_phase_component(year=year, phase="production", component=comp, value_kgco2e=prod * area)
-                    self.add_phase_component(year=year, phase="biogenic", component=comp, value_kgco2e=(-bio) * area)
+                    self.add_phase_component(year=year, phase="biogenic", component=comp, value_kgco2e=bio * area)
                 continue
 
             # Not resolvable to layered materials and not covered by an alternative model.
@@ -1794,7 +1794,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
                 prod, demo, bio = _material_intensity_per_m2(materials, layer)
                 if action == "add":
                     self.add_phase_component(year=year, phase="production", component=comp, value_kgco2e=prod * area)
-                    self.add_phase_component(year=year, phase="biogenic", component=comp, value_kgco2e=(-bio) * area)
+                    self.add_phase_component(year=year, phase="biogenic", component=comp, value_kgco2e=bio * area)
                 else:
                     self.add_phase_component(year=year, phase="demolition", component=comp, value_kgco2e=demo * area)
 
