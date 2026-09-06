@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 
 from cea.datamanagement.database import BaseDatabase, BaseDatabaseCollection
+from cea.datamanagement.database.assemblies import BaseAssemblyDatabase
 
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
@@ -141,6 +142,28 @@ class Distribution(BaseDatabase):
 
 
 @dataclass
+class Materials(BaseAssemblyDatabase):
+    """The material layers that ENVELOPE_WALL/ROOF/FLOOR rows reference by name.
+
+    Indexed by `name` rather than by the KBOB `ID`, because `name` is the foreign key
+    `material_name_1..3` points at — keeping it as the row key stops the editor from renaming a
+    material out from under the envelope rows that depend on it.
+
+    Only the CH database ships this file; `BaseAssemblyDatabase` already loads a missing one
+    as None.
+    """
+    _index = "name"
+
+    materials: pd.DataFrame | None
+
+    @classmethod
+    def _locator_mapping(cls) -> dict[str, str]:
+        return {
+            "materials": "get_database_components_materials"
+        }
+
+
+@dataclass
 class Feedstocks(BaseDatabase):
     # FIXME: Ensure that there is a proper index for the DataFrame i.e. Rsun code
     _index = "code"
@@ -189,13 +212,15 @@ class Components(BaseDatabaseCollection):
     conversion: Conversion
     distribution: Distribution
     feedstocks: Feedstocks
+    materials: Materials
 
     @classmethod
     def from_locator(cls, locator: InputLocator):
         conversion = Conversion.from_locator(locator)
         distribution = Distribution.from_locator(locator)
         feedstocks = Feedstocks.from_locator(locator)
-        return cls(conversion, distribution, feedstocks)
+        materials = Materials.from_locator(locator)
+        return cls(conversion, distribution, feedstocks, materials)
 
     def to_dict(self):
         return self.dataclass_to_dict()

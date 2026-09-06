@@ -8,7 +8,7 @@ import traceback
 import warnings
 from collections import defaultdict
 from contextlib import redirect_stdout
-from typing import Dict, Any
+from typing import Dict, Any, Literal
 import zipfile
 
 from fastapi.responses import StreamingResponse
@@ -20,11 +20,12 @@ from fiona.errors import DriverError
 from pydantic import BaseModel, Field
 
 import cea.config
+import cea.databases
 import cea.inputlocator
 from cea.datamanagement.district_pathways.pathway_timeline import PathwayChildScenario
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 import cea.schemas
-from cea.databases import CEADatabase, CEADatabaseException
+from cea.databases import CEADatabase, CEADatabaseException, databases_folder_path
 from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
 
 from cea.interfaces.dashboard.utils import (
@@ -475,6 +476,40 @@ async def put_input_database_data(scenario: CEAScenario, payload: Dict[str, Any]
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e),
         )
+
+
+class SeedMaterialsDatabase(BaseModel):
+    source: Literal['CH']
+
+
+@router.post('/databases/components/materials')
+async def seed_materials_database(scenario: CEAScenario, payload: SeedMaterialsDatabase):
+    """Give a scenario a MATERIALS.csv it does not have yet."""
+    # Only the CH database ships one, and every existing copy path is folder-granular
+    # (`database_helper` copytree's the whole COMPONENTS tree, clobbering the siblings).
+    locator = cea.inputlocator.InputLocator(scenario)
+    destination = locator.get_database_components_materials()
+    if os.path.exists(destination):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This scenario already has a materials database.",
+        )
+
+    # Mirror the destination's own sub-path inside the region database, so moving the file
+    # is a locator change rather than a locator change plus this literal.
+    source = os.path.join(
+        databases_folder_path,
+        payload.source,
+        os.path.relpath(destination, locator.get_db4_folder()),
+    )
+
+    def do_copy():
+        os.makedirs(os.path.dirname(destination), exist_ok=True)
+        shutil.copyfile(source, destination)
+
+    await run_in_threadpool(do_copy)
+
+    return {'source': payload.source}
 
 
 @router.post('/databases/upload')
