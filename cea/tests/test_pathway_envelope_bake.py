@@ -33,12 +33,21 @@ LAYERS = {
     "thickness_3_m": 0.02,
 }
 DERIVED_U = 0.3335  # 1 / (0.20/0.6 + 0.10/0.04 + 0.02/0.8), to 4 s.f.
-DERIVED_GHG = 160.0
+DERIVED_GHG = 160.0  # 0.5 kgCO2/kg x (200 + 100 + 20) kg/m2
+DERIVED_GHG_PRODUCTION = 128.0  # 0.4 kgCO2/kg x 320 kg/m2
+DERIVED_GHG_RECYCLING = 32.0  # 0.1 kgCO2/kg x 320 kg/m2
 
-ROOF_CACHE_COLS = ("U_roof", "GHG_roof_kgCO2m2", "GHG_biogenic_roof_kgCO2m2")
+ROOF_CACHE_COLS = (
+    "U_roof",
+    "GHG_roof_kgCO2m2",
+    "GHG_biogenic_roof_kgCO2m2",
+    "GHG_production_roof_kgCO2m2",
+    "GHG_recycling_roof_kgCO2m2",
+)
 
 
 def _write_csv(path: str, rows: list[dict]) -> None:
+    """Write `rows` to `path` as CSV, creating the parent folder if needed."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
     pd.DataFrame(rows).to_csv(path, index=False)
 
@@ -105,6 +114,8 @@ def baked_state(monkeypatch):
             "U_roof": DERIVED_U,
             "GHG_roof_kgCO2m2": DERIVED_GHG,
             "GHG_biogenic_roof_kgCO2m2": 16.0,  # 320 kg/m2 x 0.05
+            "GHG_production_roof_kgCO2m2": DERIVED_GHG_PRODUCTION,
+            "GHG_recycling_roof_kgCO2m2": DERIVED_GHG_RECYCLING,
         }],
     )
 
@@ -114,6 +125,8 @@ def baked_state(monkeypatch):
     )
 
     def apply(recipe):
+        """Apply `recipe` (an archetype -> component -> field modification mapping) to the
+        fixture's state year and return whether any database was modified."""
         return pathway_state._apply_state_construction_changes(
             config, PATHWAY_NAME, YEAR, recipe
         )
@@ -123,6 +136,8 @@ def baked_state(monkeypatch):
 
 
 def _baked_roof_row(state: InputLocator) -> pd.Series:
+    """Return the single newly-baked roof row (its code contains "YEAR") from the
+    fixture's roof envelope CSV."""
     df = pd.read_csv(state.get_database_assemblies_envelope_roof(), index_col="code")
     baked = [code for code in df.index if "YEAR" in str(code)]
     assert len(baked) == 1, f"expected one baked roof row, found {baked}"
@@ -149,6 +164,10 @@ def test_editing_layers_clears_the_stale_cache(baked_state):
     envelope = EnvelopeLookup.from_locator(state)
     reloaded = envelope._df_for("roof").loc[row.name]
     assert float(reloaded["U_roof"]) != pytest.approx(DERIVED_U, rel=0.01)
+    # The production/recycling split must be re-derived too, not just left blank -- the
+    # emissions timeline prefers these over the recomputed total when both are present.
+    assert float(reloaded["GHG_production_roof_kgCO2m2"]) == pytest.approx(168.0, rel=1e-3)
+    assert float(reloaded["GHG_recycling_roof_kgCO2m2"]) == pytest.approx(42.0, rel=1e-3)
 
 
 def test_explicit_value_in_the_recipe_survives(baked_state):
@@ -172,6 +191,8 @@ def test_non_material_edit_keeps_the_cache(baked_state):
     row = _baked_roof_row(state)
     assert float(row["U_roof"]) == pytest.approx(DERIVED_U, rel=1e-3)
     assert float(row["GHG_roof_kgCO2m2"]) == pytest.approx(DERIVED_GHG, rel=1e-3)
+    assert float(row["GHG_production_roof_kgCO2m2"]) == pytest.approx(DERIVED_GHG_PRODUCTION, rel=1e-3)
+    assert float(row["GHG_recycling_roof_kgCO2m2"]) == pytest.approx(DERIVED_GHG_RECYCLING, rel=1e-3)
 
 
 def test_promotion_still_requires_the_full_material_set(baked_state):
