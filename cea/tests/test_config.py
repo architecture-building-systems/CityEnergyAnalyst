@@ -87,6 +87,23 @@ class TestConfiguration(unittest.TestCase):
         self.assertIsInstance(thermal_network_parameter, cea.config.MultiChoiceParameter)
         self.assertIsInstance(solar_parameter, cea.config.MultiChoiceParameter)
 
+    def test_export_folder_name_rejects_path_traversal(self):
+        # The value is joined into scenario/export/results/{name}-{timestamp}
+        # (InputLocator.get_export_results_summary_folder) -- path separators must be
+        # rejected so it cannot escape the scenario's export folder.
+        config = cea.config.Configuration()
+        parameter = config.get_parameter('result-summary:folder-name-to-save-exported-results')
+        self.assertIsInstance(parameter, cea.config.ExportFolderNameParameter)
+
+        with self.assertRaises(ValueError):
+            parameter.encode('../../escape')
+        with self.assertRaises(ValueError):
+            parameter.decode('../../escape')
+
+        self.assertEqual(parameter.encode('my-summary'), 'my-summary')
+        self.assertEqual(parameter.encode(''), '')
+        self.assertEqual(parameter.decode(''), '')
+
 
 if __name__ == "__main__":
     unittest.main()

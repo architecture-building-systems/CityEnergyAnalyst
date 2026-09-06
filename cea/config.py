@@ -781,6 +781,26 @@ class StringParameter(Parameter):
     """Default Parameter type"""""
 
 
+# Shared by every name-like StringParameter subclass below whose value is later joined into
+# a filesystem path (what-if/network/phasing-plan/export-folder names): reject path
+# separators and other filesystem-reserved characters so a name can never escape its
+# intended directory (e.g. via `..` combined with `/`) or break path construction on
+# Windows. This is a security check (used by encode() AND decode()), not a business rule --
+# see the decode()/encode() split documented in cea/CLAUDE.md.
+_FILESYSTEM_INVALID_CHARS = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
+
+
+def _validate_no_filesystem_invalid_chars(value: str, label: str) -> str:
+    """Raise ValueError if `value` contains a filesystem-reserved character; otherwise
+    return it unchanged. `label` names the field in the error message (e.g. "Network name")."""
+    if any(char in value for char in _FILESYSTEM_INVALID_CHARS):
+        raise ValueError(
+            f"{label} contains invalid characters. "
+            f"Avoid: {' '.join(_FILESYSTEM_INVALID_CHARS)}"
+        )
+    return value
+
+
 class WhatIfNameParameter(StringParameter):
     """
     Parameter for what-if scenario names with collision detection.
@@ -791,17 +811,7 @@ class WhatIfNameParameter(StringParameter):
         """
         Validate what-if name for invalid characters and collision with existing scenarios.
         """
-        value = value.strip()
-
-        # Check for invalid filesystem characters
-        invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
-        if any(char in value for char in invalid_chars):
-            raise ValueError(
-                f"What-if name contains invalid characters. "
-                f"Avoid: {' '.join(invalid_chars)}"
-            )
-
-        return value
+        return _validate_no_filesystem_invalid_chars(value.strip(), "What-if name")
 
     def encode(self, value):
         """
@@ -824,18 +834,35 @@ class WhatIfNameParameter(StringParameter):
         if not value:
             return ""
 
-        value = value.strip()
-
         # Only validate filesystem characters (security concern)
         # Collision check is encode's job when creating new scenarios
-        invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
-        if any(char in value for char in invalid_chars):
-            raise ValueError(
-                f"What-if name contains invalid characters. "
-                f"Avoid: {' '.join(invalid_chars)}"
-            )
+        return _validate_no_filesystem_invalid_chars(value.strip(), "What-if name")
 
-        return value
+
+class ExportFolderNameParameter(StringParameter):
+    """
+    Parameter for the results-export subfolder name.
+
+    The value is joined (with a timestamp suffix) into
+    `scenario/export/results/{name}-{timestamp}` -- see
+    `InputLocator.get_export_results_summary_folder`. Rejecting path separators here, not
+    just at the point of use, keeps the export confined to the scenario's export folder
+    regardless of which caller builds the path.
+    """
+
+    def encode(self, value):
+        """Validate and encode the export folder name; empty is allowed (falls back to
+        "summary" at the point of use)."""
+        if not value or str(value).strip() == '':
+            return ''
+        return _validate_no_filesystem_invalid_chars(str(value).strip(), "Export folder name")
+
+    def decode(self, value):
+        """Parse the export folder name from the config file. Lenient like the other
+        name parameters: only the filesystem-character security check runs here."""
+        if not value:
+            return ''
+        return _validate_no_filesystem_invalid_chars(value.strip(), "Export folder name")
 
 
 class NetworkLayoutNameParameter(StringParameter):
@@ -848,17 +875,7 @@ class NetworkLayoutNameParameter(StringParameter):
         """
         Validate network name for invalid characters and collision with existing networks.
         """
-        value = value.strip()
-
-        # Check for invalid filesystem characters
-        invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
-        if any(char in value for char in invalid_chars):
-            raise ValueError(
-                f"Network name contains invalid characters. "
-                f"Avoid: {' '.join(invalid_chars)}"
-            )
-
-        return value
+        return _validate_no_filesystem_invalid_chars(value.strip(), "Network name")
 
     def encode(self, value):
         """
@@ -881,18 +898,9 @@ class NetworkLayoutNameParameter(StringParameter):
         if not value:
             return ""
 
-        value = value.strip()
-
         # Only validate filesystem characters (security concern)
         # Collision check is encode's job when creating new networks
-        invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
-        if any(char in value for char in invalid_chars):
-            raise ValueError(
-                f"Network name contains invalid characters. "
-                f"Avoid: {' '.join(invalid_chars)}"
-            )
-
-        return value
+        return _validate_no_filesystem_invalid_chars(value.strip(), "Network name")
 
 
 class OptimizationIndividualListParameter(ListParameter):
@@ -1164,15 +1172,9 @@ class PhasingPlanChoiceParameter(StringParameter):
     """
 
     def _validate_phasing_plan_name(self, value) -> str:
-        value = value.strip()
-
-        # Check for invalid filesystem characters
-        invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
-        if any(char in value for char in invalid_chars):
-            raise ValueError(
-                f"Phasing plan name contains invalid characters. "
-                f"Avoid: {' '.join(invalid_chars)}"
-            )
+        """Validate phasing plan name for invalid characters and collision with existing
+        plans."""
+        value = _validate_no_filesystem_invalid_chars(value.strip(), "Phasing plan name")
 
         # Check for collision with existing phasing plans
         scenario = self.config.scenario
@@ -1195,16 +1197,11 @@ class PhasingPlanChoiceParameter(StringParameter):
         return self._validate_phasing_plan_name(str(value))
 
     def decode(self, value):
+        """Parse the phasing plan name from the config file. Lenient: only the
+        filesystem-character security check runs here; collision is encode's job."""
         if not value:
             return ''
-        value = value.strip()
-        invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
-        if any(char in value for char in invalid_chars):
-            raise ValueError(
-                f"Phasing plan name contains invalid characters. "
-                f"Avoid: {' '.join(invalid_chars)}"
-            )
-        return value
+        return _validate_no_filesystem_invalid_chars(value.strip(), "Phasing plan name")
 
 
 class WhatIfNameChoiceParameter(ChoiceParameter):

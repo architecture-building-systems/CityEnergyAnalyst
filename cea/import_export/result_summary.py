@@ -1160,7 +1160,13 @@ def slice_hourly_results_for_custom_time_period(hour_start, hour_end, df):
 
 
 def exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings, bool_analytics=False, network_name=''):
+    """Locate, read, and hour-slice the CEA result files for `list_metrics`, or (for the
+    `architecture` feature) compute per-building areas from zone geometry + architecture
+    instead of reading a time series.
 
+    :return: (list_list_useful_cea_results, list_appendix) -- per-source-file result
+        DataFrames and their matching appendix labels (e.g. network name).
+    """
     # map the CEA Feature for the selected metrics
     cea_feature = map_metrics_cea_features(list_metrics)
 
@@ -1196,6 +1202,11 @@ def exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildi
         else:
             raise KeyError(f"Zone geometry must have either 'Name' or 'name' column. Available columns: {zone_raw.columns.tolist()}")
         zone_df = zone_raw.set_index(name_col)
+        # Normalise to 'name' regardless of which casing the source used: calc_useful_areas
+        # merges index-to-index and inherits this name, and the reset_index() below turns it
+        # back into a column that filter_cea_results_by_buildings and the later merge both
+        # require to be lowercase 'name'.
+        zone_df.index.name = 'name'
 
         architecture_df = pd.read_csv(locator.get_building_architecture()).set_index('name')
 
@@ -2893,13 +2904,19 @@ def filter_buildings(locator, list_buildings,
 def write_selected_buildings_file(locator, buildings_path, list_buildings,
                                   integer_year_start, integer_year_end, list_standard,
                                   list_main_use_type, ratio_main_use_type,
-                                  bool_use_acronym):
+                                  bool_use_acronym, errors_encountered):
     """Filter the zone's buildings, attach their architecture areas, and write the
     selected-buildings CSV that plotting reads back as `df_architecture_data`.
 
     It carries the GFA/Af/Aroof columns that y-normalisation divides by and the
     construction_year / use-type columns that x-sorting and faceting key on, so every
     path that produces plot input has to write it.
+
+    Filtering and the architecture merge are a prerequisite for every step that follows,
+    so unlike the per-metric exports below there is nothing to continue with if they fail.
+    Saving the result to disk is not: nothing downstream reads `buildings_path` back, so a
+    write failure (permissions, full disk) is recorded and swallowed like every other
+    export step instead of aborting the whole summary.
 
     :return: the filtered building names.
     """
@@ -2921,11 +2938,15 @@ def write_selected_buildings_file(locator, buildings_path, list_buildings,
     df_buildings = pd.merge(df_buildings, list_list_useful_cea_results_buildings[0][0],
                             on='name', how='inner')
 
-    numeric_columns = df_buildings.select_dtypes(include=[np.number]).columns
-    df_buildings[numeric_columns] = df_buildings[numeric_columns].round(2)
-
-    os.makedirs(os.path.dirname(buildings_path), exist_ok=True)
-    df_buildings.to_csv(buildings_path, index=False, float_format="%.2f")
+    try:
+        numeric_columns = df_buildings.select_dtypes(include=[np.number]).columns
+        df_buildings[numeric_columns] = df_buildings[numeric_columns].round(2)
+        df_buildings.to_csv(buildings_path, index=False, float_format="%.2f")
+    except Exception as e:
+        error_msg = f"Step 5 (Save Building Summary): {str(e)}"
+        errors_encountered.append(error_msg)
+        print(f"Warning: {error_msg}")
+        print("         Continuing with remaining steps...")
 
     return list_buildings
 
@@ -3340,9 +3361,10 @@ def process_building_summary(config, locator,
         summary_folder = locator.get_export_plots_folder()
     os.makedirs(summary_folder, exist_ok=True)
 
-    # Steps 3-5: Filter buildings, attach architecture areas, save to disk.
-    # A prerequisite for every step below, so unlike the per-metric exports there is
-    # nothing to continue with if it fails.
+    # Steps 3-5: Filter buildings, attach architecture areas, save to disk. Filtering and
+    # the merge are a prerequisite for every step below, so there is nothing to continue
+    # with if they fail; saving to disk is recoverable, like the per-metric exports (see
+    # write_selected_buildings_file).
     if not plot:
         buildings_path = locator.get_export_results_summary_selected_building_file(summary_folder)
     else:
@@ -3351,6 +3373,7 @@ def process_building_summary(config, locator,
         locator, buildings_path, list_buildings,
         integer_year_start, integer_year_end, list_standard,
         list_main_use_type, ratio_main_use_type, bool_use_acronym,
+        errors_encountered,
     )
 
     # Step 6: Export Results Without Date (Non-8760 Hours, Aggregate by Building)
