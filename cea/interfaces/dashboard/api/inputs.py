@@ -445,7 +445,9 @@ async def get_building_schedule(scenario: CEAScenario, building: str):
 async def get_input_database_data(scenario: CEAScenario):
     locator = cea.inputlocator.InputLocator(scenario)
     try:
-        cea_db = await run_in_threadpool(lambda: CEADatabase.from_locator(locator))
+        # Lenient: a database with a broken row must still open, or the user cannot reach the
+        # editor to fix it. `/databases/check` reports what is wrong.
+        cea_db = await run_in_threadpool(lambda: CEADatabase.from_locator(locator, strict=False))
     except CEADatabaseException as e:
         print(e)
         raise HTTPException(
