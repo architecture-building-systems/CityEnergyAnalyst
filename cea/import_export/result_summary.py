@@ -2904,7 +2904,7 @@ def filter_buildings(locator, list_buildings,
 def write_selected_buildings_file(locator, buildings_path, list_buildings,
                                   integer_year_start, integer_year_end, list_standard,
                                   list_main_use_type, ratio_main_use_type,
-                                  bool_use_acronym, errors_encountered):
+                                  bool_use_acronym):
     """Filter the zone's buildings, attach their architecture areas, and write the
     selected-buildings CSV that plotting reads back as `df_architecture_data`.
 
@@ -2912,11 +2912,13 @@ def write_selected_buildings_file(locator, buildings_path, list_buildings,
     construction_year / use-type columns that x-sorting and faceting key on, so every
     path that produces plot input has to write it.
 
-    Filtering and the architecture merge are a prerequisite for every step that follows,
-    so unlike the per-metric exports below there is nothing to continue with if they fail.
-    Saving the result to disk is not: nothing downstream reads `buildings_path` back, so a
-    write failure (permissions, full disk) is recorded and swallowed like every other
-    export step instead of aborting the whole summary.
+    Filtering, the architecture merge, and saving the result are all a prerequisite for
+    what follows: `calc_ubem_analytics_normalised` and `plot_input_processor` both read
+    `buildings_path` back. Unlike the per-metric exports below, there is nothing to
+    continue with if any of these fail, so a write failure propagates instead of being
+    recorded and swallowed -- a previous run's file must never be left in place as if it
+    were current. The parent directory is created if missing, and the write is atomic
+    (temp file + replace) so a failure partway through never leaves a truncated CSV.
 
     :return: the filtered building names.
     """
@@ -2938,15 +2940,18 @@ def write_selected_buildings_file(locator, buildings_path, list_buildings,
     df_buildings = pd.merge(df_buildings, list_list_useful_cea_results_buildings[0][0],
                             on='name', how='inner')
 
+    numeric_columns = df_buildings.select_dtypes(include=[np.number]).columns
+    df_buildings[numeric_columns] = df_buildings[numeric_columns].round(2)
+
+    os.makedirs(os.path.dirname(buildings_path), exist_ok=True)
+    tmp_path = f"{buildings_path}.tmp"
     try:
-        numeric_columns = df_buildings.select_dtypes(include=[np.number]).columns
-        df_buildings[numeric_columns] = df_buildings[numeric_columns].round(2)
-        df_buildings.to_csv(buildings_path, index=False, float_format="%.2f")
-    except Exception as e:
-        error_msg = f"Step 5 (Save Building Summary): {str(e)}"
-        errors_encountered.append(error_msg)
-        print(f"Warning: {error_msg}")
-        print("         Continuing with remaining steps...")
+        df_buildings.to_csv(tmp_path, index=False, float_format="%.2f")
+        os.replace(tmp_path, buildings_path)
+    except Exception:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+        raise
 
     return list_buildings
 
@@ -3361,10 +3366,9 @@ def process_building_summary(config, locator,
         summary_folder = locator.get_export_plots_folder()
     os.makedirs(summary_folder, exist_ok=True)
 
-    # Steps 3-5: Filter buildings, attach architecture areas, save to disk. Filtering and
-    # the merge are a prerequisite for every step below, so there is nothing to continue
-    # with if they fail; saving to disk is recoverable, like the per-metric exports (see
-    # write_selected_buildings_file).
+    # Steps 3-5: Filter buildings, attach architecture areas, save to disk. All of this is
+    # a prerequisite for every step below and for the readers of buildings_path, so there
+    # is nothing to continue with if any of it fails (see write_selected_buildings_file).
     if not plot:
         buildings_path = locator.get_export_results_summary_selected_building_file(summary_folder)
     else:
@@ -3373,7 +3377,6 @@ def process_building_summary(config, locator,
         locator, buildings_path, list_buildings,
         integer_year_start, integer_year_end, list_standard,
         list_main_use_type, ratio_main_use_type, bool_use_acronym,
-        errors_encountered,
     )
 
     # Step 6: Export Results Without Date (Non-8760 Hours, Aggregate by Building)

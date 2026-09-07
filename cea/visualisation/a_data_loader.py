@@ -906,17 +906,15 @@ class csv_pointer:
         # bypassing process_building_summary -- which is what writes
         # selected_buildings.csv for every other feature. Without it the plot has no
         # architecture data to normalise or sort by, so write it here for all of them.
+        # write_selected_buildings_file raises on failure rather than swallowing it, so a
+        # bad write aborts the plot instead of reading back a previous run's data.
         if self.plot_cea_feature in WHATIF_PLOT_FEATURES and self.whatif_names:
-            selected_buildings_errors: list[str] = []
             write_selected_buildings_file(
                 self.locator, self.locator.get_export_plots_selected_building_file(),
                 self.buildings,
                 self.integer_year_start, self.integer_year_end, self.list_construction_type,
                 self.list_use_type, self.min_ratio_as_main_use, bool_use_acronym=True,
-                errors_encountered=selected_buildings_errors,
             )
-            for error_msg in selected_buildings_errors:
-                print(f"Warning: {error_msg}")
 
         if self.plot_cea_feature == 'heat-rejection':
             if not self.whatif_names:
