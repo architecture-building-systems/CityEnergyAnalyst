@@ -65,6 +65,8 @@ InputLocator._cleanup_temp_directory = lambda self: None
   copies and deleted only by the process that created it. Creation stays lazy.
 - `test_envelope_layer_rules.py` - When U/GHG may be blank: one material layer (name + thickness > 0)
   is enough; service life must always be positive; partial direct values are still cross-checked.
+  Also covers `apply_material_derivation`: saving re-derives from edited layers, and a stored value
+  that contradicts them is reported as a conflict rather than silently replaced.
 - `test_biogenic_sign_convention.py` - Biogenic carbon is negative at every level, and no consumer
   may negate it. Scans shipped databases and the source tree.
 - `paths.py` - Shared repo/examples/workflows filesystem anchors; use instead of `__file__`-relative math.

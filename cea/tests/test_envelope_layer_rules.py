@@ -6,6 +6,7 @@ usable layer must carry the direct properties instead. Service life is always re
 always positive.
 """
 
+import pandas as pd
 import pytest
 
 from cea.datamanagement.database.assemblies import Envelope
@@ -147,3 +148,71 @@ def test_verifier_accepts_a_positive_service_life(wall):
 
     assert _wall_errors(locator) == []
 
+
+
+# --- derivation on save ---------------------------------------------------------------------
+
+def test_saving_re_derives_from_edited_layers(envelope_scenario):
+    """Editing a layer used to keep the U/GHG describing the previous composition, producing
+    a file that no longer loads. Saving must recompute them."""
+    locator = envelope_scenario(
+        [MATERIAL],
+        wall=[{"code": "WALL_A", "material_name_1": "brick", "thickness_1_m": 0.20,
+               "U_wall": DERIVED_U, "Service_Life_wall": 40}],
+    )
+    envelope = Envelope.from_locator(locator, strict=False)
+    envelope.wall.loc["WALL_A", "thickness_1_m"] = 0.30
+
+    materials = pd.read_csv(locator.get_database_components_materials())
+    envelope.apply_material_derivation(materials)
+    envelope.save(locator)
+
+    # The written file must load under the strict rules the simulation uses.
+    reloaded = _wall_row(locator)
+    assert float(reloaded["thickness_1_m"]) == pytest.approx(0.30)
+    assert float(reloaded["U_wall"]) != pytest.approx(DERIVED_U)
+
+
+def test_a_contradicting_stored_value_is_reported(envelope_scenario):
+    """A stored value that disagrees with the layers is returned so the caller can confirm."""
+    locator = envelope_scenario(
+        [MATERIAL],
+        wall=[{"code": "WALL_A", "material_name_1": "brick", "thickness_1_m": 0.20,
+               "U_wall": 0.25, "Service_Life_wall": 40}],
+    )
+    envelope = Envelope.from_locator(locator, strict=False)
+    materials = pd.read_csv(locator.get_database_components_materials())
+
+    conflicts = envelope.apply_material_derivation(materials)
+
+    assert [(c["code"], c["column"]) for c in conflicts] == [("WALL_A", "U_wall")]
+    assert conflicts[0]["stored"] == pytest.approx(0.25)
+    assert conflicts[0]["derived"] == pytest.approx(DERIVED_U)
+
+
+def test_filling_an_empty_value_is_not_a_conflict(envelope_scenario):
+    """Deriving into a blank cell needs no confirmation -- nothing is being overwritten."""
+    locator = envelope_scenario(
+        [MATERIAL],
+        wall=[{"code": "WALL_A", "material_name_1": "brick", "thickness_1_m": 0.20,
+               "Service_Life_wall": 40}],
+    )
+    envelope = Envelope.from_locator(locator, strict=False)
+    materials = pd.read_csv(locator.get_database_components_materials())
+
+    assert envelope.apply_material_derivation(materials) == []
+    assert float(envelope.wall.loc["WALL_A", "U_wall"]) == pytest.approx(DERIVED_U)
+
+
+def test_rows_without_layers_are_left_alone(envelope_scenario):
+    """A direct-property row has nothing to derive from and must not be touched."""
+    locator = envelope_scenario(
+        [MATERIAL],
+        wall=[{"code": "WALL_A", "U_wall": 0.25, "GHG_wall_kgCO2m2": 90.0,
+               "GHG_biogenic_wall_kgCO2m2": -5.0, "Service_Life_wall": 40}],
+    )
+    envelope = Envelope.from_locator(locator, strict=False)
+    materials = pd.read_csv(locator.get_database_components_materials())
+
+    assert envelope.apply_material_derivation(materials) == []
+    assert float(envelope.wall.loc["WALL_A", "U_wall"]) == pytest.approx(0.25)
