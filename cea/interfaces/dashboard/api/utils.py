@@ -294,6 +294,13 @@ def deconstruct_parameters(
     else:
         params["depends_on"] = None
 
+    # WhatIfNameChoiceParameter / WhatIfNameMultiChoiceParameter (WhatIfNameChoicesMixin):
+    # which what-if output this dropdown requires (final_energy/emissions/costs/
+    # heat_rejection), so the GUI can name the right tool in its "no choices" message
+    # instead of hardcoding "Run Final Energy first" for every mode.
+    if isinstance(p, cea.config.WhatIfNameChoicesMixin):
+        params["mode"] = p.mode
+
     return params
 
 

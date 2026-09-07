@@ -1204,7 +1204,23 @@ class PhasingPlanChoiceParameter(StringParameter):
         return _validate_no_filesystem_invalid_chars(value.strip(), "Phasing plan name")
 
 
-class WhatIfNameChoiceParameter(ChoiceParameter):
+class WhatIfNameChoicesMixin:
+    """Shared `mode` lookup for the what-if name parameters below.
+
+    `mode` (`final_energy`, `emissions`, `costs`, `heat_rejection`, or unset) picks which
+    what-if output the dropdown requires to exist. It is also read back by
+    `deconstruct_parameters` (api/utils.py) so the GUI can word its "no choices" message
+    with the right tool name instead of hardcoding "Run Final Energy first" for all modes.
+    """
+
+    config: Configuration
+
+    @property
+    def mode(self) -> str | None:
+        return self.config.default_config.get(self.section.name, f"{self.name}.mode", fallback=None)
+
+
+class WhatIfNameChoiceParameter(WhatIfNameChoicesMixin, ChoiceParameter):
     """
     Parameter for selecting an existing what-if scenario name from a dropdown.
     Scans outputs/data/analysis/ for existing subfolders.
@@ -1217,12 +1233,11 @@ class WhatIfNameChoiceParameter(ChoiceParameter):
             analysis_root = os.path.dirname(locator.get_analysis_folder('__probe__'))
             if not os.path.exists(analysis_root):
                 return []
-            mode = self.config.default_config.get(self.section.name, f"{self.name}.mode", fallback=None)
             names = sorted(
                 name for name in os.listdir(analysis_root)
                 if os.path.isdir(os.path.join(analysis_root, name))
             )
-            if mode == 'final_energy':
+            if self.mode == 'final_energy':
                 names = [name for name in names if os.path.exists(locator.get_final_energy_folder(name))]
             return names
         except Exception:
@@ -1466,7 +1481,7 @@ class NetworkLayoutMultiChoiceParameter(NetworkLayoutChoicesMixin, MultiChoicePa
         return value
 
 
-class WhatIfNameMultiChoiceParameter(MultiChoiceParameter):
+class WhatIfNameMultiChoiceParameter(WhatIfNameChoicesMixin, MultiChoiceParameter):
     """
     Multi-choice version of WhatIfNameChoiceParameter.
     Scans outputs/data/analysis/ for existing subfolders and allows selecting multiple.
@@ -1483,7 +1498,7 @@ class WhatIfNameMultiChoiceParameter(MultiChoiceParameter):
             analysis_root = os.path.dirname(locator.get_analysis_folder('__probe__'))
             if not os.path.exists(analysis_root):
                 return []
-            mode = self.config.default_config.get(self.section.name, f"{self.name}.mode", fallback=None)
+            mode = self.mode
             # Per mode, pick the specific output file whose mtime we'll
             # sort by. Overwriting a file doesn't reliably bump the
             # parent folder's mtime on common filesystems, so sorting
