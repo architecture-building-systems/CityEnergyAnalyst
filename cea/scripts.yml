@@ -480,9 +480,9 @@ District Evolution Pathways:
     module: cea.datamanagement.district_pathways.pathway_validate_all_states_job
     parameters: ['general:scenario', 'pathway-state-workflow:existing-pathway-name']
 
-Life Cycle Analysis:
+Life Cycle Analysis (LCA):
   - name: final-energy
-    label: Energy by Carrier [BETA]
+    label: "LCA Part 1: Energy by Carrier"
     short_description: Calculate final energy consumption by carrier type
     description: |
       This feature calculates final energy consumption for each building by energy carrier. **Final energy** is the energy delivered to the building meter (electricity, natural gas, district heating/cooling, etc.),
@@ -518,7 +518,7 @@ Life Cycle Analysis:
       - [ get_db4_components_conversion_folder ]
 
   - name: emissions
-    label: GHG Emissions [BETA]
+    label: "LCA Part 2a: GHG Emissions"
     short_description: Calculate embodied and operational GHG emissions from final energy
     description: |
       This Feature calculates lifecycle GHG emissions for each building.
@@ -569,7 +569,7 @@ Life Cycle Analysis:
 #      - [get_building_supply]
 
   - name: system-costs
-    label: Costs [BETA]
+    label: "LCA Part 2b: Costs"
     short_description: Calculate detailed costs for base case supply systems
     description: |
       This feature calculates costs for baseline supply systems using detailed
@@ -592,7 +592,7 @@ Life Cycle Analysis:
       - [get_analysis_configuration_file, 'what-ifs:what-if-name']
 
   - name: anthropogenic-heat
-    label: Heat Rejection [BETA]
+    label: "LCA Part 2c: Heat Rejection"
     short_description: Calculate heat rejection to the environment from energy systems
     description: |
       This feature calculates anthropogenic heat emissions (heat rejection) from
