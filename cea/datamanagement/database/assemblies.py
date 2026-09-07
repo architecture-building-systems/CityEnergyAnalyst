@@ -20,6 +20,216 @@ if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
 
 
+# --- Envelope derivation -------------------------------------------------------------
+# Material layers are canonical: U and the GHG columns are derived from them. These live
+# at module level because both reading (Envelope.from_locator) and writing (the database
+# editor, via apply_material_derivation) must derive identically -- a second copy of this
+# arithmetic would drift from the first.
+
+def _to_float(value: Any) -> float | None:
+    """Safely parse numeric value to float or None when missing/NaN/invalid."""
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return None
+    try:
+        return float(value)
+    except Exception:
+        return None
+
+
+def _calc_u(materials: list[dict[str, Any]], kind: Literal["floor", "roof", "wall"]) -> float | None:
+    """Compute U-value as 1 / sum(thickness_i / conductivity_i).
+
+    Returns None if any layer lacks required data or resistance is zero.
+    """
+    total_thermal_resistance = 0.0
+    has_conductivity_values = False
+    for m in materials:
+        conductivity_value = _to_float(m.get("thermal_conductivity"))
+        thickness_value = _to_float(m.get("thickness"))
+        # Skip if missing; allow zero thickness (contributes zero resistance)
+        if conductivity_value is None or thickness_value is None:
+            continue
+        if conductivity_value <= 0:
+            continue
+        total_thermal_resistance += thickness_value / conductivity_value
+        has_conductivity_values = True
+    if not has_conductivity_values or total_thermal_resistance == 0:
+        return None
+    # add internal and external surface resistances based on element type
+    coeffs = SURFACE_RESISTANCES.get(kind, {"internal": 0.0, "external": 0.0})
+    total_thermal_resistance += coeffs["internal"] + coeffs["external"]
+    return 1.0 / total_thermal_resistance
+
+
+def _calc_ghg(
+    materials: list[dict[str, Any]],
+) -> tuple[float | None, float | None, float | None, float | None]:
+    """Compute GHG per m2 for kg-based entries.
+
+    Uses mass_per_m2 = density * thickness (m, kg/m3 → kg/m2).
+    Disallows any material with unit 'm2'.
+    Returns tuple: (total, production, recycling, biogenic). Each may be None if insufficient data.
+    """
+    total_emissions = 0.0
+    production_emissions = 0.0
+    recycling_emissions = 0.0
+    biogenic_emissions = 0.0
+
+    any_total = False
+    any_production = False
+    any_recycling = False
+    any_biogenic = False
+
+    for m in materials:
+        unit = m.get("unit")
+        density_value = _to_float(m.get("density"))
+        ghg_total_value = _to_float(m.get("GHG_emission_total"))
+        ghg_production_value = _to_float(m.get("GHG_emission_production"))
+        ghg_recycling_value = _to_float(m.get("GHG_emission_recycling"))
+        bio_carbon_value = _to_float(m.get("biogenic_carbon_in_product"))
+        thickness_value = _to_float(m.get("thickness"))
+
+        if unit == "kg":
+            if density_value is None or thickness_value is None or thickness_value < 0:
+                continue
+            mass_per_m2 = density_value * thickness_value
+            if ghg_total_value is not None:
+                total_emissions += ghg_total_value * mass_per_m2
+                any_total = True
+            if ghg_production_value is not None:
+                production_emissions += ghg_production_value * mass_per_m2
+                any_production = True
+            if ghg_recycling_value is not None:
+                recycling_emissions += ghg_recycling_value * mass_per_m2
+                any_recycling = True
+            if bio_carbon_value is not None:
+                biogenic_emissions += bio_carbon_value * mass_per_m2
+                any_biogenic = True
+        elif str(unit).lower() == "m2":
+            # Disallow m2 unit entries in material database
+            raise ValueError(
+                "Material unit 'm2' is not supported. Please provide entries with unit 'kg'."
+            )
+        else:
+            # Unknown unit: skip
+            continue
+
+    return (
+        total_emissions if any_total else None,
+        production_emissions if any_production else None,
+        recycling_emissions if any_recycling else None,
+        biogenic_emissions if any_biogenic else None,
+    )
+
+
+MATERIAL_COLS = (
+    "material_name_1", "thickness_1_m",
+    "material_name_2", "thickness_2_m",
+    "material_name_3", "thickness_3_m",
+)
+
+
+# Per-component legacy (direct-property) columns that materials derive.
+
+
+DERIVED_COLS_BY_KIND: dict[str, tuple[str, str, str]] = {
+    "floor": ("U_base", "GHG_floor_kgCO2m2", "GHG_biogenic_floor_kgCO2m2"),
+    "roof": ("U_roof", "GHG_roof_kgCO2m2", "GHG_biogenic_roof_kgCO2m2"),
+    "wall": ("U_wall", "GHG_wall_kgCO2m2", "GHG_biogenic_wall_kgCO2m2"),
+}
+
+
+CROSS_CHECK_REL_TOLERANCE = 0.01  # 1% drift between materials-derived and on-disk
+
+
+def _is_blank_name(name: Any) -> bool:
+    return name is None or pd.isna(name) or str(name).strip() == ""
+
+
+def _row_has_usable_material_layer(row: pd.Series) -> bool:
+    """A row is usable iff at least one layer pairs a material name with a
+    positive thickness. A slot with no thickness, or a thickness of zero, is unused --
+    the remaining slots do not have to be filled in. A positive thickness with no
+    material name is malformed, not unused: silently dropping that layer would
+    understate the construction.
+    """
+    usable_layers = 0
+    for i in (1, 2, 3):
+        t = _to_float(row.get(f"thickness_{i}_m"))
+        if t is None or t <= 0:
+            continue
+        if _is_blank_name(row.get(f"material_name_{i}")):
+            return False
+        usable_layers += 1
+    return usable_layers >= 1
+
+
+def _row_has_complete_direct_set(row: pd.Series, kind: str) -> bool:
+    # Biogenic carbon was added after the rest of the legacy schema; v3 datasets
+    # (e.g. the migrated reference-case-open) ship without it. Require only U and
+    # GHG total; biogenic defaults to 0 below when missing.
+    u_col, ghg_col, _bio_col = DERIVED_COLS_BY_KIND[kind]
+    return (
+        _to_float(row.get(u_col)) is not None
+        and _to_float(row.get(ghg_col)) is not None
+    )
+
+
+def _gather_materials_for_row(row: pd.Series, material_db: pd.DataFrame | None) -> list[dict[str, Any]] | None:
+    """Return list of layer dicts joined with MATERIALS.csv, or None if any layer fails to resolve."""
+    if material_db is None:
+        return None
+    mats: list[dict[str, Any]] = []
+    for i in (1, 2, 3):
+        name = row.get(f"material_name_{i}")
+        thickness = _to_float(row.get(f"thickness_{i}_m"))
+        if thickness is None or thickness <= 0:
+            # Unused slot (blank or zero thickness): contributes nothing; skip joining
+            continue
+        if _is_blank_name(name):
+            return None
+        kb_match = material_db[material_db["name"] == name]
+        if kb_match.empty:
+            return None
+        rec = kb_match.iloc[0]
+        mats.append({
+            "name": name,
+            "thickness": thickness,
+            "thermal_conductivity": rec.get("thermal_conductivity"),
+            "density": rec.get("density"),
+            "unit": rec.get("unit"),
+            "GHG_emission_total": rec.get("GHG_emission_total"),
+            "GHG_emission_production": rec.get("GHG_emission_production"),
+            "GHG_emission_recycling": rec.get("GHG_emission_recycling"),
+            "biogenic_carbon_in_product": rec.get("biogenic_carbon_in_product"),
+        })
+    return mats
+
+
+def _derive_row_values(
+    row: pd.Series,
+    kind: Literal["floor", "roof", "wall"],
+    material_db: pd.DataFrame | None,
+) -> tuple[float | None, float | None, float | None] | None:
+    """The (U, GHG total, GHG biogenic) a row's material layers produce.
+
+    ``None`` when the row has no usable layer, or a layer that does not resolve against the
+    material database. Ordered to match ``DERIVED_COLS_BY_KIND[kind]``.
+    """
+    if not _row_has_usable_material_layer(row):
+        return None
+    materials = _gather_materials_for_row(row, material_db)
+    if not materials:
+        return None
+    ghg_total, _production, _recycling, ghg_biogenic = _calc_ghg(materials)
+    return _calc_u(materials, kind), ghg_total, ghg_biogenic
+
+
+def _relative_drift(disk: float, derived: float) -> float:
+    denom = max(abs(disk), abs(derived), 1e-9)
+    return abs(derived - disk) / denom
+
+
 class BaseAssemblyDatabase(BaseDatabase):
     _index: str = 'code'
     
@@ -116,178 +326,6 @@ class Envelope(BaseAssemblyDatabase):
         except (AttributeError, FileNotFoundError):
             material_db = None
 
-        def _to_float(value: Any) -> float | None:
-            """Safely parse numeric value to float or None when missing/NaN/invalid."""
-            if value is None or (isinstance(value, float) and pd.isna(value)):
-                return None
-            try:
-                return float(value)
-            except Exception:
-                return None
-
-        def _calc_u(materials: list[dict[str, Any]], kind: Literal["floor", "roof", "wall"]) -> float | None:
-            """Compute U-value as 1 / sum(thickness_i / conductivity_i).
-
-            Returns None if any layer lacks required data or resistance is zero.
-            """
-            total_thermal_resistance = 0.0
-            has_conductivity_values = False
-            for m in materials:
-                conductivity_value = _to_float(m.get("thermal_conductivity"))
-                thickness_value = _to_float(m.get("thickness"))
-                # Skip if missing; allow zero thickness (contributes zero resistance)
-                if conductivity_value is None or thickness_value is None:
-                    continue
-                if conductivity_value <= 0:
-                    continue
-                total_thermal_resistance += thickness_value / conductivity_value
-                has_conductivity_values = True
-            if not has_conductivity_values or total_thermal_resistance == 0:
-                return None
-            # add internal and external surface resistances based on element type
-            coeffs = SURFACE_RESISTANCES.get(kind, {"internal": 0.0, "external": 0.0})
-            total_thermal_resistance += coeffs["internal"] + coeffs["external"]
-            return 1.0 / total_thermal_resistance
-
-        def _calc_ghg(
-            materials: list[dict[str, Any]],
-        ) -> tuple[float | None, float | None, float | None, float | None]:
-            """Compute GHG per m2 for kg-based entries.
-
-            Uses mass_per_m2 = density * thickness (m, kg/m3 → kg/m2).
-            Disallows any material with unit 'm2'.
-            Returns tuple: (total, production, recycling, biogenic). Each may be None if insufficient data.
-            """
-            total_emissions = 0.0
-            production_emissions = 0.0
-            recycling_emissions = 0.0
-            biogenic_emissions = 0.0
-
-            any_total = False
-            any_production = False
-            any_recycling = False
-            any_biogenic = False
-
-            for m in materials:
-                unit = m.get("unit")
-                density_value = _to_float(m.get("density"))
-                ghg_total_value = _to_float(m.get("GHG_emission_total"))
-                ghg_production_value = _to_float(m.get("GHG_emission_production"))
-                ghg_recycling_value = _to_float(m.get("GHG_emission_recycling"))
-                bio_carbon_value = _to_float(m.get("biogenic_carbon_in_product"))
-                thickness_value = _to_float(m.get("thickness"))
-
-                if unit == "kg":
-                    if density_value is None or thickness_value is None or thickness_value < 0:
-                        continue
-                    mass_per_m2 = density_value * thickness_value
-                    if ghg_total_value is not None:
-                        total_emissions += ghg_total_value * mass_per_m2
-                        any_total = True
-                    if ghg_production_value is not None:
-                        production_emissions += ghg_production_value * mass_per_m2
-                        any_production = True
-                    if ghg_recycling_value is not None:
-                        recycling_emissions += ghg_recycling_value * mass_per_m2
-                        any_recycling = True
-                    if bio_carbon_value is not None:
-                        biogenic_emissions += bio_carbon_value * mass_per_m2
-                        any_biogenic = True
-                elif str(unit).lower() == "m2":
-                    # Disallow m2 unit entries in material database
-                    raise ValueError(
-                        "Material unit 'm2' is not supported. Please provide entries with unit 'kg'."
-                    )
-                else:
-                    # Unknown unit: skip
-                    continue
-
-            return (
-                total_emissions if any_total else None,
-                production_emissions if any_production else None,
-                recycling_emissions if any_recycling else None,
-                biogenic_emissions if any_biogenic else None,
-            )
-
-        MATERIAL_COLS = (
-            "material_name_1", "thickness_1_m",
-            "material_name_2", "thickness_2_m",
-            "material_name_3", "thickness_3_m",
-        )
-
-        # Per-component legacy (direct-property) columns that materials derive.
-        DERIVED_COLS_BY_KIND: dict[str, tuple[str, str, str]] = {
-            "floor": ("U_base", "GHG_floor_kgCO2m2", "GHG_biogenic_floor_kgCO2m2"),
-            "roof": ("U_roof", "GHG_roof_kgCO2m2", "GHG_biogenic_roof_kgCO2m2"),
-            "wall": ("U_wall", "GHG_wall_kgCO2m2", "GHG_biogenic_wall_kgCO2m2"),
-        }
-
-        CROSS_CHECK_REL_TOLERANCE = 0.01  # 1% drift between materials-derived and on-disk
-
-        def _is_blank_name(name: Any) -> bool:
-            return name is None or pd.isna(name) or str(name).strip() == ""
-
-        def _row_has_usable_material_layer(row: pd.Series) -> bool:
-            """A row is usable iff at least one layer pairs a material name with a
-            positive thickness. A slot with no thickness, or a thickness of zero, is unused --
-            the remaining slots do not have to be filled in. A positive thickness with no
-            material name is malformed, not unused: silently dropping that layer would
-            understate the construction.
-            """
-            usable_layers = 0
-            for i in (1, 2, 3):
-                t = _to_float(row.get(f"thickness_{i}_m"))
-                if t is None or t <= 0:
-                    continue
-                if _is_blank_name(row.get(f"material_name_{i}")):
-                    return False
-                usable_layers += 1
-            return usable_layers >= 1
-
-        def _row_has_complete_direct_set(row: pd.Series, kind: str) -> bool:
-            # Biogenic carbon was added after the rest of the legacy schema; v3 datasets
-            # (e.g. the migrated reference-case-open) ship without it. Require only U and
-            # GHG total; biogenic defaults to 0 below when missing.
-            u_col, ghg_col, _bio_col = DERIVED_COLS_BY_KIND[kind]
-            return (
-                _to_float(row.get(u_col)) is not None
-                and _to_float(row.get(ghg_col)) is not None
-            )
-
-        def _gather_materials_for_row(row: pd.Series) -> list[dict[str, Any]] | None:
-            """Return list of layer dicts joined with MATERIALS.csv, or None if any layer fails to resolve."""
-            if material_db is None:
-                return None
-            mats: list[dict[str, Any]] = []
-            for i in (1, 2, 3):
-                name = row.get(f"material_name_{i}")
-                thickness = _to_float(row.get(f"thickness_{i}_m"))
-                if thickness is None or thickness <= 0:
-                    # Unused slot (blank or zero thickness): contributes nothing; skip joining
-                    continue
-                if _is_blank_name(name):
-                    return None
-                kb_match = material_db[material_db["name"] == name]
-                if kb_match.empty:
-                    return None
-                rec = kb_match.iloc[0]
-                mats.append({
-                    "name": name,
-                    "thickness": thickness,
-                    "thermal_conductivity": rec.get("thermal_conductivity"),
-                    "density": rec.get("density"),
-                    "unit": rec.get("unit"),
-                    "GHG_emission_total": rec.get("GHG_emission_total"),
-                    "GHG_emission_production": rec.get("GHG_emission_production"),
-                    "GHG_emission_recycling": rec.get("GHG_emission_recycling"),
-                    "biogenic_carbon_in_product": rec.get("biogenic_carbon_in_product"),
-                })
-            return mats
-
-        def _relative_drift(disk: float, derived: float) -> float:
-            denom = max(abs(disk), abs(derived), 1e-9)
-            return abs(derived - disk) / denom
-
         def _ensure_legacy_columns_exist(
             df: pd.DataFrame,
             kind: Literal["floor", "roof", "wall"],
@@ -334,8 +372,8 @@ class Envelope(BaseAssemblyDatabase):
                         df.loc[code_str, bio_col] = 0.0
                     continue
 
-                mats = _gather_materials_for_row(row)
-                if not mats:
+                derived_values = _derive_row_values(row, kind, material_db)
+                if derived_values is None:
                     # Materials referenced but MATERIALS.csv missing or layer unresolved.
                     # If direct-property is also complete, fall back to it silently.
                     if has_direct:
@@ -343,14 +381,11 @@ class Envelope(BaseAssemblyDatabase):
                     malformed.append(code_str)
                     continue
 
-                u_derived = _calc_u(mats, kind)
-                ghg_total, _ghg_prod, _ghg_recyc, ghg_bio = _calc_ghg(mats)
-                derived_values = (u_derived, ghg_total, ghg_bio)
-
                 # Cross-check every on-disk value that is present, column by column. A row
                 # that fills in only some of the direct properties is not a complete direct
                 # set, but the values it does carry are still claims about this construction
                 # -- comparing only complete sets would let them be overwritten in silence.
+                conflicting: set[str] = set()
                 for col, derived in zip(derived_cols, derived_values):
                     if derived is None:
                         continue
@@ -359,6 +394,7 @@ class Envelope(BaseAssemblyDatabase):
                         continue
                     drift = _relative_drift(disk, derived)
                     if drift > CROSS_CHECK_REL_TOLERANCE:
+                        conflicting.add(col)
                         drift_errors.append(
                             f"  {envelope_ref} row '{code_str}': column '{col}' "
                             f"on-disk={disk:.4g} but derived-from-materials={derived:.4g} "
@@ -366,9 +402,12 @@ class Envelope(BaseAssemblyDatabase):
                             f"Materials are canonical. Refresh the on-disk cache or correct the material composition."
                         )
 
-                # Materials win: write derived values (overwriting any stale cache within tolerance).
+                # Materials win: write derived values (overwriting any stale cache within
+                # tolerance). A conflicting value is left as it is on disk -- in strict mode
+                # the raise below stops the load anyway, and in lenient mode the editor must
+                # show what the file actually holds rather than a silently corrected number.
                 for col, derived in zip(derived_cols, derived_values):
-                    if derived is not None:
+                    if derived is not None and col not in conflicting:
                         df.loc[code_str, col] = derived
 
             if not strict:
@@ -408,6 +447,61 @@ class Envelope(BaseAssemblyDatabase):
         # Stored material database used for deriving legacy values (if available).
         setattr(env, "_material_db", material_db)
         return env
+
+    def apply_material_derivation(
+        self, material_db: pd.DataFrame | None
+    ) -> list[dict[str, Any]]:
+        """Recompute U/GHG from the material layers, and report what that overwrites.
+
+        Materials are canonical, so any row with a usable layer has its derived columns
+        rewritten here. Without this, saving an edited layer keeps the U/GHG that described
+        the *previous* composition, and the file no longer loads.
+
+        Returns one entry per column whose stored value disagreed with the layers by more
+        than the cross-check tolerance. Values that were empty, or already agreed, are not
+        reported -- filling a blank or confirming a match is not something to warn about.
+        """
+        if material_db is None:
+            return []
+        # Read from a CSV, `name` is a column; rebuilt from the editor payload it is the
+        # index. The layer lookup needs the column form.
+        if "name" not in material_db.columns and material_db.index.name == "name":
+            material_db = material_db.reset_index()
+
+        conflicts: list[dict[str, Any]] = []
+        for kind, derived_cols in DERIVED_COLS_BY_KIND.items():
+            df = getattr(self, kind, None)
+            if df is None:
+                continue
+            # Up front, not per row: a table with no layers at all still gains the columns,
+            # and creating one mid-iteration would modify the frame being walked.
+            for col in derived_cols:
+                if col not in df.columns:
+                    df[col] = None
+
+            for code, row in df.iterrows():
+                derived_values = _derive_row_values(row, kind, material_db)
+                if derived_values is None:
+                    continue
+
+                for col, derived in zip(derived_cols, derived_values):
+                    if derived is None:
+                        continue
+                    stored = _to_float(row.get(col))
+                    if (
+                        stored is not None
+                        and _relative_drift(stored, derived) > CROSS_CHECK_REL_TOLERANCE
+                    ):
+                        conflicts.append({
+                            "table": kind,
+                            "code": str(code),
+                            "column": col,
+                            "stored": stored,
+                            "derived": derived,
+                        })
+                    df.loc[code, col] = derived
+
+        return conflicts
 
     def save(self, locator: InputLocator) -> None:
         """Save envelope databases while preserving the on-disk schema.

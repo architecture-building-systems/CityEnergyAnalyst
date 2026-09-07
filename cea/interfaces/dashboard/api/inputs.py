@@ -26,6 +26,7 @@ from cea.datamanagement.district_pathways.pathway_timeline import PathwayChildSc
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 import cea.schemas
 from cea.databases import CEADatabase, CEADatabaseException, databases_folder_path
+from cea.datamanagement.database.assemblies import CROSS_CHECK_REL_TOLERANCE
 from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
 
 from cea.interfaces.dashboard.utils import (
@@ -464,14 +465,44 @@ async def get_input_database_data(scenario: CEAScenario):
 
 
 @router.put('/databases')
-async def put_input_database_data(scenario: CEAScenario, payload: Dict[str, Any]):
+async def put_input_database_data(
+    scenario: CEAScenario,
+    payload: Dict[str, Any],
+    overwrite_derived: bool = False,
+):
+    """Save the database, deriving envelope U/GHG values from the material layers.
+
+    A row whose stored U/GHG disagree with its layers is reported as a conflict and the whole
+    save is refused (409) unless `overwrite_derived` is set. Refusing everything rather than
+    the offending rows keeps the file consistent with what the user last saw: a partial save
+    would leave the editor showing values that were not written.
+    """
     locator = cea.inputlocator.InputLocator(scenario)
     try:
         def fn():
             db = CEADatabase.from_dict(payload)
+            materials = getattr(db.components.materials, 'materials', None)
+            conflicts = db.assemblies.envelope.apply_material_derivation(materials)
+            if conflicts and not overwrite_derived:
+                return conflicts
             db.save(locator)
-            return {'message': 'Database updated'}
-        return await run_in_threadpool(fn)
+            return None
+
+        conflicts = await run_in_threadpool(fn)
+        if conflicts:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={
+                    'status': 'derived_conflict',
+                    'message': (
+                        f'{len(conflicts)} value(s) disagree with their material layers by more '
+                        f'than {CROSS_CHECK_REL_TOLERANCE:.0%}. Material layers are the source of '
+                        f'truth, so saving replaces them with values derived from the layers.'
+                    ),
+                    'conflicts': conflicts,
+                },
+            )
+        return {'message': 'Database updated'}
     except CEADatabaseException as e:
         print(e)
         raise HTTPException(
