@@ -1621,7 +1621,11 @@ class ComponentMultiChoiceParameter(MultiChoiceParameter):
                 return []
             shared = component_sets[0].intersection(*component_sets[1:])
             return sorted(shared)
-        except Exception:
+        except (OSError, AttributeError, KeyError, ValueError) as e:
+            import logging
+            logging.getLogger(__name__).warning(
+                "ComponentMultiChoiceParameter(%s): could not build choices: %s", self.name, e
+            )
             return []
 
     empty_means_all = False
