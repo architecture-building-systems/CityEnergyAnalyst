@@ -372,7 +372,16 @@ class Envelope(BaseAssemblyDatabase):
                         df.loc[code_str, bio_col] = 0.0
                     continue
 
-                derived_values = _derive_row_values(row, kind, material_db)
+                try:
+                    derived_values = _derive_row_values(row, kind, material_db)
+                except ValueError:
+                    # A material this row references cannot be interpreted (an unsupported
+                    # unit, say). Fatal for a simulation, but the editor has to open or the
+                    # user cannot reach the row to fix it; the verifier reports the problem.
+                    if strict:
+                        raise
+                    continue
+
                 if derived_values is None:
                     # Materials referenced but MATERIALS.csv missing or layer unresolved.
                     # If direct-property is also complete, fall back to it silently.
