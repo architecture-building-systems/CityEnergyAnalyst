@@ -10,10 +10,7 @@ import pandas as pd
 import pytest
 
 from cea.datamanagement.database.assemblies import Envelope
-from cea.datamanagement.format_helper.cea4_verify_db import (
-    verify_assembly,
-    verify_file_against_schema_4_db,
-)
+from cea.datamanagement.format_helper.cea4_verify_db import verify_file_against_schema_4_db
 
 MATERIAL = {
     "name": "brick",
