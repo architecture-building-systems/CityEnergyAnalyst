@@ -207,10 +207,14 @@ async def restore_default_config(config: CEAConfig, tool_name: str, scenario: CE
 
 
 @router.post('/{tool_name}/save-config')
-async def save_tool_config(config: CEAConfig, tool_name: str, payload: Dict[str, Any], scenario: CEAScenarioLenient):
+async def save_tool_config(config: CEAConfig, tool_name: str, payload: Dict[str, Any], scenario: CEAScenarioLenient) -> ToolProperties:
     """
     Save the configuration for this tool to the configuration file.
     Validates all parameters before saving and returns field-level errors if validation fails.
+
+    Returns the rebuilt tool properties (same shape as GET /{tool_name} and
+    /{tool_name}/default) so callers can adopt the saved state directly instead of
+    issuing a follow-up GET.
     """
     config.scenario = scenario
     field_errors = {}
@@ -241,7 +245,7 @@ async def save_tool_config(config: CEAConfig, tool_name: str, payload: Dict[str,
             parameter.set(value)
 
     config.save()
-    return 'Success'
+    return _build_tool_properties(tool_name, config)
 
 
 @router.post('/{tool_name}/validate-field')
