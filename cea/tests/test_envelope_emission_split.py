@@ -1,6 +1,6 @@
 """Envelope embodied carbon is reported split into production and demolition.
 
-`GHG_*_kgCO2m2` stays the whole-lifecycle figure; `GHG_production_*` and `GHG_recycling_*`
+`GHG_*_kgCO2m2` stays the whole-lifecycle figure; `GHG_production_*` and `GHG_demolition_*`
 split it and are derived from the material layers. A database without MATERIALS.csv, a
 direct-property row, and a window all lack the split, so the split is decided per row -- one
 file routinely holds both kinds.
@@ -33,7 +33,7 @@ BRICK = {
 LAYER = {"material_name_1": "brick", "thickness_1_m": 0.20}
 EXPECTED_TOTAL = 100.0       # 0.5 x 200
 EXPECTED_PRODUCTION = 80.0   # 0.4 x 200
-EXPECTED_RECYCLING = 20.0    # 0.1 x 200
+EXPECTED_DEMOLITION = 20.0    # 0.1 x 200
 
 DIRECT_ROW = {
     "code": "WALL_DIRECT",
@@ -58,7 +58,7 @@ def test_a_layered_row_derives_the_split(envelope_scenario):
     row = _wall(locator)
     assert float(row["GHG_wall_kgCO2m2"]) == pytest.approx(EXPECTED_TOTAL)
     assert float(row["GHG_production_wall_kgCO2m2"]) == pytest.approx(EXPECTED_PRODUCTION)
-    assert float(row["GHG_recycling_wall_kgCO2m2"]) == pytest.approx(EXPECTED_RECYCLING)
+    assert float(row["GHG_demolition_wall_kgCO2m2"]) == pytest.approx(EXPECTED_DEMOLITION)
 
 
 def test_the_split_adds_up_to_the_total(envelope_scenario):
@@ -68,7 +68,7 @@ def test_the_split_adds_up_to_the_total(envelope_scenario):
     )
 
     row = _wall(locator)
-    parts = float(row["GHG_production_wall_kgCO2m2"]) + float(row["GHG_recycling_wall_kgCO2m2"])
+    parts = float(row["GHG_production_wall_kgCO2m2"]) + float(row["GHG_demolition_wall_kgCO2m2"])
     assert parts == pytest.approx(float(row["GHG_wall_kgCO2m2"]))
 
 
@@ -83,7 +83,7 @@ def test_one_file_can_hold_split_and_unsplit_rows(envelope_scenario):
 
     production, demolition, biogenic = envelope_emission_intensities(lookup, "WALL_A")
     assert (production, demolition) == pytest.approx(
-        (EXPECTED_PRODUCTION, EXPECTED_RECYCLING)
+        (EXPECTED_PRODUCTION, EXPECTED_DEMOLITION)
     )
 
     production, demolition, biogenic = envelope_emission_intensities(lookup, "WALL_DIRECT")
@@ -137,7 +137,7 @@ def test_a_hand_written_split_that_does_not_add_up_is_rejected(envelope_scenario
         [BRICK],
         wall=[{**DIRECT_ROW,
                "GHG_production_wall_kgCO2m2": 10.0,
-               "GHG_recycling_wall_kgCO2m2": 5.0}],   # 15 vs a stated total of 90
+               "GHG_demolition_wall_kgCO2m2": 5.0}],   # 15 vs a stated total of 90
     )
 
     with pytest.raises(ValueError, match="does not add up"):
@@ -150,7 +150,7 @@ def test_a_hand_written_split_within_tolerance_is_accepted(envelope_scenario):
         [BRICK],
         wall=[{**DIRECT_ROW,
                "GHG_production_wall_kgCO2m2": 72.0,
-               "GHG_recycling_wall_kgCO2m2": 18.4}],  # 90.4 vs 90.0: 0.44%
+               "GHG_demolition_wall_kgCO2m2": 18.4}],  # 90.4 vs 90.0: 0.44%
     )
 
     row = _wall(locator, "WALL_DIRECT")

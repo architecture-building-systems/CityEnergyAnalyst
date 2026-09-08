@@ -23,7 +23,7 @@ class EnvelopeLookup:
         "U",
         "GHG_kgCO2m2",
         "GHG_production_kgCO2m2",
-        "GHG_recycling_kgCO2m2",
+        "GHG_demolition_kgCO2m2",
         "GHG_biogenic_kgCO2m2",
         "G_win",
         "e_win",
@@ -163,7 +163,7 @@ class EnvelopeLookup:
             "GHG_kgCO2m2",
             "GHG_biogenic_kgCO2m2",
             "GHG_production_kgCO2m2",
-            "GHG_recycling_kgCO2m2",
+            "GHG_demolition_kgCO2m2",
             "Service_Life",
         }
         if field in ghg_fields:
@@ -182,8 +182,8 @@ class EnvelopeLookup:
                 return f"GHG_biogenic_{suf}_kgCO2m2"
             if field == "GHG_production_kgCO2m2":
                 return f"GHG_production_{suf}_kgCO2m2"
-            if field == "GHG_recycling_kgCO2m2":
-                return f"GHG_recycling_{suf}_kgCO2m2"
+            if field == "GHG_demolition_kgCO2m2":
+                return f"GHG_demolition_{suf}_kgCO2m2"
             # Service_Life
             return f"Service_Life_{suf}"
 
@@ -241,7 +241,7 @@ def envelope_emission_intensities(
 ) -> tuple[float, float, float]:
     """Return (production, demolition, biogenic) in kgCO2e/m2 for an envelope code.
 
-    The production/recycling split is decided per row, not per file: one ENVELOPE_WALL.csv can
+    The production/demolition split is decided per row, not per file: one ENVELOPE_WALL.csv can
     hold layered rows that derive a split alongside direct-property rows that do not, and
     windows never have layers at all. Testing the row's *values* rather than whether the
     column exists is what makes that work -- once any row derives a split the column exists
@@ -255,9 +255,9 @@ def envelope_emission_intensities(
     biogenic = _optional_field(lookup, code, "GHG_biogenic_kgCO2m2", default=0.0)
 
     production = _optional_field(lookup, code, "GHG_production_kgCO2m2")
-    recycling = _optional_field(lookup, code, "GHG_recycling_kgCO2m2")
-    if production is not None and recycling is not None:
-        return production, recycling, biogenic
+    demolition = _optional_field(lookup, code, "GHG_demolition_kgCO2m2")
+    if production is not None and demolition is not None:
+        return production, demolition, biogenic
 
     total = lookup.get_item_value(code, "GHG_kgCO2m2")
     if total is None:

@@ -644,7 +644,7 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
                 lifetime = SERVICE_LIFE_OF_TECHNICAL_SYSTEMS
                 production = EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS
                 biogenic = 0.0
-                demolition = 0.0  # FIXME: assuming recycling of systems require generates emission, which is false
+                demolition = 0.0  # FIXME: assumes demolishing technical systems emits nothing, which is false
             else:
                 type_str = f"type_{value}"
                 lifetime_any = self.envelope_lookup.get_item_value(
@@ -1012,23 +1012,17 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
         self.timeline.loc[self.timeline.index >= demolition_year_str, emission_cols] = 0.0
         for key, value in _MAPPING_DICT.items():
             if key == "technical_systems":
-                demolition_any = 0.0
+                demolition = 0.0
             else:
-                type_str = f"type_{value}"
-                try:
-                    demolition_any = self.envelope_lookup.get_item_value(
-                        code=self.envelope[type_str], field="GHG_recycling_kgCO2m2"
-                    )
-                except KeyError:  # if detailed LCA data not available, use simplified
-                    demolition_any = 0.0
-
-            if demolition_any is not None:
-                demolition = float(demolition_any)
-            else:
-                raise ValueError(
-                    f"Recycling column exists but without meaningful data for item {self.envelope[type_str]}."
+                # Same per-row rules as the construction-time split: a row with no
+                # material-derived demolition term reports none. Deciding on the row's value
+                # rather than the column's existence matters here too -- a file holding both
+                # kinds of row would otherwise yield NaN, which `float()` would carry into
+                # the timeline as a NaN emission.
+                _production, demolition, _biogenic = envelope_emission_intensities(
+                    self.envelope_lookup, str(self.envelope[f"type_{value}"])
                 )
-            
+
             area: float = self.surface_area[f"A{key}"]
             max_year = max(years_from_index(self.timeline.index))
             # if demolition_year > max_year, do nothing

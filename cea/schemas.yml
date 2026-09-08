@@ -2437,7 +2437,7 @@ get_database_assemblies_envelope_floor:
     # Rows with both will be cross-checked at load (materials canonical, 1% tolerance).
     # The direct-property set is U + the lifecycle GHG total, matching what the loader
     # requires: biogenic defaults to 0 when absent (v3-migrated datasets ship without it),
-    # and the production/recycling split is only ever derived.
+    # and the production/demolition split is only ever derived.
     required_one_of:
       - [U_base, GHG_floor_kgCO2m2]
       - any_pair_of:
@@ -2468,14 +2468,14 @@ get_database_assemblies_envelope_floor:
         nullable: true
       GHG_production_floor_kgCO2m2:
         description: Production (cradle-to-gate) share of the embodied emissions per m2 of floors.
-          Together with GHG_recycling_floor_kgCO2m2 it splits GHG_floor_kgCO2m2; both are derived from
+          Together with GHG_demolition_floor_kgCO2m2 it splits GHG_floor_kgCO2m2; both are derived from
           the material layer set and absent for databases without one.
         type: float
         unit: '[kg CO2-eq/m2]'
         min: 0.0
         nullable: true
-      GHG_recycling_floor_kgCO2m2:
-        description: End-of-life (demolition/recycling) share of the embodied emissions per m2 of
+      GHG_demolition_floor_kgCO2m2:
+        description: End-of-life (demolition) share of the embodied emissions per m2 of
           floors. Together with GHG_production_floor_kgCO2m2 it splits GHG_floor_kgCO2m2; both are derived
           from the material layer set and absent for databases without one.
         type: float
@@ -2551,7 +2551,7 @@ get_database_assemblies_envelope_roof:
     # Rows with both will be cross-checked at load (materials canonical, 1% tolerance).
     # The direct-property set is U + the lifecycle GHG total, matching what the loader
     # requires: biogenic defaults to 0 when absent (v3-migrated datasets ship without it),
-    # and the production/recycling split is only ever derived.
+    # and the production/demolition split is only ever derived.
     required_one_of:
       - [U_roof, GHG_roof_kgCO2m2]
       - any_pair_of:
@@ -2577,14 +2577,14 @@ get_database_assemblies_envelope_roof:
         nullable: true
       GHG_production_roof_kgCO2m2:
         description: Production (cradle-to-gate) share of the embodied emissions per m2 of roofs.
-          Together with GHG_recycling_roof_kgCO2m2 it splits GHG_roof_kgCO2m2; both are derived from
+          Together with GHG_demolition_roof_kgCO2m2 it splits GHG_roof_kgCO2m2; both are derived from
           the material layer set and absent for databases without one.
         type: float
         unit: '[kg CO2-eq/m2]'
         min: 0.0
         nullable: true
-      GHG_recycling_roof_kgCO2m2:
-        description: End-of-life (demolition/recycling) share of the embodied emissions per m2 of
+      GHG_demolition_roof_kgCO2m2:
+        description: End-of-life (demolition) share of the embodied emissions per m2 of
           roofs. Together with GHG_production_roof_kgCO2m2 it splits GHG_roof_kgCO2m2; both are derived
           from the material layer set and absent for databases without one.
         type: float
@@ -2758,7 +2758,7 @@ get_database_assemblies_envelope_wall:
     # Rows with both will be cross-checked at load (materials canonical, 1% tolerance).
     # The direct-property set is U + the lifecycle GHG total, matching what the loader
     # requires: biogenic defaults to 0 when absent (v3-migrated datasets ship without it),
-    # and the production/recycling split is only ever derived.
+    # and the production/demolition split is only ever derived.
     required_one_of:
       - [U_wall, GHG_wall_kgCO2m2]
       - any_pair_of:
@@ -2784,14 +2784,14 @@ get_database_assemblies_envelope_wall:
         nullable: true
       GHG_production_wall_kgCO2m2:
         description: Production (cradle-to-gate) share of the embodied emissions per m2 of walls.
-          Together with GHG_recycling_wall_kgCO2m2 it splits GHG_wall_kgCO2m2; both are derived from
+          Together with GHG_demolition_wall_kgCO2m2 it splits GHG_wall_kgCO2m2; both are derived from
           the material layer set and absent for databases without one.
         type: float
         unit: '[kg CO2-eq/m2]'
         min: 0.0
         nullable: true
-      GHG_recycling_wall_kgCO2m2:
-        description: End-of-life (demolition/recycling) share of the embodied emissions per m2 of
+      GHG_demolition_wall_kgCO2m2:
+        description: End-of-life (demolition) share of the embodied emissions per m2 of
           walls. Together with GHG_production_wall_kgCO2m2 it splits GHG_wall_kgCO2m2; both are derived
           from the material layer set and absent for databases without one.
         type: float
