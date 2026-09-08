@@ -2435,8 +2435,11 @@ get_database_assemblies_envelope_floor:
   schema:
     # Per-row rule: each row must satisfy at least one of these column sets.
     # Rows with both will be cross-checked at load (materials canonical, 1% tolerance).
+    # The direct-property set is U + the lifecycle GHG total, matching what the loader
+    # requires: biogenic defaults to 0 when absent (v3-migrated datasets ship without it),
+    # and the production/recycling split is only ever derived.
     required_one_of:
-      - [U_base, GHG_floor_kgCO2m2, GHG_biogenic_floor_kgCO2m2]
+      - [U_base, GHG_floor_kgCO2m2]
       - any_pair_of:
           - [material_name_1, thickness_1_m]
           - [material_name_2, thickness_2_m]
@@ -2546,8 +2549,11 @@ get_database_assemblies_envelope_roof:
   schema:
     # Per-row rule: each row must satisfy at least one of these column sets.
     # Rows with both will be cross-checked at load (materials canonical, 1% tolerance).
+    # The direct-property set is U + the lifecycle GHG total, matching what the loader
+    # requires: biogenic defaults to 0 when absent (v3-migrated datasets ship without it),
+    # and the production/recycling split is only ever derived.
     required_one_of:
-      - [U_roof, GHG_roof_kgCO2m2, GHG_biogenic_roof_kgCO2m2]
+      - [U_roof, GHG_roof_kgCO2m2]
       - any_pair_of:
           - [material_name_1, thickness_1_m]
           - [material_name_2, thickness_2_m]
@@ -2750,8 +2756,11 @@ get_database_assemblies_envelope_wall:
   schema:
     # Per-row rule: each row must satisfy at least one of these column sets.
     # Rows with both will be cross-checked at load (materials canonical, 1% tolerance).
+    # The direct-property set is U + the lifecycle GHG total, matching what the loader
+    # requires: biogenic defaults to 0 when absent (v3-migrated datasets ship without it),
+    # and the production/recycling split is only ever derived.
     required_one_of:
-      - [U_wall, GHG_wall_kgCO2m2, GHG_biogenic_wall_kgCO2m2]
+      - [U_wall, GHG_wall_kgCO2m2]
       - any_pair_of:
           - [material_name_1, thickness_1_m]
           - [material_name_2, thickness_2_m]
