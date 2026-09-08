@@ -4,6 +4,7 @@ Read and summarise CEA results over all scenarios in a project.
 """
 import itertools
 import os
+import tempfile
 import pandas as pd
 import numpy as np
 import cea.config
@@ -2944,7 +2945,17 @@ def write_selected_buildings_file(locator, buildings_path, list_buildings,
     df_buildings[numeric_columns] = df_buildings[numeric_columns].round(2)
 
     os.makedirs(os.path.dirname(buildings_path), exist_ok=True)
-    tmp_path = f"{buildings_path}.tmp"
+    # A fixed `.tmp` suffix collides under concurrent writers targeting the same
+    # buildings_path (e.g. multiple plot panels for one scenario, or two sessions on a
+    # multi-worker dashboard deployment): one call's write, or its except-branch cleanup,
+    # could clobber another's in-flight temp file. mkstemp guarantees a unique path per
+    # call, so concurrent writers never share one.
+    tmp_fd, tmp_path = tempfile.mkstemp(
+        dir=os.path.dirname(buildings_path),
+        prefix=f"{os.path.basename(buildings_path)}.",
+        suffix=".tmp",
+    )
+    os.close(tmp_fd)
     try:
         df_buildings.to_csv(tmp_path, index=False, float_format="%.2f")
         os.replace(tmp_path, buildings_path)
