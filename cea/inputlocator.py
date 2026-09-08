@@ -83,6 +83,9 @@ class InputLocator(object):
         # mkdtemp()/atexit.register() on every one of the ~200+ construction sites left
         # orphaned temp directories and an ever-growing atexit list for the process lifetime.
         self.__temp_directory = None
+        # PID of the process that created the directory. Only that process may remove it:
+        # an unpickled copy in a worker must not delete what the parent is still reading.
+        self.__temp_directory_pid = None
 
     def __getstate__(self):
         """Make sure we can pickle an InputLocator..."""
@@ -91,7 +94,12 @@ class InputLocator(object):
             "db_path": self.db_path,
             "weather_path": self.weather_path,
             "plugins": [str(p) for p in self.plugins],
-            "_temp_directory": self.__temp_directory
+            # Materialise before crossing a process boundary. Workers write per-building
+            # files here that the parent reads back (see demand_writers), so every copy of
+            # this locator has to name the same directory -- if each side created its own on
+            # first use, they would never see each other's files.
+            "_temp_directory": self.get_temporary_folder(),
+            "_temp_directory_pid": self.__temp_directory_pid,
         }
 
     def __setstate__(self, state):
@@ -105,12 +113,20 @@ class InputLocator(object):
         self.plugins = [instantiate_plugin(plugin_fqname) for plugin_fqname in state["plugins"]]
         self._wrap_locator_methods(self.plugins)
         self.__temp_directory = state["_temp_directory"]
-        if self.__temp_directory is not None:
-            atexit.register(self._cleanup_temp_directory)
+        self.__temp_directory_pid = state["_temp_directory_pid"]
+        # `__getstate__` materialises the directory, so there is always one to clean up here.
+        # Whether this copy is allowed to is decided by `_cleanup_temp_directory`.
+        atexit.register(self._cleanup_temp_directory)
 
     def _cleanup_temp_directory(self):
         """atexit callback: remove this locator's temporary directory, if one was ever
-        created (see `get_temporary_folder`)."""
+        created (see `get_temporary_folder`).
+
+        Only the creating process deletes it. Worker processes hold unpickled copies naming
+        the parent's directory, and deleting it on their way out would take the results with
+        it while the parent is still reading them."""
+        if self.__temp_directory_pid != os.getpid():
+            return
         if self.__temp_directory is not None and os.path.exists(self.__temp_directory):
             shutil.rmtree(self.__temp_directory)
 
@@ -2245,6 +2261,7 @@ class InputLocator(object):
         throughout a run."""
         if self.__temp_directory is None:
             self.__temp_directory = tempfile.mkdtemp()
+            self.__temp_directory_pid = os.getpid()
             atexit.register(self._cleanup_temp_directory)
         return self.__temp_directory
 

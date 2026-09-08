@@ -31,7 +31,16 @@ from cea.interfaces.dashboard.dependencies import CEALocalConfig, require_authen
 from cea.interfaces.dashboard.settings import Settings, get_settings
 from cea.tests.paths import REPO_ROOT
 
-InputLocator._cleanup_temp_directory = lambda self: None  # type: ignore[method-assign]
+
+@pytest.fixture(autouse=True)
+def _no_temp_directory_cleanup(monkeypatch):
+    """Keep atexit from removing the temp directories these tests create.
+
+    Scoped to this module rather than assigned on the class at import time: a permanent
+    assignment leaks into every test that runs afterwards, silently turning real cleanup into
+    a no-op (`test_inputlocator_temp_directory` depends on it working).
+    """
+    monkeypatch.setattr(InputLocator, "_cleanup_temp_directory", lambda self: None)
 
 
 @pytest.fixture

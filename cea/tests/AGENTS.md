@@ -45,6 +45,13 @@ cea.api.pathway_validate_all_states(...)
 # Simulate cache.get / RedLock / cache.set failures without depending on Redis.
 ```
 
+### DON'T: Patch a class at module import time
+```python
+# Bad: leaks into every test that runs afterwards, in any file.
+InputLocator._cleanup_temp_directory = lambda self: None
+# Good: an autouse fixture with monkeypatch, which restores after each test.
+```
+
 ### DON'T: Depend on the developer's real projects or config
 ```python
 # Bad: tests must create their own pathway folders and logs.
@@ -54,4 +61,6 @@ cea.api.pathway_validate_all_states(...)
 - `test_dashboard_bootstrap.py` - Dashboard preparation and launcher ordering coverage.
 - `test_pathway_api.py` - API-level coverage for overview rows, stock/manual/mixed classification, editor endpoints, and stale-status detection.
 - `test_pathway_envelope_bake.py` - Envelope row handling when baking a state from a template: the U/GHG cache must be dropped when material layers change (issue #4059), kept when they don't.
+- `test_inputlocator_temp_directory.py` - One temp directory per run, shared across pickled
+  copies and deleted only by the process that created it. Creation stays lazy.
 - `paths.py` - Shared repo/examples/workflows filesystem anchors; use instead of `__file__`-relative math.
