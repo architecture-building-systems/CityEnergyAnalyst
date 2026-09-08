@@ -6,7 +6,7 @@
 
 import configparser
 import os
-from typing import Optional
+from typing import Any, Optional
 
 import cea.config
 import cea.inputlocator
@@ -228,6 +228,57 @@ def _missing_source_database(
     return None
 
 
+def normalize_choice_value(param: cea.config.ChoiceParameterBase, value: Any, choices: list[str]) -> Any:
+    """Coerce a stored choice-parameter value against a freshly-computed `choices` list.
+
+    `value` lives in the shared, non-scenario-scoped `~/cea.config` (see `Configuration.__init__`),
+    while a scenario-relative parameter's `choices` (e.g. `WhatIfNameMultiChoiceParameter`, scanning
+    `outputs/data/analysis/`) are recomputed per request from whichever scenario is currently active.
+    Switching scenarios can therefore leave a value selected that the new scenario's choices no
+    longer contain. Multi-choice values are silently filtered down to the valid subset; a single
+    choice value falls back to the first available choice (or `None` if nullable).
+    """
+    valid_choices = set(choices)
+    is_multi_choice = isinstance(param, cea.config.MultiChoiceParameter)
+
+    def _raise_missing_choices_error(reason: str) -> None:
+        message = f"No choices available for non-nullable parameter {param.fqname} while {reason}."
+        logger.error(message)
+        raise ValueError(message)
+
+    if is_multi_choice:
+        if value is None:
+            return []
+
+        if isinstance(value, list):
+            raw_values = value
+        elif isinstance(value, str):
+            raw_values = [v.strip() for v in value.split(',') if v.strip()]
+        else:
+            raw_values = [value]
+
+        return [str(v).strip() for v in raw_values if str(v).strip() in valid_choices]
+
+    if value is None:
+        if param.nullable:
+            return None
+        if not choices:
+            _raise_missing_choices_error("normalising a missing value")
+        return choices[0]
+
+    normalized_value = str(value).strip()
+    if param.nullable and normalized_value == '':
+        return None
+
+    if normalized_value in valid_choices:
+        return normalized_value
+
+    if not choices and not param.nullable:
+        _raise_missing_choices_error(f"normalising value {normalized_value}")
+
+    return choices[0] if choices else None
+
+
 def deconstruct_parameters(
     p: cea.config.Parameter, config=None, locator: cea.inputlocator.InputLocator | None = None
 ):
@@ -241,8 +292,15 @@ def deconstruct_parameters(
             params['value'] = []
         else:
             params["value"] = p.get()
-    except (cea.ConfigError, ValueError) as e:
-        print(e)
+    except (cea.ConfigError, ValueError, OSError) as e:
+        # OSError (e.g. FileNotFoundError): some ColumnChoicesMixin-backed multi-choice
+        # parameters (empty_means_all=True) decode '' by evaluating their own `_choices`,
+        # which reads a database CSV via the locator -- on a fresh scenario with no
+        # database yet, that raises here rather than being caught by the `_choices`
+        # try/except below (this happens inside decode(), before choices are even
+        # requested for this parameter). Pre-existing gap, unrelated to choice-value
+        # normalisation: this must not fail the whole tool-properties response either.
+        logger.warning("Could not get value for %s: %s", p.fqname, e)
         params["value"] = ""
 
     missing_database = _missing_source_database(p, config, locator)
@@ -273,6 +331,25 @@ def deconstruct_parameters(
                     "reason": f"Options for this input could not be read: {e}",
                     "missing_file": None,
                 }
+
+        # `value` may predate the choices just computed above -- e.g. a
+        # WhatIfNameMultiChoiceParameter selection saved while a different scenario was
+        # active. Multi-choice only: normalize_choice_value's multi-choice branch only ever
+        # narrows the list to the currently-valid subset, which is always safe. Its
+        # single-choice branch can fall back to `choices[0]` when the value doesn't match --
+        # correct for POST .../parameter-metadata's original use (a value just invalidated
+        # by the user's own live edit of a field it depends on), but wrong here: some single
+        # ChoiceParameterBase subclasses (e.g. ScenarioNameParameter, whose decode()
+        # deliberately allows any string -- "allow scenario name to be non-existing folder
+        # when reading from config file") treat `choices` as a UI suggestion list, not an
+        # exhaustive valid set. Applying the same fallback there would silently overwrite a
+        # legitimate but currently-unlisted value with an unrelated `choices[0]` on every
+        # GET, and a subsequent Save would persist that corruption.
+        if isinstance(p, cea.config.MultiChoiceParameter):
+            try:
+                params['value'] = normalize_choice_value(p, params['value'], params['choices'])
+            except ValueError as e:
+                logger.warning("Could not normalise value for %s: %s", p.fqname, e)
 
     if isinstance(p, cea.config.WeatherPathParameter):
         locator = cea.inputlocator.InputLocator(config.scenario)

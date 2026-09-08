@@ -13,7 +13,7 @@ import cea.config
 import cea.inputlocator
 import cea.scripts
 from cea.schemas import schemas
-from .utils import deconstruct_parameters
+from .utils import deconstruct_parameters, normalize_choice_value
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError, secure_join_under_root
 from cea.interfaces.dashboard.dependencies import CEAConfig
 from cea.interfaces.dashboard.api.utils import CEAScenario, CEAScenarioLenient
@@ -22,48 +22,6 @@ from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 router = APIRouter()
 logger = getCEAServerLogger("cea-server-tools")
 
-
-
-def _normalize_choice_value(param: cea.config.ChoiceParameterBase, value: Any, choices: list[str]) -> Any:
-    valid_choices = set(choices)
-    is_multi_choice = isinstance(param, cea.config.MultiChoiceParameter)
-
-    def _raise_missing_choices_error(reason: str) -> None:
-        message = f"No choices available for non-nullable parameter {param.fqname} while {reason}."
-        logger.error(message)
-        raise ValueError(message)
-
-    if is_multi_choice:
-        if value is None:
-            return []
-
-        if isinstance(value, list):
-            raw_values = value
-        elif isinstance(value, str):
-            raw_values = [v.strip() for v in value.split(',') if v.strip()]
-        else:
-            raw_values = [value]
-
-        return [str(v).strip() for v in raw_values if str(v).strip() in valid_choices]
-
-    if value is None:
-        if param.nullable:
-            return None
-        if not choices:
-            _raise_missing_choices_error("normalising a missing value")
-        return choices[0]
-
-    normalized_value = str(value).strip()
-    if param.nullable and normalized_value == '':
-        return None
-
-    if normalized_value in valid_choices:
-        return normalized_value
-
-    if not choices and not param.nullable:
-        _raise_missing_choices_error(f"normalising value {normalized_value}")
-
-    return choices[0] if choices else None
 
 
 def validate_parameter(parameter, value, parameter_name: str | None = None) -> tuple[bool, str | None]:
@@ -337,7 +295,7 @@ async def get_parameter_metadata(config: CEAConfig, tool_name: str, payload: Dic
         if isinstance(param, cea.config.ChoiceParameterBase):
             try:
                 choices = param._choices  # type: ignore[attr-defined]
-                current_value = _normalize_choice_value(param, param.get(), choices)
+                current_value = normalize_choice_value(param, param.get(), choices)
 
                 result[param.name] = {
                     'choices': choices,
