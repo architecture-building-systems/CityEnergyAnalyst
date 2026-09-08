@@ -12,11 +12,12 @@ import pandas as pd
 import pytest
 
 from cea.datamanagement.database.assemblies import Envelope
-from cea.tests.conftest import write_database_csv
 from cea.datamanagement.database.envelope_lookup import (
     EnvelopeLookup,
     envelope_emission_intensities,
 )
+from cea.datamanagement.format_helper.cea4_verify_db import verify_assembly
+from cea.tests.conftest import write_database_csv
 
 # density 1000 kg/m3 x 0.20 m = 200 kg/m2
 BRICK = {
@@ -170,3 +171,35 @@ def test_the_split_is_written_back_to_the_csv(envelope_scenario):
     assert float(saved.loc["WALL_A", "GHG_production_wall_kgCO2m2"]) == pytest.approx(
         EXPECTED_PRODUCTION
     )
+
+
+# --- the loader and the verifier must demand the same thing ------------------------------
+
+def test_a_row_without_biogenic_loads_and_verifies(envelope_scenario):
+    """v3-migrated datasets ship no biogenic column. The loader has always tolerated that
+    (defaulting it to 0), but `required_one_of` used to demand it, so such a database loaded
+    while reporting itself invalid.
+
+    Covers all three envelope tables at once: `required_one_of` is declared per table, so a
+    single one passing would not show that the other two agree.
+    """
+    locator = envelope_scenario(
+        [BRICK],
+        wall=[{"code": "WALL_A", "U_wall": 0.25, "GHG_wall_kgCO2m2": 90.0,
+               "Service_Life_wall": 40}],
+        roof=[{"code": "ROOF_A", "U_roof": 0.30, "GHG_roof_kgCO2m2": 50.0,
+               "Service_Life_roof": 40}],
+        floor=[{"code": "FLOOR_A", "U_base": 0.30, "GHG_floor_kgCO2m2": 50.0,
+                "Service_Life_floor": 40}],
+    )
+    os.remove(locator.get_database_components_materials())
+
+    Envelope.from_locator(locator)  # must not raise
+
+    _missing, issues = verify_assembly(
+        locator.scenario,
+        "ENVELOPE",
+        ["ENVELOPE_MASS", "ENVELOPE_TIGHTNESS", "ENVELOPE_SHADING", "ENVELOPE_WINDOW"],
+    )
+    reported = [i for i in issues if isinstance(i, str)]
+    assert reported == [], reported
