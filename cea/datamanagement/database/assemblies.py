@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, fields
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, NamedTuple
 import os
 
 import pandas as pd
@@ -129,14 +129,72 @@ MATERIAL_COLS = (
 )
 
 
-# Per-component legacy (direct-property) columns that materials derive.
+class DerivedValues(NamedTuple):
+    """The direct properties a row's material layers produce.
+
+    Named rather than a bare tuple because the columns are written by zipping this against
+    `DERIVED_COLS_BY_KIND`; with five like-typed floats, a positional slip would silently
+    file embodied carbon under the wrong phase.
+    """
+
+    u: float | None
+    ghg_total: float | None
+    ghg_biogenic: float | None
+    ghg_production: float | None
+    ghg_recycling: float | None
 
 
-DERIVED_COLS_BY_KIND: dict[str, tuple[str, str, str]] = {
-    "floor": ("U_base", "GHG_floor_kgCO2m2", "GHG_biogenic_floor_kgCO2m2"),
-    "roof": ("U_roof", "GHG_roof_kgCO2m2", "GHG_biogenic_roof_kgCO2m2"),
-    "wall": ("U_wall", "GHG_wall_kgCO2m2", "GHG_biogenic_wall_kgCO2m2"),
+class DerivedColumns(NamedTuple):
+    """The column names holding those properties, per envelope kind."""
+
+    u: str
+    ghg_total: str
+    ghg_biogenic: str
+    ghg_production: str
+    ghg_recycling: str
+
+
+# Values and columns are zipped together, so the two must stay in the same field order.
+assert DerivedColumns._fields == DerivedValues._fields
+
+# `GHG_*_kgCO2m2` is the whole lifecycle; production and recycling split it (recycling is the
+# demolition/end-of-life term) and are optional -- a database with no MATERIALS.csv carries
+# the total alone. Only `u` and `ghg_total` are ever required of a database; the rest are
+# derived, which is why they are read by name rather than by position.
+DERIVED_COLS_BY_KIND: dict[str, DerivedColumns] = {
+    "floor": DerivedColumns(
+        u="U_base",
+        ghg_total="GHG_floor_kgCO2m2",
+        ghg_biogenic="GHG_biogenic_floor_kgCO2m2",
+        ghg_production="GHG_production_floor_kgCO2m2",
+        ghg_recycling="GHG_recycling_floor_kgCO2m2",
+    ),
+    "roof": DerivedColumns(
+        u="U_roof",
+        ghg_total="GHG_roof_kgCO2m2",
+        ghg_biogenic="GHG_biogenic_roof_kgCO2m2",
+        ghg_production="GHG_production_roof_kgCO2m2",
+        ghg_recycling="GHG_recycling_roof_kgCO2m2",
+    ),
+    "wall": DerivedColumns(
+        u="U_wall",
+        ghg_total="GHG_wall_kgCO2m2",
+        ghg_biogenic="GHG_biogenic_wall_kgCO2m2",
+        ghg_production="GHG_production_wall_kgCO2m2",
+        ghg_recycling="GHG_recycling_wall_kgCO2m2",
+    ),
 }
+
+# The `EnvelopeLookup` field names for everything materials derive. Anything that copies an
+# envelope row and edits its layers must blank these, or the copy keeps values describing the
+# previous composition and the loader's cross-check rejects it (issue #4059).
+DERIVED_LOOKUP_FIELDS = (
+    "U",
+    "GHG_kgCO2m2",
+    "GHG_biogenic_kgCO2m2",
+    "GHG_production_kgCO2m2",
+    "GHG_recycling_kgCO2m2",
+)
 
 
 CROSS_CHECK_REL_TOLERANCE = 0.01  # 1% drift between materials-derived and on-disk
@@ -167,11 +225,37 @@ def _row_has_usable_material_layer(row: pd.Series) -> bool:
 def _row_has_complete_direct_set(row: pd.Series, kind: str) -> bool:
     # Biogenic carbon was added after the rest of the legacy schema; v3 datasets
     # (e.g. the migrated reference-case-open) ship without it. Require only U and
-    # GHG total; biogenic defaults to 0 below when missing.
-    u_col, ghg_col, _bio_col = DERIVED_COLS_BY_KIND[kind]
+    # GHG total; biogenic defaults to 0 below when missing, and the production/recycling
+    # split is only ever derived, never demanded of a database.
+    cols = DERIVED_COLS_BY_KIND[kind]
     return (
-        _to_float(row.get(u_col)) is not None
-        and _to_float(row.get(ghg_col)) is not None
+        _to_float(row.get(cols.u)) is not None
+        and _to_float(row.get(cols.ghg_total)) is not None
+    )
+
+
+def _check_direct_split_sums(row: pd.Series, kind: str, code: str) -> str | None:
+    """Does a hand-supplied production/recycling split agree with the total it splits?
+
+    Only applies to values already on disk: derived rows get both parts from the same
+    calculation, so they agree by construction. Returns a message, or None when the row
+    carries no split (the common case) or the split adds up.
+    """
+    cols = DERIVED_COLS_BY_KIND[kind]
+    total = _to_float(row.get(cols.ghg_total))
+    production = _to_float(row.get(cols.ghg_production))
+    recycling = _to_float(row.get(cols.ghg_recycling))
+    if total is None or production is None or recycling is None:
+        return None
+
+    drift = _relative_drift(total, production + recycling)
+    if drift <= CROSS_CHECK_REL_TOLERANCE:
+        return None
+    return (
+        f"  row '{code}': {cols.ghg_production} + {cols.ghg_recycling} = "
+        f"{production + recycling:.4g} but {cols.ghg_total} = {total:.4g} "
+        f"(relative drift={drift * 100:.2f}%, tolerance "
+        f"{CROSS_CHECK_REL_TOLERANCE * 100:.1f}%). The split must add up to the total."
     )
 
 
@@ -210,8 +294,8 @@ def _derive_row_values(
     row: pd.Series,
     kind: Literal["floor", "roof", "wall"],
     material_db: pd.DataFrame | None,
-) -> tuple[float | None, float | None, float | None] | None:
-    """The (U, GHG total, GHG biogenic) a row's material layers produce.
+) -> DerivedValues | None:
+    """The direct properties a row's material layers produce.
 
     ``None`` when the row has no usable layer, or a layer that does not resolve against the
     material database. Ordered to match ``DERIVED_COLS_BY_KIND[kind]``.
@@ -221,8 +305,14 @@ def _derive_row_values(
     materials = _gather_materials_for_row(row, material_db)
     if not materials:
         return None
-    ghg_total, _production, _recycling, ghg_biogenic = _calc_ghg(materials)
-    return _calc_u(materials, kind), ghg_total, ghg_biogenic
+    ghg_total, ghg_production, ghg_recycling, ghg_biogenic = _calc_ghg(materials)
+    return DerivedValues(
+        u=_calc_u(materials, kind),
+        ghg_total=ghg_total,
+        ghg_biogenic=ghg_biogenic,
+        ghg_production=ghg_production,
+        ghg_recycling=ghg_recycling,
+    )
 
 
 def _relative_drift(disk: float, derived: float) -> float:
@@ -353,6 +443,7 @@ class Envelope(BaseAssemblyDatabase):
                     df[c] = None
 
             drift_errors: list[str] = []
+            split_errors: list[str] = []
             malformed: list[str] = []
 
             for code, row in df.iterrows():
@@ -366,10 +457,14 @@ class Envelope(BaseAssemblyDatabase):
 
                 if not has_materials:
                     # Direct-property only. Fill in a missing biogenic value (legacy schema)
-                    # with 0 so downstream readers always get a defined number.
-                    bio_col = derived_cols[2]
-                    if _to_float(row.get(bio_col)) is None:
-                        df.loc[code_str, bio_col] = 0.0
+                    # with 0 so downstream readers always get a defined number. The
+                    # production/recycling split is left absent rather than invented -- the
+                    # timeline reads the total and reports no demolition for such a row.
+                    if _to_float(row.get(derived_cols.ghg_biogenic)) is None:
+                        df.loc[code_str, derived_cols.ghg_biogenic] = 0.0
+                    split_error = _check_direct_split_sums(row, kind, code_str)
+                    if split_error:
+                        split_errors.append(split_error)
                     continue
 
                 try:
@@ -424,6 +519,12 @@ class Envelope(BaseAssemblyDatabase):
                 # can open a database that needs fixing. The verifier still reports them.
                 return df
 
+            if split_errors:
+                raise ValueError(
+                    f"Envelope {kind} ({envelope_ref}) has {len(split_errors)} row(s) whose "
+                    f"production/recycling split does not add up:\n" + "\n".join(split_errors)
+                )
+
             if drift_errors:
                 raise ValueError(
                     f"Envelope cross-check failed for {kind} ({len(drift_errors)} row(s) out of tolerance):\n"
@@ -433,7 +534,8 @@ class Envelope(BaseAssemblyDatabase):
                 raise ValueError(
                     f"Envelope {kind} ({envelope_ref}) has {len(malformed)} malformed row(s) — "
                     f"each row must have either the full direct-property set "
-                    f"({', '.join(derived_cols)}) or at least one material layer "
+                    f"({derived_cols.u}, {derived_cols.ghg_total}) "
+                    f"or at least one material layer "
                     f"(a material_name_N with a thickness_N_m greater than zero). "
                     f"Affected codes: {', '.join(malformed)}"
                 )
@@ -516,8 +618,10 @@ class Envelope(BaseAssemblyDatabase):
         """Save envelope databases while preserving the on-disk schema.
 
         `BaseDatabase.save` trims columns to the (legacy) schema in `cea.schemas`, which
-        would drop material-based columns. For Envelope, we instead persist only the
-        columns that were present when the CSV was loaded.
+        would drop material-based columns. For Envelope, we instead persist the columns that
+        were present when the CSV was loaded, plus the values derived from the material
+        layers -- writing those back is what lets a reader see the production/demolition
+        split without re-deriving it.
         """
         mapping = self._locator_mapping()
         original_columns: dict[str, list[str]] = getattr(self, "_original_columns", {})
@@ -539,7 +643,14 @@ class Envelope(BaseAssemblyDatabase):
                 for c in cols:
                     if c not in out.columns:
                         out[c] = None
-                out = out[cols]
+                # Append the derived columns the file did not have, keeping their declared
+                # order rather than whatever order they were added to the frame.
+                derived = [
+                    c
+                    for c in DERIVED_COLS_BY_KIND.get(kind, ())
+                    if c not in cols and c in out.columns
+                ]
+                out = out[cols + derived]
 
             os.makedirs(os.path.dirname(path), exist_ok=True)
             out.to_csv(path)

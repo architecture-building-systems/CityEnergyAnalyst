@@ -16,6 +16,7 @@ from cea.datamanagement.district_pathways.pathway_integrity import (
     merge_modify_recipes,
     scan_state_year_folders,
 )
+from cea.datamanagement.database.assemblies import DERIVED_LOOKUP_FIELDS
 from cea.datamanagement.district_pathways.envelope_topology import (
     ALL_MATERIAL_FIELDS,
     extract_material_fields,
@@ -1263,7 +1264,7 @@ def _apply_state_construction_changes(
                         # row whose cache has drifted from its own layers (issue #4059).
                         derived_cols = [
                             envelope_lookup._col(envelope_db_name, f)
-                            for f in ("U", "GHG_kgCO2m2", "GHG_biogenic_kgCO2m2")
+                            for f in DERIVED_LOOKUP_FIELDS
                         ]
                         # ...but keep anything the recipe set itself: materials plus an
                         # explicit U means that U.
