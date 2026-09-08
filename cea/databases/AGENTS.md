@@ -91,11 +91,14 @@ storage into emission with no error to reveal it; `cea/tests/test_biogenic_sign_
 fails if one is reintroduced.
 
 **Embodied carbon is split by phase.** `GHG_*_kgCO2m2` in the envelope assemblies is the whole
-lifecycle; `GHG_production_*_kgCO2m2` and `GHG_recycling_*_kgCO2m2` split it (recycling is the
-demolition term) and are derived from the material layers, so they are absent for a database
-with no `MATERIALS.csv`, for direct-property rows, and for windows. Read them through
+lifecycle; `GHG_production_*_kgCO2m2` and `GHG_demolition_*_kgCO2m2` split it and are derived
+from the material layers, so they are absent for a database with no `MATERIALS.csv`, for
+direct-property rows, and for windows. Read them through
 `envelope_emission_intensities`, which decides per row -- one file routinely holds both kinds,
 so testing whether the *column* exists gives NaN for the rows that lack a split.
+
+The demolition term derives from `MATERIALS.csv`'s `GHG_emission_recycling`, which keeps
+the name KBOB publishes it under; everything CEA derives from it says `demolition`.
 
 ## Related Files
 - `cea/schemas.yml` - Database schema definitions

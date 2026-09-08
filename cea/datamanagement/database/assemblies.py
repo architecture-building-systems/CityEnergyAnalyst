@@ -68,16 +68,18 @@ def _calc_ghg(
 
     Uses mass_per_m2 = density * thickness (m, kg/m3 → kg/m2).
     Disallows any material with unit 'm2'.
-    Returns tuple: (total, production, recycling, biogenic). Each may be None if insufficient data.
+    Returns tuple: (total, production, demolition, biogenic). Each may be None if
+    insufficient data. The demolition term comes from the material's end-of-life column,
+    `GHG_emission_recycling`, which keeps the name KBOB publishes it under.
     """
     total_emissions = 0.0
     production_emissions = 0.0
-    recycling_emissions = 0.0
+    demolition_emissions = 0.0
     biogenic_emissions = 0.0
 
     any_total = False
     any_production = False
-    any_recycling = False
+    any_demolition = False
     any_biogenic = False
 
     for m in materials:
@@ -85,7 +87,7 @@ def _calc_ghg(
         density_value = _to_float(m.get("density"))
         ghg_total_value = _to_float(m.get("GHG_emission_total"))
         ghg_production_value = _to_float(m.get("GHG_emission_production"))
-        ghg_recycling_value = _to_float(m.get("GHG_emission_recycling"))
+        ghg_demolition_value = _to_float(m.get("GHG_emission_recycling"))
         bio_carbon_value = _to_float(m.get("biogenic_carbon_in_product"))
         thickness_value = _to_float(m.get("thickness"))
 
@@ -99,9 +101,9 @@ def _calc_ghg(
             if ghg_production_value is not None:
                 production_emissions += ghg_production_value * mass_per_m2
                 any_production = True
-            if ghg_recycling_value is not None:
-                recycling_emissions += ghg_recycling_value * mass_per_m2
-                any_recycling = True
+            if ghg_demolition_value is not None:
+                demolition_emissions += ghg_demolition_value * mass_per_m2
+                any_demolition = True
             if bio_carbon_value is not None:
                 biogenic_emissions += bio_carbon_value * mass_per_m2
                 any_biogenic = True
@@ -117,7 +119,7 @@ def _calc_ghg(
     return (
         total_emissions if any_total else None,
         production_emissions if any_production else None,
-        recycling_emissions if any_recycling else None,
+        demolition_emissions if any_demolition else None,
         biogenic_emissions if any_biogenic else None,
     )
 
@@ -141,7 +143,7 @@ class DerivedValues(NamedTuple):
     ghg_total: float | None
     ghg_biogenic: float | None
     ghg_production: float | None
-    ghg_recycling: float | None
+    ghg_demolition: float | None
 
 
 class DerivedColumns(NamedTuple):
@@ -151,37 +153,37 @@ class DerivedColumns(NamedTuple):
     ghg_total: str
     ghg_biogenic: str
     ghg_production: str
-    ghg_recycling: str
+    ghg_demolition: str
 
 
 # Values and columns are zipped together, so the two must stay in the same field order.
 assert DerivedColumns._fields == DerivedValues._fields
 
-# `GHG_*_kgCO2m2` is the whole lifecycle; production and recycling split it (recycling is the
-# demolition/end-of-life term) and are optional -- a database with no MATERIALS.csv carries
-# the total alone. Only `u` and `ghg_total` are ever required of a database; the rest are
-# derived, which is why they are read by name rather than by position.
+# `GHG_*_kgCO2m2` is the whole lifecycle; production and demolition split it and are
+# optional -- a database with no MATERIALS.csv carries the total alone. Only `u` and
+# `ghg_total` are ever required of a database; the rest are derived, which is why they are
+# read by name rather than by position.
 DERIVED_COLS_BY_KIND: dict[str, DerivedColumns] = {
     "floor": DerivedColumns(
         u="U_base",
         ghg_total="GHG_floor_kgCO2m2",
         ghg_biogenic="GHG_biogenic_floor_kgCO2m2",
         ghg_production="GHG_production_floor_kgCO2m2",
-        ghg_recycling="GHG_recycling_floor_kgCO2m2",
+        ghg_demolition="GHG_demolition_floor_kgCO2m2",
     ),
     "roof": DerivedColumns(
         u="U_roof",
         ghg_total="GHG_roof_kgCO2m2",
         ghg_biogenic="GHG_biogenic_roof_kgCO2m2",
         ghg_production="GHG_production_roof_kgCO2m2",
-        ghg_recycling="GHG_recycling_roof_kgCO2m2",
+        ghg_demolition="GHG_demolition_roof_kgCO2m2",
     ),
     "wall": DerivedColumns(
         u="U_wall",
         ghg_total="GHG_wall_kgCO2m2",
         ghg_biogenic="GHG_biogenic_wall_kgCO2m2",
         ghg_production="GHG_production_wall_kgCO2m2",
-        ghg_recycling="GHG_recycling_wall_kgCO2m2",
+        ghg_demolition="GHG_demolition_wall_kgCO2m2",
     ),
 }
 
@@ -193,7 +195,7 @@ DERIVED_LOOKUP_FIELDS = (
     "GHG_kgCO2m2",
     "GHG_biogenic_kgCO2m2",
     "GHG_production_kgCO2m2",
-    "GHG_recycling_kgCO2m2",
+    "GHG_demolition_kgCO2m2",
 )
 
 
@@ -225,7 +227,7 @@ def _row_has_usable_material_layer(row: pd.Series) -> bool:
 def _row_has_complete_direct_set(row: pd.Series, kind: str) -> bool:
     # Biogenic carbon was added after the rest of the legacy schema; v3 datasets
     # (e.g. the migrated reference-case-open) ship without it. Require only U and
-    # GHG total; biogenic defaults to 0 below when missing, and the production/recycling
+    # GHG total; biogenic defaults to 0 below when missing, and the production/demolition
     # split is only ever derived, never demanded of a database.
     cols = DERIVED_COLS_BY_KIND[kind]
     return (
@@ -235,7 +237,7 @@ def _row_has_complete_direct_set(row: pd.Series, kind: str) -> bool:
 
 
 def _check_direct_split_sums(row: pd.Series, kind: str, code: str) -> str | None:
-    """Does a hand-supplied production/recycling split agree with the total it splits?
+    """Does a hand-supplied production/demolition split agree with the total it splits?
 
     Only applies to values already on disk: derived rows get both parts from the same
     calculation, so they agree by construction. Returns a message, or None when the row
@@ -244,16 +246,16 @@ def _check_direct_split_sums(row: pd.Series, kind: str, code: str) -> str | None
     cols = DERIVED_COLS_BY_KIND[kind]
     total = _to_float(row.get(cols.ghg_total))
     production = _to_float(row.get(cols.ghg_production))
-    recycling = _to_float(row.get(cols.ghg_recycling))
-    if total is None or production is None or recycling is None:
+    demolition = _to_float(row.get(cols.ghg_demolition))
+    if total is None or production is None or demolition is None:
         return None
 
-    drift = _relative_drift(total, production + recycling)
+    drift = _relative_drift(total, production + demolition)
     if drift <= CROSS_CHECK_REL_TOLERANCE:
         return None
     return (
-        f"  row '{code}': {cols.ghg_production} + {cols.ghg_recycling} = "
-        f"{production + recycling:.4g} but {cols.ghg_total} = {total:.4g} "
+        f"  row '{code}': {cols.ghg_production} + {cols.ghg_demolition} = "
+        f"{production + demolition:.4g} but {cols.ghg_total} = {total:.4g} "
         f"(relative drift={drift * 100:.2f}%, tolerance "
         f"{CROSS_CHECK_REL_TOLERANCE * 100:.1f}%). The split must add up to the total."
     )
@@ -305,13 +307,13 @@ def _derive_row_values(
     materials = _gather_materials_for_row(row, material_db)
     if not materials:
         return None
-    ghg_total, ghg_production, ghg_recycling, ghg_biogenic = _calc_ghg(materials)
+    ghg_total, ghg_production, ghg_demolition, ghg_biogenic = _calc_ghg(materials)
     return DerivedValues(
         u=_calc_u(materials, kind),
         ghg_total=ghg_total,
         ghg_biogenic=ghg_biogenic,
         ghg_production=ghg_production,
-        ghg_recycling=ghg_recycling,
+        ghg_demolition=ghg_demolition,
     )
 
 
@@ -458,7 +460,7 @@ class Envelope(BaseAssemblyDatabase):
                 if not has_materials:
                     # Direct-property only. Fill in a missing biogenic value (legacy schema)
                     # with 0 so downstream readers always get a defined number. The
-                    # production/recycling split is left absent rather than invented -- the
+                    # production/demolition split is left absent rather than invented -- the
                     # timeline reads the total and reports no demolition for such a row.
                     if _to_float(row.get(derived_cols.ghg_biogenic)) is None:
                         df.loc[code_str, derived_cols.ghg_biogenic] = 0.0
@@ -522,7 +524,7 @@ class Envelope(BaseAssemblyDatabase):
             if split_errors:
                 raise ValueError(
                     f"Envelope {kind} ({envelope_ref}) has {len(split_errors)} row(s) whose "
-                    f"production/recycling split does not add up:\n" + "\n".join(split_errors)
+                    f"production/demolition split does not add up:\n" + "\n".join(split_errors)
                 )
 
             if drift_errors:
