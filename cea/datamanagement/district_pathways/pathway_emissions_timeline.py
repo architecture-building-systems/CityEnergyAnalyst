@@ -54,7 +54,10 @@ from cea.constants import (
     EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS,
     SERVICE_LIFE_OF_TECHNICAL_SYSTEMS,
 )
-from cea.datamanagement.database.envelope_lookup import EnvelopeLookup
+from cea.datamanagement.database.envelope_lookup import (
+    EnvelopeLookup,
+    envelope_emission_intensities,
+)
 from cea.datamanagement.district_pathways.pathway_years import (
     ensure_state_years_exist,
     get_building_construction_years,
@@ -275,24 +278,10 @@ def _envelope_intensities_per_m2(
 ) -> tuple[float, float, float]:
     """Return (production, demolition, biogenic) intensities in kgCO2e/m2 for an envelope code.
 
-    Mirrors the logic in `cea.analysis.lca.emission_timeline`:
-    - Prefer detailed `GHG_production_kgCO2m2` + `GHG_recycling_kgCO2m2` if present.
-    - Otherwise fall back to `GHG_kgCO2m2` and assume zero demolition.
+    Thin wrapper so this module's call sites read the same as before; the per-row split rules
+    live in `envelope_emission_intensities`, shared with `cea.analysis.lca.emission_timeline`.
     """
-    code_str = str(code)
-    try:
-        production_any = env_lookup.get_item_value(code_str, "GHG_production_kgCO2m2")
-        demolition_any = env_lookup.get_item_value(code_str, "GHG_recycling_kgCO2m2")
-    except KeyError:
-        production_any = env_lookup.get_item_value(code_str, "GHG_kgCO2m2")
-        demolition_any = 0.0
-
-    biogenic_any = env_lookup.get_item_value(code_str, "GHG_biogenic_kgCO2m2") # wins and materials all have biogenic carbon field
-    if production_any is None or demolition_any is None or biogenic_any is None:
-        raise ValueError(
-            f"Envelope database returned None for one of the required fields for item {code_str}."
-        )
-    return float(production_any), float(demolition_any), float(biogenic_any)
+    return envelope_emission_intensities(env_lookup, str(code))
 
 
 @dataclass(frozen=True)

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 import pandas as pd
 
 from dataclasses import fields as dataclass_fields
@@ -235,3 +235,48 @@ class EnvelopeLookup:
             )
 
         df.at[code, col] = value
+
+def envelope_emission_intensities(
+    lookup: EnvelopeLookup, code: str
+) -> tuple[float, float, float]:
+    """Return (production, demolition, biogenic) in kgCO2e/m2 for an envelope code.
+
+    The production/recycling split is decided per row, not per file: one ENVELOPE_WALL.csv can
+    hold layered rows that derive a split alongside direct-property rows that do not, and
+    windows never have layers at all. Testing the row's *values* rather than whether the
+    column exists is what makes that work -- once any row derives a split the column exists
+    for every row, so a column-level test hands back NaN for the rest.
+
+    Without a split, `GHG_kgCO2m2` is the whole lifecycle: attributing it to production and
+    reporting no demolition keeps the total right and only the phase breakdown coarse.
+    """
+    biogenic = _as_float(lookup.get_item_value(code, "GHG_biogenic_kgCO2m2"), default=0.0)
+
+    production = _optional_field(lookup, code, "GHG_production_kgCO2m2")
+    recycling = _optional_field(lookup, code, "GHG_recycling_kgCO2m2")
+    if production is not None and recycling is not None:
+        return production, recycling, biogenic
+
+    total = lookup.get_item_value(code, "GHG_kgCO2m2")
+    if total is None:
+        raise ValueError(
+            f"Envelope database has no GHG_kgCO2m2 for item {code}; cannot report emissions."
+        )
+    return float(total), 0.0, biogenic
+
+
+def _optional_field(lookup: EnvelopeLookup, code: str, field: str) -> float | None:
+    """The field's value, or None when the column is absent or the row leaves it empty."""
+    try:
+        return _as_float(lookup.get_item_value(code, field), default=None)
+    except KeyError:
+        return None
+
+
+def _as_float(value: Any, default: float | None) -> float | None:
+    """Parse to float, treating None, unparseable values and NaN alike as absent."""
+    try:
+        result = float(value)
+    except (TypeError, ValueError):
+        return default
+    return default if pd.isna(result) else result

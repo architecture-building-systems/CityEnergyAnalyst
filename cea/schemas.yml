@@ -2463,6 +2463,22 @@ get_database_assemblies_envelope_floor:
         unit: '[kg CO2-eq/m2]'
         max: 0.0
         nullable: true
+      GHG_production_floor_kgCO2m2:
+        description: Production (cradle-to-gate) share of the embodied emissions per m2 of floors.
+          Together with GHG_recycling_floor_kgCO2m2 it splits GHG_floor_kgCO2m2; both are derived from
+          the material layer set and absent for databases without one.
+        type: float
+        unit: '[kg CO2-eq/m2]'
+        min: 0.0
+        nullable: true
+      GHG_recycling_floor_kgCO2m2:
+        description: End-of-life (demolition/recycling) share of the embodied emissions per m2 of
+          floors. Together with GHG_production_floor_kgCO2m2 it splits GHG_floor_kgCO2m2; both are derived
+          from the material layer set and absent for databases without one.
+        type: float
+        unit: '[kg CO2-eq/m2]'
+        min: 0.0
+        nullable: true
       U_base:
         description: Thermal transmittance of floor including linear losses (+10%). Defined according to ISO 13790. Derivable from the material layer set.
         type: float
@@ -2552,6 +2568,22 @@ get_database_assemblies_envelope_roof:
         type: float
         unit: '[kg CO2-eq/m2]'
         max: 0.0
+        nullable: true
+      GHG_production_roof_kgCO2m2:
+        description: Production (cradle-to-gate) share of the embodied emissions per m2 of roofs.
+          Together with GHG_recycling_roof_kgCO2m2 it splits GHG_roof_kgCO2m2; both are derived from
+          the material layer set and absent for databases without one.
+        type: float
+        unit: '[kg CO2-eq/m2]'
+        min: 0.0
+        nullable: true
+      GHG_recycling_roof_kgCO2m2:
+        description: End-of-life (demolition/recycling) share of the embodied emissions per m2 of
+          roofs. Together with GHG_production_roof_kgCO2m2 it splits GHG_roof_kgCO2m2; both are derived
+          from the material layer set and absent for databases without one.
+        type: float
+        unit: '[kg CO2-eq/m2]'
+        min: 0.0
         nullable: true
       U_roof:
         description: Thermal transmittance of roof including linear losses (+10%). Defined according to ISO 13790. Derivable from the material layer set.
@@ -2740,6 +2772,22 @@ get_database_assemblies_envelope_wall:
         type: float
         unit: '[kg CO2-eq/m2]'
         max: 0.0
+        nullable: true
+      GHG_production_wall_kgCO2m2:
+        description: Production (cradle-to-gate) share of the embodied emissions per m2 of walls.
+          Together with GHG_recycling_wall_kgCO2m2 it splits GHG_wall_kgCO2m2; both are derived from
+          the material layer set and absent for databases without one.
+        type: float
+        unit: '[kg CO2-eq/m2]'
+        min: 0.0
+        nullable: true
+      GHG_recycling_wall_kgCO2m2:
+        description: End-of-life (demolition/recycling) share of the embodied emissions per m2 of
+          walls. Together with GHG_production_wall_kgCO2m2 it splits GHG_wall_kgCO2m2; both are derived
+          from the material layer set and absent for databases without one.
+        type: float
+        unit: '[kg CO2-eq/m2]'
+        min: 0.0
         nullable: true
       U_wall:
         description: Thermal transmittance of walls including linear losses (+10%). Defined according to ISO 13790. Derivable from the material layer set.

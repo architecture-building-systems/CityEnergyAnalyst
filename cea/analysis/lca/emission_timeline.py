@@ -17,7 +17,10 @@ from cea.constants import (
     SERVICE_LIFE_OF_TECHNICAL_SYSTEMS,
 )
 from cea.datamanagement.database.components import Feedstocks
-from cea.datamanagement.database.envelope_lookup import EnvelopeLookup
+from cea.datamanagement.database.envelope_lookup import (
+    EnvelopeLookup,
+    envelope_emission_intensities,
+)
 
 __author__ = "Yiqiao Wang, Zhongming Shi"
 __copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
@@ -648,35 +651,17 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
                     code=self.envelope[type_str], field="Service_Life"
                 )
                 code_for_note = str(self.envelope[type_str])
-                try: # if detailed LCA data (production + recycling) available, use it
-                    ghg_production_any = self.envelope_lookup.get_item_value(
-                        code=self.envelope[type_str], field="GHG_production_kgCO2m2"
-                    )
-                    ghg_recycling_any = self.envelope_lookup.get_item_value(
-                        code=self.envelope[type_str], field="GHG_recycling_kgCO2m2"
-                    )
-                except KeyError: # else use simplified data (one value only)
-                    ghg_production_any = self.envelope_lookup.get_item_value(
-                        code=self.envelope[type_str], field="GHG_kgCO2m2"
-                    )
-                    ghg_recycling_any = 0.0
-
-                biogenic_any = self.envelope_lookup.get_item_value(
-                    code=self.envelope[type_str], field="GHG_biogenic_kgCO2m2"
+                # Production/demolition come from the row's own material-derived split when
+                # it has one, otherwise from the lifecycle total with no demolition; the
+                # rules are shared with the pathway timeline.
+                production, demolition, biogenic = envelope_emission_intensities(
+                    self.envelope_lookup, code_for_note
                 )
-                if (
-                    lifetime_any is None
-                    or ghg_production_any is None
-                    or ghg_recycling_any is None
-                    or biogenic_any is None
-                ):
+                if lifetime_any is None:
                     raise ValueError(
-                        f"Envelope database returned None for one of the required fields for item {self.envelope[type_str]}."
+                        f"Envelope database has no Service_Life for item {code_for_note}."
                     )
                 lifetime = int(lifetime_any)
-                production = float(ghg_production_any)
-                biogenic = float(biogenic_any)
-                demolition = float(ghg_recycling_any)
             self.log_emissions(area, production, biogenic, demolition, lifetime, key, note_detail=code_for_note)
 
     def fill_pv_embodied_emissions(self, pv_codes: list[str]) -> None:
