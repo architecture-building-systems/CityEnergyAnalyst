@@ -8,6 +8,7 @@ import pickle
 import os
 import tempfile
 import cea.config
+import cea.inputlocator
 
 
 class TestConfiguration(unittest.TestCase):
@@ -103,6 +104,51 @@ class TestConfiguration(unittest.TestCase):
         self.assertEqual(parameter.encode('my-summary'), 'my-summary')
         self.assertEqual(parameter.encode(''), '')
         self.assertEqual(parameter.decode(''), '')
+
+    def test_whatif_choice_parameter_filters_by_every_mode(self):
+        """WhatIfNameChoiceParameter (the single-choice what-if selector) used to filter
+        `_choices` only for mode='final_energy' -- every other mode returned every
+        outputs/data/analysis/ subfolder unfiltered, regardless of whether that mode's
+        output actually existed. Its sibling WhatIfNameMultiChoiceParameter already
+        filtered correctly for all four modes; both now share
+        WhatIfNameChoicesMixin._mode_output_path_fn. Not currently declared by any
+        built-in tool (only the multi-choice variant is), but constructible directly --
+        e.g. for a plugin -- so it's tested directly rather than through a config section.
+        """
+        config = cea.config.Configuration()
+        scenario = os.path.join(tempfile.mkdtemp(), 'baseline')
+        os.makedirs(scenario, exist_ok=True)
+        config.scenario = scenario
+        locator = cea.inputlocator.InputLocator(scenario)
+
+        # 'complete': has every mode's output file. 'partial': the analysis folder
+        # exists (a what-if run happened) but none of the mode-specific outputs do.
+        for output_file_fn in (
+            locator.get_final_energy_buildings_file,
+            locator.get_emissions_whatif_buildings_file,
+            locator.get_costs_whatif_buildings_file,
+            locator.get_heat_rejection_whatif_buildings_file,
+        ):
+            path = output_file_fn('complete')
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            open(path, 'w').close()
+        os.makedirs(locator.get_analysis_folder('partial'), exist_ok=True)
+
+        # [result-summary] declares one WhatIfNameMultiChoiceParameter per mode; reuse
+        # those section:name pairs to construct the singular class directly -- `.mode`
+        # resolves from `{section}:{name}.mode` in default.config regardless of the
+        # `.type` that was actually declared there.
+        section = config.sections['result-summary']
+        mode_by_param_name = {
+            'what-if-name-final-energy': 'final_energy',
+            'what-if-name-emissions': 'emissions',
+            'what-if-name-costs': 'costs',
+            'what-if-name-heat-rejection': 'heat_rejection',
+        }
+        for param_name, expected_mode in mode_by_param_name.items():
+            parameter = cea.config.WhatIfNameChoiceParameter(param_name, section, config)
+            self.assertEqual(parameter.mode, expected_mode)
+            self.assertEqual(parameter._choices, ['complete'], f"mode={expected_mode}")
 
 
 if __name__ == "__main__":

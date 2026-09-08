@@ -1219,11 +1219,25 @@ class WhatIfNameChoicesMixin:
     def mode(self) -> str | None:
         return self.config.default_config.get(self.section.name, f"{self.name}.mode", fallback=None)
 
+    def _mode_output_path_fn(self, locator):
+        """Locator method returning the mode-specific output file whose existence proves
+        an analysis subfolder actually has this mode's results -- shared between the
+        single- and multi-choice what-if selectors so both filter consistently by every
+        supported mode (not just final_energy). Returns None for an unset/unrecognised
+        mode, meaning "no mode-specific filtering"."""
+        return {
+            'final_energy':   locator.get_final_energy_buildings_file,
+            'heat_rejection': locator.get_heat_rejection_whatif_buildings_file,
+            'costs':          locator.get_costs_whatif_buildings_file,
+            'emissions':      locator.get_emissions_whatif_buildings_file,
+        }.get(self.mode)
+
 
 class WhatIfNameChoiceParameter(WhatIfNameChoicesMixin, ChoiceParameter):
     """
     Parameter for selecting an existing what-if scenario name from a dropdown.
-    Scans outputs/data/analysis/ for existing subfolders.
+    Scans outputs/data/analysis/ for existing subfolders, filtered to those with the
+    mode-specific output -- see WhatIfNameChoicesMixin.
     """
 
     @property
@@ -1237,8 +1251,9 @@ class WhatIfNameChoiceParameter(WhatIfNameChoicesMixin, ChoiceParameter):
                 name for name in os.listdir(analysis_root)
                 if os.path.isdir(os.path.join(analysis_root, name))
             )
-            if self.mode == 'final_energy':
-                names = [name for name in names if os.path.exists(locator.get_final_energy_folder(name))]
+            mode_path_fn = self._mode_output_path_fn(locator)
+            if mode_path_fn is not None:
+                names = [name for name in names if os.path.exists(mode_path_fn(name))]
             return names
         except Exception:
             return []
@@ -1485,7 +1500,8 @@ class WhatIfNameMultiChoiceParameter(WhatIfNameChoicesMixin, MultiChoiceParamete
     """
     Multi-choice version of WhatIfNameChoiceParameter.
     Scans outputs/data/analysis/ for existing subfolders and allows selecting multiple.
-    Supports mode=final_energy to filter to scenarios with final-energy output.
+    Filters to scenarios with the mode-specific output, per `mode` (final_energy,
+    heat_rejection, costs, or emissions) -- see WhatIfNameChoicesMixin.
     """
 
     empty_means_all = False
@@ -1498,7 +1514,6 @@ class WhatIfNameMultiChoiceParameter(WhatIfNameChoicesMixin, MultiChoiceParamete
             analysis_root = os.path.dirname(locator.get_analysis_folder('__probe__'))
             if not os.path.exists(analysis_root):
                 return []
-            mode = self.mode
             # Per mode, pick the specific output file whose mtime we'll
             # sort by. Overwriting a file doesn't reliably bump the
             # parent folder's mtime on common filesystems, so sorting
@@ -1506,12 +1521,7 @@ class WhatIfNameMultiChoiceParameter(WhatIfNameChoicesMixin, MultiChoiceParamete
             # their old position. Sorting by the key file's mtime
             # (and filtering out names whose file is missing) makes
             # the just-run what-if appear first in the dropdown.
-            mode_path_fn = {
-                'final_energy':   locator.get_final_energy_buildings_file,
-                'heat_rejection': locator.get_heat_rejection_whatif_buildings_file,
-                'costs':          locator.get_costs_whatif_buildings_file,
-                'emissions':      locator.get_emissions_whatif_buildings_file,
-            }.get(mode)
+            mode_path_fn = self._mode_output_path_fn(locator)
             entries = []
             for name in os.listdir(analysis_root):
                 if name.startswith('.'):
