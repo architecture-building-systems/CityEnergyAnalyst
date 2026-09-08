@@ -250,7 +250,9 @@ def envelope_emission_intensities(
     Without a split, `GHG_kgCO2m2` is the whole lifecycle: attributing it to production and
     reporting no demolition keeps the total right and only the phase breakdown coarse.
     """
-    biogenic = _as_float(lookup.get_item_value(code, "GHG_biogenic_kgCO2m2"), default=0.0)
+    # Optional like the split: the loader creates this column for wall/roof/floor when a
+    # database omits it, but not for windows, which are not derived from materials.
+    biogenic = _optional_field(lookup, code, "GHG_biogenic_kgCO2m2", default=0.0)
 
     production = _optional_field(lookup, code, "GHG_production_kgCO2m2")
     recycling = _optional_field(lookup, code, "GHG_recycling_kgCO2m2")
@@ -265,12 +267,14 @@ def envelope_emission_intensities(
     return float(total), 0.0, biogenic
 
 
-def _optional_field(lookup: EnvelopeLookup, code: str, field: str) -> float | None:
-    """The field's value, or None when the column is absent or the row leaves it empty."""
+def _optional_field(
+    lookup: EnvelopeLookup, code: str, field: str, default: float | None = None
+) -> float | None:
+    """The field's value, or `default` when the column is absent or the row leaves it empty."""
     try:
-        return _as_float(lookup.get_item_value(code, field), default=None)
+        return _as_float(lookup.get_item_value(code, field), default=default)
     except KeyError:
-        return None
+        return default
 
 
 def _as_float(value: Any, default: float | None) -> float | None:

@@ -203,3 +203,23 @@ def test_a_row_without_biogenic_loads_and_verifies(envelope_scenario):
     )
     reported = [i for i in issues if isinstance(i, str)]
     assert reported == [], reported
+
+
+def test_a_window_without_a_biogenic_column_still_reports(envelope_scenario):
+    """Windows are not derived from materials, so the loader does not create their derived
+    columns. With biogenic now optional in the schema, reading it must not raise."""
+    locator = envelope_scenario(
+        [BRICK], wall=[{"code": "WALL_A", **LAYER, "Service_Life_wall": 40}]
+    )
+    write_database_csv(
+        locator.get_database_assemblies_envelope_window(),
+        # No GHG_biogenic_win_kgCO2m2 at all.
+        [{"code": "WINDOW_A", "U_win": 1.2, "GHG_win_kgCO2m2": 47.0,
+          "Service_Life_win": 30, "G_win": 0.6, "e_win": 0.9, "F_F": 0.2}],
+    )
+
+    production, demolition, biogenic = envelope_emission_intensities(
+        EnvelopeLookup.from_locator(locator), "WINDOW_A"
+    )
+
+    assert (production, demolition, biogenic) == pytest.approx((47.0, 0.0, 0.0))
