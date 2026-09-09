@@ -523,7 +523,7 @@ Life Cycle Analysis (LCA):
     description: |
       This Feature calculates lifecycle GHG emissions for each building.
 
-      **Embodied emissions** include construction materials and processes, building envelope, renovations, demolition, biogenic carbon storage (e.g. timber), and PV panel manufacturing.
+      **Embodied emissions** include construction materials and processes, building envelope, renovations, end of life, biogenic carbon storage (e.g. timber), and PV panel manufacturing. In EN 15978 terms: production covers A1-A3 (repeated at each replacement, B4) and the `demolition` category covers end of life C2-C4 (transport to disposal, waste processing, disposal), excluding the C1 deconstruction activity.
 
       **Operational emissions** are calculated from **final energy consumption** (energy delivered to building) using emission factors (gCO2e/kWh).
 
@@ -1026,7 +1026,7 @@ Visualisation:
     label: Plot - Emission Timeline
     short_description: Visualise how emissions evolve over time
     description: |
-      This Feature tracks cumulative lifecycle emissions across different sources (i.e. operation, production, biogenic, demolition, PV).
+      This Feature tracks cumulative lifecycle emissions across different sources (i.e. operation, production, biogenic, demolition, PV). `demolition` is end of life, EN 15978 C2-C4.
       
       It offers multiple visualisation modes, including a line plot for viewing itemised emission trends, 
       a line plot for displaying overall net emissions against a target year to achieve net-zero,
@@ -1047,7 +1047,7 @@ Visualisation:
     short_description: Visualise how district pathway emissions evolve over time
     description: |
       This Feature tracks cumulative lifecycle emissions for one district pathway across different sources
-      (i.e. operation, production, biogenic, demolition, PV).
+      (i.e. operation, production, biogenic, demolition, PV). `demolition` is end of life, EN 15978 C2-C4.
 
       It offers multiple visualisation modes, including a line plot for viewing itemised emission trends,
       a line plot for displaying overall net emissions against a target year to achieve net-zero,

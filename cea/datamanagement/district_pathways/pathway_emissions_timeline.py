@@ -2062,7 +2062,7 @@ def _material_intensity_per_m2(materials: pd.DataFrame, layer: MaterialLayer) ->
     mass_per_m2 = density * float(layer.thickness_m)
 
     prod = _to_float(rec.get("GHG_emission_production"), default=0.0) * mass_per_m2
-    demo = _to_float(rec.get("GHG_emission_recycling"), default=0.0) * mass_per_m2
+    demo = _to_float(rec.get("GHG_emission_disposal"), default=0.0) * mass_per_m2
     bio = _to_float(rec.get("biogenic_carbon_in_product"), default=0.0) * mass_per_m2
     return prod, demo, bio
 

@@ -380,6 +380,52 @@ def _describe_alternative(alternative) -> str:
     return "{" + ", ".join(alternative) + "}"
 
 
+# MATERIALS.csv end-of-life columns were named `*_recycling` before they were corrected to
+# `*_disposal` (KBOB publishes the dataset as *Entsorgung*, so `recycling` was a
+# mistranslation). A database written before that rename reports seven missing columns, which
+# says what is absent but not why -- this turns that into an actionable message.
+_DISPOSAL_COLUMNS_PRE_RENAME = {
+    "ID_disposal": "ID_recycling",
+    "disposal_method": "recycling_method",
+    "UBP_disposal": "UBP_recycling",
+    "overall_disposal": "overall_recycling",
+    "renewable_disposal": "renewable_recycling",
+    "unrenewable_disposal": "unrenewable_recycling",
+    "GHG_emission_disposal": "GHG_emission_recycling",
+}
+
+
+def _pre_rename_disposal_hint(materials_path: str, missing_columns: list) -> str | None:
+    """Explain missing `*_disposal` columns when the file still has the old `*_recycling` names.
+
+    Returns None unless the file genuinely looks pre-rename, so a database that is simply
+    incomplete gets the plain missing-column report rather than a misleading migration hint.
+    """
+    expected_missing = [c for c in missing_columns if c in _DISPOSAL_COLUMNS_PRE_RENAME]
+    if not expected_missing:
+        return None
+
+    try:
+        present = set(pd.read_csv(materials_path, nrows=0).columns)
+    except Exception:
+        return None
+
+    stale = [
+        _DISPOSAL_COLUMNS_PRE_RENAME[c]
+        for c in expected_missing
+        if _DISPOSAL_COLUMNS_PRE_RENAME[c] in present
+    ]
+    if not stale:
+        return None
+
+    return (
+        f"MATERIALS.csv uses the pre-rename end-of-life column names "
+        f"({', '.join(sorted(stale))}). Re-import the CH materials database, or rename them "
+        f"to their `*_disposal` equivalents "
+        f"(e.g. GHG_emission_recycling -> GHG_emission_disposal)."
+    )
+
+
 def print_verification_results_4_db(scenario_name, dict_missing):
 
     if all(not value for value in dict_missing.values()):
@@ -864,9 +910,13 @@ def cea4_verify_db(scenario, verbose=False) -> Dict[str, List[str]]:
     #6b. verify columns and values in MATERIALS.csv, when the scenario has one.
     # MATERIALS is deliberately absent from COMPONENTS_FOLDERS: only the CH database ships it,
     # so requiring it would report every DE/SG database as incomplete. Check it when present.
-    if os.path.isfile(path_to_db_file_4(scenario, 'MATERIALS', 'MATERIALS')):
+    materials_path = path_to_db_file_4(scenario, 'MATERIALS', 'MATERIALS')
+    if os.path.isfile(materials_path):
         missing_columns, issues = verify_file_against_schema_4_db(
             scenario, 'MATERIALS', sheet_name='MATERIALS')
+        pre_rename_hint = _pre_rename_disposal_hint(materials_path, missing_columns)
+        if pre_rename_hint:
+            issues = list(issues) + [pre_rename_hint]
         add_values_to_dict(dict_missing_db, 'MATERIALS', missing_columns)
         add_values_to_dict(dict_missing_db, 'MATERIALS', issues)
         if verbose:

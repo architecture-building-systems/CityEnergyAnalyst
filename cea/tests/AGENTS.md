@@ -58,6 +58,8 @@ cea.api.pathway_validate_all_states(...)
   is enough; service life must always be positive; partial direct values are still cross-checked.
   Also covers `apply_material_derivation`: saving re-derives from edited layers, and a stored value
   that contradicts them is reported as a conflict rather than silently replaced.
+- `test_materials_pre_rename_hint.py` - A MATERIALS.csv with the old `*_recycling` column
+  names gets an actionable pointer, not a silent rewrite; a merely incomplete file does not.
 - `test_envelope_emission_split.py` - `GHG_*_kgCO2m2` stays the lifecycle total; production
   and demolition split it, derived per row. One file can hold split and unsplit rows.
 - `test_biogenic_sign_convention.py` - Biogenic carbon is negative at every level, and no consumer
