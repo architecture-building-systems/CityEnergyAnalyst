@@ -23,12 +23,59 @@ Calculates greenhouse gas emissions for each building and district plant across 
 **Demolition Emissions** (kgCO2e):
 - End-of-life processing at the building's demolition year
 
+**Maintenance and Repair Emissions** (kgCO2e):
+- Estimated as a fraction of production emissions, not modelled from a schedule
+- Charged once per installed generation, on each component's own replacement cycle
+
 **Solar Offset Emissions** (kgCO2e, negative):
 - Grid emissions avoided by on-site PV/PVT/SC generation
 
 **Lifecycle Timeline**:
 - Year-by-year emissions from construction year through demolition
 - Supports grid decarbonisation projections
+
+## Scope: which lifecycle stages are included
+
+CEA reports against the **EN 15978** lifecycle module framework. Knowing which modules are
+covered matters when comparing CEA results with a whole-life carbon assessment produced
+elsewhere — a smaller CEA total may simply reflect a narrower boundary.
+
+| Module | Stage | Covered | Notes |
+|---|---|:---:|---|
+| A1-A3 | Product (raw material, transport, manufacturing) | yes | The `production` category |
+| A4 | Transport to site | no | Not modelled |
+| A5 | Construction / installation | no | Not modelled |
+| B1 | In-use emissions | no | Not modelled |
+| B2 | Maintenance | estimated | Fraction of production — see below |
+| B3 | Repair | estimated | Fraction of production — see below |
+| B4 | Replacement | yes | Components renewed on their own service life |
+| B5 | Refurbishment | partial | Via District Evolution Pathways |
+| B6 | Operational energy | yes | The `operation` category, hourly |
+| B7 | Operational water | no | Not modelled |
+| C1 | Deconstruction | no | Not modelled |
+| C2-C4 | Transport, waste processing, disposal | yes | The `demolition` category |
+| D | Beyond the system boundary | no | Not modelled |
+
+Two points worth reading carefully:
+
+**`demolition` is C2-C4, not C1.** The underlying material data covers transport, waste
+processing and disposal, but not the energy of deconstruction itself. The category name is
+broader than the modules behind it.
+
+**Maintenance (B2) and repair (B3) are estimates, not simulations.** CEA has no maintenance
+schedules, so both are taken as a proportion of production emissions, following RICS (2017)
+and as adopted by Singapore's Green Mark Version 7 Cn Technical Guide (Table 16):
+
+| Module | Default | Basis |
+|---|---|---|
+| B2 maintenance | 1% of production | RICS recommends 1% of A1-A5 |
+| B3 repair | 10% of production | RICS recommends 10% of A1-A3 |
+
+Both defaults are deliberately conservative. RICS states B2 against A1-A5, but CEA models only
+A1-A3, so the fraction is applied to a smaller base. Neither figure carries a frequency term,
+so CEA charges the allowance once per installed generation rather than annually.
+
+Set either fraction to `0` to exclude that module entirely.
 
 ## Prerequisites
 
@@ -45,6 +92,8 @@ Calculates greenhouse gas emissions for each building and district plant across 
 | **Grid decarbonisation target year** | Target year for reduced grid emissions (optional) |
 | **Grid decarbonisation target emission factor** | Target kgCO2/kWh at target year (optional) |
 | **Grid carbon intensity dataset CSV** | External 8760-row hourly grid intensity file (optional) |
+| **Maintenance fraction of production** | EN 15978 B2 as a share of production emissions (default 0.01; `0` excludes B2) |
+| **Repair fraction of production** | EN 15978 B3 as a share of production emissions (default 0.10; `0` excludes B3) |
 
 ## How to Use
 
@@ -65,7 +114,7 @@ All outputs are under `{scenario}/outputs/data/analysis/{what-if-name}/emissions
 
 | File | Description |
 |------|-------------|
-| `emissions_buildings.csv` | Per-entity lifecycle totals (production, operation, biogenic, demolition) |
+| `emissions_buildings.csv` | Per-entity lifecycle totals (production, operation, biogenic, demolition, maintenance, repair) |
 | `emissions_operational.csv` | District-level hourly operational emissions (8760 rows) |
 | `emissions_timeline.csv` | District-level yearly lifecycle timeline |
 | `operational/{building}.csv` | Per-building 8,760-row hourly operational emissions |
@@ -120,7 +169,9 @@ Creates stacked bar charts showing total lifecycle emissions per building, combi
 | District Cooling | DC plant operational emissions (incl. pumping) |
 | Production | Embodied construction emissions |
 | Biogenic | Carbon stored in bio-based materials (negative) |
-| Demolition | End-of-life emissions |
+| Demolition | End-of-life emissions (EN 15978 C2-C4) |
+| Maintenance | Estimated maintenance, a fraction of production (B2) |
+| Repair | Estimated repair, a fraction of production (B3) |
 | PV Offset | Grid emissions avoided by PV (negative) |
 
 ---

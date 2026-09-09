@@ -62,7 +62,7 @@ For each building `BXXX`, the feature generates:
 - Hourly solar radiation values (W/m²) for every surface point
 - 8,760 hours × surface points matrix
 
-**Radiation metadata file**: `{scenario}/outputs/data/solar-radiation/BXXX_radiation_metadata.csv`
+**Radiation metadata file**: `{scenario}/outputs/data/solar-radiation/BXXX_geometry.csv`
 - Surface properties (area, orientation, tilt)
 - Annual cumulative radiation per surface
 - Surface coordinates

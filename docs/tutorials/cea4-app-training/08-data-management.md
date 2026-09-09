@@ -53,7 +53,7 @@ Loads standard CEA databases into your current scenario. These databases contain
 
 The feature will copy all database files to:
 ```
-{CEA Project}/{Current Scenario}/inputs/technology/
+{CEA Project}/{Current Scenario}/inputs/database/
 ```
 
 ### Database Versions
@@ -128,9 +128,9 @@ The feature maps buildings to archetypes based on:
 The feature populates all building property files:
 - `envelope.csv` - Envelope properties, window-wall ratios, floor heights
 - `internal_loads.csv` - Occupancy densities, appliances, lighting
-- `comfort.csv` - Setpoint temperatures, acceptable ranges
-- `air_conditioning.csv` - HVAC system types
-- `supply_systems.csv` - Energy supply configuration
+- `indoor_comfort.csv` - Setpoint temperatures, acceptable ranges
+- `hvac.csv` - HVAC system types
+- `supply.csv` - Energy supply configuration
 
 ### Understanding Archetype Mapping
 
@@ -152,10 +152,10 @@ After running Archetypes Mapper, you can manually adjust properties:
 4. Proceed with CEA analysis
 
 Common adjustments:
-- Window-wall ratios (architecture.csv)
-- HVAC system types (air_conditioning.csv)
+- Window-wall ratios (envelope.csv)
+- HVAC system types (hvac.csv)
 - Occupancy schedules (internal_loads.csv)
-- Setpoint temperatures (comfort.csv)
+- Setpoint temperatures (indoor_comfort.csv)
 
 ### Tips
 - **Run before first demand calculation**: Mandatory step
@@ -547,7 +547,7 @@ Required attributes:
    - Provide tree data file
    - Click **Run**
 
-4. Trees saved to `{scenario}/inputs/building-geometry/trees.shp`
+4. Trees saved to `{scenario}/inputs/tree-geometry/trees.shp`
 
 ### Tree Shading Effects
 
@@ -575,6 +575,83 @@ Required attributes:
 **Issue**: Trees not affecting solar radiation results
 - **Solution**: Verify trees.shp is in correct location and format
 - **Solution**: Check tree heights are reasonable (>2m typically)
+
+---
+
+## Database Editor: Material Layers
+
+The Database Editor can now edit **material layers** for envelope assemblies, and derive the
+thermal and carbon properties from them rather than requiring you to enter those numbers by
+hand.
+
+### The materials database
+
+Materials live in `COMPONENTS/MATERIALS/MATERIALS.csv` and are referenced by name from the
+envelope assemblies.
+
+Only the **Swiss (CH)** database ships with a materials file. Open **COMPONENTS → MATERIALS**
+in a scenario built from another region and the editor explains this and offers to import the
+Swiss set, which is based on KBOB data.
+
+> **Use at your own risk.** The imported values are specific to Switzerland and may not
+> represent materials available in your region.
+
+### Building up an envelope from layers
+
+On the **ENVELOPE** tabs each assembly row carries up to three layers:
+
+| Column | Meaning |
+|---|---|
+| `material_name_1` … `material_name_3` | Material, chosen from a dropdown of the materials database |
+| `thickness_1_m` … `thickness_3_m` | Layer thickness in metres |
+
+The material dropdowns only list names that exist in your materials file, so a row cannot
+reference a material that is not there. These six columns appear only when a materials file
+is present.
+
+### Derived columns
+
+Once a row has at least one material with a thickness greater than zero, CEA derives its
+properties from the layers and **locks** the derived cells — they are computed, so editing
+them by hand would be silently overwritten:
+
+| Derived | Example column |
+|---|---|
+| U-value | `U_base` |
+| Total embodied carbon | `GHG_floor_kgCO2m2` |
+| Biogenic carbon | `GHG_biogenic_floor_kgCO2m2` |
+| Production carbon (A1-A3) | `GHG_production_floor_kgCO2m2` |
+| Disposal carbon (C2-C4) | `GHG_demolition_floor_kgCO2m2` |
+
+Splitting embodied carbon into **production** and **demolition** is what lets the
+[Emissions](06-2-emissions.md) feature report those EN 15978 modules separately.
+
+### What you must still provide
+
+Layers are optional — a database with no materials file keeps working exactly as before, with
+U-values and carbon entered directly.
+
+| Situation | Required |
+|---|---|
+| Row has at least one material with thickness > 0 | U-value and GHG columns may be left empty; they are derived |
+| Row has no usable material layer | U-value and GHG columns must be filled in |
+| Every row | Service life must be greater than zero |
+
+Values are validated when you save, and errors name the row and column at fault. A genuine
+zero is accepted — CEA distinguishes "zero" from "not filled in".
+
+### Cross-check
+
+Where a row has both derived values and values already in the file, CEA compares them and
+warns if they differ by more than **1%**. Small differences are expected: published totals are
+rounded, so production plus disposal rarely reproduces the stated total exactly.
+
+### Tips
+
+- Biogenic carbon is stored as a **negative** number throughout, representing carbon held in
+  the material. Do not enter it as positive.
+- After changing materials, re-run any analysis that reads envelope properties — the derived
+  values change with them.
 
 ---
 

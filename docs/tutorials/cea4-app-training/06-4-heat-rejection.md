@@ -68,7 +68,7 @@ Heat rejection results are also available as a **map layer** in the dashboard, c
 
 ---
 
-## Plot - Heat Rejection
+## Plot - Anthropogenic Heat Rejection
 
 ### Overview
 Creates bar charts of heat rejection per building and plant, showing the magnitude of waste heat discharged to the environment.
