@@ -16,6 +16,7 @@ from cea.constants import (
     EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS,
     SERVICE_LIFE_OF_TECHNICAL_SYSTEMS,
 )
+from cea.analysis.lca.component_lca import service_life_for_component
 from cea.datamanagement.database.components import Feedstocks
 from cea.datamanagement.database.envelope_lookup import (
     EnvelopeLookup,
@@ -529,6 +530,9 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
     _COLUMN_MAPPING = {f"{d}_kgCO2e": f"operation_{d}_kgCO2e" for d in _tech_name_mapping.keys()}
     _OPERATIONAL_COLS = list(_COLUMN_MAPPING.values())
     _EMISSION_TYPES = ["production", "biogenic", "demolition"]
+    # The supply services whose assemblies name a conversion component. Electricity is
+    # absent: SUPPLY_ELECTRICITY describes a grid connection, not a component to replace.
+    _SUPPLY_SERVICES: tuple[str, ...] = ("hs", "cs", "dhw")
 
     def __init__(
         self,
@@ -555,6 +559,7 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
         self.geometry = building_properties.geometry[self.name]
         self.typology = building_properties.typology[self.name]
         self.envelope = building_properties.envelope[self.name]
+        self.supply_systems = building_properties.supply_systems[self.name]
         self.surface_area = get_component_quantities(building_properties, self.name)
         self.timeline = self.initialize_timeline(end_year)
         self._append_note(year=int(self.typology["year"]), message="Constructed")
@@ -589,6 +594,59 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
             os.makedirs(self.locator.get_lca_timeline_folder())
 
         self.timeline.to_csv(self.locator.get_lca_timeline_building(self.name), float_format='%.2f')
+
+    def _supply_components(self) -> list[tuple[str, str]]:
+        """The `(service, component code)` pairs this building actually has.
+
+        A service with no conversion component is written as `-` in the supply assemblies
+        (`SUPPLY_HEATING_AS0`, for instance) or is absent entirely, and reads back as NaN.
+        """
+        found: list[tuple[str, str]] = []
+        for service in self._SUPPLY_SERVICES:
+            code = self.supply_systems.get(f"primary_component_{service}")
+            if code is None or pd.isna(code):
+                continue
+            code = str(code).strip()
+            if code and code != "-":
+                found.append((service, code))
+        return found
+
+    def _log_technical_system_emissions(self, *, area: float, key: str) -> None:
+        """Log the technical-system stack, one replacement cycle per supply component.
+
+        Each service's component replaces on its own service life -- a 20-year boiler and a
+        25-year chiller are not renewed together -- and `log` is additive, so all of them
+        accumulate into the one reported `technical_systems` column. That keeps the output
+        shape unchanged while the schedule becomes per component.
+
+        The embodied intensity is still the blanket per-GFA constant, shared equally between
+        the services present: the per-component factor
+        (`component_lca.embodied_factor_for_component`) is capacity-based, and installed
+        capacities are not available here. Splitting a per-GFA figure keeps the building total
+        unchanged from the previous blanket treatment.
+        """
+        components = self._supply_components()
+
+        if not components:
+            # No conversion components at all (every service NONE, or a district connection
+            # whose plant is accounted for separately). Fall back to the previous behaviour so
+            # such a building is not silently given zero technical-system emissions.
+            self.log_emissions(
+                area, EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS, 0.0, 0.0,
+                SERVICE_LIFE_OF_TECHNICAL_SYSTEMS, key,
+                note_detail="blanket intensity, no supply components",
+            )
+            return
+
+        share = EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS / len(components)
+        for service, code in components:
+            service_life = service_life_for_component(code, self.locator)
+            note = f"{service}: {code}"
+            if service_life.is_assumed:
+                note += f" (service life assumed, {service_life.source})"
+            self.log_emissions(
+                area, share, 0.0, 0.0, service_life.years, key, note_detail=note,
+            )
 
     def log_emissions(
         self,
@@ -643,27 +701,25 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
             code_for_note: str | None = None
 
             if key == "technical_systems":
-                lifetime = SERVICE_LIFE_OF_TECHNICAL_SYSTEMS
-                production = EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS
-                biogenic = 0.0
-                demolition = 0.0  # FIXME: assumes demolishing technical systems emits nothing, which is false
-            else:
-                type_str = f"type_{value}"
-                lifetime_any = self.envelope_lookup.get_item_value(
-                    code=self.envelope[type_str], field="Service_Life"
+                self._log_technical_system_emissions(area=area, key=key)
+                continue
+
+            type_str = f"type_{value}"
+            lifetime_any = self.envelope_lookup.get_item_value(
+                code=self.envelope[type_str], field="Service_Life"
+            )
+            code_for_note = str(self.envelope[type_str])
+            # Production/demolition come from the row's own material-derived split when
+            # it has one, otherwise from the lifecycle total with no demolition; the
+            # rules are shared with the pathway timeline.
+            production, demolition, biogenic = envelope_emission_intensities(
+                self.envelope_lookup, code_for_note
+            )
+            if lifetime_any is None:
+                raise ValueError(
+                    f"Envelope database has no Service_Life for item {code_for_note}."
                 )
-                code_for_note = str(self.envelope[type_str])
-                # Production/demolition come from the row's own material-derived split when
-                # it has one, otherwise from the lifecycle total with no demolition; the
-                # rules are shared with the pathway timeline.
-                production, demolition, biogenic = envelope_emission_intensities(
-                    self.envelope_lookup, code_for_note
-                )
-                if lifetime_any is None:
-                    raise ValueError(
-                        f"Envelope database has no Service_Life for item {code_for_note}."
-                    )
-                lifetime = int(lifetime_any)
+            lifetime = int(lifetime_any)
             self.log_emissions(area, production, biogenic, demolition, lifetime, key, note_detail=code_for_note)
 
     def fill_pv_embodied_emissions(self, pv_codes: list[str]) -> None:

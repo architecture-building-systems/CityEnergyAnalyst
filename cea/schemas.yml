@@ -3453,6 +3453,16 @@ get_database_components_conversion_absorption_chillers:
         min: 0.0
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this technology
         min: 0
@@ -3628,6 +3638,16 @@ get_database_components_conversion_boilers:
         min: 0.0
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this technology
         min: 0
@@ -3840,6 +3860,16 @@ get_database_components_conversion_cogeneration_plants:
         min: 0.0
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this technology
         min: 0
@@ -3970,6 +4000,16 @@ get_database_components_conversion_cooling_towers:
         min: 0.0
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this technology
         min: 0
@@ -4089,6 +4129,16 @@ get_database_components_conversion_fuel_cells:
         min: 0.0
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this technology
         min: 0
@@ -4173,6 +4223,16 @@ get_database_components_conversion_heat_exchangers:
         min: 0.0
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this technology
         min: 0
@@ -4300,6 +4360,16 @@ get_database_components_conversion_heat_pumps:
         min: 0.0
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this technology
         min: 0
@@ -4433,6 +4503,16 @@ get_database_components_conversion_bore_holes:
         min: 0.0
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this technology
         min: 0
@@ -4517,6 +4597,16 @@ get_database_components_conversion_hydraulic_pumps:
         min: 0.0
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this technology
         min: 0
@@ -4601,6 +4691,16 @@ get_database_components_conversion_photovoltaic_panels:
         min: 0.0
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this technology
         min: 0
@@ -4759,6 +4859,16 @@ get_database_components_conversion_photovoltaic_thermal_panels:
         min: 0.0
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this technology
         min: 0
@@ -4844,6 +4954,16 @@ get_database_components_conversion_power_transformers:
         min: 0.0
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this technology
         min: 0
@@ -4988,6 +5108,16 @@ get_database_components_conversion_solar_collectors:
         min: 0.0
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this technology
         min: 0
@@ -5204,6 +5334,16 @@ get_database_components_conversion_thermal_energy_storages:
         description: 'parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity '
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this storage technology
         min: 0
@@ -5293,6 +5433,16 @@ get_database_components_conversion_unitary_air_conditioners:
         min: 0.0
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this technology
         min: 0
@@ -5403,6 +5553,16 @@ get_database_components_conversion_vapor_compression_chillers:
         min: 0.0
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this technology
         min: 0
