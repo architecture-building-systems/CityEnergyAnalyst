@@ -18809,6 +18809,18 @@ get_emissions_whatif_buildings_file:
           Whole Life Carbon professional standard. Assumed not re-released at end of life.
         type: float
         unit: '[kgCO2e]'
+      maintenance_kgCO2e:
+        description: Total lifecycle maintenance GHG emissions across all years. EN 15978
+          module B2, estimated as a fraction of production emissions rather than modelled
+          (see emissions.maintenance-fraction-of-production; RICS 2017 recommends 1%).
+        type: float
+        unit: '[kg CO2-eq]'
+      repair_kgCO2e:
+        description: Total lifecycle repair GHG emissions across all years. EN 15978 module
+          B3, estimated as a fraction of production emissions rather than modelled
+          (see emissions.repair-fraction-of-production; RICS 2017 recommends 10%).
+        type: float
+        unit: '[kg CO2-eq]'
       demolition_kgCO2e:
         description: Total lifecycle end-of-life GHG emissions across all years. EN 15978
           modules C2-C4 (transport to disposal, waste processing, disposal). The on-site
