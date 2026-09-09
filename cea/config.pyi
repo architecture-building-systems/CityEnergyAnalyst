@@ -664,6 +664,8 @@ class EmissionsSection(Section):
     """Typed section for emissions configuration"""
     what_if_name: list[str]
     year_end: int | None
+    maintenance_fraction_of_production: float
+    repair_fraction_of_production: float
     grid_carbon_intensity_dataset_csv: str | None
     csv_carbon_intensity_column_name: Any
     grid_decarbonise_reference_year: int | None
@@ -674,6 +676,10 @@ class EmissionsSection(Section):
     def __getattr__(self, item: Literal["what_if_name"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["year_end"]) -> int | None: ...
+    @overload
+    def __getattr__(self, item: Literal["maintenance_fraction_of_production"]) -> float: ...
+    @overload
+    def __getattr__(self, item: Literal["repair_fraction_of_production"]) -> float: ...
     @overload
     def __getattr__(self, item: Literal["grid_carbon_intensity_dataset_csv"]) -> str | None: ...
     @overload

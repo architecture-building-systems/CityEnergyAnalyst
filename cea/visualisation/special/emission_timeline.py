@@ -125,6 +125,8 @@ class EmissionTimelinePlot:
             'DH': {'columns': [], 'positive': True, 'display_name': 'district_heating'},
             'DC': {'columns': [], 'positive': True, 'display_name': 'district_cooling'},
             'production': {'columns': [], 'positive': True, 'display_name': 'production'},
+            'maintenance': {'columns': [], 'positive': True, 'display_name': 'maintenance'},
+            'repair': {'columns': [], 'positive': True, 'display_name': 'repair'},
             'demolition': {'columns': [], 'positive': True, 'display_name': 'demolition'},
             'biogenic': {'columns': [], 'positive': False, 'display_name': 'biogenic'},
             'solar_offset': {'columns': [], 'positive': False, 'display_name': 'solar_offset'},
@@ -156,6 +158,10 @@ class EmissionTimelinePlot:
                 categories['biogenic']['columns'].append(col)
             elif col_lower.startswith('production'):
                 categories['production']['columns'].append(col)
+            elif col_lower.startswith('maintenance'):
+                categories['maintenance']['columns'].append(col)
+            elif col_lower.startswith('repair'):
+                categories['repair']['columns'].append(col)
             elif col_lower.startswith('demolition'):
                 categories['demolition']['columns'].append(col)
 
@@ -226,6 +232,8 @@ class EmissionTimelinePlot:
         categories = {
             'operation': {'columns': [], 'positive': True},
             'production': {'columns': [], 'positive': True},
+            'maintenance': {'columns': [], 'positive': True},
+            'repair': {'columns': [], 'positive': True},
             'demolition': {'columns': [], 'positive': True},
             'biogenic': {'columns': [], 'positive': False},  # Negative: carbon storage
             'pv': {'columns': [], 'positive': False}  # Negative: PV offset/export
@@ -242,6 +250,10 @@ class EmissionTimelinePlot:
                 categories['operation']['columns'].append(col)
             elif col_lower.startswith('production'):
                 categories['production']['columns'].append(col)
+            elif col_lower.startswith('maintenance'):
+                categories['maintenance']['columns'].append(col)
+            elif col_lower.startswith('repair'):
+                categories['repair']['columns'].append(col)
             elif col_lower.startswith('demolition'):
                 categories['demolition']['columns'].append(col)
 
@@ -293,6 +305,8 @@ class EmissionTimelinePlot:
             'DH': COLOURS_TO_RGB['red_light'],
             'DC': COLOURS_TO_RGB['blue_light'],
             'production': COLOURS_TO_RGB['purple'],
+            'maintenance': COLOURS_TO_RGB['purple_light'],
+            'repair': COLOURS_TO_RGB['purple_lighter'],
             'demolition': COLOURS_TO_RGB['brown'],
             'biogenic': COLOURS_TO_RGB['grey'],
             'solar_offset': COLOURS_TO_RGB['yellow'],
@@ -544,6 +558,8 @@ class EmissionTimelinePlot:
             'DH': COLOURS_TO_RGB['red_light'],
             'DC': COLOURS_TO_RGB['blue_light'],
             'production': COLOURS_TO_RGB['purple'],
+            'maintenance': COLOURS_TO_RGB['purple_light'],
+            'repair': COLOURS_TO_RGB['purple_lighter'],
             'demolition': COLOURS_TO_RGB['brown'],
             'biogenic': COLOURS_TO_RGB['grey'],
             'solar_offset': COLOURS_TO_RGB['yellow'],

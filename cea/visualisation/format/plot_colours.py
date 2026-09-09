@@ -335,6 +335,26 @@ _BASE_COLUMN_COLORS = {
     "demolition_floor": "brown",
     "demolition_base": "brown",
     "demolition_technical_systems": "brown",
+    "maintenance_wall_ag": "purple_light",
+    "maintenance_wall_bg": "purple_light",
+    "maintenance_wall_part": "purple_light",
+    "maintenance_win_ag": "purple_light",
+    "maintenance_roof": "purple_light",
+    "maintenance_upperside": "purple_light",
+    "maintenance_underside": "purple_light",
+    "maintenance_floor": "purple_light",
+    "maintenance_base": "purple_light",
+    "maintenance_technical_systems": "purple_light",
+    "repair_wall_ag": "purple_lighter",
+    "repair_wall_bg": "purple_lighter",
+    "repair_wall_part": "purple_lighter",
+    "repair_win_ag": "purple_lighter",
+    "repair_roof": "purple_lighter",
+    "repair_upperside": "purple_lighter",
+    "repair_underside": "purple_lighter",
+    "repair_floor": "purple_lighter",
+    "repair_base": "purple_lighter",
+    "repair_technical_systems": "purple_lighter",
 
     # PV Production/Demolition/Biogenic - use same colors as other components
     "production_pv": "purple",
@@ -344,6 +364,8 @@ _BASE_COLUMN_COLORS = {
     # What-if mode lifecycle totals (no component suffix)
     "production": "purple",
     "biogenic": "grey",
+    "maintenance": "purple_light",
+    "repair": "purple_lighter",
     "demolition": "brown",
 
     # Solar offset columns (electric = yellows, thermal = oranges)

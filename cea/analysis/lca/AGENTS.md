@@ -29,9 +29,9 @@ defensible, not full coverage.
 | A4 | transport to site | **no** | not modelled |
 | A5 | construction / installation | **no** | not modelled |
 | B1 | in-use emissions (refrigerant leakage, off-gassing) | **no** | — |
-| B2 | maintenance | **no** | — |
-| B3 | repair | **no** | — |
-| B4 | replacement | yes | envelope re-logged every `Service_Life_*`; PV uses its own `LT_yr`; the rest of the technical-system stack still uses the blanket `SERVICE_LIFE_OF_TECHNICAL_SYSTEMS` -- `component_lca.py` can resolve per component but is not wired in yet |
+| B2 | maintenance | estimated | `maintenance` phase: a fraction of production (RICS 1%), not a modelled schedule -- see below |
+| B3 | repair | estimated | `repair` phase: a fraction of production (RICS 10%), not a modelled schedule -- see below |
+| B4 | replacement | yes | envelope re-logged every `Service_Life_*`; supply components on their own `LT_yr` (see below); replacement *quantity* is still the blanket per-GFA intensity |
 | B5 | refurbishment | partly | not a module, but district pathways model retrofits explicitly by year |
 | B6 | operational energy | yes | hourly, per carrier |
 | B7 | operational water | **no** | hot-water *energy* is B6; water supply impact is absent |
@@ -47,6 +47,30 @@ continuity with the output columns and plot categories; read it as "end of life"
 **Biogenic carbon is not a module.** It is a separate reporting item (RICS PS on Whole Life
 Carbon, section 4.11), stored negative throughout. KBOB applies carbon-neutral accounting, so
 the stored carbon is not re-released in the C2-C4 figure.
+
+### Maintenance (B2) and repair (B3) are estimated, not modelled
+
+Both are proportions of the production term rather than simulated activities, because CEA has
+no maintenance schedules or spare-part inventories. RICS (2017) sanctions this, and Green Mark
+Version 7's Cn Technical Guide adopts it (Table 16, GWP Base Formulae):
+
+| module | RICS basis | CEA default |
+|---|---|---|
+| B2 maintenance | 1% of A1-A5 | `emissions:maintenance-fraction-of-production` = 0.01 |
+| B3 repair | 10% of A1-A3 | `emissions:repair-fraction-of-production` = 0.10 |
+
+Two deliberate deviations, both conservative:
+
+- **RICS states B2 against A1-A5**, and CEA models A1-A3 only (no A4 transport, no A5
+  construction). The 1% is therefore applied to a smaller base, so B2 is under-stated.
+- **Neither RICS formula carries a frequency term**, unlike B4 replacement (`A1-A4 x
+  frequency`). CEA charges the allowance once per *installed generation* -- on the component's
+  own replacement cycle -- rather than annually, reading it as a per-installation allowance.
+  An annual reading would give a figure tens of times larger.
+
+Set either fraction to 0 to exclude that module. The defaults are also available as
+`DEFAULT_MAINTENANCE_FRACTION` / `DEFAULT_REPAIR_FRACTION` for callers without a
+Configuration.
 
 ### Technical systems (MEP) are counted, but not per device
 
@@ -142,10 +166,13 @@ Buildings using DH/DC have **zero** operational emissions for those services at 
 
 Indexed by `period` (`Y_XXXX`), columns:
 
-**Embodied** (3 types × 10 components = 30 columns):
-- `{emission}_{component}_kgCO2e` where emission ∈ {`production`, `biogenic`, `demolition`}
+**Embodied** (5 types × 10 components = 50 columns):
+- `{emission}_{component}_kgCO2e` where emission ∈ {`production`, `biogenic`, `demolition`,
+  `maintenance`, `repair`}
   - `biogenic` values are negative (stored carbon): the database column is already negative,
     so it is logged as-is. Do not negate it -- see `cea/databases/AGENTS.md`.
+  - `maintenance` and `repair` are fractions of `production`, not independent quantities --
+    see Maintenance (B2) and repair (B3) above.
 - Components: `wall_ag`, `wall_bg`, `wall_part`, `win_ag`, `roof`, `upperside`, `underside`, `floor`, `base`, `technical_systems`
 
 **Operational** (6 columns):

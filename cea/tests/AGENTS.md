@@ -58,6 +58,8 @@ cea.api.pathway_validate_all_states(...)
   is enough; service life must always be positive; partial direct values are still cross-checked.
   Also covers `apply_material_derivation`: saving re-derives from edited layers, and a stored value
   that contradicts them is reported as a conflict rather than silently replaced.
+- `test_use_stage_proportions.py` - B2 maintenance and B3 repair are RICS-recommended fractions
+  of production, charged per installed generation; zero excludes the module.
 - `test_technical_system_replacement.py` - Each supply component replaces on its own `LT_yr`;
   the blanket intensity is shared, not multiplied, so building totals are unchanged.
 - `test_component_lca.py` - Component service life comes from `LT_yr` first, then a documented

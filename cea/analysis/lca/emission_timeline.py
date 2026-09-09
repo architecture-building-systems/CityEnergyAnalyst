@@ -38,6 +38,13 @@ if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
 
 
+# RICS (2017) estimates for the use-stage proportions CEA does not model directly. Kept here
+# as well as in `default.config` so callers without a Configuration still get the documented
+# values. Reference: Green Mark Version 7 Cn Technical Guide, Table 16 GWP Base Formulae.
+DEFAULT_MAINTENANCE_FRACTION = 0.01  # B2, of production emissions
+DEFAULT_REPAIR_FRACTION = 0.10       # B3, of production emissions
+
+
 COMPONENT_TO_SRC_COMPONENT: dict[str, str] = {
     "wall_ag": "wall",
     "wall_bg": "base",
@@ -529,7 +536,9 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
 
     _COLUMN_MAPPING = {f"{d}_kgCO2e": f"operation_{d}_kgCO2e" for d in _tech_name_mapping.keys()}
     _OPERATIONAL_COLS = list(_COLUMN_MAPPING.values())
-    _EMISSION_TYPES = ["production", "biogenic", "demolition"]
+    # EN 15978 modules, in reporting order: A1-A3, the biogenic reporting item, B2, B3,
+    # C2-C4. Maintenance and repair are proportions of production (see `log_emissions`).
+    _EMISSION_TYPES = ["production", "biogenic", "demolition", "maintenance", "repair"]
     # The supply services whose assemblies name a conversion component. Electricity is
     # absent: SUPPLY_ELECTRICITY describes a grid connection, not a component to replace.
     _SUPPLY_SERVICES: tuple[str, ...] = ("hs", "cs", "dhw")
@@ -540,6 +549,8 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
         building_name: str,
         locator: InputLocator,
         end_year: int,
+        maintenance_fraction: float = DEFAULT_MAINTENANCE_FRACTION,
+        repair_fraction: float = DEFAULT_REPAIR_FRACTION,
     ):
         """Initialize the BuildingEmissionTimeline object.
 
@@ -552,8 +563,17 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
         :type locator: InputLocator
         :param end_year: The last year that should exist in the building timeline.
         :type end_year: int
+        :param maintenance_fraction: B2 maintenance as a fraction of production emissions.
+            Defaults to the RICS 1% estimate; see `cea.default.config`.
+        :type maintenance_fraction: float
+        :param repair_fraction: B3 repair as a fraction of production emissions. Defaults to
+            the RICS 10% estimate; see `cea.default.config`.
+        :type repair_fraction: float
         """
         super().__init__(name=building_name, locator=locator)
+
+        self.maintenance_fraction = float(maintenance_fraction)
+        self.repair_fraction = float(repair_fraction)
 
         self._is_demolished = False
         self.geometry = building_properties.geometry[self.name]
@@ -658,8 +678,25 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
         key: str,
         note_detail: str | None = None,
     ):
+        production = production_per_area * area
         self._log_emission_with_lifetime(
-            emission=production_per_area * area, lifetime=lifetime, col=f"production_{key}_kgCO2e"
+            emission=production, lifetime=lifetime, col=f"production_{key}_kgCO2e"
+        )
+        # B2 maintenance and B3 repair as proportions of production, per installed
+        # generation. RICS (2017) recommends 1% of A1-A5 for B2 and 10% of A1-A3 for B3;
+        # CEA models A1-A3 only, so B2 is estimated against that and is conservative.
+        # Unlike B4, neither formula carries a frequency term, so the allowance is charged
+        # once per installation rather than annually -- see Green Mark Version 7 Cn Technical
+        # Guide, Table 16 GWP Base Formulae.
+        self._log_emission_with_lifetime(
+            emission=production * self.maintenance_fraction,
+            lifetime=lifetime,
+            col=f"maintenance_{key}_kgCO2e",
+        )
+        self._log_emission_with_lifetime(
+            emission=production * self.repair_fraction,
+            lifetime=lifetime,
+            col=f"repair_{key}_kgCO2e",
         )
         self._log_emission_with_lifetime(
             emission=biogenic_per_area * area,
