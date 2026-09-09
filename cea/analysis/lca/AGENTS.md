@@ -31,7 +31,7 @@ defensible, not full coverage.
 | B1 | in-use emissions (refrigerant leakage, off-gassing) | **no** | — |
 | B2 | maintenance | **no** | — |
 | B3 | repair | **no** | — |
-| B4 | replacement | yes | re-logged every `Service_Life_*`; technical systems use a blanket constant, not per-component `LT_yr` |
+| B4 | replacement | yes | envelope re-logged every `Service_Life_*`; PV uses its own `LT_yr`; the rest of the technical-system stack still uses the blanket `SERVICE_LIFE_OF_TECHNICAL_SYSTEMS` -- `component_lca.py` can resolve per component but is not wired in yet |
 | B5 | refurbishment | partly | not a module, but district pathways model retrofits explicitly by year |
 | B6 | operational energy | yes | hourly, per carrier |
 | B7 | operational water | **no** | hot-water *energy* is B6; water supply impact is absent |
@@ -47,6 +47,35 @@ continuity with the output columns and plot categories; read it as "end of life"
 **Biogenic carbon is not a module.** It is a separate reporting item (RICS PS on Whole Life
 Carbon, section 4.11), stored negative throughout. KBOB applies carbon-neutral accounting, so
 the stored carbon is not re-released in the C2-C4 figure.
+
+### Technical systems (MEP) are counted, but not per device
+
+**Replacement is per component; intensity is still blanket.**
+`_log_technical_system_emissions` resolves each supply service's `primary_component_{hs,cs,dhw}`
+(exposed by `BuildingSupplySystems`) to that component's own `LT_yr` via
+`component_lca.service_life_for_component`, and logs one replacement cycle per component. A
+20-year boiler and a 25-year chiller therefore renew independently. `log` is additive, so all
+of them accumulate into the single reported `technical_systems` column -- the output shape is
+unchanged.
+
+The **embodied intensity** is still `EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS` (35 kgCO2e/m2 GFA),
+shared equally between the services present, so the building total is unchanged from the
+previous blanket treatment. Per-component carbon awaits capacities:
+`component_lca.embodied_factor_for_component` reads the optional capacity-based
+`GHG_embodied_kgCO2e_per_unit` (in the component's own `unit` -- W, VA, m2, m3, kWh, like the
+cost curve), but installed capacities are not available in the timeline, and no family except
+`PHOTOVOLTAIC_PANELS` carries data yet.
+
+Two deliberate exclusions:
+
+- **Electricity** has no component. `SUPPLY_ELECTRICITY` describes a grid connection, so
+  `_SUPPLY_SERVICES` covers heating, cooling and hot water only.
+- **A building with no components at all** (every service `NONE`, or a district connection
+  whose plant is accounted for separately) keeps the old blanket cycle rather than dropping
+  to zero.
+
+An assumed service life is named in the timeline note, since it changes the replacement
+count.
 
 ## Two Paths: What-If vs Legacy
 

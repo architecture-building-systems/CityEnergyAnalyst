@@ -43,7 +43,14 @@ SERVICE_LIFE_OF_BUILDINGS = 60
 """Service life of standard building components and materials in years (SIA2032)."""
 
 SERVICE_LIFE_OF_TECHNICAL_SYSTEMS = 25
-"""Service life of technical installations in years. Average of SIA2032 (20-40 years)."""
+"""Service life of technical installations in years. Average of SIA2032 (20-40 years).
+
+A blanket figure for the whole technical-system stack. Prefer
+`cea.analysis.lca.component_lca.service_life_for_component`, which reads the component's own
+`LT_yr` from `COMPONENTS/CONVERSION/` (20-50 years depending on the component) and falls back
+to a documented reference when that is missing. This constant remains for the paths that have
+no component code to resolve.
+"""
 
 EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS = 35
 """Embodied emissions of technical systems in kg CO2/m² gross floor area."""

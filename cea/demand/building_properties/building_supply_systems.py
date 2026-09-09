@@ -32,28 +32,40 @@ class BuildingSupplySystems(BuildingPropertiesDatabase):
     @staticmethod
     def get_properties_supply_systems(locator: InputLocator, properties_supply: pd.DataFrame):
         # Supply system mappings using DatabaseMapping dataclass
-        # NOTE: Only scale is extracted. Efficiency and feedstock calculations moved to final-energy module.
+        # NOTE: Only scale and the primary component are extracted. Efficiency and feedstock
+        # calculations moved to final-energy module.
         supply_database = Supply.from_locator(locator)
 
+        # `primary_components` names the conversion component the assembly is built around
+        # (e.g. 'BO1'), which is what lets a consumer reach that component's own data in
+        # COMPONENTS/CONVERSION -- service life and embodied carbon for the emissions
+        # timeline, for instance. Carried for heating, cooling and hot water only: electricity
+        # supply is a grid connection with no conversion component, and secondary/tertiary
+        # components have no consumer yet.
         supply_mappings = {
             'supply heating': DatabaseMapping(
                 data=supply_database.heating,
                 join_column='supply_type_hs',
-                fields=['scale_hs'],
-                column_renames={"scale": "scale_hs"}
+                fields=['scale_hs', 'primary_component_hs'],
+                column_renames={"scale": "scale_hs",
+                                "primary_components": "primary_component_hs"}
             ),
             'supply cooling': DatabaseMapping(
                 data=supply_database.cooling,
                 join_column='supply_type_cs',
-                fields=['scale_cs'],
-                column_renames={"scale": "scale_cs"}
+                fields=['scale_cs', 'primary_component_cs'],
+                column_renames={"scale": "scale_cs",
+                                "primary_components": "primary_component_cs"}
             ),
             'supply dhw': DatabaseMapping(
                 data=supply_database.hot_water,
                 join_column='supply_type_dhw',
-                fields=['scale_dhw'],
-                column_renames={"scale": "scale_dhw"}
+                fields=['scale_dhw', 'primary_component_dhw'],
+                column_renames={"scale": "scale_dhw",
+                                "primary_components": "primary_component_dhw"}
             ),
+            # Electricity has no `primary_components`: SUPPLY_ELECTRICITY describes a
+            # feedstock/grid connection rather than a conversion component.
             'supply electricity': DatabaseMapping(
                 data=supply_database.electricity,
                 join_column='supply_type_el',
