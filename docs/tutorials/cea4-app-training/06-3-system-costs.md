@@ -69,7 +69,7 @@ All outputs under `{scenario}/outputs/data/analysis/{what-if-name}/costs/`:
 
 ---
 
-## Plot - Cost Sankey
+## Plot - System Cost Sankey
 
 ### Overview
 Creates a Sankey diagram showing cost flows from individual cost components through services to total building/district costs.

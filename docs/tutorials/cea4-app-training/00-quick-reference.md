@@ -1,6 +1,6 @@
 # Quick Reference Guide
 
-This page provides a complete overview of all 41 features available in the CEA-4 App dashboard.
+This page provides a complete overview of all 48 features available in the CEA-4 App dashboard.
 
 ---
 
@@ -50,11 +50,11 @@ This page provides a complete overview of all 41 features available in the CEA-4
 | Feature | Description | Key Use |
 |---------|-------------|---------|
 | **Thermal Network Part 1: Layout** | Create thermal network piping layout using minimum spanning tree | Generate district heating/cooling network layout |
-| **Thermal Network Part 2: Flow & Sizing** | Solve thermal hydraulic network flow and sizing | Size pipes and calculate pressure drops for networks |
+| **Thermal Network Part 2a: Flow & Sizing (Single-Phase)** | Solve thermal hydraulic network flow and sizing | Size pipes and calculate pressure drops for networks |
 
 ---
 
-## Life Cycle Analysis
+## Life Cycle Analysis (LCA)
 
 All four LCA features use a shared **what-if scenario** (a named supply configuration). **Run "Energy by Carrier" (Final Energy) first** — its `configuration.json` is the prerequisite for the other three.
 
@@ -114,6 +114,39 @@ All four LCA features use a shared **what-if scenario** (a named supply configur
 | **Plot - Solar Technology** | Plot bar chart of solar energy technologies' yields | Visualise PV, PVT, and solar collector potential |
 | **Plot - Building Comfort Chart** | Plot comfort and discomfort hours for buildings | Visualise thermal comfort analysis results |
 | **Plot - Pareto Front** | Plot Pareto front for optimisation results | Visualise trade-offs between cost, emissions, and energy |
+
+---
+
+## District Evolution Pathways
+
+Model how a district changes over time. See [District Evolution Pathways](11-district-pathways.md).
+
+| Feature | Description | Key Use |
+|---------|-------------|---------|
+| **Create District Evolution Pathway** | Create a new pathway under the active scenario | Start a phasing or retrofit study |
+| **Create Building Events** | Record constructions and demolitions for a year | Specific, named changes to the stock |
+| **Define Intervention Template** | Define a reusable bundle of modifications | Programme-level changes across many buildings |
+| **Apply Intervention Templates to Year** | Apply a template to one year | Roll a programme out in a chosen year |
+| **Bake Pathway States** | Materialise `state_{year}` scenario folders | Required before anything can be simulated |
+| **Simulate Pathway** | Run simulations across every state | Results per year rather than per scenario |
+| **Validate State** / **Validate All States** | Check baked states against the definition | Detect states that drifted after edits |
+| **Clear State** | Remove one year's inputs and/or outputs | Re-run a single year |
+| **Delete Pathway** | Remove a whole pathway and its states | Discard a trajectory |
+
+---
+
+## Canvas Builder
+
+Side-by-side comparison workspace. See [Canvas Builder](12-canvas-builder.md).
+
+| Capability | Description | Key Use |
+|---------|-------------|---------|
+| **Inter-scenario mode** | Columns are sibling scenarios | Compare design alternatives |
+| **Inter-what-if mode** | Columns are what-if variants | Compare supply options |
+| **Pathway modes** | Columns are state years, or whole pathways | Read a trajectory over time |
+| **KPI cards** | Headline numbers across nine domains | Scan results without opening plots |
+| **Plot / map / text cards** | Drawn per column on a free-form grid | Assemble a comparison page |
+| **Y-axis alignment** | One shared scale across columns | Compare magnitudes fairly |
 
 ---
 
@@ -226,11 +259,13 @@ For detailed information about each feature, refer to the category-specific guid
 - [Renewable Energy Potential Assessment](03-renewable-energy.md)
 - [Energy Demand Forecasting](04-demand-forecasting.md)
 - [Thermal Network Design](05-thermal-network.md)
-- [Life Cycle Analysis](06-0-life-cycle-analysis.md)
+- [Life Cycle Analysis (LCA)](06-0-life-cycle-analysis.md)
 - [Energy Supply System Optimisation](07-supply-optimisation.md)
 - [Data Management](08-data-management.md)
 - [Utilities](09-utilities.md)
 - [Visualisation](10-visualisation.md)
+- [District Evolution Pathways](11-district-pathways.md)
+- [Canvas Builder](12-canvas-builder.md)
 
 ---
 

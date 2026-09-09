@@ -134,7 +134,7 @@ visualisation) filter out `*_dumped_kWh` so it doesn't inflate totals.
 
 ---
 
-## Plot - Final Energy
+## Plot - Energy by Carrier
 
 ### Overview
 Creates bar charts of final energy consumption by carrier for buildings and plants.

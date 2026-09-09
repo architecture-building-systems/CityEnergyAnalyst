@@ -2,7 +2,7 @@
 
 _Generated from `cea/schemas.yml` by `scripts/generate_tutorial_glossary.py`. Do not hand-edit — re-run the script to refresh._
 
-Files in this category: **25**
+Files in this category: **29**
 
 ---
 
@@ -28,6 +28,10 @@ Files in this category: **25**
 - [`get_thermal_network_layout_massflow_edges_file`](#get_thermal_network_layout_massflow_edges_file)
 - [`get_thermal_network_layout_massflow_nodes_file`](#get_thermal_network_layout_massflow_nodes_file)
 - [`get_thermal_network_node_types_csv_file`](#get_thermal_network_node_types_csv_file)
+- [`get_thermal_network_phasing_edge_list_file`](#get_thermal_network_phasing_edge_list_file)
+- [`get_thermal_network_phasing_energy_pumping_requirements_file`](#get_thermal_network_phasing_energy_pumping_requirements_file)
+- [`get_thermal_network_phasing_plant_heat_requirement_file`](#get_thermal_network_phasing_plant_heat_requirement_file)
+- [`get_thermal_network_phasing_total_thermal_loss_file`](#get_thermal_network_phasing_total_thermal_loss_file)
 - [`get_thermal_network_plant_heat_requirement_file`](#get_thermal_network_plant_heat_requirement_file)
 - [`get_thermal_network_pressure_losses_edges_file`](#get_thermal_network_pressure_losses_edges_file)
 - [`get_thermal_network_substation_ploss_file`](#get_thermal_network_substation_ploss_file)
@@ -316,6 +320,59 @@ Files in this category: **25**
 | `Building` | Unique building ID. It must start with a letter. | string | `NA` | alphanumeric |
 | `name` | Unique network node ID. | string | `NA` | alphanumeric |
 | `Type` | Type of node: "PLANT" / "CONSUMER" / "NONE" (if it is neither) | string | `NA` | alphanumeric |
+
+---
+
+### `get_thermal_network_phasing_edge_list_file`
+
+- **Path**: `outputs/data/thermal-network/phasing-plans/{plan_name}/{network_type}/{phase}/{network_type}_{phase}_metadata_edges.csv`
+- **File type**: `csv`
+- **Created by**: `thermal_network`
+- **Used by**: _(none)_
+
+| Variable | Description | Type | Unit | Values |
+|----------|-------------|------|------|--------|
+| `length_m` | Length of each pipe in the network | float | `[m]` | {0.0...n} |
+| `name` | Unique network pipe ID. | string | `NA` | alphanumeric |
+
+---
+
+### `get_thermal_network_phasing_energy_pumping_requirements_file`
+
+- **Path**: `outputs/data/thermal-network/phasing-plans/{plan_name}/{network_type}/{phase}/{network_type}_{phase}_plant_pumping_load_kW.csv`
+- **File type**: `csv`
+- **Created by**: `thermal_network`
+- **Used by**: _(none)_
+
+| Variable | Description | Type | Unit | Values |
+|----------|-------------|------|------|--------|
+| `pressure_loss_total_kW` | pumping electricity required to overcome pressure losses in the entire network | float | `[kWh]` | {0.0...n} |
+
+---
+
+### `get_thermal_network_phasing_plant_heat_requirement_file`
+
+- **Path**: `outputs/data/thermal-network/phasing-plans/{plan_name}/{network_type}/{phase}/{network_type}_{phase}_plant_thermal_load_kW.csv`
+- **File type**: `csv`
+- **Created by**: `thermal_network`
+- **Used by**: _(none)_
+
+| Variable | Description | Type | Unit | Values |
+|----------|-------------|------|------|--------|
+| `thermal_load_kW` | Thermal load supplied by the plant at each time step | float | `[kWh]` | {0.0...n} |
+
+---
+
+### `get_thermal_network_phasing_total_thermal_loss_file`
+
+- **Path**: `outputs/data/thermal-network/phasing-plans/{plan_name}/{network_type}/{phase}/{network_type}_{phase}_total_thermal_loss_edges_kW.csv`
+- **File type**: `csv`
+- **Created by**: `thermal_network`
+- **Used by**: _(none)_
+
+| Variable | Description | Type | Unit | Values |
+|----------|-------------|------|------|--------|
+| `thermal_loss_total_kW` | Thermal losses in the entire thermal network at each time step | float | `[kWh]` | {0.0...n} |
 
 ---
 

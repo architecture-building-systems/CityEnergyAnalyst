@@ -18,8 +18,8 @@ This guide is designed for end users who want to learn how to use the CEA-4 App 
 New to CEA-4? Start with these resources:
 
 1. **Create New Scenario Wizard** - Use this in CEA-4 App to automate initial data setup
-2. **[Quick Reference Guide](00-quick-reference.md)** - A single-page overview of all 41 features
-3. **[Variable & File Glossary](../glossary/index.md)** - Reference of all 179 input/intermediate/output files, grouped by feature
+2. **[Quick Reference Guide](00-quick-reference.md)** - A single-page overview of all 48 features
+3. **[Variable & File Glossary](../glossary/index.md)** - Reference of all 184 input/intermediate/output files, grouped by feature
 4. **[Data Management](08-data-management.md)** - Understanding the automated data preparation
 5. **[Energy Demand Forecasting](04-demand-forecasting.md)** - Core functionality for building energy analysis
 
@@ -54,10 +54,11 @@ Forecast hourly and annual energy demand for heating, cooling, electricity, and 
 
 ### 5. [Thermal Network Design](05-thermal-network.md)
 Design and analyse district heating and cooling networks.
-- Network Layout Generation
-- Thermal Hydraulic Flow & Sizing
+- Thermal Network Part 1: Layout
+- Thermal Network Part 2a: Flow & Sizing (Single-Phase)
+- Thermal Network Part 2b: Flow & Sizing (Multiple-Phase) — phased rollout over time
 
-### 6. [Life Cycle Analysis](06-0-life-cycle-analysis.md)
+### 6. [Life Cycle Analysis (LCA)](06-0-life-cycle-analysis.md)
 Assess environmental impacts and costs of building energy systems using what-if supply scenarios. All four features run on a shared what-if scenario; **Final Energy must run first** and produces the `configuration.json` consumed by the other three.
 - [Final Energy / Energy by Carrier](06-1-final-energy.md) (BETA) - Carrier consumption by buildings and plants; includes hourly SC/PVT-primary DHW tank dispatch
 - [Emissions / GHG Emissions](06-2-emissions.md) (BETA) - Lifecycle and operational GHG emissions, with optional grid-decarbonisation trajectory
@@ -82,15 +83,38 @@ Prepare and validate input data for CEA analysis.
 ### 9. [Utilities](09-utilities.md)
 Supporting tools for data conversion, format verification, and more.
 - CEA-4 Format Helper
-- Sensitivity Analysis Sampler
-- File Format Conversion Tools
-- Building Rename Tool
+- Generate Samples for Sensitivity Analysis (SA)
+- .dbf to .csv to .dbf
+- .shp to .csv to .shp
+- Rename Building
 
 ### 10. [Visualisation](10-visualisation.md)
 Create charts and plots to visualise CEA results.
-- Plot Building Energy Demand
-- Plot Solar Technology Results
-- Plot Building Comfort Chart
+Fifteen plots, covering demand, carriers, emissions, costs, solar, comfort and optimisation:
+- Plot - Building Energy Demand, Plot - Solar Technology, Plot - Building Comfort Chart
+- Plot - Energy by Carrier, Plot - Energy Flow Sankey, Plot - Load Duration Curve by Component
+- Plot - Lifecycle Emissions, Plot - Emission Timeline, Plot - Operational Emissions,
+  Plot - Pathway Emission Timeline
+- Plot - Cost Breakdown, Plot - System Cost Sankey
+- Plot - Anthropogenic Heat Rejection, Plot - Supply System, Plot - Pareto Front
+
+### 11. [District Evolution Pathways](11-district-pathways.md)
+Model how a district changes over time — construction, demolition and retrofit across a
+sequence of years — and run analyses on each year.
+- Create District Evolution Pathway
+- Create Building Events
+- Define and Apply Intervention Templates
+- Bake Pathway States
+- Simulate Pathway
+- Validate State / Validate All States
+- Clear State / Delete Pathway
+
+### 12. [Canvas Builder](12-canvas-builder.md)
+Side-by-side comparison workspace. Columns are scenarios, what-if variants or pathway years;
+cards (plots, KPIs, maps, notes) are drawn for every column at once.
+- Four comparison modes
+- KPI strips across nine domains
+- Y-axis alignment for fair comparison
 
 ## How to Use This Guide
 

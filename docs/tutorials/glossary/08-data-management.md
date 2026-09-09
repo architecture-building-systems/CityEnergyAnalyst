@@ -2,7 +2,7 @@
 
 _Generated from `cea/schemas.yml` by `scripts/generate_tutorial_glossary.py`. Do not hand-edit — re-run the script to refresh._
 
-Files in this category: **66** (⚠️ 35 stale)
+Files in this category: **67** (⚠️ 35 stale)
 
 ---
 
@@ -64,6 +64,7 @@ Files in this category: **66** (⚠️ 35 stale)
 - [`get_database_components_feedstocks_solar`](#get_database_components_feedstocks_solar) ⚠️
 - [`get_database_components_feedstocks_wetbiomass`](#get_database_components_feedstocks_wetbiomass) ⚠️
 - [`get_database_components_feedstocks_wood`](#get_database_components_feedstocks_wood) ⚠️
+- [`get_database_components_materials`](#get_database_components_materials)
 - [`get_database_construction_standards`](#get_database_construction_standards) ⚠️
 - [`get_database_conversion_systems`](#get_database_conversion_systems) ⚠️
 - [`get_database_distribution_systems`](#get_database_distribution_systems) ⚠️
@@ -456,12 +457,20 @@ Files in this category: **66** (⚠️ 35 stale)
 
 | Variable | Description | Type | Unit | Values |
 |----------|-------------|------|------|--------|
-| `code` | Type of roof | string | `NA` | alphanumeric |
-| `description` | Describes the Type of roof | string | `NA` | alphanumeric |
-| `GHG_biogenic_floor_kgCO2m2` | Biogenic carbon storage per m2 of floor.(entire building life cycle) | float | `[kg CO2-eq/m2]` | {n...0.0} |
-| `GHG_floor_kgCO2m2` | Embodied emissions per m2 of floor.(entire building life cycle) | float | `[kg CO2-eq/m2]` | {0.0...n} |
-| `Service_Life_floor` | Service life of the floor assembly | float | `[yr]` | {0.0...n} |
-| `U_base` | Thermal transmittance of floor including linear losses (+10%). Defined according to ISO 13790. | float | `[-]` | {0.1...n} |
+| `code` | Type of floor | string | `NA` | alphanumeric |
+| `description` | Describes the Type of floor | string | `NA` | alphanumeric |
+| `GHG_biogenic_floor_kgCO2m2` | Biogenic carbon storage per m2 of floor (entire building life cycle). Derivable from the material layer set. | float | `[kg CO2-eq/m2]` | {n...0.0} |
+| `GHG_demolition_floor_kgCO2m2` | End-of-life share of the embodied emissions per m2 of floors. EN 15978 modules C2-C4 (transport to disposal, waste processing, disposal) - not the C1 deconstruction activity, despite the column name. Together with GHG_production_floor_kgCO2m2 it splits GHG_floor_kgCO2m2; both are derived from the material layer set and absent for databases without one. | float | `[kg CO2-eq/m2]` | {0.0...n} |
+| `GHG_floor_kgCO2m2` | Embodied emissions per m2 of floor (entire building life cycle). Derivable from the material layer set. | float | `[kg CO2-eq/m2]` | {0.0...n} |
+| `GHG_production_floor_kgCO2m2` | Production (cradle-to-gate) share of the embodied emissions per m2 of floors. Together with GHG_demolition_floor_kgCO2m2 it splits GHG_floor_kgCO2m2; both are derived from the material layer set and absent for databases without one. | float | `[kg CO2-eq/m2]` | {0.0...n} |
+| `material_name_1` | Layer 1 material name; must match a `name` in MATERIALS.csv. Required when the material layer set is used. | string | `NA` | alphanumeric |
+| `material_name_2` | Layer 2 material name; must match a `name` in MATERIALS.csv. Required when the material layer set is used. | string | `NA` | alphanumeric |
+| `material_name_3` | Layer 3 material name; must match a `name` in MATERIALS.csv. Required when the material layer set is used. | string | `NA` | alphanumeric |
+| `Service_Life_floor` | Service life of the floor assembly | float | `[yr]` | {n...n} |
+| `thickness_1_m` | Layer 1 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused. | float | `[m]` | {0.0...n} |
+| `thickness_2_m` | Layer 2 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused. | float | `[m]` | {0.0...n} |
+| `thickness_3_m` | Layer 3 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused. | float | `[m]` | {0.0...n} |
+| `U_base` | Thermal transmittance of floor including linear losses (+10%). Defined according to ISO 13790. Derivable from the material layer set. | float | `[-]` | {0.05...n} |
 
 ---
 
@@ -493,11 +502,19 @@ Files in this category: **66** (⚠️ 35 stale)
 | `code` | Type of roof | string | `NA` | alphanumeric |
 | `description` | Describes the Type of roof | string | `NA` | alphanumeric |
 | `e_roof` | Emissivity of external surface. Defined according to ISO 13790. | float | `[-]` | {0.0...1.0} |
-| `GHG_biogenic_roof_kgCO2m2` | Biogenic carbon storage per m2 of roof.(entire building life cycle) | float | `[kg CO2-eq/m2]` | {n...0.0} |
-| `GHG_roof_kgCO2m2` | Embodied emissions per m2 of roof.(entire building life cycle) | float | `[kg CO2-eq/m2]` | {0.0...n} |
+| `GHG_biogenic_roof_kgCO2m2` | Biogenic carbon storage per m2 of roof (entire building life cycle). Derivable from the material layer set. | float | `[kg CO2-eq/m2]` | {n...0.0} |
+| `GHG_demolition_roof_kgCO2m2` | End-of-life share of the embodied emissions per m2 of roofs. EN 15978 modules C2-C4 (transport to disposal, waste processing, disposal) - not the C1 deconstruction activity, despite the column name. Together with GHG_production_roof_kgCO2m2 it splits GHG_roof_kgCO2m2; both are derived from the material layer set and absent for databases without one. | float | `[kg CO2-eq/m2]` | {0.0...n} |
+| `GHG_production_roof_kgCO2m2` | Production (cradle-to-gate) share of the embodied emissions per m2 of roofs. Together with GHG_demolition_roof_kgCO2m2 it splits GHG_roof_kgCO2m2; both are derived from the material layer set and absent for databases without one. | float | `[kg CO2-eq/m2]` | {0.0...n} |
+| `GHG_roof_kgCO2m2` | Embodied emissions per m2 of roof (entire building life cycle). Derivable from the material layer set. | float | `[kg CO2-eq/m2]` | {0.0...n} |
+| `material_name_1` | Layer 1 material name; must match a `name` in MATERIALS.csv. Required when the material layer set is used. | string | `NA` | alphanumeric |
+| `material_name_2` | Layer 2 material name; must match a `name` in MATERIALS.csv. Required when the material layer set is used. | string | `NA` | alphanumeric |
+| `material_name_3` | Layer 3 material name; must match a `name` in MATERIALS.csv. Required when the material layer set is used. | string | `NA` | alphanumeric |
 | `r_roof` | Reflectance in the Red spectrum. Defined according Radiance. (long-wave) | float | `[-]` | {0.0...1.0} |
-| `Service_Life_roof` | Service life of the roof assembly | float | `[yr]` | {0.0...n} |
-| `U_roof` | Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790. | float | `[-]` | {0.1...n} |
+| `Service_Life_roof` | Service life of the roof assembly | float | `[yr]` | {n...n} |
+| `thickness_1_m` | Layer 1 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused. | float | `[m]` | {0.0...n} |
+| `thickness_2_m` | Layer 2 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused. | float | `[m]` | {0.0...n} |
+| `thickness_3_m` | Layer 3 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused. | float | `[m]` | {0.0...n} |
+| `U_roof` | Thermal transmittance of roof including linear losses (+10%). Defined according to ISO 13790. Derivable from the material layer set. | float | `[-]` | {0.05...n} |
 
 ---
 
@@ -546,11 +563,19 @@ Files in this category: **66** (⚠️ 35 stale)
 | `code` | Type of wall | string | `NA` | alphanumeric |
 | `description` | Describes the Type of wall | string | `NA` | alphanumeric |
 | `e_wall` | Emissivity of external surface. Defined according to ISO 13790. | float | `[-]` | {0.0...1.0} |
-| `GHG_biogenic_wall_kgCO2m2` | Biogenic carbon storage per m2 of walls (entire building life cycle) | float | `[kg CO2-eq/m2]` | {n...0.0} |
-| `GHG_wall_kgCO2m2` | Embodied emissions per m2 of walls (entire building life cycle) | float | `[kg CO2-eq/m2]` | {0.0...n} |
+| `GHG_biogenic_wall_kgCO2m2` | Biogenic carbon storage per m2 of walls (entire building life cycle). Derivable from the material layer set. | float | `[kg CO2-eq/m2]` | {n...0.0} |
+| `GHG_demolition_wall_kgCO2m2` | End-of-life share of the embodied emissions per m2 of walls. EN 15978 modules C2-C4 (transport to disposal, waste processing, disposal) - not the C1 deconstruction activity, despite the column name. Together with GHG_production_wall_kgCO2m2 it splits GHG_wall_kgCO2m2; both are derived from the material layer set and absent for databases without one. | float | `[kg CO2-eq/m2]` | {0.0...n} |
+| `GHG_production_wall_kgCO2m2` | Production (cradle-to-gate) share of the embodied emissions per m2 of walls. Together with GHG_demolition_wall_kgCO2m2 it splits GHG_wall_kgCO2m2; both are derived from the material layer set and absent for databases without one. | float | `[kg CO2-eq/m2]` | {0.0...n} |
+| `GHG_wall_kgCO2m2` | Embodied emissions per m2 of walls (entire building life cycle). Derivable from the material layer set. | float | `[kg CO2-eq/m2]` | {0.0...n} |
+| `material_name_1` | Layer 1 material name; must match a `name` in MATERIALS.csv. Required when the material layer set is used. | string | `NA` | alphanumeric |
+| `material_name_2` | Layer 2 material name; must match a `name` in MATERIALS.csv. Required when the material layer set is used. | string | `NA` | alphanumeric |
+| `material_name_3` | Layer 3 material name; must match a `name` in MATERIALS.csv. Required when the material layer set is used. | string | `NA` | alphanumeric |
 | `r_wall` | Reflectance in the Red spectrum. Defined according Radiance. (long-wave) | float | `[-]` | {0.0...1.0} |
-| `Service_Life_wall` | Service life of the wall assembly | float | `[yr]` | {0.0...n} |
-| `U_wall` | Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790. | float | `[-]` | {0.1...n} |
+| `Service_Life_wall` | Service life of the wall assembly | float | `[yr]` | {n...n} |
+| `thickness_1_m` | Layer 1 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused. | float | `[m]` | {0.0...n} |
+| `thickness_2_m` | Layer 2 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused. | float | `[m]` | {0.0...n} |
+| `thickness_3_m` | Layer 3 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused. | float | `[m]` | {0.0...n} |
+| `U_wall` | Thermal transmittance of walls including linear losses (+10%). Defined according to ISO 13790. Derivable from the material layer set. | float | `[-]` | {0.05...n} |
 
 ---
 
@@ -781,6 +806,7 @@ Files in this category: **66** (⚠️ 35 stale)
 | `e` | parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity | float | `[-]` | {0.0...n} |
 | `e_e` | parameter in the characteristic equations to calculate the evaporator side | float | `[-]` | {0.0...n} |
 | `e_g` | parameter in the characteristic equations to calculate the generator side | float | `[-]` | {0.0...n} |
+| `GHG_embodied_kgCO2e_per_unit` | Embodied GHG emissions per one of this component's `unit` (see the unit column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978 modules A1-A3. Capacity-based like the cost curve, so the installed emission is this factor times the sized capacity. Optional - where absent, the emissions timeline falls back to the blanket per-GFA intensity in cea/constants.py. | float | `[kg CO2-eq/unit]` | {0.0...n} |
 | `IR_%` | interest rate charged on the loan for the capital cost | float | `[-]` | {0.0...n} |
 | `LT_yr` | lifetime of this technology | int | `[yr]` | {0...n} |
 | `m_cw` | external flow rate of cooling water at the condenser and absorber | float | `[kg/s]` | {0.0...n} |
@@ -824,6 +850,7 @@ Files in this category: **66** (⚠️ 35 stale)
 | `description` | describes the type of boiler | string | `NA` | alphanumeric |
 | `e` | parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x) | float | `[-]` | {0.0...n} |
 | `fuel_code` | code of the combustible energy carrier used by the boiler (matching code in EnergyCarriers database) | string | `NA` | alphanumeric |
+| `GHG_embodied_kgCO2e_per_unit` | Embodied GHG emissions per one of this component's `unit` (see the unit column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978 modules A1-A3. Capacity-based like the cost curve, so the installed emission is this factor times the sized capacity. Optional - where absent, the emissions timeline falls back to the blanket per-GFA intensity in cea/constants.py. | float | `[kg CO2-eq/unit]` | {0.0...n} |
 | `IR_%` | interest rate charged on the loan for the capital cost | float | `[-]` | {0.0...n} |
 | `LT_yr` | lifetime of this technology | int | `[yr]` | {0...n} |
 | `min_eff_rating` | minimum thermal efficiency rating of the boiler | float | `[-]` | {n...n} |
@@ -859,6 +886,7 @@ Files in this category: **66** (⚠️ 35 stale)
 | `d` | parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity | float | `[-]` | {n...n} |
 | `description` | Describes the source of the benchmark standards. | string | `NA` | alphanumeric |
 | `e` | parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity | float | `[-]` | {0.0...n} |
+| `GHG_embodied_kgCO2e_per_unit` | Embodied GHG emissions per one of this component's `unit` (see the unit column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978 modules A1-A3. Capacity-based like the cost curve, so the installed emission is this factor times the sized capacity. Optional - where absent, the emissions timeline falls back to the blanket per-GFA intensity in cea/constants.py. | float | `[kg CO2-eq/unit]` | {0.0...n} |
 | `IR_%` | interest rate charged on the loan for the capital cost | float | `[-]` | {0.0...n} |
 | `LT_yr` | lifetime of this technology | int | `[yr]` | {0...n} |
 | `O&M_%` | operation and maintenance cost factor (fraction of the investment cost) | float | `[-]` | {0.0...n} |
@@ -890,6 +918,7 @@ Files in this category: **66** (⚠️ 35 stale)
 | `e` | parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x) | float | `[-]` | {0.0...n} |
 | `elec_eff_design` | electrical efficiency rating of the cogen plant under design conditions | float | `[-]` | {0.0...n} |
 | `fuel_code` | code of the combustible energy carrier used by the cogeneration plant (matching code in EnergyCarriers database) | string | `NA` | alphanumeric |
+| `GHG_embodied_kgCO2e_per_unit` | Embodied GHG emissions per one of this component's `unit` (see the unit column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978 modules A1-A3. Capacity-based like the cost curve, so the installed emission is this factor times the sized capacity. Optional - where absent, the emissions timeline falls back to the blanket per-GFA intensity in cea/constants.py. | float | `[kg CO2-eq/unit]` | {0.0...n} |
 | `IR_%` | interest rate charged on the loan for the capital cost | float | `[-]` | {0.0...n} |
 | `LT_yr` | lifetime of this technology | int | `[yr]` | {0...n} |
 | `O&M_%` | operation and maintenance cost factor (fraction of the investment cost) | float | `[-]` | {0.0...n} |
@@ -926,6 +955,7 @@ Files in this category: **66** (⚠️ 35 stale)
 | `d` | parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x) | float | `[-]` | {n...n} |
 | `description` | describes the type of cooling tower | string | `NA` | alphanumeric |
 | `e` | parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x) | float | `[-]` | {0.0...n} |
+| `GHG_embodied_kgCO2e_per_unit` | Embodied GHG emissions per one of this component's `unit` (see the unit column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978 modules A1-A3. Capacity-based like the cost curve, so the installed emission is this factor times the sized capacity. Optional - where absent, the emissions timeline falls back to the blanket per-GFA intensity in cea/constants.py. | float | `[kg CO2-eq/unit]` | {0.0...n} |
 | `IR_%` | interest rate charged on the loan for the capital cost | float | `[-]` | {0.0...n} |
 | `LT_yr` | lifetime of this technology | int | `[yr]` | {0...n} |
 | `O&M_%` | operation and maintenance cost factor (fraction of the investment cost) | float | `[-]` | {0.0...n} |
@@ -961,6 +991,7 @@ Files in this category: **66** (⚠️ 35 stale)
 | `d` | parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x) | float | `[-]` | {n...n} |
 | `description` | Describes the type of fuel cell | string | `NA` | alphanumeric |
 | `e` | parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x) | float | `[-]` | {0.0...n} |
+| `GHG_embodied_kgCO2e_per_unit` | Embodied GHG emissions per one of this component's `unit` (see the unit column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978 modules A1-A3. Capacity-based like the cost curve, so the installed emission is this factor times the sized capacity. Optional - where absent, the emissions timeline falls back to the blanket per-GFA intensity in cea/constants.py. | float | `[kg CO2-eq/unit]` | {0.0...n} |
 | `IR_%` | interest rate charged on the loan for the capital cost | float | `[-]` | {0.0...n} |
 | `LT_yr` | lifetime of this technology | int | `[yr]` | {0...n} |
 | `O&M_%` | operation and maintenance cost factor (fraction of the investment cost) | float | `[-]` | {0.0...n} |
@@ -990,6 +1021,7 @@ Files in this category: **66** (⚠️ 35 stale)
 | `d` | parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity mass flow rate [W/K] | float | `[-]` | {n...n} |
 | `description` | Describes the type of heat exchanger | string | `NA` | alphanumeric |
 | `e` | parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), here x is the capacity mass flow rate [W/K] | float | `[-]` | {0.0...n} |
+| `GHG_embodied_kgCO2e_per_unit` | Embodied GHG emissions per one of this component's `unit` (see the unit column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978 modules A1-A3. Capacity-based like the cost curve, so the installed emission is this factor times the sized capacity. Optional - where absent, the emissions timeline falls back to the blanket per-GFA intensity in cea/constants.py. | float | `[kg CO2-eq/unit]` | {0.0...n} |
 | `IR_%` | interest rate charged on the loan for the capital cost | float | `[-]` | {0.0...n} |
 | `LT_yr` | lifetime of this technology | int | `[yr]` | {0...n} |
 | `medium_in` | thermal energy carrier subtype (i.e. type of fluid) on the hot side of the heat exchanger | string | `NA` | {water, air, brine} |
@@ -1025,6 +1057,7 @@ Files in this category: **66** (⚠️ 35 stale)
 | `d` | parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity | float | `[-]` | {n...n} |
 | `description` | Describes the source of the heat pump | string | `NA` | alphanumeric |
 | `e` | parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity | float | `[-]` | {n...n} |
+| `GHG_embodied_kgCO2e_per_unit` | Embodied GHG emissions per one of this component's `unit` (see the unit column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978 modules A1-A3. Capacity-based like the cost curve, so the installed emission is this factor times the sized capacity. Optional - where absent, the emissions timeline falls back to the blanket per-GFA intensity in cea/constants.py. | float | `[kg CO2-eq/unit]` | {0.0...n} |
 | `IR_%` | interest rate charged on the loan for the capital cost | float | `[-]` | {0.0...n} |
 | `LT_yr` | lifetime of this technology | int | `[yr]` | {0...n} |
 | `medium_cond_side` | thermal energy carrier subtype (i.e. type of fluid) on the condenser side of the heat pump | string | `NA` | {water, air, brine} |
@@ -1062,6 +1095,7 @@ Files in this category: **66** (⚠️ 35 stale)
 | `d` | parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity | float | `[-]` | {n...n} |
 | `description` | Describes the source of the benchmark standards. | string | `NA` | alphanumeric |
 | `e` | parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity | float | `[-]` | {0.0...n} |
+| `GHG_embodied_kgCO2e_per_unit` | Embodied GHG emissions per one of this component's `unit` (see the unit column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978 modules A1-A3. Capacity-based like the cost curve, so the installed emission is this factor times the sized capacity. Optional - where absent, the emissions timeline falls back to the blanket per-GFA intensity in cea/constants.py. | float | `[kg CO2-eq/unit]` | {0.0...n} |
 | `IR_%` | interest rate charged on the loan for the capital cost | float | `[-]` | {0.0...n} |
 | `LT_yr` | lifetime of this technology | int | `[yr]` | {0...n} |
 | `O&M_%` | operation and maintenance cost factor (fraction of the investment cost) | float | `[-]` | {0.0...n} |
@@ -1091,6 +1125,7 @@ Files in this category: **66** (⚠️ 35 stale)
 | `d` | parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity | float | `[-]` | {n...n} |
 | `description` | Describes the source of the benchmark standards. | string | `NA` | alphanumeric |
 | `e` | parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity | float | `[-]` | {0.0...n} |
+| `GHG_embodied_kgCO2e_per_unit` | Embodied GHG emissions per one of this component's `unit` (see the unit column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978 modules A1-A3. Capacity-based like the cost curve, so the installed emission is this factor times the sized capacity. Optional - where absent, the emissions timeline falls back to the blanket per-GFA intensity in cea/constants.py. | float | `[kg CO2-eq/unit]` | {0.0...n} |
 | `IR_%` | interest rate charged on the loan for the capital cost | float | `[-]` | {0.0...n} |
 | `LT_yr` | lifetime of this technology | int | `[yr]` | {0...n} |
 | `misc_losses` | losses from cabling, resistances etc... | float | `[-]` | {0.0...1.0} |
@@ -1132,6 +1167,7 @@ Files in this category: **66** (⚠️ 35 stale)
 | `d` | parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity | float | `[-]` | {n...n} |
 | `description` | Describes the type of photovoltaic thermal technology | string | `NA` | alphanumeric |
 | `e` | parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity | float | `[-]` | {0.0...n} |
+| `GHG_embodied_kgCO2e_per_unit` | Embodied GHG emissions per one of this component's `unit` (see the unit column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978 modules A1-A3. Capacity-based like the cost curve, so the installed emission is this factor times the sized capacity. Optional - where absent, the emissions timeline falls back to the blanket per-GFA intensity in cea/constants.py. | float | `[kg CO2-eq/unit]` | {0.0...n} |
 | `IR_%` | interest rate charged on the loan for the capital cost | float | `[-]` | {0.0...n} |
 | `LT_yr` | lifetime of this technology | int | `[yr]` | {0...n} |
 | `O&M_%` | operation and maintenance cost factor (fraction of the investment cost) | float | `[-]` | {0.0...n} |
@@ -1163,6 +1199,7 @@ Files in this category: **66** (⚠️ 35 stale)
 | `d` | parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x) | float | `[-]` | {n...n} |
 | `description` | Describes the type of power transformer | string | `NA` | alphanumeric |
 | `e` | parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x) | float | `[-]` | {0.0...n} |
+| `GHG_embodied_kgCO2e_per_unit` | Embodied GHG emissions per one of this component's `unit` (see the unit column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978 modules A1-A3. Capacity-based like the cost curve, so the installed emission is this factor times the sized capacity. Optional - where absent, the emissions timeline falls back to the blanket per-GFA intensity in cea/constants.py. | float | `[kg CO2-eq/unit]` | {0.0...n} |
 | `IR_%` | interest rate charged on the loan for the capital cost | float | `[-]` | {0.0...n} |
 | `LT_yr` | lifetime of this technology | int | `[yr]` | {0...n} |
 | `O&M_%` | operation and maintenance cost factor (fraction of the investment cost) | float | `[-]` | {0.0...n} |
@@ -1207,6 +1244,7 @@ Files in this category: **66** (⚠️ 35 stale)
 | `dP3` | pressure drop at maximum flow rate (mB_max) | float | `[Pa/m2]` | {0.0...n} |
 | `dP4` | pressure drop at minimum flow rate (mB_min) | float | `[Pa/m2]` | {0.0...n} |
 | `e` | parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity | float | `[-]` | {0.0...n} |
+| `GHG_embodied_kgCO2e_per_unit` | Embodied GHG emissions per one of this component's `unit` (see the unit column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978 modules A1-A3. Capacity-based like the cost curve, so the installed emission is this factor times the sized capacity. Optional - where absent, the emissions timeline falls back to the blanket per-GFA intensity in cea/constants.py. | float | `[kg CO2-eq/unit]` | {0.0...n} |
 | `IAM_d` | incident angle modifier for diffuse radiation | float | `[-]` | {0.0...n} |
 | `IR_%` | interest rate charged on the loan for the capital cost | float | `[-]` | {0.0...n} |
 | `LT_yr` | lifetime of this technology | int | `[yr]` | {0...n} |
@@ -1247,6 +1285,7 @@ Files in this category: **66** (⚠️ 35 stale)
 | `d` | parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity | float | `[-]` | {n...n} |
 | `description` | Describes the thermal energy storage technology | string | `[-]` | alphanumeric |
 | `e` | parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity | float | `[-]` | {n...n} |
+| `GHG_embodied_kgCO2e_per_unit` | Embodied GHG emissions per one of this component's `unit` (see the unit column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978 modules A1-A3. Capacity-based like the cost curve, so the installed emission is this factor times the sized capacity. Optional - where absent, the emissions timeline falls back to the blanket per-GFA intensity in cea/constants.py. | float | `[kg CO2-eq/unit]` | {0.0...n} |
 | `HL_kJkg` | Lantent heat of working fluid at phase change temperature | float | `[-]` | {0.0...n} |
 | `IR_%` | interest rate charged on the loan for the capital cost | float | `[-]` | {0.0...n} |
 | `LT_mat_yr` | lifetime of the working fluid of this storage technology | int | `[yr]` | {0...n} |
@@ -1285,6 +1324,7 @@ Files in this category: **66** (⚠️ 35 stale)
 | `d` | parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x) | float | `[-]` | {n...n} |
 | `description` | describes the air conditioner unit | string | `NA` | alphanumeric |
 | `e` | parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x) | float | `[-]` | {0.0...n} |
+| `GHG_embodied_kgCO2e_per_unit` | Embodied GHG emissions per one of this component's `unit` (see the unit column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978 modules A1-A3. Capacity-based like the cost curve, so the installed emission is this factor times the sized capacity. Optional - where absent, the emissions timeline falls back to the blanket per-GFA intensity in cea/constants.py. | float | `[kg CO2-eq/unit]` | {0.0...n} |
 | `IR_%` | interest rate charged on the loan for the capital cost | float | `[-]` | {0.0...n} |
 | `LT_yr` | lifetime of this technology | int | `[yr]` | {0...n} |
 | `O&M_%` | operation and maintenance cost factor (fraction of the investment cost) | float | `[-]` | {0.0...n} |
@@ -1320,6 +1360,7 @@ Files in this category: **66** (⚠️ 35 stale)
 | `d` | parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x) | float | `[-]` | {n...n} |
 | `description` | Describes the source of the benchmark standards. | string | `NA` | alphanumeric |
 | `e` | parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x) | float | `[-]` | {0.0...n} |
+| `GHG_embodied_kgCO2e_per_unit` | Embodied GHG emissions per one of this component's `unit` (see the unit column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978 modules A1-A3. Capacity-based like the cost curve, so the installed emission is this factor times the sized capacity. Optional - where absent, the emissions timeline falls back to the blanket per-GFA intensity in cea/constants.py. | float | `[kg CO2-eq/unit]` | {0.0...n} |
 | `IR_%` | interest rate charged on the loan for the capital cost | float | `[-]` | {0.0...n} |
 | `LT_yr` | lifetime of this technology | int | `[yr]` | {0...n} |
 | `min_eff_rating` | Minimum efficiency rating according to prevalent standards or manufacturer catalogues, expressed as a COP. | float | `[W_th/W_el]` | {0.0...n} |
@@ -1561,6 +1602,50 @@ Files in this category: **66** (⚠️ 35 stale)
 | `Opex_var_buy_USD2015kWh` | buying price | float | `[USD-2015/kWh]` | {0.0...n} |
 | `Opex_var_sell_USD2015kWh` | selling price | float | `[USD-2015/kWh]` | {0.0...n} |
 | `reference` | reference | string | `NA` | alphanumeric |
+
+---
+
+### `get_database_components_materials`
+
+- **Path**: `inputs/database/COMPONENTS/MATERIALS/MATERIALS.csv`
+- **File type**: `csv`
+- **Created by**: `database_helper`
+- **Used by**: `emissions`
+
+| Variable | Description | Type | Unit | Values |
+|----------|-------------|------|------|--------|
+| `biogenic_carbon_in_product` | Biogenic carbon stored in the product, as a negative contribution to the CO2 balance. Note this is the opposite sign to the KBOB source, which publishes a positive magnitude; CEA stores stored carbon as negative throughout, matching GHG_biogenic_* in the envelope assemblies derived from this column. | float | `[kgCO2eq/kg]` | {n...0.0} |
+| `density` | Bulk density [kg/m3]. Some entries are ranges, e.g. "1'400 - 1'500", so this is stored as text. | string | `[kg/m3]` | alphanumeric |
+| `disposal_method` | End-of-life treatment assumed for the disposal figures, as published by KBOB under Entsorgung - incineration, landfill or recycling processing. | string | `NA` | alphanumeric |
+| `GHG_emission_disposal` | Greenhouse gas emissions from end-of-life disposal. EN 15978 modules C2-C4 (transport to disposal, waste processing, disposal); excludes the C1 deconstruction activity. KBOB Entsorgung. | float | `[kgCO2eq/kg]` | {n...n} |
+| `GHG_emission_production` | Greenhouse gas emissions from production. | float | `[kgCO2eq/kg]` | {n...n} |
+| `GHG_emission_total` | Total greenhouse gas emissions, used to derive embodied carbon. | float | `[kgCO2eq/kg]` | {n...n} |
+| `ID` | KBOB material identifier, e.g. 7.001. Dotted codes, not a number. | string | `NA` | alphanumeric |
+| `ID_disposal` | KBOB identifier of the disposal (Entsorgung) process, e.g. 91.175.01. | string | `NA` | alphanumeric |
+| `name` | Material name. Referenced by material_name_1..3 in the ENVELOPE assemblies. | string | `NA` | alphanumeric |
+| `name_KBOB` | Material name as published by KBOB (German). | string | `NA` | alphanumeric |
+| `overall_disposal` | Primary energy demand from end-of-life disposal. | float | `[MJ]` | {n...n} |
+| `overall_energy_production` | Primary energy demand from production. | float | `[MJ]` | {n...n} |
+| `overall_energy_production_in_process` | Primary energy demand from production, process share. | float | `[MJ]` | {n...n} |
+| `overall_energy_prodution_in_material` | Primary energy demand from production, material share. Column name misspelt in the source data. | float | `[MJ]` | {n...n} |
+| `overall_energy_total` | Total primary energy demand, renewable and non-renewable. | float | `[MJ]` | {n...n} |
+| `renewable_disposal` | Renewable primary energy demand from end-of-life disposal. | float | `[MJ]` | {n...n} |
+| `renewable_energy_production` | Renewable primary energy demand from production. | float | `[MJ]` | {n...n} |
+| `renewable_energy_production_in_process` | Renewable primary energy demand from production, process share. | float | `[MJ]` | {n...n} |
+| `renewable_energy_prodution_in_material` | Renewable primary energy demand from production, material share. Column name misspelt in the source data. | float | `[MJ]` | {n...n} |
+| `renewable_energy_total` | Renewable primary energy demand. | float | `[MJ]` | {n...n} |
+| `thermal_conductivity` | Thermal conductivity, used to derive U-values. | float | `[W/mK]` | {n...n} |
+| `thermal_conductivity_source` | Source of the thermal conductivity value, e.g. a SIA standard. | string | `NA` | alphanumeric |
+| `UBP_disposal` | Environmental impact points (UBP) from end-of-life disposal. | float | `[UBP]` | {n...n} |
+| `UBP_production` | Environmental impact points (UBP) from production. | float | `[UBP]` | {n...n} |
+| `UBP_total` | Total environmental impact points (UBP), the Swiss ecological scarcity indicator. | float | `[UBP]` | {n...n} |
+| `unit` | Reference unit for the impact figures. | string | `NA` | alphanumeric |
+| `unrenewable_disposal` | Non-renewable primary energy demand from end-of-life disposal. | float | `[MJ]` | {n...n} |
+| `unrenewable_energy_production` | Non-renewable primary energy demand from production. | float | `[MJ]` | {n...n} |
+| `unrenewable_energy_production_in_process` | Non-renewable primary energy demand from production, process share. | float | `[MJ]` | {n...n} |
+| `unrenewable_energy_prodution_in_material` | Non-renewable primary energy demand from production, material share. Column name misspelt in the source data. | float | `[MJ]` | {n...n} |
+| `unrenewable_energy_total` | Non-renewable primary energy demand. | float | `[MJ]` | {n...n} |
+| `UUID` | KBOB record identifier. | string | `NA` | alphanumeric |
 
 ---
 

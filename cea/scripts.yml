@@ -1026,7 +1026,7 @@ Visualisation:
     label: Plot - Emission Timeline
     short_description: Visualise how emissions evolve over time
     description: |
-      This Feature tracks cumulative lifecycle emissions across different sources (i.e. operation, production, biogenic, demolition, PV). `demolition` is end of life, EN 15978 C2-C4.
+      This Feature tracks cumulative lifecycle emissions across different sources (i.e. operation, production, biogenic, demolition, PV).
       
       It offers multiple visualisation modes, including a line plot for viewing itemised emission trends, 
       a line plot for displaying overall net emissions against a target year to achieve net-zero,
@@ -1047,7 +1047,7 @@ Visualisation:
     short_description: Visualise how district pathway emissions evolve over time
     description: |
       This Feature tracks cumulative lifecycle emissions for one district pathway across different sources
-      (i.e. operation, production, biogenic, demolition, PV). `demolition` is end of life, EN 15978 C2-C4.
+      (i.e. operation, production, biogenic, demolition, PV).
 
       It offers multiple visualisation modes, including a line plot for viewing itemised emission trends,
       a line plot for displaying overall net emissions against a target year to achieve net-zero,

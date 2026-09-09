@@ -1,6 +1,6 @@
 # CEA Variable & File Glossary
 
-A reference of the **179** input, intermediate, and output files used by the City Energy Analyst, grouped by feature. Each entry lists the file path, the script that produces it, the scripts that consume it, and the full column schema with type, unit, and valid values.
+A reference of the **184** input, intermediate, and output files used by the City Energy Analyst, grouped by feature. Each entry lists the file path, the script that produces it, the scripts that consume it, and the full column schema with type, unit, and valid values.
 
 _Generated from `cea/schemas.yml` by `scripts/generate_tutorial_glossary.py`. Re-run after modifying the schema to refresh._
 
@@ -14,10 +14,10 @@ _Generated from `cea/schemas.yml` by `scripts/generate_tutorial_glossary.py`. Re
 | 02 | [Solar Radiation Analysis](02-solar-radiation.md) | 4 |
 | 03 | [Renewable Energy Potential Assessment](03-renewable-energy.md) | 15 |
 | 04 | [Energy Demand Forecasting](04-demand-forecasting.md) | 3 |
-| 05 | [Thermal Network Design](05-thermal-network.md) | 25 |
+| 05 | [Thermal Network Design](05-thermal-network.md) | 29 |
 | 06 | [Life Cycle Analysis (BETA)](06-life-cycle-analysis.md) | 24 |
 | 07 | [Energy Supply System Optimisation](07-supply-optimisation.md) | 35 |
-| 08 | [Data Management](08-data-management.md) | 66 |
+| 08 | [Data Management](08-data-management.md) | 67 |
 | 09 | [Utilities](09-utilities.md) | 1 |
 
 ---
