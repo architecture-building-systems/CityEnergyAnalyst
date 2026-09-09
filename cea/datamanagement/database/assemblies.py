@@ -70,7 +70,9 @@ def _calc_ghg(
     Disallows any material with unit 'm2'.
     Returns tuple: (total, production, demolition, biogenic). Each may be None if
     insufficient data. The demolition term comes from the material's end-of-life column,
-    `GHG_emission_recycling`, which keeps the name KBOB publishes it under.
+    `GHG_emission_disposal` (KBOB *Entsorgung*): EN 15978 modules C2-C4 -- transport to the
+    disposal route plus incineration, landfill or recycling processing. Excludes the C1
+    deconstruction activity.
     """
     total_emissions = 0.0
     production_emissions = 0.0
@@ -87,7 +89,7 @@ def _calc_ghg(
         density_value = _to_float(m.get("density"))
         ghg_total_value = _to_float(m.get("GHG_emission_total"))
         ghg_production_value = _to_float(m.get("GHG_emission_production"))
-        ghg_demolition_value = _to_float(m.get("GHG_emission_recycling"))
+        ghg_demolition_value = _to_float(m.get("GHG_emission_disposal"))
         bio_carbon_value = _to_float(m.get("biogenic_carbon_in_product"))
         thickness_value = _to_float(m.get("thickness"))
 
@@ -286,7 +288,7 @@ def _gather_materials_for_row(row: pd.Series, material_db: pd.DataFrame | None) 
             "unit": rec.get("unit"),
             "GHG_emission_total": rec.get("GHG_emission_total"),
             "GHG_emission_production": rec.get("GHG_emission_production"),
-            "GHG_emission_recycling": rec.get("GHG_emission_recycling"),
+            "GHG_emission_disposal": rec.get("GHG_emission_disposal"),
             "biogenic_carbon_in_product": rec.get("biogenic_carbon_in_product"),
         })
     return mats

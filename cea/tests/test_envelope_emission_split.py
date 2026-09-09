@@ -27,7 +27,7 @@ BRICK = {
     "unit": "kg",
     "GHG_emission_total": 0.5,
     "GHG_emission_production": 0.4,
-    "GHG_emission_recycling": 0.1,
+    "GHG_emission_disposal": 0.1,
     "biogenic_carbon_in_product": -0.05,
 }
 LAYER = {"material_name_1": "brick", "thickness_1_m": 0.20}

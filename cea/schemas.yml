@@ -2147,12 +2147,13 @@ get_database_components_materials:
         description: Material name as published by KBOB (German).
         type: string
         unit: NA
-      ID_recycling:
-        description: KBOB identifier of the recycling process, e.g. 91.175.01.
+      ID_disposal:
+        description: KBOB identifier of the disposal (Entsorgung) process, e.g. 91.175.01.
         type: string
         unit: NA
-      recycling_method:
-        description: End-of-life treatment assumed for the recycling figures.
+      disposal_method:
+        description: End-of-life treatment assumed for the disposal figures, as published by
+          KBOB under Entsorgung - incineration, landfill or recycling processing.
         type: string
         unit: NA
       density:
@@ -2179,8 +2180,8 @@ get_database_components_materials:
         description: Environmental impact points (UBP) from production.
         type: float
         unit: '[UBP]'
-      UBP_recycling:
-        description: Environmental impact points (UBP) from recycling.
+      UBP_disposal:
+        description: Environmental impact points (UBP) from end-of-life disposal.
         type: float
         unit: '[UBP]'
       overall_energy_total:
@@ -2199,8 +2200,8 @@ get_database_components_materials:
         description: Primary energy demand from production, material share. Column name misspelt in the source data.
         type: float
         unit: '[MJ]'
-      overall_recycling:
-        description: Primary energy demand from recycling.
+      overall_disposal:
+        description: Primary energy demand from end-of-life disposal.
         type: float
         unit: '[MJ]'
       renewable_energy_total:
@@ -2219,8 +2220,8 @@ get_database_components_materials:
         description: Renewable primary energy demand from production, material share. Column name misspelt in the source data.
         type: float
         unit: '[MJ]'
-      renewable_recycling:
-        description: Renewable primary energy demand from recycling.
+      renewable_disposal:
+        description: Renewable primary energy demand from end-of-life disposal.
         type: float
         unit: '[MJ]'
       unrenewable_energy_total:
@@ -2239,8 +2240,8 @@ get_database_components_materials:
         description: Non-renewable primary energy demand from production, material share. Column name misspelt in the source data.
         type: float
         unit: '[MJ]'
-      unrenewable_recycling:
-        description: Non-renewable primary energy demand from recycling.
+      unrenewable_disposal:
+        description: Non-renewable primary energy demand from end-of-life disposal.
         type: float
         unit: '[MJ]'
       GHG_emission_total:
@@ -2251,8 +2252,10 @@ get_database_components_materials:
         description: Greenhouse gas emissions from production.
         type: float
         unit: '[kgCO2eq/kg]'
-      GHG_emission_recycling:
-        description: Greenhouse gas emissions from recycling.
+      GHG_emission_disposal:
+        description: Greenhouse gas emissions from end-of-life disposal. EN 15978 modules
+          C2-C4 (transport to disposal, waste processing, disposal); excludes the C1
+          deconstruction activity. KBOB Entsorgung.
         type: float
         unit: '[kgCO2eq/kg]'
       biogenic_carbon_in_product:
@@ -2475,9 +2478,11 @@ get_database_assemblies_envelope_floor:
         min: 0.0
         nullable: true
       GHG_demolition_floor_kgCO2m2:
-        description: End-of-life (demolition) share of the embodied emissions per m2 of
-          floors. Together with GHG_production_floor_kgCO2m2 it splits GHG_floor_kgCO2m2; both are derived
-          from the material layer set and absent for databases without one.
+        description: End-of-life share of the embodied emissions per m2 of floors. EN 15978
+          modules C2-C4 (transport to disposal, waste processing, disposal) - not the C1
+          deconstruction activity, despite the column name. Together with
+          GHG_production_floor_kgCO2m2 it splits GHG_floor_kgCO2m2; both are derived from the
+          material layer set and absent for databases without one.
         type: float
         unit: '[kg CO2-eq/m2]'
         min: 0.0
@@ -2584,9 +2589,11 @@ get_database_assemblies_envelope_roof:
         min: 0.0
         nullable: true
       GHG_demolition_roof_kgCO2m2:
-        description: End-of-life (demolition) share of the embodied emissions per m2 of
-          roofs. Together with GHG_production_roof_kgCO2m2 it splits GHG_roof_kgCO2m2; both are derived
-          from the material layer set and absent for databases without one.
+        description: End-of-life share of the embodied emissions per m2 of roofs. EN 15978
+          modules C2-C4 (transport to disposal, waste processing, disposal) - not the C1
+          deconstruction activity, despite the column name. Together with
+          GHG_production_roof_kgCO2m2 it splits GHG_roof_kgCO2m2; both are derived from the
+          material layer set and absent for databases without one.
         type: float
         unit: '[kg CO2-eq/m2]'
         min: 0.0
@@ -2791,9 +2798,11 @@ get_database_assemblies_envelope_wall:
         min: 0.0
         nullable: true
       GHG_demolition_wall_kgCO2m2:
-        description: End-of-life (demolition) share of the embodied emissions per m2 of
-          walls. Together with GHG_production_wall_kgCO2m2 it splits GHG_wall_kgCO2m2; both are derived
-          from the material layer set and absent for databases without one.
+        description: End-of-life share of the embodied emissions per m2 of walls. EN 15978
+          modules C2-C4 (transport to disposal, waste processing, disposal) - not the C1
+          deconstruction activity, despite the column name. Together with
+          GHG_production_wall_kgCO2m2 it splits GHG_wall_kgCO2m2; both are derived from the
+          material layer set and absent for databases without one.
         type: float
         unit: '[kg CO2-eq/m2]'
         min: 0.0
@@ -18624,19 +18633,26 @@ get_emissions_whatif_buildings_file:
         unit: NA
         nullable: true
       operation_kgCO2e:
-        description: Total annual operational GHG emissions
+        description: Total annual operational GHG emissions. EN 15978 module B6 (operational
+          energy); operational water use (B7) is not included.
         type: float
         unit: '[kgCO2e/yr]'
       production_kgCO2e:
-        description: Total lifecycle production (embodied) GHG emissions across all years
+        description: Total lifecycle production (embodied) GHG emissions across all years.
+          EN 15978 modules A1-A3 (cradle to gate), repeated at each component replacement
+          (B4). Transport to site (A4) and construction (A5) are not included.
         type: float
         unit: '[kgCO2e]'
       biogenic_kgCO2e:
-        description: Total lifecycle biogenic carbon storage across all years (negative = sequestration)
+        description: Total lifecycle biogenic carbon storage across all years (negative =
+          sequestration). Not an EN 15978 module; a separate reporting item per the RICS
+          Whole Life Carbon professional standard. Assumed not re-released at end of life.
         type: float
         unit: '[kgCO2e]'
       demolition_kgCO2e:
-        description: Total lifecycle demolition GHG emissions across all years
+        description: Total lifecycle end-of-life GHG emissions across all years. EN 15978
+          modules C2-C4 (transport to disposal, waste processing, disposal). The on-site
+          deconstruction activity itself (C1) is not included.
         type: float
         unit: '[kgCO2e]'
       whatif_name:

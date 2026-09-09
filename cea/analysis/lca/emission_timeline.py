@@ -485,8 +485,10 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
     - `biogenic`: the emissions that are stored within the material that
     would have otherwise been released during other processes or
     because of decay or wasting. In some results it's also called `uptake`.
-    - `demolition`: the emissions associated with the deconstruction and
-    disposal of building materials at the end of their service life.
+    - `demolition`: the emissions from transporting and treating building materials at the
+    end of their service life -- EN 15978 modules C2-C4 (transport to disposal, waste
+    processing, disposal), from KBOB *Entsorgung* data. The on-site deconstruction activity
+    itself (C1) is **not** included; see `AGENTS.md` for the full module coverage.
 
     The components include:
     - vertical surfaces (excluding windows)
