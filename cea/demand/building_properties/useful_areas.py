@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from cea.datamanagement.utils import (
+    OPTIONAL_VOID_DECK_COLUMNS,
+    resolve_enclosed_floors_ag,
+)
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
 
 if TYPE_CHECKING:
@@ -26,9 +30,10 @@ def calc_useful_areas(zone_df: gpd.GeoDataFrame, architecture_df: pd.DataFrame) 
         - Af: Conditioned floor area [m2]
         - Aef: Electrified floor area [m2]
     """
-    # Ensure void_deck data is only present in zone_df
+    # Ensure void-deck data is only present in zone_df
     props = {}
-    if "void_deck" in zone_df.columns and "void_deck" in architecture_df.columns:
+    if any(c in zone_df.columns and c in architecture_df.columns
+           for c in OPTIONAL_VOID_DECK_COLUMNS):
         props['suffixes'] = ('', '_arch')
 
     # Merge zone data with architecture data to get building properties
@@ -40,13 +45,18 @@ def calc_useful_areas(zone_df: gpd.GeoDataFrame, architecture_df: pd.DataFrame) 
 
     # Calculate gross floor areas
     df['footprint'] = df.area
-    df['GFA_ag_m2'] = df['footprint'] * (df['floors_ag'] - df['void_deck'])
+    # The void deck is open, so it contributes no floor area. `resolve_enclosed_floors_ag`
+    # handles both ways of recording it: `floors_ag` spans the whole height alongside the
+    # legacy `void_deck`, but counts only the enclosed storeys alongside `height_vd`.
+    floors_ag_enclosed = resolve_enclosed_floors_ag(df)
+
+    df['GFA_ag_m2'] = df['footprint'] * floors_ag_enclosed
     df['GFA_bg_m2'] = df['footprint'] * df['floors_bg']
     df['GFA_m2'] = df['GFA_ag_m2'] + df['GFA_bg_m2']
 
     # Calculate share of above- and below-ground GFA that is conditioned/occupied (assume same share on all floors)
     df['Hs_ag'], df['Hs_bg'], df['Ns_ag'], df['Ns_bg'] = split_above_and_below_ground_shares(
-        df['Hs'], df['Ns'], df['occupied_bg'], df['floors_ag'] - df['void_deck'], df['floors_bg'])
+        df['Hs'], df['Ns'], df['occupied_bg'], floors_ag_enclosed, df['floors_bg'])
     # occupied floor area: all occupied areas in the building
     df['Aocc'] = df['GFA_ag_m2'] * df['Ns_ag'] + df['GFA_bg_m2'] * df['Ns_bg']
     # conditioned area: areas that are heated/cooled

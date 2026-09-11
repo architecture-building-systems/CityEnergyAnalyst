@@ -2912,10 +2912,14 @@ get_database_assemblies_envelope_window:
         unit: '[kg CO2-eq/m2]'
         min: 0.0
       GHG_biogenic_win_kgCO2m2:
-        description: Biogenic carbon storage per m2 of windows.(entire building life cycle)
+        description: Biogenic carbon storage per m2 of windows (entire building life cycle).
+          Optional - a database without this column is treated as storing no biogenic carbon in
+          its windows, the same way a missing demolition column is treated. Databases migrated
+          from CEA-3 do not have it.
         type: float
         unit: '[kg CO2-eq/m2]'
         max: 0.0
+        nullable: true
       G_win:
         description: Solar heat gain coefficient. A value of 1 means all solar heat is 
           gained. Defined according to ISO 13790.
@@ -18007,7 +18011,13 @@ get_zone_geometry:
         type: string
         unit: NA
       floors_ag:
-        description: Number of floors above ground (incl. ground floor, minimum one floor is needed)
+        description: Number of floors above ground (incl. ground floor, minimum one floor is
+          needed). For a building with a void deck, what this counts depends on which void
+          column the scenario uses. With height_vd it counts only the ENCLOSED storeys above
+          the void deck. With the legacy void_deck column it counts EVERY storey, void ones
+          included, so the enclosed count is floors_ag minus void_deck. Either way height_ag
+          spans the void deck plus the enclosed building, and the storey height of the
+          enclosed part is (height_ag - void deck height) / enclosed floors.
         min: 1
         type: int
         unit: '[-]'
@@ -18017,12 +18027,33 @@ get_zone_geometry:
         unit: '[-]'
         min: 0
       void_deck:
-        description: Number of floors (from the ground up) with an open envelope (default = 0, should be lower than floors_ag.)
+        description: Legacy column - number of floors (from the ground up) with an open envelope (default
+          = 0, should be lower than floors_ag). Here floors_ag spans the whole above-ground
+          height, void storeys included, so the enclosed storey count is floors_ag minus
+          void_deck. Superseded by height_vd, which records the void in metres and is not tied
+          to whole storeys. Still fully supported - CEA-3 scenarios are migrated onto this
+          column unchanged. Where both are present, height_vd is used.
         type: int
         unit: '[-]'
         min: 0
+      height_vd:
+        description: Height of the void deck - the open, unenclosed portion at the bottom of the
+          building (default = 0, and it must leave at least 2 m of height per enclosed floor).
+          Optional. Replaces void_deck,
+          which could only express whole floors. IMPORTANT - when height_vd is used, floors_ag
+          counts only the ENCLOSED storeys sitting above the void deck, while height_ag still
+          spans the void deck plus the enclosed solid. This is what lets a void deck be taller
+          than a normal storey. With the legacy void_deck column, floors_ag instead spans the
+          whole height, void storeys included. A void deck is always at ground level; CEA does
+          not model an open storey part-way up a building.
+        type: float
+        unit: '[m]'
+        min: 0
       height_ag:
-        description: Height above ground (incl. ground floor, minimum one floor is needed)
+        description: Height above ground (incl. ground floor, minimum one floor is needed).
+          Always measured from the ground to the roof, so it spans any void deck as well as
+          the enclosed building above it. Because of that it is not floors_ag times the storey
+          height whenever a void deck is present - see floors_ag and height_vd.
         min: 2.0
         type: float
         unit: '[m]'

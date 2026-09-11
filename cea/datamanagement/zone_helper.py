@@ -16,6 +16,7 @@ import pandas as pd
 import cea.config
 import cea.inputlocator
 from cea.datamanagement.databases_verification import COLUMNS_ZONE
+from cea.datamanagement.utils import VOID_HEIGHT_COLUMN
 from cea.demand import constants
 from cea.datamanagement.constants import OSM_BUILDING_CATEGORIES, OTHER_OSM_CATEGORIES_UNCONDITIONED, GRID_SIZE_M, EARTH_RADIUS_M
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system, \
@@ -123,7 +124,9 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
         shapefile["floors_ag"] = [int(x) if not np.isnan(x) else data_osm_floors_joined for x in
                                   shapefile['building:levels'] + shapefile['roof:levels']]
 
-        shapefile["void_deck"] = 0 # assume no void decks by default
+        # Always written, so the column is there for the user to edit. 0 means the
+        # building is enclosed to the ground, which is the right default from OSM.
+        shapefile[VOID_HEIGHT_COLUMN] = 0.0
 
         if 'height' in list_of_columns:
             #  Replaces 'nan' values with CEA assumption

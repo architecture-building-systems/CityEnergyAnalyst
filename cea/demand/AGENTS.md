@@ -10,6 +10,32 @@
 - **End Use** (`Q*_sys`): Energy needed at building (includes HVAC losses)
 - **Final Energy** (`GRID_*`, `NG_*`): Energy consumed from source (includes efficiency)
 
+## `floors_ag` means two different things
+
+A void deck is the open, unenclosed portion at the bottom of a building. It can be recorded two
+ways, and `floors_ag` counts differently in each:
+
+| scenario carries | `height_ag` | `floors_ag` |
+|---|---|---|
+| `height_vd` (metres) | void deck + enclosed building | **enclosed storeys only** |
+| `void_deck` (legacy floors) | void deck + enclosed building | **every storey**, void ones included |
+
+Never read `floors_ag` directly when a void deck could be involved, and never write
+`height_ag / floors_ag` for a storey height -- that is only the storey height in the legacy
+form, and overstates it in the metre form. Use the resolvers in `cea.datamanagement.utils`:
+
+```python
+resolve_void_height(df)          # void deck height in metres, 0 if none
+resolve_enclosed_floors_ag(df)   # storeys that actually enclose space
+enclosed_storey_height(df)       # (height_ag - void height) / enclosed floors
+```
+
+`*_for_row` variants take the dict that `BuildingGeometry[name]` returns.
+
+This bit twice already: `get_floor_height` returning `height_ag / floors_ag` inflated internal
+air volume by 67%, and `floors_ag x floor_height` for the DHW riser silently lost the void
+deck's height. Both now go through the resolvers.
+
 ## Main Patterns
 
 ### Shading Activation (`blinds.py`)

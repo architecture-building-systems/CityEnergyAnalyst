@@ -593,7 +593,7 @@ Files in this category: **67** (⚠️ 35 stale)
 | `e_win` | Emissivity of external surface. Defined according to ISO 13790. | float | `[-]` | {0.0...1.0} |
 | `F_F` | Window frame fraction coefficient. Defined according to ISO 13790. | float | `[m2-frame/m2-window]` | {0.0...1.0} |
 | `G_win` | Solar heat gain coefficient. A value of 1 means all solar heat is gained. Defined according to ISO 13790. | float | `[-]` | {0.0...1.0} |
-| `GHG_biogenic_win_kgCO2m2` | Biogenic carbon storage per m2 of windows.(entire building life cycle) | float | `[kg CO2-eq/m2]` | {n...0.0} |
+| `GHG_biogenic_win_kgCO2m2` | Biogenic carbon storage per m2 of windows (entire building life cycle). Optional - a database without this column is treated as storing no biogenic carbon in its windows, the same way a missing demolition column is treated. Databases migrated from CEA-3 do not have it. | float | `[kg CO2-eq/m2]` | {n...0.0} |
 | `GHG_win_kgCO2m2` | Embodied emissions per m2 of windows.(entire building life cycle) | float | `[kg CO2-eq/m2]` | {0.0...n} |
 | `Service_Life_win` | Service life of the window assembly | float | `[yr]` | {0.0...n} |
 | `U_win` | Thermal transmittance of windows including linear losses (+10%). Defined according to ISO 13790. | float | `[-]` | {0.1...n} |

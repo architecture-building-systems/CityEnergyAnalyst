@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, cast
 import numpy as np
 import pandas as pd
 
+from cea.datamanagement.utils import resolve_void_height_for_row
 from cea.analysis.lca.hourly_operational_emission import (
     OperationalHourlyTimeline,
     _tech_name_mapping,
@@ -123,7 +124,7 @@ def get_component_quantities(
     surface_area["Aupperside"] = float(envelope_props.get("Aupperside", 0.0))  # Currently not available in Daysim radiation results, defaults to 0
     surface_area["Aunderside"] = float(envelope_props.get("Aunderside", 0.0))
 
-    if float(geometry_props["floors_bg"]) == 0 and float(geometry_props.get("void_deck", 0)) > 0:
+    if float(geometry_props["floors_bg"]) == 0 and resolve_void_height_for_row(geometry_props) > 0:
         area_base = 0.0
     else:
         area_base = float(rc_model_props["footprint"])

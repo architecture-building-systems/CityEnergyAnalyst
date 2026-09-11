@@ -578,6 +578,119 @@ Required attributes:
 
 ---
 
+## Void Decks
+
+A **void deck** is the open, unenclosed portion at the bottom of a building — the open ground
+floors common in Singapore HDB blocks, or a building on stilts. It has no facade, contributes
+no floor area, and leaves the underside exposed to outside air.
+
+Record it in the zone geometry, in **metres**:
+
+| Column | Meaning |
+|---|---|
+| `height_vd` | Height of the void deck above ground, in metres. Optional; `0` or absent means none. |
+| `void_deck` | **Legacy.** The same void expressed as a whole number of floors. |
+
+### How `floors_ag` is counted
+
+This is the part to get right, because the two columns differ:
+
+| | `height_ag` | `floors_ag` |
+|---|---|---|
+| with `height_vd` | void deck **+** enclosed building | **enclosed storeys only** |
+| with `void_deck` (legacy) | void deck **+** enclosed building | **every storey**, void ones included |
+
+So the same building can be written either way:
+
+```
+A 15 m block: 6 m open void deck, then 3 enclosed floors of 3 m
+
+  legacy   void_deck = 2   floors_ag = 5   height_ag = 15
+  metres   height_vd = 6   floors_ag = 3   height_ag = 15
+```
+
+Both give the same floor area, the same storey height, and the same 3D solid.
+
+The storey height of the enclosed part is always
+
+```
+(height_ag − void deck height) ÷ enclosed floors
+```
+
+which is `(15 − 6) ÷ 3 = 3 m` either way. Note the denominator is the **enclosed** floor
+count — that is `floors_ag` itself with `height_vd`, but `floors_ag − void_deck` with the
+legacy column.
+
+### Why metres matter: a void deck taller than a storey
+
+A real void deck is often taller than the floors above it, and whole floors cannot express
+that. An HDB-style block with a 4.5 m void deck under four 2.8 m residential floors:
+
+```
+  height_vd = 4.5    floors_ag = 4    height_ag = 15.7
+  -> storey height (15.7 − 4.5) / 4 = 2.8 m, and 4 whole floors of area
+```
+
+Forcing that onto a single uniform storey grid would give a 3.14 m storey — neither the real
+void deck nor the real floor — and understate the floor area by about 11%.
+
+### Metres, not floors
+
+`void_deck` could only express whole storeys, so a 4.5 m void in a building with 3 m floors had
+to be rounded. `height_vd` records the height directly, so the void can sit anywhere.
+
+**Every new scenario gets `height_vd`, set to 0.** Whether you generate the zone from
+OpenStreetMap or upload your own, the column is created so you can edit it straight away
+without adding a field in GIS. `0` means the building is enclosed to the ground.
+
+**Existing scenarios keep working and are not modified.** Where `height_vd` is absent, CEA reads
+`void_deck` and converts it at that building's own storey height (`height_ag / floors_ag`) —
+the same conversion it always applied internally, so results do not change. Neither column is
+required; a scenario with neither simply has no void decks.
+
+Where both columns are present, `height_vd` is used and CEA warns that `void_deck` is being
+ignored.
+
+You never have to migrate a CEA-4 scenario by hand. Add or edit `height_vd` only when you want a
+void that is not a whole number of storeys.
+
+### Upgrading from CEA-3
+
+CEA-3 stored the void deck in `architecture.dbf`, in whole floors. The CEA-4 migration moves it
+into the zone geometry **as `void_deck`, unchanged** — it is not converted to metres.
+
+That is deliberate. Converting would mean redefining `floors_ag` to the enclosed count, and
+`floors_ag` is read elsewhere as the total above-ground storey count (the database migration
+rescales the occupied-area share `Ns` by `(floors_ag + floors_bg) / floors_ag`). Rewriting it
+would quietly change occupied areas and demand for every migrated building. A migrated scenario
+therefore keeps exactly the areas it had.
+
+To move a building to metres yourself, convert both columns together: set
+`height_vd = void_deck × (height_ag / floors_ag)`, reduce `floors_ag` by `void_deck`, and remove
+`void_deck`. For the example above: `void_deck = 2, floors_ag = 5` becomes
+`height_vd = 6, floors_ag = 3`.
+
+### What it affects
+
+- **Floor area** — the void contributes no GFA, so conditioned and occupied areas shrink with it
+- **Embodied emissions** — void storeys have no partitions, no floor slab and no technical
+  systems, so they are excluded from the embodied floor area as well
+- **Facade area** — no walls or windows over the void height, which lowers embodied emissions
+- **Heat loss** — the underside is exposed to outside air rather than sitting on the ground
+- **Radiation** — the building solid starts at the top of the void deck
+- **Radiation engine** — CRAX does not support void decks, so CEA falls back to DAYSIM when any
+  building has one (see [Solar Radiation](02-solar-radiation.md))
+
+### Rules
+
+- Always measured **from ground level up**. CEA does not model an open storey part-way up a
+  building.
+- Must leave at least **2 m of height per enclosed floor**. CEA measures this on the enclosed
+  part, not on `height_ag`, so a tall void deck cannot hide storeys squeezed into what is left.
+- Cannot be negative.
+
+---
+
 ## Database Editor: Material Layers
 
 The Database Editor can now edit **material layers** for envelope assemblies, and derive the

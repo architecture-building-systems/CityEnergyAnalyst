@@ -10,12 +10,26 @@ import re
 from cea.utilities import simple_memoize
 from cea.utilities.schedule_reader import get_all_schedule_names
 
-COLUMNS_ZONE_GEOMETRY = ['name', 'floors_bg', 'floors_ag', 'void_deck', 'height_bg', 'height_ag']
+from cea.datamanagement.utils import (
+    OPTIONAL_VOID_DECK_COLUMNS,
+    VOID_FLOORS_COLUMN,
+    VOID_HEIGHT_COLUMN,
+    enclosed_storey_height,
+)
+
+# A habitable storey below this is not a building CEA can meaningfully simulate.
+# CEA's own default is 3.0 m (`cea.demand.constants.H_F`).
+MINIMUM_STOREY_HEIGHT_M = 2.0
+
+COLUMNS_ZONE_GEOMETRY = ['name', 'floors_bg', 'floors_ag', 'height_bg', 'height_ag']
+# Never require these. `height_vd` does not exist in older scenarios and `void_deck` does not
+# exist in ones CEA writes now, so demanding either would break half the scenarios in the wild.
+OPTIONAL_COLUMNS_ZONE_GEOMETRY = list(OPTIONAL_VOID_DECK_COLUMNS)
 COLUMNS_SURROUNDINGS_GEOMETRY = ['name', 'height_ag', 'floors_ag']
 COLUMNS_ZONE_TYPOLOGY = ['name', 'year', 'const_type',
                          'use_type1', 'use_type1r', 'use_type2', 'use_type2r', 'use_type3', 'use_type3r']
 NAME_COLUMN = 'name'
-COLUMNS_ZONE = ['name', 'floors_bg', 'floors_ag', 'void_deck', 'height_bg', 'height_ag', 'reference', 'geometry',
+COLUMNS_ZONE = ['name', 'floors_bg', 'floors_ag', VOID_HEIGHT_COLUMN, 'height_bg', 'height_ag', 'reference', 'geometry',
                 'year', 'const_type', 'use_type1', 'use_type1r', 'use_type2', 'use_type2r', 'use_type3', 'use_type3r',
                 'house_no', 'street', 'postcode', 'house_name', 'resi_type', 'city', 'country']
 
@@ -46,11 +60,23 @@ def assert_input_geometry_acceptable_values_floor_height(zone_df: pd.DataFrame):
                         "less than 1 meter. This is not possible to simulate in CEA at the moment. Please verify your "
                         "Zone or Surroundings shapefile file")
 
-    # Rule 2. Where floor height is less than 1m on average above ground.
-    rule2 = (zone_df['height_ag'] < zone_df['floors_ag']).any()
-    if rule2:
-        raise Exception('one of more buildings report less than 1m height per floor. This is not possible'
-                        'to simulate in CEA at the moment. Please verify your Zone or Surroundings shapefile file')
+    # Rule 2. Storey height of the enclosed part of the building.
+    #
+    # Measured on the *enclosed* height, not `height_ag / floors_ag`: a void deck is part of
+    # height_ag but encloses nothing, so the gross figure can look healthy while the occupied
+    # storeys are squeezed into what is left. A 12 m void deck under 3 storeys of a 15 m
+    # building gives a 1 m storey and used to pass.
+    #
+    # This subsumes the older "less than 1 m per floor" rule, and also catches a void deck
+    # taller than the building (negative storey height) and one that swallows every storey.
+    storey_height = enclosed_storey_height(zone_df)
+    too_short = storey_height < MINIMUM_STOREY_HEIGHT_M
+    if too_short.any():
+        names = zone_df.loc[too_short, 'name'].tolist() if 'name' in zone_df.columns else []
+        raise Exception(
+            f'One or more buildings have less than {MINIMUM_STOREY_HEIGHT_M} m of height per '
+            f'enclosed floor: {names}. Check floors_ag, height_ag and any void deck '
+            f'({VOID_HEIGHT_COLUMN} / {VOID_FLOORS_COLUMN}) in your Zone shapefile.')
 
     # Rule 3. floors below ground cannot be negative
     rule3 = (zone_df['floors_bg'] < 0).any()
@@ -127,9 +153,45 @@ def check_void_deck_values(df):
     if (df['void_deck'] < 0).any():
         raise ValueError('The void_deck column should not contain negative values. Please check your zone geometry file.')
 
-    if (df['void_deck'] > df['floors_ag']).any():
-        raise ValueError('The void_deck column should not contain values greater than the number of floors above ground. '
+    # `>=`, not `>`: a void deck spanning every storey leaves no enclosed floor, so the
+    # building has no above-ground floor area, no storey height, and no solid to extrude.
+    # `migrate_void_deck_data` has always called this invalid -- it just warned instead.
+    # Matches the `height_vd` rule, which requires at least 1 m of enclosed building.
+    if (df['void_deck'] >= df['floors_ag']).any():
+        raise ValueError('The void_deck column should not contain values greater than or equal to the number of floors above ground. '
                          'Please check your zone geometry file.')
+
+def check_void_height_values(df):
+    """Validate `height_vd` when the scenario carries it.
+
+    Optional by design: `height_vd` supersedes `void_deck` but is never required, so a
+    scenario that predates it must verify clean. Only its values are checked, never its
+    presence.
+    """
+    if VOID_HEIGHT_COLUMN not in df.columns:
+        return
+
+    height = pd.to_numeric(df[VOID_HEIGHT_COLUMN], errors='coerce')
+
+    non_numeric = height.isna() & df[VOID_HEIGHT_COLUMN].notna()
+    if non_numeric.any():
+        raise ValueError(f'The {VOID_HEIGHT_COLUMN} column should contain numbers (metres). '
+                         'Please check your zone geometry file.')
+
+    if (height < 0).any():
+        raise ValueError(f'The {VOID_HEIGHT_COLUMN} column should not contain negative values. '
+                         'Please check your zone geometry file.')
+
+    # A void deck at or above the full height leaves nothing enclosed. The per-storey rule in
+    # `assert_input_geometry_acceptable_values_floor_height` is stricter still; this one fires
+    # first and names the column, which is the more useful message.
+    enclosed = df['height_ag'].astype(float) - height.fillna(0.0)
+    if (enclosed <= 0).any():
+        names = df.loc[enclosed <= 0, 'name'].tolist() if 'name' in df.columns else []
+        raise ValueError(f'The {VOID_HEIGHT_COLUMN} column is at or above the full building '
+                         f'height for {names}, leaving nothing enclosed. The void deck must be '
+                         'lower than height_ag. Please check your zone geometry file.')
+
 
 def verify_input_geometry_zone(zone_df):
     # TODO: remove this when void_deck always exist in geometry
@@ -154,6 +216,8 @@ def verify_input_geometry_zone(zone_df):
     check_duplicated_names(zone_df)
 
     check_void_deck_values(zone_df)
+
+    check_void_height_values(zone_df)
 
     if not_exist_before:
         # delete the void_deck column if it was not exist before
