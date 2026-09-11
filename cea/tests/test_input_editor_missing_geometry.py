@@ -15,6 +15,7 @@ to stdout rather than the log, so it was not in the server log either.
 import asyncio
 import warnings
 
+import geopandas as gpd
 import pytest
 
 from cea.interfaces.dashboard.api.inputs import (
@@ -55,8 +56,11 @@ def test_a_table_sent_without_its_geometry_does_not_raise(locator):
         schedules={},
     )
 
-    result = save(locator.scenario, form)  # must not raise TypeError
-    assert result is not None
+    # The call itself is the test -- this used to raise TypeError and surface as a 500.
+    result = save(locator.scenario, form)
+
+    # And the rows survive the round trip, rather than the table being dropped.
+    assert len(result["tables"]["zone"]) == len(store["tables"]["zone"])
 
 
 def test_the_untouched_geometry_is_left_on_disk(locator):
@@ -65,8 +69,6 @@ def test_the_untouched_geometry_is_left_on_disk(locator):
     The rows are handed back so the editor keeps showing them, but nothing is written -- the
     geometry needed to write a shapefile is precisely what is missing.
     """
-    import geopandas as gpd
-
     store = load(locator.scenario)
     before = len(gpd.read_file(locator.get_zone_geometry()))
 
@@ -92,8 +94,12 @@ def test_an_empty_feature_list_is_treated_the_same_as_none(locator):
         crs=store["crs"],
         schedules={},
     )
+    before = len(gpd.read_file(locator.get_zone_geometry()))
     result = save(locator.scenario, form)
-    assert result is not None
+
+    assert len(gpd.read_file(locator.get_zone_geometry())) == before, (
+        "an empty feature list must not empty the shapefile")
+    assert len(result["tables"]["zone"]) == before
 
 
 def test_a_normal_save_is_unaffected(locator):
