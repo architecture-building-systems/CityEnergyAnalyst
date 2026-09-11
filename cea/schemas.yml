@@ -18050,6 +18050,7 @@ get_zone_geometry:
           back to void_deck, so leaving it empty in an older scenario changes nothing.
         type: float
         unit: '[m]'
+        nullable: true
         min: 0
       height_ag:
         description: Height above ground (incl. ground floor, minimum one floor is needed).
