@@ -192,6 +192,19 @@ async def save_all_inputs(scenario: CEAScenario, form: InputForm):
 
             if len(tables[db]):
                 if file_type == 'shp':
+                    # The editor sends back what the GET gave it, and the GET builds `tables`
+                    # and `geojsons` from two independent reads. When the geometry read failed
+                    # the table can arrive populated with no geojson beside it; writing the
+                    # shapefile needs the geometry, so skip rather than raise a TypeError from
+                    # `None['features']`.
+                    if not (geojsons.get(db) or {}).get('features'):
+                        logger.warning(
+                            f"Skipping {db}: its rows were sent without any geometry. The "
+                            f"geometry file likely failed to load - check the log from when "
+                            f"the scenario was opened.")
+                        out['tables'][db] = tables[db]
+                        continue
+
                     table_df = geopandas.GeoDataFrame.from_features(geojsons[db]['features'],
                                                                     crs=get_geographic_coordinate_system())
                     out['geojsons'][db] = json.loads(table_df.to_json())
@@ -431,10 +444,13 @@ def df_to_json(file_location, root=None):
         out = json.loads(out.to_json())
         return out, crs
     except (IOError, DriverError, FileNotFoundError) as e:
-        print(e)
+        # Through the logger, naming the file. Returning None here is invisible until a later
+        # save trips over it -- `save_all_inputs` reads `geojsons[db]['features']` -- so the
+        # 500 it eventually raises points at the save, not at whatever actually failed here.
+        logger.warning(f"Could not read geometry for the Input Editor from {file_location}: {e}")
         return None, None
     except Exception:
-        traceback.print_exc()
+        logger.exception(f"Could not read geometry for the Input Editor from {file_location}")
         return None, None
 
 
