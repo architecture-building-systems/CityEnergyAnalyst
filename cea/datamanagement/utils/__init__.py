@@ -182,44 +182,47 @@ def enclosed_storey_height_for_row(row) -> float:
 
 
 def migrate_void_deck_data(locator: InputLocator) -> None:
-    """Check if void_deck exists in zone.shp and copy it from envelope.csv if necessary.
+    """Move a CEA-3-era `void_deck` column from envelope.csv into zone.shp.
+
+    CEA-3 recorded the void deck in the architecture/envelope table. This lifts it into the
+    zone geometry, where CEA-4 keeps it, and drops the stale source column.
+
+    Does nothing when the scenario already expresses its void decks -- with either
+    `height_vd` or `void_deck` in zone.shp -- and nothing when envelope.csv has no
+    `void_deck` either. In particular it must not *invent* a `void_deck` column: a scenario
+    CEA created today carries `height_vd`, and adding the legacy column back would put two
+    columns for one concept in front of the user, in a file that never had one.
 
     :param locator: the input locator object.
-    :type locator: cea.inputlocator.InputLocator
     """
-
     zone_gdf = gpd.read_file(locator.get_zone_geometry())
 
-    # Both branches must reach disk: consumers re-read zone.shp (radiation's
-    # geometry_generator indexes the column with no default), so an in-memory value alone
-    # is invisible to them.
-    if "void_deck" not in zone_gdf.columns:
-        envelope_df = pd.read_csv(locator.get_building_architecture())
+    if any(c in zone_gdf.columns for c in OPTIONAL_VOID_DECK_COLUMNS):
+        return  # already expressed, nothing to migrate
 
-        if "void_deck" in envelope_df.columns:
-            # assign void_deck from envelope.csv to zone.shp and remove it from envelope.csv
-            zone_gdf = zone_gdf.merge(
-                envelope_df[["name", "void_deck"]], on="name", how="left"
-            )
-            zone_gdf["void_deck"] = zone_gdf["void_deck"].fillna(0)
-            zone_gdf.to_file(locator.get_zone_geometry())
+    envelope_df = pd.read_csv(locator.get_building_architecture())
+    if VOID_FLOORS_COLUMN not in envelope_df.columns:
+        return  # no void-deck data anywhere: the scenario simply has none
 
-            print("Migrated void_deck data from envelope.csv to zone.shp.")
-            # Drop the source only once the destination is on disk.
-            envelope_df.drop(columns=["void_deck"], inplace=True)
-            envelope_df.to_csv(locator.get_building_architecture(), index=False)
+    # Reaching disk matters: consumers re-read zone.shp, so an in-memory value is invisible.
+    zone_gdf = zone_gdf.merge(
+        envelope_df[["name", VOID_FLOORS_COLUMN]], on="name", how="left"
+    )
+    zone_gdf[VOID_FLOORS_COLUMN] = zone_gdf[VOID_FLOORS_COLUMN].fillna(0)
+    zone_gdf.to_file(locator.get_zone_geometry())
+    print(f"Migrated {VOID_FLOORS_COLUMN} data from envelope.csv to zone.shp.")
 
-        else:  # cannot find void_deck anywhere, just initialize it to 0
-            zone_gdf["void_deck"] = 0
-            zone_gdf.to_file(locator.get_zone_geometry())
-            warnings.warn(
-                "No void_deck data found in envelope.csv, setting to 0 in zone.shp"
-            )
+    # Drop the source only once the destination is on disk.
+    envelope_df.drop(columns=[VOID_FLOORS_COLUMN], inplace=True)
+    envelope_df.to_csv(locator.get_building_architecture(), index=False)
 
-    # Validate that floors_ag is larger than void_deck for each building
-    actual_floors = zone_gdf["floors_ag"] - zone_gdf["void_deck"]
-    invalid_floors = zone_gdf[actual_floors <= 0]
-    if len(invalid_floors) > 0:
-        invalid_buildings = invalid_floors["name"].tolist()
-        warnings.warn(f"Some buildings have void_deck greater than or equal to floors_ag: {invalid_buildings}",
-                      RuntimeWarning)
+    # A void deck spanning every storey leaves no enclosed floor. Verification rejects it;
+    # warn here too, because this runs before verification on most entry points.
+    enclosed = resolve_enclosed_floors_ag(zone_gdf)
+    invalid = zone_gdf.loc[enclosed <= 0, "name"].tolist()
+    if invalid:
+        warnings.warn(
+            f"Some buildings have {VOID_FLOORS_COLUMN} greater than or equal to floors_ag: "
+            f"{invalid}",
+            RuntimeWarning,
+        )

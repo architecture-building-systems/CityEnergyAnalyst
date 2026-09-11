@@ -20,8 +20,6 @@ results do not move.
 """
 
 import contextlib
-import os
-import tempfile
 import warnings
 
 import geopandas as gpd
@@ -618,7 +616,7 @@ def test_the_cea3_migration_keeps_the_void_deck_on_the_legacy_column():
 # --------------------------------------------------------------------------- naming
 
 
-def test_the_column_name_survives_a_shapefile_round_trip():
+def test_the_column_name_survives_a_shapefile_round_trip(tmp_path):
     """zone.shp stores attributes in a DBF, which truncates field names at 10 characters.
 
     `height_void` would silently become `height_voi` on write, so the length is a hard
@@ -631,7 +629,7 @@ def test_the_column_name_survives_a_shapefile_round_trip():
          "geometry": [Polygon([(0, 0), (1, 0), (1, 1), (0, 1)])]},
         crs="EPSG:4326",
     )
-    path = os.path.join(tempfile.mkdtemp(), "zone.shp")
+    path = tmp_path / "zone.shp"
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         gdf.to_file(path)
@@ -734,3 +732,49 @@ def test_the_zone_helper_cannot_create_a_scenario_that_will_not_open():
         # Must not raise -- this is the whole point.
         assert_input_geometry_acceptable_values_floor_height(zone_row)
         assert int(created["floors_ag"].iloc[0]) >= 1, kwargs
+
+
+def test_the_envelope_migration_never_invents_a_legacy_column(tmp_path):
+    """`migrate_void_deck_data` runs at the top of eight entry points.
+
+    Its job is lifting a CEA-3 `void_deck` out of envelope.csv. It used to *create* the column
+    when it found none anywhere, which meant the first tool run on a scenario CEA had just
+    created added the legacy column back beside `height_vd` -- two columns for one concept, in
+    a file that never had one.
+    """
+    from cea.datamanagement.utils import migrate_void_deck_data
+    from cea.inputlocator import InputLocator
+
+    def scenario(name, zone_cols, envelope_cols):
+        root = tmp_path / name
+        (root / "inputs" / "building-geometry").mkdir(parents=True)
+        (root / "inputs" / "building-properties").mkdir(parents=True)
+        gpd.GeoDataFrame(
+            [{"name": "B1", "floors_ag": 5, "floors_bg": 1, "height_ag": 15.0,
+              "height_bg": 3.0, **zone_cols,
+              "geometry": Polygon([(0, 0), (10, 0), (10, 10), (0, 10)])}],
+            crs="EPSG:4326",
+        ).to_file(root / "inputs" / "building-geometry" / "zone.shp")
+        pd.DataFrame([{"name": "B1", "Hs": 0.8, **envelope_cols}]).to_csv(
+            root / "inputs" / "building-properties" / "envelope.csv", index=False)
+        return InputLocator(str(root))
+
+    def void_columns(locator):
+        cols = gpd.read_file(locator.get_zone_geometry()).columns
+        return [c for c in (VOID_HEIGHT_COLUMN, VOID_FLOORS_COLUMN) if c in cols]
+
+    # A scenario CEA created today is left exactly as it was.
+    locator = scenario("new", {VOID_HEIGHT_COLUMN: 0.0}, {})
+    migrate_void_deck_data(locator)
+    assert void_columns(locator) == [VOID_HEIGHT_COLUMN]
+
+    # A scenario with no void-deck data anywhere does not acquire a column.
+    locator = scenario("empty", {}, {})
+    migrate_void_deck_data(locator)
+    assert void_columns(locator) == []
+
+    # The migration it actually exists for still happens.
+    locator = scenario("cea3", {}, {VOID_FLOORS_COLUMN: 4})
+    migrate_void_deck_data(locator)
+    assert void_columns(locator) == [VOID_FLOORS_COLUMN]
+    assert VOID_FLOORS_COLUMN not in pd.read_csv(locator.get_building_architecture()).columns
