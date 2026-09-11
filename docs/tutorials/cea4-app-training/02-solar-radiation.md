@@ -197,7 +197,8 @@ Use DAYSIM instead of CRAX when:
 - **Solution**: Use DAYSIM for accurate results; report discrepancy if CRAX shows systematic errors
 
 **Issue**: Void deck buildings fail
-- **Solution**: CRAX does not support void decks; use DAYSIM instead
+- **Solution**: CRAX does not support void decks; use DAYSIM instead. See
+  [Void Decks](08-data-management.md#void-decks) for how they are defined.
 
 ---
 

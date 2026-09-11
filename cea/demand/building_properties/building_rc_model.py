@@ -5,6 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from cea.datamanagement.utils import resolve_void_height
 from cea.demand.constants import H_MS, H_IS, B_F, LAMBDA_AT
 from cea.demand.building_properties.useful_areas import calc_useful_areas
 from cea.demand.control_heating_cooling_systems import has_heating_system, has_cooling_system
@@ -141,8 +142,9 @@ class BuildingRCModel:
         # Weigh area of windows with fraction of air-conditioned space, relationship of area and perimeter is squared
         df['Htr_w'] = envelope['Awin_ag'] * envelope['U_win'] * np.sqrt(areas_df['Hs_ag'])
 
-        # check if buildings are completely above ground
-        is_floating = (geometry["void_deck"] > 0).astype(int)
+        # check if buildings are completely above ground: a void deck lifts the underside
+        # clear of the ground, so it exchanges heat with outside air
+        is_floating = (resolve_void_height(geometry) > 0).astype(int)
 
         # direct thermal transmission coefficient to the external environment in [W/K]
         # Weigh area of with fraction of air-conditioned space, relationship of area and perimeter is squared

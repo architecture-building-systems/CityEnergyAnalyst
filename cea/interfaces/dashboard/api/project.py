@@ -21,8 +21,10 @@ from typing_extensions import Annotated
 
 import cea.config
 import cea.inputlocator
+from cea.datamanagement.utils import VOID_HEIGHT_COLUMN
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
-    verify_input_typology, COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY, verify_input_terrain
+    verify_input_typology, COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY, \
+    OPTIONAL_COLUMNS_ZONE_GEOMETRY, verify_input_terrain
 from cea.datamanagement.surroundings_helper import generate_empty_surroundings
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot, CEAProjectInfo, \
     create_project, CEAUserID, \
@@ -394,7 +396,8 @@ async def create_new_scenario(cea_project: CEAProject, scenario_form: Annotated[
 
             # Make sure zone column names are in correct case
             zone_df.columns = [col.lower() for col in zone_df.columns]
-            rename_dict = {col.lower(): col for col in COLUMNS_ZONE_GEOMETRY}
+            rename_dict = {col.lower(): col
+                           for col in COLUMNS_ZONE_GEOMETRY + OPTIONAL_COLUMNS_ZONE_GEOMETRY}
             zone_df.rename(columns=rename_dict, inplace=True)
 
             verify_input_geometry_zone(zone_df)
@@ -404,7 +407,16 @@ async def create_new_scenario(cea_project: CEAProject, scenario_form: Annotated[
 
             zone_path = locator.get_zone_geometry()
             locator.ensure_parent_folder_exists(zone_path)
-            zone_df[COLUMNS_ZONE_GEOMETRY + ['geometry']].to_file(zone_path)
+            # Give every new scenario a void-deck column so it can be edited later. An upload
+            # carrying `void_deck` keeps it -- converting would rewrite the user's data -- and
+            # one carrying neither gets `height_vd = 0`, meaning "enclosed to the ground".
+            if not any(c in zone_df.columns for c in OPTIONAL_COLUMNS_ZONE_GEOMETRY):
+                zone_df[VOID_HEIGHT_COLUMN] = 0.0
+
+            # Keep any optional columns the upload carried; selecting a fixed list would
+            # silently strip them from the user's data on write.
+            optional = [c for c in OPTIONAL_COLUMNS_ZONE_GEOMETRY if c in zone_df.columns]
+            zone_df[COLUMNS_ZONE_GEOMETRY + optional + ['geometry']].to_file(zone_path)
 
         return zone_df
 

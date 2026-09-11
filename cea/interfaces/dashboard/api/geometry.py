@@ -10,7 +10,8 @@ import geopandas as gpd
 from pydantic import BaseModel
 
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
-    verify_input_typology, COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY
+    verify_input_typology, COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY, \
+    OPTIONAL_COLUMNS_ZONE_GEOMETRY
 from cea.interfaces.dashboard.utils import secure_path
 
 router = APIRouter()
@@ -68,7 +69,8 @@ async def validate_building_geometry(data: ValidateGeometry):
 
                 # Make sure zone column names are in correct case
                 building_df.columns = [col.lower() for col in building_df.columns]
-                rename_dict = {col.lower(): col for col in COLUMNS_ZONE_GEOMETRY}
+                rename_dict = {col.lower(): col
+                               for col in COLUMNS_ZONE_GEOMETRY + OPTIONAL_COLUMNS_ZONE_GEOMETRY}
                 building_df.rename(columns=rename_dict, inplace=True)
 
                 verify_input_geometry_zone(building_df)

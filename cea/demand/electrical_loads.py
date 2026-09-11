@@ -128,12 +128,14 @@ def calc_Eaux_ww(tsd: TimeSeriesData, bpr: BuildingPropertiesRow) -> TimeSeriesD
     Mww = tsd.heating_system_mass_flows.mww_kgs
     Qww = tsd.heating_loads.Qww
     Year = bpr.year
-    nf_ag = bpr.geometry['floors_ag']
     fforma = bpr.building_systems['fforma']
 
     # pressure losses
     deltaP_fittings_gen_kPa = 16  # equation F.4 -standard values
-    l_w_dis_col = 2 * (max(Ll, Lw) + 2.5 + nf_ag * bpr.geometry['floor_height']) * fforma  # equation F.5
+    # Vertical run of the riser. `nf_ag * floor_height` equalled `height_ag` exactly while
+    # `floors_ag` spanned the whole height; with `height_vd` it does not, because the riser
+    # still passes through the void deck.
+    l_w_dis_col = 2 * (max(Ll, Lw) + 2.5 + bpr.geometry['height_ag']) * fforma  # equation F.5
     deltaP_kPa = DELTA_P_1 * l_w_dis_col + deltaP_fittings_gen_kPa
     if Year >= 2000:
         b = 1
@@ -179,7 +181,6 @@ def calc_Eaux_Qhs_Qcs(tsd: TimeSeriesData, bpr: BuildingPropertiesRow) -> TimeSe
     Ths_sup_shu = tsd.heating_system_temperatures.Ths_sys_sup_shu
 
     Year = bpr.year
-    nf_ag = bpr.geometry['floors_ag']
 
     # split up the final demands according to the fraction of energy
     frac_heat_ahu = [ahu / sys if sys > 0 else 0 for ahu, sys in zip(tsd.heating_loads.Qhs_sen_ahu, tsd.heating_loads.Qhs_sen_sys)]
@@ -203,7 +204,10 @@ def calc_Eaux_Qhs_Qcs(tsd: TimeSeriesData, bpr: BuildingPropertiesRow) -> TimeSe
 
     # pressure losses
     deltaP_fittings_gen_kPa = 16  # equation F.4 -standard values
-    l_w_dis_col = 2 * (max(Ll, Lw) + 2.5 + nf_ag * bpr.geometry['floor_height']) * fforma  # equation F.5
+    # Vertical run of the riser. `nf_ag * floor_height` equalled `height_ag` exactly while
+    # `floors_ag` spanned the whole height; with `height_vd` it does not, because the riser
+    # still passes through the void deck.
+    l_w_dis_col = 2 * (max(Ll, Lw) + 2.5 + bpr.geometry['height_ag']) * fforma  # equation F.5
     deltaP_kPa = DELTA_P_1 * l_w_dis_col + deltaP_fittings_gen_kPa
     if Year >= 2000:
         b = 1

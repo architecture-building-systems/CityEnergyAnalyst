@@ -9,6 +9,7 @@ import cea.config
 import time
 import geopandas as gpd
 import pandas as pd
+from cea.datamanagement.utils import OPTIONAL_VOID_DECK_COLUMNS, VOID_FLOORS_COLUMN
 from cea.schemas import schemas
 import numpy as np
 
@@ -23,7 +24,10 @@ __status__ = "Production"
 
 
 SHAPEFILES = ['zone', 'surroundings']
-COLUMNS_ZONE_4 = ['name', 'floors_bg', 'floors_ag', 'void_deck', 'height_bg', 'height_ag',
+# The columns the CEA-3 migration writes. It carries `void_deck` across unchanged, so a
+# migrated scenario keeps the exact areas it had. Neither void column is required when
+# reading a zone -- see OPTIONAL_VOID_DECK_COLUMNS.
+COLUMNS_ZONE_4 = ['name', 'floors_bg', 'floors_ag', VOID_FLOORS_COLUMN, 'height_bg', 'height_ag',
                 'year', 'const_type', 'use_type1', 'use_type1r', 'use_type2', 'use_type2r', 'use_type3', 'use_type3r']
 CSV_BUILDING_PROPERTIES_3 = ['air_conditioning', 'architecture', 'indoor_comfort', 'internal_loads', 'supply_systems']
 CSV_BUILDING_PROPERTIES_4 = ['hvac', 'envelope', 'indoor_comfort', 'internal_loads', 'supply']
@@ -161,6 +165,11 @@ def verify_file_against_schema_4(scenario, item, building_name=None):
 
     # Remove 'geometry' and 'reference' from missing columns
     missing_columns = [col for col in missing_columns if col.lower() not in ['geometry', 'reference']]
+
+    # Optional columns are absent by design, not missing. Both void-deck columns qualify:
+    # `height_vd` postdates older scenarios and `void_deck` predates newer ones, so requiring
+    # either would report a perfectly valid scenario as broken.
+    missing_columns = [col for col in missing_columns if col not in OPTIONAL_VOID_DECK_COLUMNS]
 
     # Ensure ID column exists before using it
     if id_column not in df.columns:

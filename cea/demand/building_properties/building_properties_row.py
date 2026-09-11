@@ -6,6 +6,8 @@ from typing import NamedTuple
 import pandas as pd
 from typing_extensions import Annotated
 
+from cea.datamanagement.utils import enclosed_storey_height_for_row
+
 
 class PipeTransmittanceValues(NamedTuple):
     a: float
@@ -58,7 +60,15 @@ class BuildingPropertiesRow:
 
     @staticmethod
     def get_floor_height(geometry: dict) -> float:
-        return geometry['height_ag'] / geometry['floors_ag']
+        """Storey height of the enclosed part of the building, in metres.
+
+        Not `height_ag / floors_ag`: `height_ag` spans the void deck as well, and alongside
+        `height_vd` the `floors_ag` count excludes the void storeys. Dividing one by the other
+        would overstate the storey height, and with it the internal air volume
+        (`Af x floor_height`). Identical to the old expression for a scenario on the legacy
+        `void_deck` column.
+        """
+        return enclosed_storey_height_for_row(geometry)
 
 
 def _get_properties_building_systems(geometry: dict, hvac: dict, age: int) -> pd.Series:
@@ -150,12 +160,16 @@ def _get_properties_building_systems(geometry: dict, hvac: dict, age: int) -> pd
         Lcww_dis = 0
         Lvww_c = 0
     else:
+        # `height_ag` is the vertical distance the riser runs. It equalled
+        # `nf_ag * floor_height` exactly while `floors_ag` spanned the whole height; alongside
+        # `height_vd` it no longer does, because the riser still has to pass through the void
+        # deck that `floors_ag` now excludes.
         Lcww_dis = 2 * (
-                Ll + 2.5 + nf_ag * geometry['floor_height']) * fforma  # length hot water piping circulation circuit
+                Ll + 2.5 + geometry['height_ag']) * fforma  # length hot water piping circulation circuit
         Lvww_c = (2 * Ll + 0.0125 * Ll * Lw) * fforma  # length piping heating system circulation circuit
 
-    Lsww_dis = 0.038 * Ll * Lw * nf_ag * geometry[
-        'floor_height'] * fforma  # length hot water piping distribution circuit
+    Lsww_dis = 0.038 * Ll * Lw * geometry[
+        'height_ag'] * fforma  # length hot water piping distribution circuit
     Lvww_dis = (Ll + 0.0625 * Ll * Lw) * fforma  # length piping heating system distribution circuit
 
     building_systems = pd.Series({'Lcww_dis': Lcww_dis,
