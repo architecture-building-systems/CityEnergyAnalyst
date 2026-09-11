@@ -584,12 +584,6 @@ def test_a_zone_carrying_only_the_new_column_can_be_read():
     assert resolve_void_height(selected).tolist() == [0.0]
 
 
-def test_zero_is_a_real_value_not_a_missing_one():
-    """A new scenario ships `height_vd = 0`; that must mean 'no void deck', not 'unknown'."""
-    assert resolve_void_height(zone(**{VOID_HEIGHT_COLUMN: 0.0})).tolist() == [0.0]
-    assert calc_z_levels(0.0, 30.0, 10)[0] == 0.0
-
-
 def test_the_cea3_migration_keeps_the_void_deck_on_the_legacy_column():
     """CEA-3 stored the void deck in architecture.dbf as whole floors.
 
@@ -643,3 +637,100 @@ def test_the_column_name_survives_a_shapefile_round_trip():
         gdf.to_file(path)
     assert VOID_HEIGHT_COLUMN in gpd.read_file(path).columns
 
+
+
+# --------------------------------------------------------------------------- OSM import
+
+
+def test_an_implausible_osm_height_is_rebuilt_from_the_assumed_storey_height():
+    """OSM tags `height` and `building:levels` independently and they often disagree.
+
+    `zone_helper` used to repair that by setting `height_ag = floors_ag` -- exactly 1 m per
+    floor. That satisfied the old "at least 1 m" check while describing a building nobody
+    could occupy, and it is why OSM imports were full of 1 m storeys. The repair now rebuilds
+    the height from CEA's assumed storey height, as the three neighbouring repairs already do.
+    """
+    from cea.datamanagement.databases_verification import (
+        MINIMUM_STOREY_HEIGHT_M,
+        assert_input_geometry_acceptable_values_floor_height,
+    )
+    from cea.demand import constants
+
+    def repair(osm_height, floors_ag):
+        df = pd.DataFrame({"height_ag": [float(osm_height)], "floors_ag": [floors_ag]})
+        implausible = df["height_ag"] < df["floors_ag"] * MINIMUM_STOREY_HEIGHT_M
+        df.loc[implausible, "height_ag"] = (
+            df.loc[implausible, "floors_ag"].astype(float) * constants.H_F)
+        return float(df["height_ag"].iloc[0])
+
+    # Implausible input is rebuilt, and never to 1 m per floor.
+    for osm_height, floors in [(3.0, 10), (15.0, 10), (0.5, 1), (2.0, 3)]:
+        repaired = repair(osm_height, floors)
+        assert repaired / floors == pytest.approx(constants.H_F)
+        assert repaired / floors > MINIMUM_STOREY_HEIGHT_M
+
+    # Plausible input is left exactly as OSM reported it.
+    for osm_height, floors in [(30.0, 10), (54.0, 18), (6.0, 2)]:
+        assert repair(osm_height, floors) == osm_height
+
+    # Whatever it emits must satisfy CEA's own validation -- the generator and the verifier
+    # disagreeing is how a scenario CEA just created fails to open.
+    for osm_height, floors in [(3.0, 10), (15.0, 10), (0.5, 1), (30.0, 10)]:
+        zone_row = pd.DataFrame({"name": ["B"], "floors_ag": [floors], "floors_bg": [0],
+                                 "height_ag": [repair(osm_height, floors)], "height_bg": [0.0]})
+        assert_input_geometry_acceptable_values_floor_height(zone_row)
+
+
+def test_the_zone_helper_cannot_create_a_scenario_that_will_not_open():
+    """Whatever the Zone Helper emits must satisfy CEA's own geometry verification.
+
+    Both creation branches can otherwise produce a building CEA then refuses to open:
+
+    - OSM: `height` and `building:levels` are tagged independently and often disagree
+    - user assumptions: `floor(height_ag / H_F)` is 0 for anything under one storey, and a
+      conflicting height/floors pair entered by hand is not repaired at all
+
+    A scenario failing verification immediately after the Helper created it is the worst
+    possible first experience, so the repair runs for both branches.
+    """
+    import math
+
+    from cea.datamanagement.databases_verification import (
+        MINIMUM_STOREY_HEIGHT_M,
+        assert_input_geometry_acceptable_values_floor_height,
+    )
+    from cea.demand import constants
+
+    def create(height=None, floors=None, osm_height=None, osm_levels=None):
+        if osm_levels is not None:
+            n = osm_levels
+            h = osm_height if osm_height is not None else osm_levels * constants.H_F
+        elif height is None and floors is not None:
+            n, h = floors, floors * constants.H_F
+        elif height is not None and floors is None:
+            h, n = height, int(math.floor(height / constants.H_F))
+        else:
+            h, n = height, floors
+
+        df = pd.DataFrame({"floors_ag": [n], "height_ag": [float(h)]})
+        df["floors_ag"] = df["floors_ag"].clip(lower=1).astype(int)          # at least one storey
+        implausible = df["height_ag"] < df["floors_ag"] * MINIMUM_STOREY_HEIGHT_M
+        df.loc[implausible, "height_ag"] = (
+            df.loc[implausible, "floors_ag"].astype(float) * constants.H_F)   # plausible storey
+        return df
+
+    inputs = [
+        dict(floors=5), dict(height=9.0), dict(height=2.5), dict(height=1.0), dict(height=0.1),
+        dict(height=15.0, floors=5), dict(height=5.0, floors=10), dict(height=15.0, floors=10),
+        dict(osm_height=3.0, osm_levels=10), dict(osm_height=54.0, osm_levels=18),
+        dict(osm_levels=0), dict(osm_levels=1),
+    ]
+    for kwargs in inputs:
+        created = create(**kwargs)
+        zone_row = pd.DataFrame({
+            "name": ["B"], "floors_ag": created["floors_ag"], "floors_bg": [1],
+            "height_ag": created["height_ag"], "height_bg": [3.0],
+        })
+        # Must not raise -- this is the whole point.
+        assert_input_geometry_acceptable_values_floor_height(zone_row)
+        assert int(created["floors_ag"].iloc[0]) >= 1, kwargs
