@@ -6,6 +6,8 @@ building properties algorithm
 # J. A. Fonseca  script development          22.03.15
 
 
+import os
+
 import numpy as np
 import pandas as pd
 import geopandas as gpd
@@ -92,6 +94,43 @@ def archetypes_mapper(locator: cea.inputlocator.InputLocator,
 
 
 
+def write_building_properties(mapped_df, fields, path, locator):
+    """Write mapped building properties, preserving buildings this run did not map.
+
+    Each mapper builds its frame from `building_typology_df`, which `archetypes_mapper` has
+    already filtered to `list_buildings`. Writing that frame straight out replaced the whole
+    file with the subset -- mapping one building of fifteen left a one-row file and silently
+    deleted the other fourteen.
+
+    Rows for buildings in `mapped_df` are replaced; rows for any other building already in the
+    file are kept, in their existing order, with newly-mapped buildings appended. A full-district
+    run keeps nothing, so it behaves exactly as before.
+
+    :param mapped_df: the freshly mapped properties, including a `name` column.
+    :param fields: the columns to write, in order.
+    :param path: the file to write.
+    :param locator: used to create the parent folder.
+    """
+    locator.ensure_parent_folder_exists(path)
+    mapped = mapped_df[fields].set_index('name')
+
+    if os.path.isfile(path):
+        existing = pd.read_csv(path)
+        # Only merge into a file of the same shape. A file from an older CEA has different
+        # columns, and blending the two would produce rows that are half one format and half
+        # the other; overwriting is the honest outcome there.
+        #
+        # Compared as sets: the file on disk stores these columns in a different order from
+        # `fields`, and requiring the same order meant the merge never ran at all.
+        if 'name' in existing.columns and set(existing.columns) == set(fields):
+            existing = existing.set_index('name')
+            kept = existing.drop(index=mapped.index, errors='ignore')
+            order = list(existing.index) + [n for n in mapped.index if n not in existing.index]
+            mapped = pd.concat([kept, mapped]).reindex(order)
+
+    mapped.reset_index()[fields].to_csv(path, index=False)
+
+
 def indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typology_df):
     comfort_DB = pd.read_csv(locator.get_database_archetypes_use_type())
     # define comfort
@@ -110,8 +149,7 @@ def indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typol
                                                         occupant_densities,
                                                         list_uses,
                                                         comfort_DB)
-    locator.ensure_parent_folder_exists(locator.get_building_comfort())
-    prop_comfort_df_merged[fields].to_csv(locator.get_building_comfort(), index=False)
+    write_building_properties(prop_comfort_df_merged, fields, locator.get_building_comfort(), locator)
 
 def internal_loads_mapper(list_uses, locator, occupant_densities, building_typology_df):
     internal_DB = pd.read_csv(locator.get_database_archetypes_use_type())
@@ -137,8 +175,7 @@ def internal_loads_mapper(list_uses, locator, occupant_densities, building_typol
                                                          occupant_densities,
                                                          list_uses,
                                                          internal_DB)
-    locator.ensure_parent_folder_exists(locator.get_building_internal())
-    prop_internal_df_merged[fields].to_csv(locator.get_building_internal(), index=False)
+    write_building_properties(prop_internal_df_merged, fields, locator.get_building_internal(), locator)
 
 
 def supply_mapper(locator, building_typology_df):
@@ -149,8 +186,7 @@ def supply_mapper(locator, building_typology_df):
               'supply_type_hs',
               'supply_type_dhw',
               'supply_type_el']
-    locator.ensure_parent_folder_exists(locator.get_building_supply())
-    prop_supply_df[fields].to_csv(locator.get_building_supply(), index=False)
+    write_building_properties(prop_supply_df, fields, locator.get_building_supply(), locator)
 
 def aircon_mapper(locator, typology_df):
     air_conditioning_DB = pd.read_csv(locator.get_database_archetypes_construction_type())
@@ -167,8 +203,7 @@ def aircon_mapper(locator, typology_df):
               'hvac_heat_ends',
               'hvac_cool_starts',
               'hvac_cool_ends']
-    locator.ensure_parent_folder_exists(locator.get_building_air_conditioning())
-    prop_HVAC_df[fields].to_csv(locator.get_building_air_conditioning(), index=False)
+    write_building_properties(prop_HVAC_df, fields, locator.get_building_air_conditioning(), locator)
 
 
 def architecture_mapper(locator, typology_df):
@@ -192,8 +227,7 @@ def architecture_mapper(locator, typology_df):
               'type_wall',
               'type_win',
               'type_shade']
-    locator.ensure_parent_folder_exists(locator.get_building_architecture())
-    prop_architecture_df[fields].to_csv(locator.get_building_architecture(), index=False)
+    write_building_properties(prop_architecture_df, fields, locator.get_building_architecture(), locator)
 
 def calc_code(code1, code2, code3, code4):
     return str(code1) + str(code2) + str(code3) + str(code4)

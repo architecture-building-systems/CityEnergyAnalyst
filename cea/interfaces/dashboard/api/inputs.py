@@ -22,6 +22,8 @@ from pydantic import BaseModel, Field
 import cea.config
 import cea.databases
 import cea.inputlocator
+from cea.datamanagement import archetype_lock
+from cea.datamanagement.archetypes_mapper import archetypes_mapper
 from cea.datamanagement.district_pathways.pathway_timeline import PathwayChildScenario
 from cea.datamanagement.utils import VOID_FLOORS_COLUMN
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
@@ -169,6 +171,73 @@ class InputForm(BaseModel):
     schedules: Dict[str, Any] = Field(default_factory=dict)
 
 
+class ArchetypeLockForm(BaseModel):
+    locked: bool
+
+
+@router.get('/archetype-lock')
+async def get_archetype_lock(scenario: CEAScenario):
+    """The lock state, plus whether the derived tables have drifted from the last mapping."""
+    locator = cea.inputlocator.InputLocator(scenario)
+
+    def fn():
+        state = archetype_lock.read_lock(locator)
+        return {
+            'locked': state.locked,
+            'drifted': archetype_lock.is_drifted(locator),
+            'mapped_at': state.mapped_at,
+            'derived_tabs': list(archetype_lock.ARCHETYPE_DERIVED_TABS),
+            'archetype_key_columns': list(archetype_lock.ARCHETYPE_KEY_COLUMNS),
+        }
+
+    return await run_in_threadpool(fn)
+
+
+@router.put('/archetype-lock')
+async def set_archetype_lock(scenario: CEAScenario, form: ArchetypeLockForm):
+    """Lock or unlock the archetype-derived tables.
+
+    Unlocking changes nothing on disk -- the user simply takes ownership of those tables.
+
+    Locking regenerates all five of them, plus schedules, from each building's archetype, so
+    any edits made while unlocked are lost. The client is expected to have confirmed that;
+    this is the point of no return, not the modal.
+    """
+    locator = cea.inputlocator.InputLocator(scenario)
+
+    def fn():
+        if not form.locked:
+            # Keep the fingerprint from the last mapping. It is the only record of what the
+            # derived tables looked like when they matched their archetypes, so discarding it
+            # here would make every later edit undetectable -- and detecting them is the
+            # reason for unlocking in the first place.
+            previous = archetype_lock.read_lock(locator)
+            archetype_lock.write_lock(
+                locator, locked=False,
+                signature=previous.mapped_signature, mapped_at=previous.mapped_at)
+            return {'locked': False,
+                    'drifted': archetype_lock.is_drifted(locator),
+                    'remapped': False}
+
+        buildings = list(locator.get_zone_building_names())
+        archetypes_mapper(
+            locator=locator,
+            update_architecture_dbf=True,
+            update_air_conditioning_systems_dbf=True,
+            update_indoor_comfort_dbf=True,
+            update_internal_loads_dbf=True,
+            update_supply_systems_dbf=True,
+            update_schedule_operation_cea=True,
+            list_buildings=buildings,
+        )
+        state = archetype_lock.write_lock(
+            locator, locked=True, signature=archetype_lock.derived_signature(locator))
+        return {'locked': True, 'drifted': False, 'remapped': True,
+                'building_count': len(buildings), 'mapped_at': state.mapped_at}
+
+    return await run_in_threadpool(fn)
+
+
 @router.put('/all-inputs')
 async def save_all_inputs(scenario: CEAScenario, form: InputForm):
     locator = cea.inputlocator.InputLocator(scenario)
@@ -179,7 +248,36 @@ async def save_all_inputs(scenario: CEAScenario, form: InputForm):
     schedules = form.schedules
 
     def fn():
-        out = {'tables': {}, 'geojsons': {}}
+        out = {'tables': {}, 'geojsons': {}, 'skipped_tables': []}
+
+        # Archetype-Lock. While locked, CEA owns the archetype-derived tables, so the payload's
+        # copies of them are not written.
+        #
+        # This has to happen server-side, not only by grey-ing out the inputs: the editor holds
+        # every table in memory and PUTs all of them on each save, so a client that is merely
+        # *stale* -- one opened before the lock, or one whose copy predates an auto-remap --
+        # would otherwise overwrite tables it never meant to touch.
+        #
+        # Skipped rather than rejected: the derived tables are in every payload, so rejecting
+        # their presence would reject every save. They are reported back in `skipped_tables`
+        # so the UI can say what was ignored, rather than dropping them silently.
+        lock = archetype_lock.read_lock(locator)
+        if lock.locked:
+            for tab in archetype_lock.ARCHETYPE_DERIVED_TABS:
+                if tables.get(tab):
+                    out['skipped_tables'].append(tab)
+                    tables[tab] = None
+
+        # Which buildings changed archetype, decided here rather than trusted from the client.
+        remap_buildings = []
+        if lock.locked and tables.get('zone'):
+            try:
+                existing_zone = geopandas.read_file(locator.get_zone_geometry())
+                existing_zone = pd.DataFrame(existing_zone.drop(columns='geometry')).set_index('name')
+                remap_buildings = archetype_lock.buildings_needing_remap(
+                    tables['zone'], existing_zone)
+            except (IOError, DriverError, ValueError, KeyError, FileNotFoundError) as e:
+                logger.warning(f"Could not compare archetype keys, skipping the re-map: {e}")
 
         # TODO: Maybe save the files to temp location in case something fails
         for db in INPUTS:
@@ -243,6 +341,37 @@ async def save_all_inputs(scenario: CEAScenario, form: InputForm):
                     data = pd.concat([df, data], ignore_index=True)
                 save_cea_schedules(data.to_dict('list'), schedule_path)
                 print('Schedule file written to {}'.format(schedule_path))
+
+        if lock.locked:
+            if remap_buildings:
+                # Only the buildings whose archetype moved, or that are new. `archetypes_mapper`
+                # merges a subset into the existing tables rather than replacing them, so the
+                # rest of the district is left alone -- and a district-wide re-derive on every
+                # `const_type` edit would be needlessly slow for a large scenario.
+                archetypes_mapper(
+                    locator=locator,
+                    update_architecture_dbf=True,
+                    update_air_conditioning_systems_dbf=True,
+                    update_indoor_comfort_dbf=True,
+                    update_internal_loads_dbf=True,
+                    update_supply_systems_dbf=True,
+                    update_schedule_operation_cea=True,
+                    list_buildings=remap_buildings,
+                )
+                out['remapped_buildings'] = remap_buildings
+
+                # Hand back what the mapper wrote. Without this the client keeps the values it
+                # sent, and its next save would write them straight back over the re-map.
+                for tab in archetype_lock.ARCHETYPE_DERIVED_TABS:
+                    tab_location = getattr(locator, INPUTS[tab]['location'])()
+                    if os.path.isfile(tab_location):
+                        remapped = pd.read_csv(tab_location)
+                        out['tables'][tab] = json.loads(
+                            remapped.set_index('name').to_json(orient='index'))
+
+            # Re-fingerprint either way: the save may have touched schedules.
+            archetype_lock.write_lock(
+                locator, locked=True, signature=archetype_lock.derived_signature(locator))
 
         return out
 

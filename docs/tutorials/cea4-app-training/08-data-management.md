@@ -176,6 +176,76 @@ Common adjustments:
 
 ---
 
+## Archetype-Lock
+
+Only the **zone** table is authored by you. Five of the other input-editor tabs are *derived*
+from it by the Archetypes Mapper, using each building's archetype:
+
+| you author | CEA derives from the archetype |
+|---|---|
+| zone, surroundings, trees | envelope, HVAC, indoor comfort, internal loads, supply |
+
+Building **schedules** are derived too, though they are not a tab.
+
+Editing a derived table directly makes the construction type stop describing the building it
+labels — the archetype says one thing, the tables another, and nothing records that. The
+**Archetype-Lock** toggle in the input editor decides who owns those tables.
+
+### Locked
+
+CEA owns the derived tables.
+
+- The five derived tabs are **read-only** (bulk *Edit Selection* too).
+- **The zone tab stays fully editable** — geometry, names, everything.
+- Change a building's **archetype** in the zone tab and CEA regenerates its derived tables when
+  you save. Add a building and it gets its derived rows the same way.
+
+The archetype is more than `const_type`. These columns all select it:
+
+```
+const_type
+use_type1, use_type1r, use_type2, use_type2r, use_type3, use_type3r
+year
+```
+
+Changing `use_type1` matters as much as changing `const_type`: use type drives indoor comfort
+and internal loads, construction type drives envelope, HVAC and supply.
+
+Editing geometry — `height_ag`, `floors_ag`, the footprint — does **not** trigger a
+regeneration, because it does not change which archetype applies.
+
+### Unlocked
+
+You own the derived tables and may edit them freely. Nothing on disk changes when you unlock.
+
+Once your edits mean the derived tables no longer match the archetypes, CEA marks the
+**archetype columns in the zone tab**, with a tooltip. The construction type shown there no
+longer describes the building, and the mark is there so a reader knows not to trust it.
+
+### Re-locking
+
+Re-locking regenerates envelope, HVAC, indoor comfort, internal loads, supply **and the
+building schedules** for every building, from their archetypes. **Any edits you made to those
+tables are lost.** The confirmation names the tabs and the number of buildings affected.
+
+### Defaults
+
+| scenario | default |
+|---|---|
+| created by CEA | **locked** — it has just been mapped, so it is consistent |
+| existing, from before this feature | **unlocked** |
+
+Existing scenarios default to unlocked deliberately: they may already contain hand-edits, and
+treating them as locked would licence CEA to overwrite work it knows nothing about. Lock one
+when you are ready for CEA to regenerate its derived tables.
+
+### The lock is enforced when you save, not just in the editor
+
+Read-only tabs are the visible half. CEA also refuses to write the derived tables while locked,
+whatever is sent to it — so a browser tab left open from before the lock cannot overwrite them.
+
+---
+
 ## Weather Helper
 
 ### Overview

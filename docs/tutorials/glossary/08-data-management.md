@@ -80,10 +80,12 @@ Files in this category: **67** (⚠️ 35 stale)
 
 ### `get_building_air_conditioning`
 
-- **Path**: `inputs/building-properties/air_conditioning_systems.csv`
+- **Path**: `inputs/building-properties/hvac.csv`
 - **File type**: `csv`
 - **Created by**: `archetypes_mapper`
 - **Used by**: `demand`
+
+HVAC system types per building. Derived from each building's archetype by the Archetypes Mapper - see Archetype-Lock. While the scenario is locked CEA owns this file and regenerates it when a building's archetype changes; while unlocked you own it.
 
 | Variable | Description | Type | Unit | Values |
 |----------|-------------|------|------|--------|
@@ -106,6 +108,8 @@ Files in this category: **67** (⚠️ 35 stale)
 - **File type**: `csv`
 - **Created by**: `archetypes_mapper`
 - **Used by**: `demand`, `emissions`, `radiation`, `occupancy`
+
+Envelope properties per building. Derived from each building's archetype by the Archetypes Mapper - see Archetype-Lock. While the scenario is locked CEA owns this file and regenerates it when a building's archetype changes; while unlocked you own it.
 
 | Variable | Description | Type | Unit | Values |
 |----------|-------------|------|------|--------|
@@ -137,6 +141,8 @@ Files in this category: **67** (⚠️ 35 stale)
 - **Created by**: `archetypes_mapper`
 - **Used by**: `demand`, `occupancy`
 
+Indoor comfort setpoints per building. Derived from each building's use type by the Archetypes Mapper - see Archetype-Lock. While the scenario is locked CEA owns this file and regenerates it when a building's archetype changes; while unlocked you own it.
+
 | Variable | Description | Type | Unit | Values |
 |----------|-------------|------|------|--------|
 | `name` | Unique building ID. It must start with a letter. | string | `[-]` | alphanumeric |
@@ -156,6 +162,8 @@ Files in this category: **67** (⚠️ 35 stale)
 - **File type**: `csv`
 - **Created by**: `archetypes_mapper`
 - **Used by**: `demand`
+
+Internal loads per building. Derived from each building's use type by the Archetypes Mapper - see Archetype-Lock. While the scenario is locked CEA owns this file and regenerates it when a building's archetype changes; while unlocked you own it.
 
 | Variable | Description | Type | Unit | Values |
 |----------|-------------|------|------|--------|
@@ -205,10 +213,12 @@ Files in this category: **67** (⚠️ 35 stale)
 
 ### `get_building_supply`
 
-- **Path**: `inputs/building-properties/supply_systems.csv`
+- **Path**: `inputs/building-properties/supply.csv`
 - **File type**: `csv`
 - **Created by**: `archetypes_mapper`
 - **Used by**: `decentralized`, `demand`, `emissions`, `system_costs`
+
+Supply system types per building. Derived from each building's archetype by the Archetypes Mapper - see Archetype-Lock. While the scenario is locked CEA owns this file and regenerates it when a building's archetype changes; while unlocked you own it.
 
 | Variable | Description | Type | Unit | Values |
 |----------|-------------|------|------|--------|

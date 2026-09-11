@@ -1102,6 +1102,16 @@ class InputLocator(object):
         """scenario/inputs/building-properties/"""
         return os.path.join(self.scenario, 'inputs', 'building-properties')
 
+    def get_archetype_lock_file(self):
+        """scenario/inputs/.archetype_lock.json
+
+        Records whether the archetype-derived building-property tables are locked to each
+        building's archetype, and a fingerprint of those tables as of the last successful
+        mapping. Absent means unlocked, so a scenario written before this existed needs no
+        migration.
+        """
+        return os.path.join(self.get_input_folder(), '.archetype_lock.json')
+
     def get_terrain_folder(self):
         return os.path.join(self.scenario, 'inputs', 'topography')
 

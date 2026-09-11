@@ -1335,9 +1335,13 @@ SC_totals:
   used_by:
   - optimization
 get_building_air_conditioning:
+  description: |
+    HVAC system types per building. Derived from each building's archetype by the Archetypes
+    Mapper - see Archetype-Lock. While the scenario is locked CEA owns this file and
+    regenerates it when a building's archetype changes; while unlocked you own it.
   created_by:
   - archetypes_mapper
-  file_path: inputs/building-properties/air_conditioning_systems.csv
+  file_path: inputs/building-properties/hvac.csv
   file_type: csv
   schema:
     columns:
@@ -1412,6 +1416,10 @@ get_building_air_conditioning:
   used_by:
   - demand
 get_building_architecture:
+  description: |
+    Envelope properties per building. Derived from each building's archetype by the Archetypes
+    Mapper - see Archetype-Lock. While the scenario is locked CEA owns this file and
+    regenerates it when a building's archetype changes; while unlocked you own it.
   created_by:
   - archetypes_mapper
   file_path: inputs/building-properties/envelope.csv
@@ -1546,6 +1554,10 @@ get_building_architecture:
   - radiation
   - occupancy
 get_building_comfort:
+  description: |
+    Indoor comfort setpoints per building. Derived from each building's use type by the
+    Archetypes Mapper - see Archetype-Lock. While the scenario is locked CEA owns this file
+    and regenerates it when a building's archetype changes; while unlocked you own it.
   created_by:
   - archetypes_mapper
   file_path: inputs/building-properties/indoor_comfort.csv
@@ -1593,6 +1605,10 @@ get_building_comfort:
   - demand
   - occupancy
 get_building_internal:
+  description: |
+    Internal loads per building. Derived from each building's use type by the Archetypes
+    Mapper - see Archetype-Lock. While the scenario is locked CEA owns this file and
+    regenerates it when a building's archetype changes; while unlocked you own it.
   created_by:
   - archetypes_mapper
   file_path: inputs/building-properties/internal_loads.csv
@@ -1671,9 +1687,13 @@ get_building_internal:
   used_by:
   - demand
 get_building_supply:
+  description: |
+    Supply system types per building. Derived from each building's archetype by the Archetypes
+    Mapper - see Archetype-Lock. While the scenario is locked CEA owns this file and
+    regenerates it when a building's archetype changes; while unlocked you own it.
   created_by:
   - archetypes_mapper
-  file_path: inputs/building-properties/supply_systems.csv
+  file_path: inputs/building-properties/supply.csv
   file_type: csv
   schema:
     columns:
