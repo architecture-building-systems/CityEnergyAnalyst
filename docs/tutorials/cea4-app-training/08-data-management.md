@@ -648,8 +648,14 @@ without adding a field in GIS. `0` means the building is enclosed to the ground.
 the same conversion it always applied internally, so results do not change. Neither column is
 required; a scenario with neither simply has no void decks.
 
-Where both columns are present, `height_vd` is used and CEA warns that `void_deck` is being
-ignored.
+Where both columns are present, CEA decides **per building, on the value**: a building whose
+`height_vd` cell has a number uses it (and CEA warns that its `void_deck` is being ignored),
+while a **blank** cell falls back to `void_deck`.
+
+That matters when you open an older scenario in the input editor: the editor shows every column
+in the schema, so you will see an empty `height_vd` column beside your populated `void_deck`.
+**This is expected and harmless** — leaving it empty changes nothing. Entering a value switches
+that building to metres; entering `0` removes its void deck.
 
 You never have to migrate a CEA-4 scenario by hand. Add or edit `height_vd` only when you want a
 void that is not a whole number of storeys.

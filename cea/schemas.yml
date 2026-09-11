@@ -18045,7 +18045,9 @@ get_zone_geometry:
           spans the void deck plus the enclosed solid. This is what lets a void deck be taller
           than a normal storey. With the legacy void_deck column, floors_ag instead spans the
           whole height, void storeys included. A void deck is always at ground level; CEA does
-          not model an open storey part-way up a building.
+          not model an open storey part-way up a building. Where both columns are present,
+          height_vd is used for any building whose cell has a value - a blank cell falls
+          back to void_deck, so leaving it empty in an older scenario changes nothing.
         type: float
         unit: '[m]'
         min: 0
