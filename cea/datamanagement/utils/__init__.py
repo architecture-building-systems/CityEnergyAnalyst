@@ -99,18 +99,24 @@ def resolve_void_height(df, *, warn_on_conflict: bool = True):
     recorded as `void_deck`, an integer count of floors, which tied the void to the storey
     grid. `height_vd` records it directly in metres, so it can sit anywhere.
 
-    `height_vd` is authoritative when present. `void_deck` is the legacy form and is converted
-    at the building's own storey height -- the same expression the geometry code has always
-    used -- so a scenario that only carries `void_deck` produces identical results to before.
+    Precedence is per building, on the *value*, not on which columns exist:
 
-    Neither column is required: a scenario with neither has no void decks.
+    - a `height_vd` cell holding a number wins, including an explicit 0 -- that is how a user
+      removes a void deck
+    - a blank `height_vd` cell falls back to `void_deck`, converted at the building's own
+      storey height. The input editor renders every schema column, so an older scenario can
+      acquire a blank `height_vd` beside a populated `void_deck`; treating the column as
+      authoritative would silently drop the void deck
+    - neither column, or neither holding a value, means no void deck
+
+    Deciding per column instead would make a scenario's areas depend on whether a blank
+    column had ever been written to it.
 
     :param df: any frame carrying the zone geometry columns. Converting the legacy column
         needs `height_ag` and `floors_ag`, both of which are in `COLUMNS_ZONE_GEOMETRY`.
-    :param warn_on_conflict: warn when both columns are present and disagree. The legacy
-        column is ignored either way; the warning stops that being silent.
-    :return: void height in metres, aligned to `df`, as float. Never NaN -- a blank cell
-        means "no void deck", which is the assumption CEA made before the column existed.
+    :param warn_on_conflict: warn where a building's two columns both hold values and those
+        values disagree. The legacy one is ignored there; the warning stops that being silent.
+    :return: void height in metres, aligned to `df`, as float. Never NaN.
     """
     has_height = VOID_HEIGHT_COLUMN in df.columns
     has_floors = VOID_FLOORS_COLUMN in df.columns
@@ -136,10 +142,8 @@ def resolve_void_height(df, *, warn_on_conflict: bool = True):
     resolved = height.where(height.notna(), legacy_height).fillna(0.0)
 
     if warn_on_conflict:
-        # Only complain where the two actually disagree; a scenario carrying a consistent
-        # pair is not doing anything wrong.
-        # Only where `height_vd` actually carries a value -- a blank cell is a fallback, not
-        # a disagreement.
+        # Only where `height_vd` holds a value and the two actually differ. A blank cell is a
+        # fallback, not a disagreement, and a consistent pair is not doing anything wrong.
         disagrees = height.notna() & ~np.isclose(height.fillna(0.0), legacy_height,
                                                  rtol=1e-6, atol=1e-9)
         if disagrees.any():
@@ -158,10 +162,10 @@ def resolve_void_height(df, *, warn_on_conflict: bool = True):
 def _single_row_frame(row) -> "pd.DataFrame":
     """A one-row frame from a building mapping, for the frame-based resolvers.
 
-    `BuildingGeometry[name]` hands back a plain dict. Rather than reimplement the column
-    precedence for mappings -- two copies of a rule this subtle drift apart -- the row
-    helpers below build a frame and defer. Only the columns the resolvers read are copied,
-    and a key that is absent stays absent, so column presence still decides.
+    `BuildingGeometry[name]` hands back a plain dict. Rather than reimplement the precedence
+    for mappings -- two copies of a rule this subtle drift apart, and did -- the row helpers
+    below build a frame and defer. Only the columns the resolvers read are copied, and a key
+    that is absent stays absent, so the frame sees exactly what the mapping carried.
     """
     fields = (VOID_HEIGHT_COLUMN, VOID_FLOORS_COLUMN, "height_ag", "floors_ag")
     return pd.DataFrame([{f: row[f] for f in fields if f in row}])
