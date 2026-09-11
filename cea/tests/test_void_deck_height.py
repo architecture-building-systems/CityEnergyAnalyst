@@ -480,6 +480,52 @@ def test_a_void_deck_is_always_at_the_bottom():
     assert min(levels) == 12.0
 
 
+def test_a_blank_metre_cell_falls_back_to_the_legacy_column():
+    """An older scenario can end up carrying a blank `height_vd` column.
+
+    The input editor renders every column in the schema, so opening an old scenario shows
+    `height_vd` as an empty column next to a populated `void_deck`. If that shape is ever
+    saved, the columns coexist with only the legacy one filled in.
+
+    Precedence is therefore per *value*, not per column: a blank cell falls back to
+    `void_deck` instead of reading as "no void deck", which would silently drop the void deck
+    and inflate floor area with no error anywhere.
+    """
+    df = pd.DataFrame({"name": ["B1014"], "floors_ag": [5], "height_ag": [15.0],
+                       VOID_FLOORS_COLUMN: [4], VOID_HEIGHT_COLUMN: [np.nan]})
+
+    assert resolve_void_height(df).iloc[0] == pytest.approx(12.0)
+    assert resolve_enclosed_floors_ag(df).iloc[0] == 1.0
+    assert enclosed_storey_height(df).iloc[0] == pytest.approx(3.0)
+
+
+def test_an_explicit_zero_still_removes_the_void_deck():
+    """0 is a value, not a blank -- it is how a user clears a void deck in the editor."""
+    df = pd.DataFrame({"name": ["B"], "floors_ag": [5], "height_ag": [15.0],
+                       VOID_FLOORS_COLUMN: [4], VOID_HEIGHT_COLUMN: [0.0]})
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        assert resolve_void_height(df).iloc[0] == 0.0
+        assert resolve_enclosed_floors_ag(df).iloc[0] == 5.0
+
+
+def test_precedence_is_decided_per_building_not_per_column():
+    """One scenario can hold both shapes at once, building by building."""
+    df = pd.DataFrame({
+        "name": ["legacy", "metres"],
+        "floors_ag": [5, 5],
+        "height_ag": [15.0, 15.0],
+        VOID_FLOORS_COLUMN: [4, 0],
+        VOID_HEIGHT_COLUMN: [np.nan, 6.0],
+    })
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        assert resolve_void_height(df).tolist() == [12.0, 6.0]
+        assert resolve_enclosed_floors_ag(df).tolist() == [1.0, 5.0]
+
+
 # --------------------------------------------------------------------------- optional-ness
 
 

@@ -53,15 +53,23 @@ def resolve_enclosed_floors_ag(df):
     :return: enclosed storey count, aligned to `df`, as float. Whole numbers in both forms.
     """
     floors_ag = df["floors_ag"].astype(float)
+    has_height = VOID_HEIGHT_COLUMN in df.columns
+    has_floors = VOID_FLOORS_COLUMN in df.columns
 
-    if VOID_HEIGHT_COLUMN in df.columns:
+    if not has_floors:
         return floors_ag
 
-    if VOID_FLOORS_COLUMN in df.columns:
-        void_floors = pd.to_numeric(df[VOID_FLOORS_COLUMN], errors="coerce").fillna(0.0)
+    void_floors = pd.to_numeric(df[VOID_FLOORS_COLUMN], errors="coerce").fillna(0.0)
+
+    if not has_height:
         return floors_ag - void_floors
 
-    return floors_ag
+    # Both columns exist, so decide per building on the value, not on the column. An empty
+    # `height_vd` cell alongside a populated `void_deck` is the common shape -- the input
+    # editor shows every schema column, so an older scenario can acquire a blank `height_vd`
+    # -- and treating the blank column as authoritative would silently drop the void deck.
+    uses_metres = pd.to_numeric(df[VOID_HEIGHT_COLUMN], errors="coerce").notna()
+    return floors_ag.where(uses_metres, floors_ag - void_floors)
 
 
 def enclosed_storey_height(df):
@@ -117,12 +125,23 @@ def resolve_void_height(df, *, warn_on_conflict: bool = True):
     if not has_height:
         return legacy_height
 
-    height = pd.to_numeric(df[VOID_HEIGHT_COLUMN], errors="coerce").fillna(0.0).astype(float)
+    height = pd.to_numeric(df[VOID_HEIGHT_COLUMN], errors="coerce").astype(float)
 
-    if has_floors and warn_on_conflict:
+    if not has_floors:
+        return height.fillna(0.0)
+
+    # A usable `height_vd` wins; a blank cell falls back to the legacy column rather than
+    # reading as "no void deck". An explicit 0 is a value, so it still wins -- that is how a
+    # user removes a void deck.
+    resolved = height.where(height.notna(), legacy_height).fillna(0.0)
+
+    if warn_on_conflict:
         # Only complain where the two actually disagree; a scenario carrying a consistent
         # pair is not doing anything wrong.
-        disagrees = ~np.isclose(height, legacy_height, rtol=1e-6, atol=1e-9)
+        # Only where `height_vd` actually carries a value -- a blank cell is a fallback, not
+        # a disagreement.
+        disagrees = height.notna() & ~np.isclose(height.fillna(0.0), legacy_height,
+                                                 rtol=1e-6, atol=1e-9)
         if disagrees.any():
             names = df.index[disagrees].tolist() if df.index.name == "name" else None
             where = f" for {names}" if names else ""
@@ -133,7 +152,7 @@ def resolve_void_height(df, *, warn_on_conflict: bool = True):
                 RuntimeWarning,
             )
 
-    return height
+    return resolved
 
 
 def _single_row_frame(row) -> "pd.DataFrame":
