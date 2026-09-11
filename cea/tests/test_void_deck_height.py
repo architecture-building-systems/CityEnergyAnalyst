@@ -778,3 +778,31 @@ def test_the_envelope_migration_never_invents_a_legacy_column(tmp_path):
     migrate_void_deck_data(locator)
     assert void_columns(locator) == [VOID_FLOORS_COLUMN]
     assert VOID_FLOORS_COLUMN not in pd.read_csv(locator.get_building_architecture()).columns
+
+
+def test_the_input_editor_stops_offering_the_deprecated_column():
+    """`void_deck` is deprecated, so it is advertised only where it already exists.
+
+    The input editor builds its column list from the schema and its data from the file, so a
+    schema column absent from the file still renders -- empty. That put a `void_deck` column
+    in front of scenarios CEA had just generated, which carry `height_vd` and never had a
+    `void_deck`: two columns for one concept, and an invitation to author new data into the
+    form being retired.
+
+    `height_vd` stays advertised unconditionally so an older scenario can opt into metres.
+    """
+    schema_columns = ["name", "floors_ag", VOID_FLOORS_COLUMN, VOID_HEIGHT_COLUMN, "height_ag"]
+
+    def advertised(file_columns):
+        hide_deprecated_void_deck = VOID_FLOORS_COLUMN not in file_columns
+        shown = [c for c in schema_columns
+                 if not (hide_deprecated_void_deck and c == VOID_FLOORS_COLUMN)]
+        return [c for c in shown if c in (VOID_FLOORS_COLUMN, VOID_HEIGHT_COLUMN)]
+
+    # Generated today: the legacy column is never offered.
+    assert advertised({"name", "floors_ag", VOID_HEIGHT_COLUMN, "height_ag"}) == [VOID_HEIGHT_COLUMN]
+    assert advertised({"name", "floors_ag", "height_ag"}) == [VOID_HEIGHT_COLUMN]
+
+    # Already carries it: still editable, so existing data stays reachable.
+    assert advertised({"name", "floors_ag", VOID_FLOORS_COLUMN, "height_ag"}) == [
+        VOID_FLOORS_COLUMN, VOID_HEIGHT_COLUMN]
