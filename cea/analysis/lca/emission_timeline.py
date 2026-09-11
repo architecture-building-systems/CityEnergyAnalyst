@@ -86,7 +86,9 @@ def get_component_quantities(
 
     Calculated area:
     - `Awall_bg`: total area of below-ground walls
-    - `Awall_part`: total area of partition walls. Currently dummy value 0.0
+    - `Awall_part`: total area of internal partition walls, estimated as
+        `GFA_m2 * CONVERSION_AREA_TO_FLOOR_AREA_RATIO` (1.5). A blanket ratio, not a
+        geometric result: CEA does not work out which surfaces adjoin each other.
     - `Aupperside`: total area of upper side. Currently not available in Daysim
         radiation results, so this value is set to `0.0`.
     - `Afloor`: total area of internal floors.
