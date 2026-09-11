@@ -23,6 +23,7 @@ import cea.config
 import cea.databases
 import cea.inputlocator
 from cea.datamanagement.district_pathways.pathway_timeline import PathwayChildScenario
+from cea.datamanagement.utils import VOID_FLOORS_COLUMN
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 import cea.schemas
 from cea.databases import CEADatabase, CEADatabaseException, databases_folder_path
@@ -294,7 +295,9 @@ def get_building_properties(scenario: str):
         file_type = db_info['file_type']
         db_columns = db_info['columns']
 
-        # Get building property data from file
+        # Get building property data from file. `available_columns` stays empty if the read
+        # fails, which is fine: the table is None then, so there is nothing to render anyway.
+        available_columns = set()
         try:
             if file_type == 'shp':
                 if not os.path.exists(file_path):
@@ -306,20 +309,32 @@ def get_building_properties(scenario: str):
                     del db_columns['geometry']
                 if 'reference' in db_columns and 'reference' not in table_df.columns:
                     table_df['reference'] = None
+                available_columns = set(table_df.columns)
                 store['tables'][db] = json.loads(table_df.set_index('name').to_json(orient='index'))
             else:
                 table_df = pd.read_csv(file_path)
                 if 'reference' in db_columns and 'reference' not in table_df.columns:
                     table_df['reference'] = None
+                available_columns = set(table_df.columns)
                 store['tables'][db] = table_df.set_index("name").to_dict(orient='index')
         except (IOError, DriverError, ValueError, FileNotFoundError) as e:
             logger.warning(f"Error reading {db} from {file_path}: {e}")
             store['tables'][db] = None
 
         # Get column definitions from schema
+        #
+        # `void_deck` is deprecated in favour of `height_vd`, so it is advertised only to
+        # scenarios that already carry it. A scenario CEA generates today has `height_vd` and
+        # never had `void_deck`; offering the legacy column there would show two columns for
+        # one concept and invite new data into the form being retired. `height_vd` is always
+        # advertised, so an older scenario can opt into metres.
+        hide_deprecated_void_deck = VOID_FLOORS_COLUMN not in available_columns
+
         columns = defaultdict(dict)
         try:
             for column_name, column in db_columns.items():
+                if hide_deprecated_void_deck and column_name == VOID_FLOORS_COLUMN:
+                    continue
                 columns[column_name]['type'] = column['type']
                 if 'choice' in column:
                     lookup_path_method = column['choice']['lookup']['path']
