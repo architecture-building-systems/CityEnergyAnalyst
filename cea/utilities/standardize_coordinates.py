@@ -105,6 +105,10 @@ def validate_geometries_before_crs_transform(gdf: geopandas.GeoDataFrame, shapef
     (self-intersecting, unclosed). Reporting both as "invalid" sends people looking for the
     wrong thing.
 
+    An *empty* geometry (`POLYGON EMPTY`) counts as missing. It passes both `isna` and
+    `is_valid`, so it would otherwise slip through -- but a shapefile write turns it into a
+    null geometry on read-back, which is the very thing the missing check exists to catch.
+
     :param gdf: GeoDataFrame to validate
     :param shapefile_name: Name of shapefile for error messages (e.g., "zone", "streets")
     :raises ValueError: If any geometries are missing or invalid
@@ -112,8 +116,9 @@ def validate_geometries_before_crs_transform(gdf: geopandas.GeoDataFrame, shapef
     def row_name(index, row):
         return str(row.get('name', row.get('Name', f'index_{index}')))
 
-    missing = gdf[gdf.geometry.isna()]
-    malformed = gdf[~gdf.geometry.isna() & ~gdf.geometry.is_valid]
+    absent = gdf.geometry.isna() | gdf.geometry.is_empty
+    missing = gdf[absent]
+    malformed = gdf[~absent & ~gdf.geometry.is_valid]
 
     if missing.empty and malformed.empty:
         return

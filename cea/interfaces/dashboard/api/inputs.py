@@ -43,7 +43,10 @@ from cea.plots.variable_naming import get_color_array
 from cea.technologies.network_layout.main import auto_layout_network, NetworkLayout
 from cea.utilities.file_lock import FileLock
 from cea.utilities.schedule_reader import schedule_to_file, read_cea_schedule, save_cea_schedules
-from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
+from cea.utilities.standardize_coordinates import (
+    get_geographic_coordinate_system,
+    validate_geometries_before_crs_transform,
+)
 
 router = APIRouter()
 
@@ -238,6 +241,73 @@ async def set_archetype_lock(scenario: CEAScenario, form: ArchetypeLockForm):
     return await run_in_threadpool(fn)
 
 
+def shapefile_payload_problems(db: str, table: Any, geojson: Any) -> list[str]:
+    """Reasons a shapefile payload must not be written, as user-facing sentences.
+
+    The save writes each table in turn, so anything wrong has to be found before the first
+    write -- a failure discovered halfway leaves the scenario partly updated with the client
+    still holding the version it thought it saved.
+
+    Three ways a payload can be unsafe:
+
+    - a footprint is missing or malformed (self-intersecting, unclosed). Malformed geometry
+      cannot reach here today, because `df_to_json` fails to read such a file at all and the
+      caller skips the table; the check is what makes editing geometry safe to add.
+    - two rows share a name. The write does `set_index('name')`, so one would silently win.
+    - a row exists in the table with no feature beside it. The shapefile is rebuilt from the
+      features alone, so that row would be dropped from the file without a word. This is
+      reachable now: `df_to_json` drops null-geometry rows for display while
+      `get_building_properties` keeps them in the table.
+
+    :param db: input name, used in the messages (e.g. ``zone``).
+    :param table: the table as sent by the client, ``{name: {column: value}}``.
+    :param geojson: the matching geojson as sent by the client.
+    :return: problems found, empty when the payload is safe to write.
+    """
+    features = (geojson or {}).get('features')
+    if not features:
+        # Geometry that failed to load is skipped by the caller, not rejected.
+        return []
+
+    try:
+        gdf = geopandas.GeoDataFrame.from_features(
+            features, crs=get_geographic_coordinate_system())
+    except Exception as e:
+        # Deliberately broad. This is arbitrary client input, and the ways it can fail to parse
+        # are open-ended -- shapely alone raises `GeometryTypeError` for an unknown `type`.
+        # Whatever it is, the answer is the same: tell the user we could not read it, rather
+        # than let a traceback out as a 500.
+        return [f"{db}: the geometry sent could not be read ({type(e).__name__}: {e})."]
+
+    problems = []
+    try:
+        validate_geometries_before_crs_transform(gdf, shapefile_name=db)
+    except ValueError as e:
+        problems.append(str(e))
+
+    if 'name' not in gdf.columns:
+        return problems
+
+    names = gdf['name'].astype(str)
+
+    duplicated = sorted(set(names[names.duplicated()]))
+    if duplicated:
+        problems.append(
+            f"{db}: more than one row is named {', '.join(duplicated)}. "
+            f"Names must be unique - saving would keep only one row of each.")
+
+    without_geometry = sorted(set(map(str, table or {})) - set(names))
+    if without_geometry:
+        count = len(without_geometry)
+        problems.append(
+            f"{db}: {count} {'row has' if count == 1 else 'rows have'} no footprint and would "
+            f"be deleted from the file by this save: {', '.join(without_geometry)}. "
+            f"Give {'it' if count == 1 else 'them'} a geometry or delete "
+            f"{'the row' if count == 1 else 'the rows'}.")
+
+    return problems
+
+
 @router.put('/all-inputs')
 async def save_all_inputs(scenario: CEAScenario, form: InputForm):
     locator = cea.inputlocator.InputLocator(scenario)
@@ -278,6 +348,24 @@ async def save_all_inputs(scenario: CEAScenario, form: InputForm):
                     tables['zone'], existing_zone)
             except (IOError, DriverError, ValueError, KeyError, FileNotFoundError) as e:
                 logger.warning(f"Could not compare archetype keys, skipping the re-map: {e}")
+
+        # Nothing is written until every shapefile payload has been checked. The loop below
+        # writes tables one at a time, so a problem found partway through would leave the
+        # scenario half-updated -- and unlike a rejected save, there is no way back from that.
+        geometry_problems = []
+        for db, db_info in INPUTS.items():
+            if db_info['file_type'] == 'shp' and tables.get(db):
+                geometry_problems.extend(
+                    shapefile_payload_problems(db, tables[db], geojsons.get(db)))
+        if geometry_problems:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    'message': 'Nothing was saved: the geometry has problems that would '
+                               'corrupt the scenario.',
+                    'problems': geometry_problems,
+                },
+            )
 
         # TODO: Maybe save the files to temp location in case something fails
         for db in INPUTS:
