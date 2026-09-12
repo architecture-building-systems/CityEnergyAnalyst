@@ -14,13 +14,12 @@ from cea.datamanagement.district_pathways.intervention_templates import (
     load_intervention_templates,
 )
 from cea.datamanagement.district_pathways.pathway_timeline import (
-    StockOnlyStateError,
     StockYearRequiresEditError,
     YearRequiresEditError,
     apply_templates_to_year,
     create_pathway_year,
     create_pathway,
-    delete_or_clear_state,
+    clear_state,
     delete_pathway,
     get_pathway_overview,
     get_pathway_timeline,
@@ -477,9 +476,25 @@ async def put_year_yaml(
 
 
 @router.delete("/{pathway_name}/years/{year}")
-async def delete_year(config: CEAConfig, pathway_name: str, year: int) -> dict[str, Any]:
+async def delete_year(
+    config: CEAConfig,
+    pathway_name: str,
+    year: int,
+    delete_inputs: bool = True,
+    delete_outputs: bool = True,
+) -> dict[str, Any]:
+    """Clear a state year's data (`clear_state`). Does not 409 for a stock year --
+    clearing inputs there only removes the regenerable bake, not the stock year itself; the
+    response's `state_kind` tells the caller which case occurred."""
     try:
-        return await run_in_threadpool(delete_or_clear_state, config, pathway_name, year)
+        return await run_in_threadpool(
+            clear_state,
+            config,
+            pathway_name,
+            year,
+            delete_inputs=delete_inputs,
+            delete_outputs=delete_outputs,
+        )
     except FileNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -489,16 +504,6 @@ async def delete_year(config: CEAConfig, pathway_name: str, year: int) -> dict[s
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(exc),
-        ) from exc
-    except StockOnlyStateError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail={
-                "message": str(exc),
-                "state_kind": "stock",
-                "can_delete": False,
-                "can_clear_manual_changes": False,
-            },
         ) from exc
     except ValueError as exc:
         raise HTTPException(

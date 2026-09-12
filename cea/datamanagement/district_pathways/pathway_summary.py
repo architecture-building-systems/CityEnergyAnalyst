@@ -22,6 +22,9 @@ def build_pathway_year_row(
     year: int,
     issues: list[str],
 ) -> dict[str, Any]:
+    """Project one pathway year into the shared row shape timeline reads and editor
+    preflight both consume: state kind (manual/stock/mixed), pending building events and
+    modifications, disk presence of inputs/outputs, and hash-backed phase status."""
     entry_exists = int(year) in pathway.log_data
     entry = pathway.log_data.get(int(year), {}) or {}
     modifications = deepcopy(entry.get("modifications", {}) or {})
@@ -64,7 +67,13 @@ def build_pathway_year_row(
         "explicit_building_events": explicit_building_events,
         "can_delete": state_kind == "manual",
         "can_clear_manual_changes": state_kind == "mixed",
-        "has_state_folder": state.exists_on_disk(),
+        # Which halves of the state are on disk, so the Clear State dialog can offer
+        # (and default) only the parts that actually exist.
+        "has_state_inputs": state.has_inputs_on_disk(),
+        "has_state_outputs": state.has_outputs_on_disk(),
+        # Buildings the stock puts in this year; the panel names them when explaining why a
+        # stock-required year cannot be removed.
+        "stock_new_buildings": pathway.get_derived_stock_new_buildings(int(year)),
         "status": status,
         "latest_modified_at": entry.get("latest_modified_at"),
         "latest_confirmed_at": status.get("latest_confirmed_at"),

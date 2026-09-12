@@ -410,14 +410,19 @@ District Evolution Pathways:
       - 'final-energy:dhw-booster-type-building'
 
   - name: pathway-delete-state
-    label: "Delete or Clear State"
-    short_description: Delete one explicit pathway year or clear its manual changes
+    label: "Clear State"
+    short_description: Clear the inputs and/or outputs of one pathway state year
     description: |
-      This job removes the explicit entry for one pathway year from the pathway log.
-      Manual-only years are deleted entirely. Mixed years keep their stock-driven presence and only lose the manual edits.
+      This job clears one pathway state year's data on disk. Select inputs, outputs, or both.
+      Clearing the outputs removes the simulation results and leaves the state baked, ready to re-simulate.
+      Clearing the inputs removes the whole baked state folder — results cannot outlive the scenario that
+      produced them, so the outputs go with it — along with the saved status record and the year's manual
+      content in the pathway log. A mixed year keeps its stock-driven presence, and a stock-only year has no
+      entry to remove, so it only loses its files.
     interfaces: [cli]
     module: cea.datamanagement.district_pathways.pathway_delete_state_job
-    parameters: ['general:scenario', 'pathway-state-edit:existing-pathway-names', 'pathway-state-edit:year-of-state']
+    parameters: ['general:scenario', 'pathway-state-edit:existing-pathway-names', 'pathway-state-edit:year-of-state',
+                 'pathway-state-edit:delete-inputs', 'pathway-state-edit:delete-outputs']
 
   - name: pathway-delete-pathway
     label: "Delete Pathway"

@@ -68,7 +68,16 @@ def should_use_crax_radiation(state_locator: InputLocator) -> bool:
         # handles them correctly (DAYSIM) rather than CRAX.
         return False
 
-    void_deck = pd.to_numeric(zone_gdf["void_deck"], errors="coerce").fillna(0)
+    void_deck = pd.to_numeric(zone_gdf["void_deck"], errors="coerce")
+    unknown = void_deck.isna()
+    if unknown.any():
+        # Blank or non-numeric means unknown, not zero -- same treatment as a missing column.
+        print(
+            f"Warning: void_deck is not a number for {zone_gdf.loc[unknown, 'name'].tolist()}. "
+            "Falling back to DAYSIM."
+        )
+        return False
+
     return bool((void_deck <= 0).all())
 
 
@@ -151,6 +160,17 @@ def determine_network_phase_mode(
 # ---------------------------------------------------------------------------
 
 
+def build_all_buildings_step(script: str) -> dict[str, Any]:
+    """A workflow step pinned to every building standing in the state year.
+
+    Unpinned, these scripts inherit whatever selection the user last saved for the tool in
+    ~/cea.config, and BuildingsParameter quietly drops names absent from this scenario's
+    zone -- so a selection made elsewhere becomes an empty list and the script does nothing.
+    Empty means "all buildings here" (BuildingsParameter.empty_means_all).
+    """
+    return {"script": script, "parameters": {"buildings": []}}
+
+
 def build_base_workflow(
     config: Configuration | None = None,
     *,
@@ -159,12 +179,12 @@ def build_base_workflow(
     """Build the Step 4 pre-network workflow for a state year."""
     workflow: list[dict[str, Any]] = [
         {"config": "."},
-        {"script": "radiation-crax" if use_crax_radiation else "radiation"},
-        {"script": "occupancy"},
-        {"script": "demand"},
+        build_all_buildings_step("radiation-crax" if use_crax_radiation else "radiation"),
+        build_all_buildings_step("occupancy"),
+        build_all_buildings_step("demand"),
     ]
     if should_include_photovoltaic(config):
-        workflow.append({"script": "photovoltaic"})
+        workflow.append(build_all_buildings_step("photovoltaic"))
     return workflow
 
 

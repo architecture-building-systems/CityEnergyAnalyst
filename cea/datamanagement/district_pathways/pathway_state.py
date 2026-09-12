@@ -2,7 +2,7 @@ import json
 import os
 import shutil
 from dataclasses import dataclass
-from typing import Any, Literal, cast
+from typing import Any, cast
 
 import geopandas as gpd
 import pandas as pd
@@ -31,8 +31,9 @@ from cea.datamanagement.district_pathways.pathway_log import (
 )
 from cea.datamanagement.district_pathways.pathway_status import (
     collect_state_phase_status,
+    state_inputs_folder_exists,
+    state_outputs_folder_exists,
     record_baked_state,
-    record_simulated_state,
 )
 from cea.inputlocator import InputLocator
 from cea.utilities.fingerprint import hash_payload
@@ -77,8 +78,17 @@ class DistrictStateYear:
             self.pathway_name, int(self.year),
         )
 
-    def exists_on_disk(self) -> bool:
-        return os.path.exists(self.state_folder())
+    def has_inputs_on_disk(self) -> bool:
+        """True if this state year's baked `inputs/` folder exists on disk."""
+        return state_inputs_folder_exists(
+            self.main_locator, pathway_name=self.pathway_name, year=int(self.year)
+        )
+
+    def has_outputs_on_disk(self) -> bool:
+        """True if this state year's simulation `outputs/` folder exists on disk."""
+        return state_outputs_folder_exists(
+            self.main_locator, pathway_name=self.pathway_name, year=int(self.year)
+        )
 
     def read_signature_record(self) -> dict[str, Any] | None:
         path = self.signature_path()
@@ -96,18 +106,6 @@ class DistrictStateYear:
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w", encoding="utf-8") as f:
             json.dump(rec, f, indent=2)
-
-    def needs_simulation(self) -> bool:
-        rec = self.read_signature_record()
-        if not rec:
-            return True
-
-        status = str(rec.get("simulation_status") or "").strip().lower()
-        if status:
-            return status != "simulated"
-
-        # Backward compatibility for older records without simulation_status.
-        return not bool(rec.get("simulated_at"))
 
     def mark_simulated(
         self,
@@ -798,120 +796,6 @@ class DistrictEvolutionPathway:
 
         check_district_pathway_log_yaml_integrity(self.config, self.pathway_name)
 
-    def simulate_states(
-        self,
-        *,
-        simulation_mode: Literal["pending", "all"],
-        workflow: list[dict[str, Any]],
-        state_workflows: dict[int, list[dict[str, Any]]] | None = None,
-    ) -> None:
-        """Simulate pathway states.
-
-        - `pending`: simulate only states that have not been simulated yet, or whose construction changes
-          mean results are out of date.
-        - `all`: simulate every `state_{year}` folder present in the selected pathway.
-
-        Note:
-            The dedicated Step 4 wrapper in `state_simulation/main.py` no longer calls this helper,
-            because thermal-network reuse makes Step 4 state years interdependent and it now
-            orchestrates a two-pass `all` run directly. This method remains available as a
-            generic pathway helper for other callers.
-
-        This updates both:
-        - per-state status files (`.district_pathway_signature.json`)
-        - the district evolution pathway log (`district_pathway_log.yml`) with timestamps / workflow metadata.
-
-        Args:
-            simulation_mode: "pending" or "all"
-            workflow: Default workflow to use for all states (fallback)
-            state_workflows: Optional dict mapping year -> custom workflow for that state
-                           If provided, uses custom workflow for each year; otherwise uses default workflow
-        """
-        # Validate that all state folders match YAML before simulation
-        check_district_pathway_log_yaml_integrity(self.config, self.pathway_name)
-
-        if simulation_mode not in {"pending", "all"}:
-            raise ValueError(
-                f"Invalid simulation mode: {simulation_mode}. Expected one of: pending, all"
-            )
-
-        state_years = self.list_state_years_on_disk()
-        if not state_years:
-            raise ValueError(
-                "No pathway states found in the district evolution pathway folder."
-            )
-        state_years.sort()
-
-        if simulation_mode == "pending":
-            years_to_simulate = [
-                y
-                for y in state_years
-                if DistrictStateYear(
-                    pathway_name=self.pathway_name, year=int(y), modifications={}, main_locator=self.main_locator
-                ).needs_simulation()
-            ]
-        else:
-            years_to_simulate = list(state_years)
-
-        print("State-in-time simulations started.")
-        print(f"Mode: {simulation_mode}")
-        print(f"Found state years: {state_years}")
-        print(f"Years to simulate: {years_to_simulate}")
-
-        if not years_to_simulate:
-            print("Nothing to simulate: all state years are up to date.")
-            return
-
-        simulated_years: list[int] = []
-        skipped_years = [y for y in state_years if y not in set(years_to_simulate)]
-
-        for year in years_to_simulate:
-            if year not in self.log_data:
-                raise ValueError(
-                    "State year {year} exists in the district evolution pathway folder, but it is missing from the district evolution pathway log.".format(
-                        year=year
-                    )
-                )
-
-            # Use state-specific workflow if provided, otherwise use default
-            year_workflow = workflow
-            if state_workflows and int(year) in state_workflows:
-                year_workflow = state_workflows[int(year)]
-                print(f"Using custom workflow for state {year}")
-
-            print(f"Simulating pathway state for year {year}...")
-            DistrictStateYear(
-                pathway_name=self.pathway_name, year=int(year), modifications={}, main_locator=self.main_locator
-            ).simulate(self.config, workflow=year_workflow)
-
-            # Log metadata in the YAML log.
-            entry = self.log_data.get(int(year), {}) or {}
-            entry["simulation_workflow"] = year_workflow
-            simulated_at = str(pd.Timestamp.now())
-            entry["latest_simulated_at"] = simulated_at
-            self.log_data[int(year)] = entry
-            record_simulated_state(
-                self.main_locator,
-                pathway_name=self.pathway_name,
-                year=int(year),
-                simulated_at=simulated_at,
-                source_log_hash=self.source_log_hash_for_year(int(year)),
-                workflow=year_workflow,
-            )
-
-            simulated_years.append(int(year))
-            print(f"Simulation for pathway state year {year} completed.")
-
-        self.save()
-
-        print("State-in-time simulations finished.")
-        print(f"Simulated: {len(simulated_years)} years")
-        if simulated_years:
-            print(f"Years simulated: {simulated_years}")
-        print(f"Skipped: {len(skipped_years)} years")
-        if skipped_years:
-            print(f"Years skipped: {skipped_years}")
-
 
 def create_state_in_time_scenario(
     config: Configuration,
@@ -1236,6 +1120,7 @@ def _apply_state_construction_changes(
                             f"to promote it. Missing fields: {sorted(missing)}."
                         )
 
+                explicitly_set_cols: set[str] = set()
                 for field, new_value in modifications.items():
                     if new_value is not None:
                         if field in ALL_MATERIAL_FIELDS:
@@ -1244,28 +1129,41 @@ def _apply_state_construction_changes(
                             component_field_name = envelope_lookup._col(
                                 envelope_db_name, field
                             )
+                            explicitly_set_cols.add(component_field_name)
                         new_row[component_field_name] = new_value
                         db_modified += 1
 
                 if db_modified:
-                    if is_material_promotion:
-                        # Clear stale direct-property cache; values will be re-derived from
-                        # materials by Envelope.from_locator on next load.
-                        suf = envelope_lookup._SUFFIX[envelope_db_name]
-                        derived_cols = (
-                            "U_base" if envelope_db_name == "floor" else f"U_{suf}",
-                            f"GHG_{suf}_kgCO2m2",
-                            f"GHG_biogenic_{suf}_kgCO2m2",
-                        )
-                        for c in derived_cols:
-                            if c in new_row.index:
-                                new_row[c] = None
-                        print(
-                            f"  Row '{code_new}' promoted to material-based from direct-property "
-                            f"source '{code_current}'; cleared stale {', '.join(derived_cols)} "
-                            f"(will be re-derived from materials on next load).",
-                            flush=True,
-                        )
+                    if material_fields_in_mod:
+                        # The copied cache describes the source's layers, not the new ones.
+                        # Blank it so the loader re-derives from materials — it rejects any
+                        # row whose cache has drifted from its own layers (issue #4059).
+                        derived_cols = [
+                            envelope_lookup._col(envelope_db_name, f)
+                            for f in (
+                                "U",
+                                "GHG_kgCO2m2",
+                                "GHG_biogenic_kgCO2m2",
+                                "GHG_production_kgCO2m2",
+                                "GHG_recycling_kgCO2m2",
+                            )
+                        ]
+                        # ...but keep anything the recipe set itself: materials plus an
+                        # explicit U means that U. `explicitly_set_cols` was already built
+                        # while applying `modifications` above, from the same fields.
+                        cleared = [
+                            c
+                            for c in derived_cols
+                            if c in new_row.index and c not in explicitly_set_cols
+                        ]
+                        if cleared:
+                            new_row[cleared] = None
+                            print(
+                                f"  Row '{code_new}' materials changed from source "
+                                f"'{code_current}'; cleared stale {', '.join(cleared)} "
+                                f"(will be re-derived from materials on next load).",
+                                flush=True,
+                            )
 
                     # Only validate 3-layer topology when the new row claims a material set;
                     # pure direct-property modifications must not be required to pass it.

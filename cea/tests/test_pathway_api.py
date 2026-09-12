@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import shutil
 from pathlib import Path
 from uuid import uuid4
@@ -16,11 +17,13 @@ import cea.api
 import cea.config
 from cea.datamanagement.district_pathways.pathway_state import (
     DistrictEvolutionPathway,
+    DistrictStateYear,
 )
 from cea.datamanagement.district_pathways.pathway_status import (
     record_baked_state,
     record_simulated_state,
 )
+from cea.datamanagement.district_pathways.state_simulation.main import simulate_all_states
 from cea.inputlocator import InputLocator
 from cea.interfaces.dashboard.api.pathways import router as pathways_router
 import cea.interfaces.dashboard.utils as dashboard_utils
@@ -28,7 +31,16 @@ from cea.interfaces.dashboard.dependencies import CEALocalConfig, require_authen
 from cea.interfaces.dashboard.settings import Settings, get_settings
 from cea.tests.paths import REPO_ROOT
 
-InputLocator._cleanup_temp_directory = lambda self: None  # type: ignore[method-assign]
+
+@pytest.fixture(autouse=True)
+def _no_temp_directory_cleanup(monkeypatch):
+    """Keep atexit from removing the temp directories these tests create.
+
+    Scoped to this module rather than assigned on the class at import time: a permanent
+    assignment leaks into every test that runs afterwards, silently turning real cleanup into
+    a no-op (`test_inputlocator_temp_directory` depends on it working).
+    """
+    monkeypatch.setattr(InputLocator, "_cleanup_temp_directory", lambda self: None)
 
 
 @pytest.fixture
@@ -267,6 +279,36 @@ def test_validate_all_states_job_via_cea_api(pathway_api_fixture):
     assert Path(locator.get_district_pathway_state_status_file("demo", 2040)).exists()
 
 
+def test_simulate_all_states_continues_after_one_year_fails(pathway_api_fixture, monkeypatch):
+    """A year whose workflow leaves no outputs/ behind must not discard the pathway log
+    updates already made for other years earlier in the same run: `simulate_all_states`
+    isolates each year's failure and still saves progress made before it (see
+    state_simulation/main.py)."""
+    config = pathway_api_fixture["config"]
+    locator = pathway_api_fixture["locator"]
+
+    _create_state_folder(locator, "demo", 2020, ["B1"])
+    _create_state_folder(locator, "demo", 2030, ["B1"])
+    _create_state_folder(locator, "demo", 2040, ["B1", "B2"])
+    _set_state_wall_thickness(locator, "demo", 2040, 0.15)
+
+    def fake_simulate(self, main_config, *, workflow, mark_simulated=True, recorded_workflow=None):
+        # The post-demand pass (recorded_workflow set) is the one responsible for producing
+        # outputs; skip it for year 2040 to simulate a workflow that completes without
+        # leaving results behind.
+        if recorded_workflow is not None and int(self.year) != 2040:
+            os.makedirs(InputLocator(self.state_folder()).get_output_folder(), exist_ok=True)
+
+    monkeypatch.setattr(DistrictStateYear, "simulate", fake_simulate)
+
+    with pytest.raises(ValueError, match="2040"):
+        simulate_all_states(config, pathway_name="demo")
+
+    log_data = _read_log(locator, "demo")
+    assert "latest_simulated_at" in log_data[2030]
+    assert "latest_simulated_at" not in log_data.get(2040, {})
+
+
 def test_put_year_yaml_saves_mapping(pathway_api_fixture):
     client = pathway_api_fixture["client"]
     locator = pathway_api_fixture["locator"]
@@ -290,6 +332,8 @@ modifications: {}
 
 
 def test_validate_state_records_status_and_timeline_detects_log_drift(pathway_api_fixture):
+    """A validated + simulated state reports "validated"/"baked"/"simulated" in the
+    timeline; editing it afterwards drifts every phase to its "changed_after_*" state."""
     client = pathway_api_fixture["client"]
     config = pathway_api_fixture["config"]
     locator = pathway_api_fixture["locator"]
@@ -305,6 +349,10 @@ def test_validate_state_records_status_and_timeline_detects_log_drift(pathway_ap
         built_at="2026-02-01T00:00:00",
         source_log_hash=source_hash,
     )
+    # A simulated state has results on disk. collect_state_phase_status reports
+    # `not_simulated` without them, so the record alone is not enough to stand in for a run.
+    state_locator = InputLocator(locator.get_state_in_time_scenario_folder("demo", 2030))
+    os.makedirs(state_locator.get_output_folder(), exist_ok=True)
     record_simulated_state(
         locator,
         pathway_name="demo",
@@ -349,6 +397,86 @@ def test_delete_manual_and_clear_mixed_state(pathway_api_fixture):
     assert mixed_clear.status_code == 200
     log_data = _read_log(locator, "demo")
     assert 2040 not in log_data
+
+
+def test_clear_state_outputs_only_keeps_inputs_and_log_entry(pathway_api_fixture):
+    """`delete_outputs=True, delete_inputs=False` removes only outputs/, leaving the baked
+    inputs and the pathway log entry in place so the state can be re-simulated."""
+    client = pathway_api_fixture["client"]
+    locator = pathway_api_fixture["locator"]
+
+    _create_state_folder(locator, "demo", 2030, ["B1"])
+    state_folder = Path(locator.get_state_in_time_scenario_folder("demo", 2030))
+    output_folder = Path(InputLocator(str(state_folder)).get_output_folder())
+    output_folder.mkdir(parents=True, exist_ok=True)
+
+    response = client.delete(
+        "/pathways/demo/years/2030",
+        params={"delete_inputs": False, "delete_outputs": True},
+    )
+    assert response.status_code == 200
+    assert not output_folder.exists()
+    # Inputs and the pathway entry are untouched, so the year stays baked and re-simulatable.
+    assert (state_folder / "inputs").is_dir()
+    assert 2030 in _read_log(locator, "demo")
+
+
+def test_clear_state_inputs_takes_the_whole_state_folder(pathway_api_fixture):
+    """Results cannot outlive the scenario that produced them.
+
+    Keeping outputs/ after the log entry is dropped leaves a state folder that
+    `check_district_pathway_log_yaml_integrity` rejects as unexpected, which blocks
+    Simulate Pathway for the whole pathway.
+    """
+    client = pathway_api_fixture["client"]
+    locator = pathway_api_fixture["locator"]
+
+    _create_state_folder(locator, "demo", 2030, ["B1"])
+    state_folder = Path(locator.get_state_in_time_scenario_folder("demo", 2030))
+    Path(InputLocator(str(state_folder)).get_output_folder()).mkdir(parents=True, exist_ok=True)
+
+    response = client.delete(
+        "/pathways/demo/years/2030",
+        params={"delete_inputs": True, "delete_outputs": False},
+    )
+    assert response.status_code == 200
+    assert not state_folder.exists()
+    assert 2030 not in _read_log(locator, "demo")
+
+
+def test_clear_state_on_a_stock_year_clears_the_bake_not_the_year(pathway_api_fixture):
+    """Clearing inputs on a stock-driven year removes its regenerable bake, not the year
+    itself: it is not in the log to begin with, and it stays in the timeline afterwards.
+    No 409 -- unlike POST/PUT create, DELETE does not special-case stock years."""
+    client = pathway_api_fixture["client"]
+    locator = pathway_api_fixture["locator"]
+
+    _create_state_folder(locator, "demo", 2020, ["B1"])
+    state_folder = Path(locator.get_state_in_time_scenario_folder("demo", 2020))
+    Path(InputLocator(str(state_folder)).get_output_folder()).mkdir(parents=True, exist_ok=True)
+
+    response = client.delete("/pathways/demo/years/2020")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["state_kind"] == "stock"
+    assert not state_folder.exists()
+    assert 2020 not in _read_log(locator, "demo")
+
+    timeline = client.get("/pathways/demo/timeline").json()
+    row = {item["year"]: item for item in timeline["years"]}[2020]
+    assert row["state_kind"] == "stock"
+
+
+def test_clear_state_requires_a_selection(pathway_api_fixture):
+    """Clearing with both delete_inputs and delete_outputs False is rejected as a 400,
+    not a silent no-op."""
+    client = pathway_api_fixture["client"]
+
+    response = client.delete(
+        "/pathways/demo/years/2030",
+        params={"delete_inputs": False, "delete_outputs": False},
+    )
+    assert response.status_code == 400
 
 
 def _write_zone_shapefile(locator: InputLocator) -> None:

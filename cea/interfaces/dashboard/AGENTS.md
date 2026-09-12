@@ -165,6 +165,11 @@ When a consumer needs fresh data, it should fetch and compute on demand rather t
 
 Before adding a push mechanism, ask: does the consumer already recompute correctly when it reads? If yes, the push is redundant — decline to add it.
 
+**Exception**: a write returning its own resulting state to the same caller, in the same
+response, is request/response, not push. The rule targets a producer propagating data to
+consumers *outside* the current request. Test: does this run for someone other than the
+caller of this exact request? If no, it's not the push this section warns about.
+
 ## Framing
 
 Users describe requirements in UI and event terms: "after X finishes", "when the user clicks Y", "the panel should refresh when Z". These are valid UX descriptions but are not backend specifications — translate them before deciding on an implementation.

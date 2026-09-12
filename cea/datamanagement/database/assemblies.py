@@ -90,6 +90,10 @@ class Envelope(BaseAssemblyDatabase):
 
     @classmethod
     def from_locator(cls, locator: InputLocator):
+        """Load every envelope database and, for wall/roof/floor, derive the legacy
+        U/GHG columns from materials wherever a row has a complete material set --
+        cross-checking them against any on-disk direct-property cache and raising if the
+        two have drifted (see `_ensure_legacy_columns_exist`)."""
         frames = cls._read_mapping(locator, cls._locator_mapping())
 
         # Record original columns so saving can preserve the on-disk schema.
@@ -214,6 +218,16 @@ class Envelope(BaseAssemblyDatabase):
             "wall": ("U_wall", "GHG_wall_kgCO2m2", "GHG_biogenic_wall_kgCO2m2"),
         }
 
+        # Detail GHG columns materials also derive. Not part of the legacy direct-property
+        # contract above (older rows may not have them at all), so they are re-derived
+        # whenever materials are complete but are not cross-checked or required for a row
+        # to count as "direct-property-complete".
+        DETAIL_GHG_COLS_BY_KIND: dict[str, tuple[str, str]] = {
+            "floor": ("GHG_production_floor_kgCO2m2", "GHG_recycling_floor_kgCO2m2"),
+            "roof": ("GHG_production_roof_kgCO2m2", "GHG_recycling_roof_kgCO2m2"),
+            "wall": ("GHG_production_wall_kgCO2m2", "GHG_recycling_wall_kgCO2m2"),
+        }
+
         CROSS_CHECK_REL_TOLERANCE = 0.01  # 1% drift between materials-derived and on-disk
 
         def _row_has_complete_material_set(row: pd.Series) -> bool:
@@ -291,9 +305,10 @@ class Envelope(BaseAssemblyDatabase):
             """
             df = df.copy()
             derived_cols = DERIVED_COLS_BY_KIND[kind]
+            detail_ghg_cols = DETAIL_GHG_COLS_BY_KIND[kind]
 
             # Make sure derived columns exist so downstream readers never KeyError.
-            for c in derived_cols:
+            for c in derived_cols + detail_ghg_cols:
                 if c not in df.columns:
                     df[c] = None
 
@@ -332,7 +347,7 @@ class Envelope(BaseAssemblyDatabase):
                     continue
 
                 u_derived = _calc_u(mats, kind)
-                ghg_total, _ghg_prod, _ghg_recyc, ghg_bio = _calc_ghg(mats)
+                ghg_total, ghg_prod, ghg_recyc, ghg_bio = _calc_ghg(mats)
                 derived_values = (u_derived, ghg_total, ghg_bio)
 
                 # Cross-check against on-disk values when present.
@@ -354,6 +369,11 @@ class Envelope(BaseAssemblyDatabase):
 
                 # Materials win: write derived values (overwriting any stale cache within tolerance).
                 for col, derived in zip(derived_cols, derived_values):
+                    if derived is not None:
+                        df.loc[code_str, col] = derived
+                # Detail production/recycling split, not part of the legacy contract above
+                # (so not cross-checked or required), but still stale cache if left alone.
+                for col, derived in zip(detail_ghg_cols, (ghg_prod, ghg_recyc)):
                     if derived is not None:
                         df.loc[code_str, col] = derived
 

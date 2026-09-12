@@ -12,6 +12,8 @@ import pandas as pd
 import plotly.express as px
 import geopandas as gpd
 import os
+import traceback
+
 import cea.config
 from cea.inputlocator import InputLocator
 from cea.visualisation.special._error_html import (
@@ -269,12 +271,31 @@ def process_data_by_grouping(detailed_df, architecture_df, x_to_plot, y_cost_cat
             total_area = architecture_df['Af_m2'].sum()
             area_col = 'Af_m2'
 
+        # A zero or missing area cannot produce a cost per m2. Dividing by 1 instead would
+        # plot the raw cost as though it were normalised, and dividing by 0 yields inf --
+        # both read as real numbers. Blank the entity out and name it, so the gap in the
+        # chart is explained rather than silently wrong.
+        unnormalisable: list[str] = []
+
+        def _normalise(value, normaliser, name):
+            """Divide `value` by `normaliser`, or NaN it (and record `name` as
+            unnormalisable) when the normaliser is missing or not positive."""
+            if normaliser is None or not normaliser > 0:
+                if name not in unnormalisable:
+                    unnormalisable.append(name)
+                return float('nan')
+            return value / normaliser
+
         # Get normalisation factors
         if x_to_plot in ['by_scale', 'by_energy_carrier', 'by_operation_service', 'by_component_type']:
-            # For aggregated views, use total GFA/Af across all buildings
-            # Divide all cost columns by total area
-            for col in selected_cost_cols:
-                df_agg[col] = df_agg[col] / total_area
+            # For aggregated views, total_area is one scalar for the whole block (not
+            # per-row like by_building_and_network below), so the normalisability check
+            # only needs to run once rather than once per cell via `_normalise`.
+            if total_area is None or not total_area > 0:
+                unnormalisable.append('all buildings')
+                df_agg[selected_cost_cols] = float('nan')
+            else:
+                df_agg[selected_cost_cols] = df_agg[selected_cost_cols] / total_area
 
         elif x_to_plot == 'by_building_and_network':
             # For building/network view, normalise per building/network
@@ -290,22 +311,25 @@ def process_data_by_grouping(detailed_df, architecture_df, x_to_plot, y_cost_cat
                     network_name = name[:-3]  # Remove '_DC' suffix
                     # Get DC network buildings and their total area
                     normaliser = get_network_buildings_and_area(locator, network_name, 'DC', architecture_df, area_col)
-                    if normaliser == 0:
-                        normaliser = 1  # Avoid division by zero
                 elif name.endswith('_DH'):
                     # Extract network name from network_id (format: {network_name}_DH)
                     network_name = name[:-3]  # Remove '_DH' suffix
                     # Get DH network buildings and their total area
                     normaliser = get_network_buildings_and_area(locator, network_name, 'DH', architecture_df, area_col)
-                    if normaliser == 0:
-                        normaliser = 1  # Avoid division by zero
                 elif name in arch_lookup.index:
                     normaliser = arch_lookup.loc[name, area_col]
                 else:
-                    normaliser = 1  # Avoid division by zero
+                    normaliser = None
 
                 for col in selected_cost_cols:
-                    df_agg.at[idx, col] = row[col] / normaliser
+                    df_agg.at[idx, col] = _normalise(row[col], normaliser, name)
+
+        if unnormalisable:
+            print(
+                f"Warning: no {area_col} to normalise by for {sorted(unnormalisable)}; "
+                "their costs are left blank. Set y-normalised-by = no_normalisation to plot "
+                "absolute costs instead."
+            )
 
     # Apply unit conversion
     unit_divisors = {
@@ -351,6 +375,20 @@ def process_data_by_grouping(detailed_df, architecture_df, x_to_plot, y_cost_cat
     x_sorted_by = plot_config_general.x_sorted_by
     x_sorted_reversed = plot_config_general.x_sorted_reversed
 
+    def _sort_not_applicable(reason: str) -> None:
+        """Say why the chosen sort was ignored, and which parameter does change the bars.
+
+        `x-sorted-by` comes from the shared plots-general section, so this plot offers
+        options that only make sense per building. Falling back silently makes the control
+        look broken, and reads as "the plot ignores my settings".
+        """
+        print(
+            f"Note: x-sorted-by = '{x_sorted_by}' does not apply {reason}. "
+            "Ordering the bars by total cost instead.\n"
+            "      x-sorted-by only reorders the groups that x-to-plot produces; to change "
+            f"what the bars are, set x-to-plot (currently '{x_to_plot}')."
+        )
+
     # For cost breakdown, "default" means sort by total cost
     if x_sorted_by == 'default':
         # Sort by total cost (default for cost plots)
@@ -366,13 +404,16 @@ def process_data_by_grouping(detailed_df, architecture_df, x_to_plot, y_cost_cat
             )
             df_long = df_long.sort_values('sort_area', ascending=not x_sorted_reversed)
         else:
-            # Fall back to total cost sorting if not by_building_and_network
+            _sort_not_applicable(
+                f"when x-to-plot is '{x_to_plot}' (areas are only known per building)"
+            )
             df_long = df_long.sort_values('group_total', ascending=not x_sorted_reversed)
     elif x_sorted_by == 'building_name':
         df_long = df_long.sort_values(id_col, ascending=not x_sorted_reversed)
     else:
-        # For other sorting options in plots-general (construction_year, roof_area, etc.)
-        # that don't apply to cost breakdown, fall back to total cost sorting
+        # Other plots-general options (construction_year, roof_area, ...) have no
+        # counterpart in cost results.
+        _sort_not_applicable("to cost breakdown")
         df_long = df_long.sort_values('group_total', ascending=not x_sorted_reversed)
 
     return df_long, id_col
@@ -546,6 +587,9 @@ def main(config):
         except FileNotFoundError:
             return no_data_html(label='Baseline costs', tool='baseline-costs')
         except Exception:
+            # The card stays generic on purpose (see _error_html.generic_error_html), but the
+            # cause has to reach the job log -- otherwise the failure leaves no trace anywhere.
+            traceback.print_exc()
             return generic_error_html(title='Error creating visualisation')
 
     # ── First pass: process all scenarios, collect data for axis alignment ───
@@ -572,6 +616,9 @@ def main(config):
                 available=available_whatifs,
             )))
         except Exception:
+            # As above: generic card for the user, full traceback in the job log.
+            print(f"Error processing what-if scenario '{whatif_name}':")
+            traceback.print_exc()
             slots.append(('err', generic_error_html(
                 title=f'Error for {whatif_name}',
             )))
@@ -627,10 +674,14 @@ def main(config):
         scenario_name = os.path.basename(config.scenario)
         feature_label = 'CEA-4 Cost Breakdown'
         subtitle = ' | '.join([feature_label, scenario_name, whatif_name])
+        # Keep the user's plot-title: this layout replaces the title create_cost_breakdown_chart
+        # built (to add the scenario/what-if subtitle), which silently discarded it on this
+        # path while the baseline path below honoured it.
+        heading = plot_config_general.plot_title or 'Cost Breakdown'
         fig.update_layout(
             autosize=True,
             title=dict(
-                text=f"<b>Cost Breakdown</b><br><sub>{subtitle}</sub>",
+                text=f"<b>{heading}</b><br><sub>{subtitle}</sub>",
                 x=0, xanchor='left', yanchor='top', font=dict(size=20),
             ),
             margin=dict(t=80),
