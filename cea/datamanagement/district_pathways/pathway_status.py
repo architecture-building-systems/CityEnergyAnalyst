@@ -41,7 +41,7 @@ def write_state_status(
     return current
 
 
-def _state_inputs_folder_exists(
+def state_inputs_folder_exists(
     locator: InputLocator,
     *,
     pathway_name: str,
@@ -55,6 +55,22 @@ def _state_inputs_folder_exists(
     state_folder = locator.get_state_in_time_scenario_folder(pathway_name, int(year))
     # The state folder is itself a scenario; a state-scoped locator owns the canonical path.
     return os.path.isdir(InputLocator(state_folder).get_input_folder())
+
+
+def state_outputs_folder_exists(
+    locator: InputLocator,
+    *,
+    pathway_name: str,
+    year: int,
+) -> bool:
+    """True if the state's outputs/ folder exists.
+
+    Existence only, deliberately not a content hash — see `collect_state_phase_status` for
+    why hashing this folder is brittle. A state with no outputs folder at all is
+    unambiguously not simulated; byte drift within one is not.
+    """
+    state_folder = locator.get_state_in_time_scenario_folder(pathway_name, int(year))
+    return os.path.isdir(os.path.join(state_folder, "outputs"))
 
 
 def hash_state_folder(
@@ -85,7 +101,7 @@ def record_baked_state(
     built_at: str,
     source_log_hash: str,
 ) -> dict[str, Any]:
-    if not _state_inputs_folder_exists(locator, pathway_name=pathway_name, year=year):
+    if not state_inputs_folder_exists(locator, pathway_name=pathway_name, year=year):
         raise FileNotFoundError(
             f"Cannot record baked state for missing inputs folder: {pathway_name} state_{int(year)}"
         )
@@ -113,7 +129,7 @@ def record_validated_state(
     validated_at: str,
     source_log_hash: str,
 ) -> dict[str, Any]:
-    if not _state_inputs_folder_exists(locator, pathway_name=pathway_name, year=year):
+    if not state_inputs_folder_exists(locator, pathway_name=pathway_name, year=year):
         raise FileNotFoundError(
             f"Cannot record validation for missing inputs folder: {pathway_name} state_{int(year)}"
         )
@@ -141,6 +157,14 @@ def record_simulated_state(
     if state_hash is None:
         raise FileNotFoundError(
             f"Cannot record simulation for missing state folder: {pathway_name} state_{int(year)}"
+        )
+    # Mirrors the inputs guard on `record_baked_state`: a simulation record without results
+    # behind it is the state `_collect_simulation_phase` has to defend against, so refuse to
+    # create one in the first place.
+    if not state_outputs_folder_exists(locator, pathway_name=pathway_name, year=year):
+        raise FileNotFoundError(
+            f"Cannot record simulation for a state with no outputs folder: "
+            f"{pathway_name} state_{int(year)}"
         )
     # A simulated state is, by definition, baked and validated against the same log, so re-stamp
     # the bake/validation source-log hashes too — this keeps it from showing stale after sim.
@@ -244,6 +268,9 @@ def collect_state_phase_status(
         signature=signature,
         source_log_hash=source_log_hash,
         bake=bake,
+        has_outputs=state_outputs_folder_exists(
+            locator, pathway_name=pathway_name, year=year
+        ),
     )
 
     latest_confirmed_at = max(
@@ -328,6 +355,7 @@ def _collect_simulation_phase(
     signature: dict[str, Any],
     source_log_hash: str,
     bake: dict[str, Any],
+    has_outputs: bool,
 ) -> dict[str, Any]:
     """Decide whether a state's simulation results are still current.
 
@@ -351,6 +379,16 @@ def _collect_simulation_phase(
 
     if not simulated_at:
         return _phase_payload("not_simulated", "Not simulated", simulated_at)
+
+    if not has_outputs:
+        # The stamp can outlive the results it refers to: `_cleanup_state_outputs` wipes a
+        # year's outputs before re-running it, so a run that then fails leaves the previous
+        # "simulated" record behind — as does deleting the folder by hand, or a cloud client
+        # evicting it. Trusting the stamp there makes Simulate Pathway skip the year and the
+        # GUI offer results that do not exist.
+        return _phase_payload(
+            "not_simulated", "Not simulated (outputs missing)", simulated_at
+        )
 
     if bake["state"] == "changed_after_bake":
         return _phase_payload(

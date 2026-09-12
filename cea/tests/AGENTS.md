@@ -53,4 +53,21 @@ cea.api.pathway_validate_all_states(...)
 ## Related Files
 - `test_dashboard_bootstrap.py` - Dashboard preparation and launcher ordering coverage.
 - `test_pathway_api.py` - API-level coverage for overview rows, stock/manual/mixed classification, editor endpoints, and stale-status detection.
+- `test_pathway_envelope_bake.py` - Envelope row handling when baking a state from a template: the U/GHG cache must be dropped when material layers change (issue #4059), kept when they don't.
+- `test_envelope_layer_rules.py` - When U/GHG may be blank: one material layer (name + thickness > 0)
+  is enough; service life must always be positive; partial direct values are still cross-checked.
+  Also covers `apply_material_derivation`: saving re-derives from edited layers, and a stored value
+  that contradicts them is reported as a conflict rather than silently replaced.
+- `test_use_stage_proportions.py` - B2 maintenance and B3 repair are RICS-recommended fractions
+  of production, charged per installed generation; zero excludes the module.
+- `test_technical_system_replacement.py` - Each supply component replaces on its own `LT_yr`;
+  the blanket intensity is shared, not multiplied, so building totals are unchanged.
+- `test_component_lca.py` - Component service life comes from `LT_yr` first, then a documented
+  Green Mark reference, then a short fallback; every shipped component resolves from its own data.
+- `test_materials_pre_rename_hint.py` - A MATERIALS.csv with the old `*_recycling` column
+  names gets an actionable pointer, not a silent rewrite; a merely incomplete file does not.
+- `test_envelope_emission_split.py` - `GHG_*_kgCO2m2` stays the lifecycle total; production
+  and demolition split it, derived per row. One file can hold split and unsplit rows.
+- `test_biogenic_sign_convention.py` - Biogenic carbon is negative at every level, and no consumer
+  may negate it. Scans shipped databases and the source tree.
 - `paths.py` - Shared repo/examples/workflows filesystem anchors; use instead of `__file__`-relative math.

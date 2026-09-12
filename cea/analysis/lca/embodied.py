@@ -15,7 +15,11 @@ import cea.config
 import cea.inputlocator
 from cea.constants import SERVICE_LIFE_OF_BUILDINGS, SERVICE_LIFE_OF_TECHNICAL_SYSTEMS, \
     CONVERSION_AREA_TO_FLOOR_AREA_RATIO, EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS
-from cea.datamanagement.utils import migrate_void_deck_data
+from cea.datamanagement.utils import (
+    migrate_void_deck_data,
+    resolve_enclosed_floors_ag,
+    resolve_void_height,
+)
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -132,6 +136,19 @@ def lca_embodied(year_to_calculate, locator):
     df6.rename({'GHG_wall_kgCO2m2': 'GHG_part_kgCO2m2'}, inplace=True, axis=1)
     df6.rename({'GHG_biogenic_wall_kgCO2m2': 'GHG_biogenic_part_kgCO2m2'}, inplace=True, axis=1)
 
+    # Biogenic carbon is optional. A database migrated from CEA-3 has no GHG_biogenic_*
+    # columns at all, and the schema marks them nullable. Treat an absent column as "stores no
+    # biogenic carbon" -- the same resolution the what-if path applies through
+    # `envelope_lookup._optional_field(..., default=0.0)` -- rather than failing to index it.
+    for frame, column in ((df1, 'GHG_biogenic_win_kgCO2m2'),
+                          (df2, 'GHG_biogenic_roof_kgCO2m2'),
+                          (df3, 'GHG_biogenic_wall_kgCO2m2'),
+                          (df4, 'GHG_biogenic_floor_kgCO2m2'),
+                          (df5, 'GHG_biogenic_base_kgCO2m2'),
+                          (df6, 'GHG_biogenic_part_kgCO2m2')):
+        if column not in frame.columns:
+            frame[column] = 0.0
+
     fields1 = ['name', "GHG_win_kgCO2m2"]
     fields2 = ['name', "GHG_biogenic_win_kgCO2m2"]
     fields3 = ['name', "Service_Life_win"]
@@ -189,16 +206,20 @@ def lca_embodied(year_to_calculate, locator):
     data_merged_df['area_walls_ext_ag'] = data_merged_df['perimeter'] * data_merged_df['height_ag'] - data_merged_df[
         'windows_ag']
 
-    # fix according to the void deck
+    # fix according to the void deck: the open portion carries no facade. Comparing heights
+    # directly means this no longer has to round the void to whole storeys.
     data_merged_df['empty_envelope_ratio'] = 1 - (
-            (data_merged_df['void_deck']  / data_merged_df['floors_ag'])) # total area of external facade (wall+window)
+            resolve_void_height(data_merged_df) / data_merged_df['height_ag'])  # total area of external facade (wall+window)
     data_merged_df['windows_ag'] = data_merged_df['windows_ag'] * data_merged_df['empty_envelope_ratio']
     data_merged_df['area_walls_ext_ag'] = data_merged_df['area_walls_ext_ag'] * data_merged_df['empty_envelope_ratio']
 
     ## wall area below ground
     data_merged_df['area_walls_ext_bg'] = data_merged_df['perimeter'] * data_merged_df['height_bg']
     ## floor area above ground
-    data_merged_df['floor_area_ag'] = data_merged_df['footprint'] * data_merged_df['floors_ag']
+    # Void-deck storeys are open: no partitions, no finished floor slab, no technical systems,
+    # so they carry no embodied emissions. `resolve_enclosed_floors_ag` excludes them under
+    # either column form, matching how the demand module derives GFA.
+    data_merged_df['floor_area_ag'] = data_merged_df['footprint'] * resolve_enclosed_floors_ag(data_merged_df)
     ## floor area below ground
     data_merged_df['floor_area_bg'] = data_merged_df['footprint'] * data_merged_df['floors_bg']
     ## total floor area

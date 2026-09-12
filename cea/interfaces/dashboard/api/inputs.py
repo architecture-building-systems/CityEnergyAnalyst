@@ -8,7 +8,7 @@ import traceback
 import warnings
 from collections import defaultdict
 from contextlib import redirect_stdout
-from typing import Dict, Any
+from typing import Dict, Any, Literal
 import zipfile
 
 from fastapi.responses import StreamingResponse
@@ -20,11 +20,14 @@ from fiona.errors import DriverError
 from pydantic import BaseModel, Field
 
 import cea.config
+import cea.databases
 import cea.inputlocator
 from cea.datamanagement.district_pathways.pathway_timeline import PathwayChildScenario
+from cea.datamanagement.utils import VOID_FLOORS_COLUMN
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 import cea.schemas
-from cea.databases import CEADatabase, CEADatabaseException
+from cea.databases import CEADatabase, CEADatabaseException, databases_folder_path
+from cea.datamanagement.database.assemblies import CROSS_CHECK_REL_TOLERANCE
 from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
 
 from cea.interfaces.dashboard.utils import (
@@ -189,6 +192,19 @@ async def save_all_inputs(scenario: CEAScenario, form: InputForm):
 
             if len(tables[db]):
                 if file_type == 'shp':
+                    # The editor sends back what the GET gave it, and the GET builds `tables`
+                    # and `geojsons` from two independent reads. When the geometry read failed
+                    # the table can arrive populated with no geojson beside it; writing the
+                    # shapefile needs the geometry, so skip rather than raise a TypeError from
+                    # `None['features']`.
+                    if not (geojsons.get(db) or {}).get('features'):
+                        logger.warning(
+                            f"Skipping {db}: its rows were sent without any geometry. The "
+                            f"geometry file likely failed to load - check the log from when "
+                            f"the scenario was opened.")
+                        out['tables'][db] = tables[db]
+                        continue
+
                     table_df = geopandas.GeoDataFrame.from_features(geojsons[db]['features'],
                                                                     crs=get_geographic_coordinate_system())
                     out['geojsons'][db] = json.loads(table_df.to_json())
@@ -292,7 +308,9 @@ def get_building_properties(scenario: str):
         file_type = db_info['file_type']
         db_columns = db_info['columns']
 
-        # Get building property data from file
+        # Get building property data from file. `available_columns` stays empty if the read
+        # fails, which is fine: the table is None then, so there is nothing to render anyway.
+        available_columns = set()
         try:
             if file_type == 'shp':
                 if not os.path.exists(file_path):
@@ -304,20 +322,32 @@ def get_building_properties(scenario: str):
                     del db_columns['geometry']
                 if 'reference' in db_columns and 'reference' not in table_df.columns:
                     table_df['reference'] = None
+                available_columns = set(table_df.columns)
                 store['tables'][db] = json.loads(table_df.set_index('name').to_json(orient='index'))
             else:
                 table_df = pd.read_csv(file_path)
                 if 'reference' in db_columns and 'reference' not in table_df.columns:
                     table_df['reference'] = None
+                available_columns = set(table_df.columns)
                 store['tables'][db] = table_df.set_index("name").to_dict(orient='index')
         except (IOError, DriverError, ValueError, FileNotFoundError) as e:
             logger.warning(f"Error reading {db} from {file_path}: {e}")
             store['tables'][db] = None
 
         # Get column definitions from schema
+        #
+        # `void_deck` is deprecated in favour of `height_vd`, so it is advertised only to
+        # scenarios that already carry it. A scenario CEA generates today has `height_vd` and
+        # never had `void_deck`; offering the legacy column there would show two columns for
+        # one concept and invite new data into the form being retired. `height_vd` is always
+        # advertised, so an older scenario can opt into metres.
+        hide_deprecated_void_deck = VOID_FLOORS_COLUMN not in available_columns
+
         columns = defaultdict(dict)
         try:
             for column_name, column in db_columns.items():
+                if hide_deprecated_void_deck and column_name == VOID_FLOORS_COLUMN:
+                    continue
                 columns[column_name]['type'] = column['type']
                 if 'choice' in column:
                     lookup_path_method = column['choice']['lookup']['path']
@@ -398,6 +428,28 @@ def df_to_json(file_location, root=None):
             raise FileNotFoundError(f"File not found: {file_location}")
 
         table_df = geopandas.GeoDataFrame.from_file(file_location)
+
+        # Drop rows with no geometry, for display only.
+        #
+        # `get_lat_lon_projected_shapefile` rejects the whole file if any row fails validation,
+        # so a single row with a null footprint blanks the entire map -- every other building
+        # included -- while the table beside it still lists them all. For the editor it is more
+        # useful to draw what can be drawn and say what was left out; the row stays in the
+        # table, which is where the user can fix or delete it.
+        #
+        # Simulation scripts call the validator directly and still refuse to run, which is
+        # right: a missing footprint is a real error, not a display inconvenience.
+        missing_geometry = table_df.geometry.isna()
+        if missing_geometry.any():
+            names = table_df.loc[missing_geometry].get('name')
+            logger.warning(
+                f"{int(missing_geometry.sum())} row(s) in {os.path.basename(file_location)} "
+                f"have no geometry and are not drawn on the map"
+                + (f": {', '.join(map(str, names))}" if names is not None else "")
+                + ". They remain in the table - give them a footprint or delete them."
+            )
+            table_df = table_df.loc[~missing_geometry]
+
         # Save coordinate system
         if table_df.empty:
             # Set crs to generic projection if empty
@@ -414,10 +466,13 @@ def df_to_json(file_location, root=None):
         out = json.loads(out.to_json())
         return out, crs
     except (IOError, DriverError, FileNotFoundError) as e:
-        print(e)
+        # Through the logger, naming the file. Returning None here is invisible until a later
+        # save trips over it -- `save_all_inputs` reads `geojsons[db]['features']` -- so the
+        # 500 it eventually raises points at the save, not at whatever actually failed here.
+        logger.warning(f"Could not read geometry for the Input Editor from {file_location}: {e}")
         return None, None
     except Exception:
-        traceback.print_exc()
+        logger.exception(f"Could not read geometry for the Input Editor from {file_location}")
         return None, None
 
 
@@ -444,7 +499,9 @@ async def get_building_schedule(scenario: CEAScenario, building: str):
 async def get_input_database_data(scenario: CEAScenario):
     locator = cea.inputlocator.InputLocator(scenario)
     try:
-        cea_db = await run_in_threadpool(lambda: CEADatabase.from_locator(locator))
+        # Lenient: a database with a broken row must still open, or the user cannot reach the
+        # editor to fix it. `/databases/check` reports what is wrong.
+        cea_db = await run_in_threadpool(lambda: CEADatabase.from_locator(locator, strict=False))
     except CEADatabaseException as e:
         print(e)
         raise HTTPException(
@@ -461,20 +518,84 @@ async def get_input_database_data(scenario: CEAScenario):
 
 
 @router.put('/databases')
-async def put_input_database_data(scenario: CEAScenario, payload: Dict[str, Any]):
+async def put_input_database_data(
+    scenario: CEAScenario,
+    payload: Dict[str, Any],
+    overwrite_derived: bool = False,
+):
+    """Save the database, deriving envelope U/GHG values from the material layers.
+
+    A row whose stored U/GHG disagree with its layers is reported as a conflict and the whole
+    save is refused (409) unless `overwrite_derived` is set. Refusing everything rather than
+    the offending rows keeps the file consistent with what the user last saw: a partial save
+    would leave the editor showing values that were not written.
+    """
     locator = cea.inputlocator.InputLocator(scenario)
     try:
         def fn():
             db = CEADatabase.from_dict(payload)
+            materials = getattr(db.components.materials, 'materials', None)
+            conflicts = db.assemblies.envelope.apply_material_derivation(materials)
+            if conflicts and not overwrite_derived:
+                return conflicts
             db.save(locator)
-            return {'message': 'Database updated'}
-        return await run_in_threadpool(fn)
+            return None
+
+        conflicts = await run_in_threadpool(fn)
+        if conflicts:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={
+                    'status': 'derived_conflict',
+                    'message': (
+                        f'{len(conflicts)} value(s) disagree with their material layers by more '
+                        f'than {CROSS_CHECK_REL_TOLERANCE:.0%}. Material layers are the source of '
+                        f'truth, so saving replaces them with values derived from the layers.'
+                    ),
+                    'conflicts': conflicts,
+                },
+            )
+        return {'message': 'Database updated'}
     except CEADatabaseException as e:
         print(e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e),
         )
+
+
+class SeedMaterialsDatabase(BaseModel):
+    source: Literal['CH']
+
+
+@router.post('/databases/components/materials')
+async def seed_materials_database(scenario: CEAScenario, payload: SeedMaterialsDatabase):
+    """Give a scenario a MATERIALS.csv it does not have yet."""
+    # Only the CH database ships one, and every existing copy path is folder-granular
+    # (`database_helper` copytree's the whole COMPONENTS tree, clobbering the siblings).
+    locator = cea.inputlocator.InputLocator(scenario)
+    destination = locator.get_database_components_materials()
+    if os.path.exists(destination):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This scenario already has a materials database.",
+        )
+
+    # Mirror the destination's own sub-path inside the region database, so moving the file
+    # is a locator change rather than a locator change plus this literal.
+    source = os.path.join(
+        databases_folder_path,
+        payload.source,
+        os.path.relpath(destination, locator.get_db4_folder()),
+    )
+
+    def do_copy():
+        os.makedirs(os.path.dirname(destination), exist_ok=True)
+        shutil.copyfile(source, destination)
+
+    await run_in_threadpool(do_copy)
+
+    return {'source': payload.source}
 
 
 @router.post('/databases/upload')

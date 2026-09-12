@@ -11,6 +11,7 @@ import pandas as pd
 from cea.import_export.result_summary import (
     get_emission_context,
     process_building_summary,
+    write_selected_buildings_file,
     exec_aggregate_time_period,
     slice_hourly_results_for_custom_time_period,
 )
@@ -811,6 +812,12 @@ def _export_operational_emissions_to_plots_folder(locator, whatif_names, buildin
         df_result.to_csv(out_path, index=False, float_format='%.3f')
 
 
+# Features whose results live under a what-if scenario: exported to the plots folder by
+# a dedicated writer rather than by process_building_summary.
+WHATIF_PLOT_FEATURES = ('heat-rejection', 'final-energy',
+                        'lifecycle-emissions', 'operational-emissions')
+
+
 # Trigger the summary feature and point to the csv results file
 class csv_pointer:
     """Maps user input combinations to pre-defined CSV file paths."""
@@ -895,6 +902,18 @@ class csv_pointer:
 
     def execute_summary(self, bool_include_advanced_analytics):
         """Executes the summary feature to generate the required CSV output."""
+        # The what-if branches below write their own intermediate CSV and return,
+        # bypassing process_building_summary -- which is what writes
+        # selected_buildings.csv for every other feature. Without it the plot has no
+        # architecture data to normalise or sort by, so write it here for all of them.
+        if self.plot_cea_feature in WHATIF_PLOT_FEATURES and self.whatif_names:
+            write_selected_buildings_file(
+                self.locator, self.locator.get_export_plots_selected_building_file(),
+                self.buildings,
+                self.integer_year_start, self.integer_year_end, self.list_construction_type,
+                self.list_use_type, self.min_ratio_as_main_use, bool_use_acronym=True,
+            )
+
         if self.plot_cea_feature == 'heat-rejection':
             if not self.whatif_names:
                 return

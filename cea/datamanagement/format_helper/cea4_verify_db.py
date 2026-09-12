@@ -36,6 +36,7 @@ CONVERSION_COMPONENTS = ['ABSORPTION_CHILLERS', 'BOILERS', 'BORE_HOLES', 'COGENE
                          'THERMAL_ENERGY_STORAGES', 'UNITARY_AIR_CONDITIONERS', 'VAPOR_COMPRESSION_CHILLERS'
                          ]
 DISTRIBUTION_COMPONENTS = ['THERMAL_GRID']
+MATERIALS_COMPONENTS = ['MATERIALS']  # single sheet, kept as a list for dict_ASSEMBLIES_COMPONENTS
 dict_assembly = {'ENVELOPE_MASS': 'type_mass', 'ENVELOPE_TIGHTNESS': 'type_leak', 'ENVELOPE_FLOOR': 'type_floor',
                  'ENVELOPE_WALL': 'type_wall', 'ENVELOPE_WINDOW': 'type_win', 'ENVELOPE_SHADING': 'type_shade',
                  'ENVELOPE_ROOF': 'type_roof', 'HVAC_CONTROLLER': 'hvac_type_ctrl', 'HVAC_HOTWATER': 'hvac_type_dhw',
@@ -46,7 +47,8 @@ dict_assembly = {'ENVELOPE_MASS': 'type_mass', 'ENVELOPE_TIGHTNESS': 'type_leak'
 ASSEMBLIES_FOLDERS = ['ENVELOPE', 'HVAC', 'SUPPLY']
 COMPONENTS_FOLDERS = ['CONVERSION', 'DISTRIBUTION', 'FEEDSTOCKS']
 dict_ASSEMBLIES_COMPONENTS = {'ENVELOPE': ENVELOPE_ASSEMBLIES, 'HVAC': HVAC_ASSEMBLIES, 'SUPPLY': SUPPLY_ASSEMBLIES,
-                              'CONVERSION': CONVERSION_COMPONENTS, 'DISTRIBUTION': DISTRIBUTION_COMPONENTS, 'FEEDSTOCKS': ['ENERGY_CARRIERS']}
+                              'CONVERSION': CONVERSION_COMPONENTS, 'DISTRIBUTION': DISTRIBUTION_COMPONENTS, 'FEEDSTOCKS': ['ENERGY_CARRIERS'],
+                              'MATERIALS': MATERIALS_COMPONENTS}
 mapping_dict_db_item_to_schema_locator = {'CONSTRUCTION_TYPES': 'get_database_archetypes_construction_type',
                                           'USE_TYPES': 'get_database_archetypes_use_type',
                                           'SCHEDULES_LIBRARY': 'get_database_archetypes_schedules',
@@ -90,6 +92,7 @@ mapping_dict_db_item_to_schema_locator = {'CONSTRUCTION_TYPES': 'get_database_ar
                                           'COAL': 'get_database_components_feedstocks_coal',
                                           'DRYBIOMASS': 'get_database_components_feedstocks_drybiomass',
                                           'ENERGY_CARRIERS': 'get_database_components_feedstocks_energy_carriers',
+                                          'MATERIALS': 'get_database_components_materials',
                                           'GRID': 'get_database_components_feedstocks_grid',
                                           'HYDROGEN': 'get_database_components_feedstocks_hydrogen',
                                           'NATURALGAS': 'get_database_components_feedstocks_naturalgas',
@@ -111,6 +114,7 @@ mapping_dict_db_item_to_id_column = {'CONSTRUCTION_TYPES': 'const_type',
                                      'FEEDSTOCKS': 'hour',
                                      'FEEDSTOCKS_LIBRARY': 'hour',
                                      'ENERGY_CARRIERS': 'code',
+                                     'MATERIALS': 'name',
                                      }
 
 dict_code_to_name = {'CH':'VAPOR_COMPRESSION_CHILLERS',
@@ -168,7 +172,8 @@ def path_to_db_file_4(scenario, item, sheet_name=None):
         "CONVERSION": os.path.join(base_path, "COMPONENTS", "CONVERSION"),
         "DISTRIBUTION": os.path.join(base_path, "COMPONENTS", "DISTRIBUTION"),
         "FEEDSTOCKS": os.path.join(base_path, "COMPONENTS", "FEEDSTOCKS"),
-        "FEEDSTOCKS_LIBRARY": os.path.join(base_path, "COMPONENTS", "FEEDSTOCKS", "FEEDSTOCKS_LIBRARY")
+        "FEEDSTOCKS_LIBRARY": os.path.join(base_path, "COMPONENTS", "FEEDSTOCKS", "FEEDSTOCKS_LIBRARY"),
+        "MATERIALS": os.path.join(base_path, "COMPONENTS", "MATERIALS"),
     }
 
     # Handle special sheet names for specific categories
@@ -290,6 +295,18 @@ def verify_file_against_schema_4_db(scenario, item, sheet_name=None):
                     identifier = df.at[idx, id_column]
                     errors.append(f"The {col_name} value for row {identifier} is too low ({value}). It should be at least {col_specs['min']}.")
 
+            # `exclusive_min` also requires a value: "greater than X" cannot be satisfied by a
+            # blank cell, unlike `min`, which pandas comparison silently passes for NaN.
+            if 'exclusive_min' in col_specs:
+                limit = col_specs['exclusive_min']
+                numeric = pd.to_numeric(col_data, errors='coerce')
+                for idx in col_data.index[numeric.isna() | (numeric <= limit)]:
+                    identifier = df.at[idx, id_column]
+                    errors.append(
+                        f"The {col_name} value for row {identifier} is {col_data[idx]!r}. "
+                        f"It must be a number greater than {limit}."
+                    )
+
             if 'max' in col_specs:
                 try:
                     out_of_range = col_data[col_data > col_specs['max']]
@@ -301,34 +318,112 @@ def verify_file_against_schema_4_db(scenario, item, sheet_name=None):
                     errors.append(f"The {col_name} value for row {identifier} is too high ({value}). It should be at most {col_specs['max']}.")
 
 
-    # Enforce `required_one_of`: every row must have all columns of at least one alternative
-    # set populated (non-null). This lets a single file mix material-based and direct-property rows.
+    # Enforce `required_one_of`: every row must satisfy at least one alternative. This lets a
+    # single file mix material-based and direct-property rows.
     if required_one_of:
         # Per-row evaluation
         for idx in df.index:
             row = df.loc[idx]
             row_id = df.at[idx, id_column] if id_column in df.columns else idx
-            satisfied = False
-            for alternative in required_one_of:
-                if all(
-                    (col in df.columns) and (not pd.isnull(row.get(col)))
-                    for col in alternative
-                ):
-                    satisfied = True
-                    break
-            if not satisfied:
+            if not any(
+                _alternative_satisfied(alternative, row, df.columns)
+                for alternative in required_one_of
+            ):
                 alt_descriptions = " OR ".join(
-                    "{" + ", ".join(alt) + "}" for alt in required_one_of
+                    _describe_alternative(alt) for alt in required_one_of
                 )
                 errors.append(
-                    f"Row '{row_id}' does not satisfy any of the required column sets: {alt_descriptions}. "
-                    f"At least one full set must be present (non-null)."
+                    f"Row '{row_id}' does not satisfy any of the required column sets: {alt_descriptions}."
                 )
 
     # Relax from the descriptive columns which not used in the modelling
     missing_columns = [item for item in missing_columns if item not in ['geometry', 'reference', 'description', 'assumption']]
 
     return missing_columns, errors
+
+
+def _alternative_satisfied(alternative, row, columns) -> bool:
+    """Is one alternative of a `required_one_of` rule satisfied by this row?
+
+    An alternative is either a list of columns that must all be present and non-null, or a
+    mapping ``{'any_pair_of': [[name_column, amount_column], ...]}``, satisfied when at least
+    one pair has a non-null name and an amount greater than zero. The pair form describes the
+    envelope material layers, where filling in one layer is enough and the unused slots are
+    left blank.
+    """
+    if isinstance(alternative, dict):
+        def pair_satisfied(name_col: str, amount_col: str) -> bool:
+            if name_col not in columns or amount_col not in columns:
+                return False
+            if pd.isnull(row.get(name_col)):
+                return False
+            amount = pd.to_numeric(row.get(amount_col), errors='coerce')
+            return bool(pd.notna(amount) and amount > 0)
+
+        return any(
+            pair_satisfied(name_col, amount_col)
+            for name_col, amount_col in alternative.get('any_pair_of') or []
+        )
+
+    return all(
+        (col in columns) and (not pd.isnull(row.get(col)))
+        for col in alternative
+    )
+
+
+def _describe_alternative(alternative) -> str:
+    if isinstance(alternative, dict):
+        pairs = alternative.get('any_pair_of') or []
+        return "at least one of {" + ", ".join(
+            f"({name_col} with {amount_col} > 0)" for name_col, amount_col in pairs
+        ) + "}"
+    return "{" + ", ".join(alternative) + "}"
+
+
+# MATERIALS.csv end-of-life columns were named `*_recycling` before they were corrected to
+# `*_disposal` (KBOB publishes the dataset as *Entsorgung*, so `recycling` was a
+# mistranslation). A database written before that rename reports seven missing columns, which
+# says what is absent but not why -- this turns that into an actionable message.
+_DISPOSAL_COLUMNS_PRE_RENAME = {
+    "ID_disposal": "ID_recycling",
+    "disposal_method": "recycling_method",
+    "UBP_disposal": "UBP_recycling",
+    "overall_disposal": "overall_recycling",
+    "renewable_disposal": "renewable_recycling",
+    "unrenewable_disposal": "unrenewable_recycling",
+    "GHG_emission_disposal": "GHG_emission_recycling",
+}
+
+
+def _pre_rename_disposal_hint(materials_path: str, missing_columns: list) -> str | None:
+    """Explain missing `*_disposal` columns when the file still has the old `*_recycling` names.
+
+    Returns None unless the file genuinely looks pre-rename, so a database that is simply
+    incomplete gets the plain missing-column report rather than a misleading migration hint.
+    """
+    expected_missing = [c for c in missing_columns if c in _DISPOSAL_COLUMNS_PRE_RENAME]
+    if not expected_missing:
+        return None
+
+    try:
+        present = set(pd.read_csv(materials_path, nrows=0).columns)
+    except Exception:
+        return None
+
+    stale = [
+        _DISPOSAL_COLUMNS_PRE_RENAME[c]
+        for c in expected_missing
+        if _DISPOSAL_COLUMNS_PRE_RENAME[c] in present
+    ]
+    if not stale:
+        return None
+
+    return (
+        f"MATERIALS.csv uses the pre-rename end-of-life column names "
+        f"({', '.join(sorted(stale))}). Re-import the CH materials database, or rename them "
+        f"to their `*_disposal` equivalents "
+        f"(e.g. GHG_emission_recycling -> GHG_emission_disposal)."
+    )
 
 
 def print_verification_results_4_db(scenario_name, dict_missing):
@@ -370,18 +465,21 @@ def verify_file_exists_4_db(scenario, items, sheet_name=None):
 
 
 def verify_assembly(scenario, ASSEMBLIES, list_missing_files_csv, verbose=False):
+    """Return ``(missing_columns_per_file, row_level_issues)`` for the assembly files present."""
     list_existing_files_csv = list(set(dict_ASSEMBLIES_COMPONENTS[ASSEMBLIES]) - set(list_missing_files_csv))
     list_list_missing_columns_csv = []
+    list_issues = []
     for assembly in list_existing_files_csv:
         list_missing_columns_csv, list_issues_against_csv = verify_file_against_schema_4_db(scenario, ASSEMBLIES, sheet_name=assembly)
         list_list_missing_columns_csv.append(list_missing_columns_csv)
+        list_issues.extend(list_issues_against_csv)
         if verbose:
             if list_missing_columns_csv:
                 print('! Ensure column(s) are present in {assembly}.csv: {missing_columns}.'.format(assembly=assembly, missing_columns=', '.join(map(str, list_missing_columns_csv))))
             if list_issues_against_csv:
                 print('! Check values in {assembly}.csv:')
                 print("\n".join(f"  {item}" for item in list_issues_against_csv))
-    return list_list_missing_columns_csv
+    return list_list_missing_columns_csv, list_issues
 
 
 def get_csv_filenames(folder_path):
@@ -723,6 +821,7 @@ def cea4_verify_db(scenario, verbose=False) -> Dict[str, List[str]]:
             if sheet not in list_missing_files_csv_schedules_library:
                 list_missing_columns_csv_schedules, list_issues_against_csv_schedules = verify_file_against_schema_4_db(scenario, 'SCHEDULES_LIBRARY', sheet_name=sheet)
                 add_values_to_dict(dict_missing_db, 'SCHEDULES', list_missing_columns_csv_schedules)
+                add_values_to_dict(dict_missing_db, 'SCHEDULES', list_issues_against_csv_schedules)
                 if verbose:
                     if list_missing_columns_csv_schedules:
                         print('! Ensure column(s) are present in {sheet}.csv: {missing_columns}.'.format(sheet=sheet, missing_columns=', '.join(map(str, list_missing_columns_csv_schedules))))
@@ -744,8 +843,9 @@ def cea4_verify_db(scenario, verbose=False) -> Dict[str, List[str]]:
             if verbose:
                 print('! Ensure .csv file(s) are present in the ASSEMBLIES>{ASSEMBLIES} folder: {list_missing_files_csv}.'.format(ASSEMBLIES=ASSEMBLIES, list_missing_files_csv=', '.join(map(str, list_missing_files_csv_assemblies))))
 
-        list_list_missing_columns_csv = verify_assembly(scenario, ASSEMBLIES, list_missing_files_csv_assemblies, verbose)
+        list_list_missing_columns_csv, list_issues_assemblies = verify_assembly(scenario, ASSEMBLIES, list_missing_files_csv_assemblies, verbose)
         add_values_to_dict(dict_missing_db, ASSEMBLIES, [item for sublist in list_list_missing_columns_csv for item in sublist])
+        add_values_to_dict(dict_missing_db, ASSEMBLIES, list_issues_assemblies)
 
         list_existing_files_csv = list(set(dict_ASSEMBLIES_COMPONENTS[ASSEMBLIES]) - set(list_missing_files_csv_assemblies))
         # Verify if all values in the construction_type.csv file are defined in the assemblies.csv file
@@ -806,6 +906,25 @@ def cea4_verify_db(scenario, verbose=False) -> Dict[str, List[str]]:
                 if list_issues_against_csv_distribution:
                     print('! Check value(s) in THERMAL_GRID.csv:')
                     print("\n".join(f"  {item}" for item in list_issues_against_csv_distribution))
+
+    #6b. verify columns and values in MATERIALS.csv, when the scenario has one.
+    # MATERIALS is deliberately absent from COMPONENTS_FOLDERS: only the CH database ships it,
+    # so requiring it would report every DE/SG database as incomplete. Check it when present.
+    materials_path = path_to_db_file_4(scenario, 'MATERIALS', 'MATERIALS')
+    if os.path.isfile(materials_path):
+        missing_columns, issues = verify_file_against_schema_4_db(
+            scenario, 'MATERIALS', sheet_name='MATERIALS')
+        pre_rename_hint = _pre_rename_disposal_hint(materials_path, missing_columns)
+        if pre_rename_hint:
+            issues = list(issues) + [pre_rename_hint]
+        add_values_to_dict(dict_missing_db, 'MATERIALS', missing_columns)
+        add_values_to_dict(dict_missing_db, 'MATERIALS', issues)
+        if verbose:
+            if missing_columns:
+                print('! Ensure column(s) are present in MATERIALS.csv: {missing_columns}.'.format(missing_columns=', '.join(map(str, missing_columns))))
+            if issues:
+                print('! Check value(s) in MATERIALS.csv:')
+                print("\n".join(f"  {item}" for item in issues))
 
     #7. verify columns and values in .csv files for components - feedstocks
     if not dict_missing_db['FEEDSTOCKS']:

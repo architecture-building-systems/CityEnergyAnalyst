@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, cast
 import numpy as np
 import pandas as pd
 
+from cea.datamanagement.utils import resolve_void_height_for_row
 from cea.analysis.lca.hourly_operational_emission import (
     OperationalHourlyTimeline,
     _tech_name_mapping,
@@ -16,8 +17,12 @@ from cea.constants import (
     EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS,
     SERVICE_LIFE_OF_TECHNICAL_SYSTEMS,
 )
+from cea.analysis.lca.component_lca import service_life_for_component
 from cea.datamanagement.database.components import Feedstocks
-from cea.datamanagement.database.envelope_lookup import EnvelopeLookup
+from cea.datamanagement.database.envelope_lookup import (
+    EnvelopeLookup,
+    envelope_emission_intensities,
+)
 
 __author__ = "Yiqiao Wang, Zhongming Shi"
 __copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
@@ -32,6 +37,13 @@ __status__ = "Production"
 if TYPE_CHECKING:
     from cea.demand.building_properties import BuildingProperties
     from cea.inputlocator import InputLocator
+
+
+# RICS (2017) estimates for the use-stage proportions CEA does not model directly. Kept here
+# as well as in `default.config` so callers without a Configuration still get the documented
+# values. Reference: Green Mark Version 7 Cn Technical Guide, Table 16 GWP Base Formulae.
+DEFAULT_MAINTENANCE_FRACTION = 0.01  # B2, of production emissions
+DEFAULT_REPAIR_FRACTION = 0.10       # B3, of production emissions
 
 
 COMPONENT_TO_SRC_COMPONENT: dict[str, str] = {
@@ -74,7 +86,9 @@ def get_component_quantities(
 
     Calculated area:
     - `Awall_bg`: total area of below-ground walls
-    - `Awall_part`: total area of partition walls. Currently dummy value 0.0
+    - `Awall_part`: total area of internal partition walls, estimated as
+        `GFA_m2 * CONVERSION_AREA_TO_FLOOR_AREA_RATIO` (1.5). A blanket ratio, not a
+        geometric result: CEA does not work out which surfaces adjoin each other.
     - `Aupperside`: total area of upper side. Currently not available in Daysim
         radiation results, so this value is set to `0.0`.
     - `Afloor`: total area of internal floors.
@@ -112,7 +126,7 @@ def get_component_quantities(
     surface_area["Aupperside"] = float(envelope_props.get("Aupperside", 0.0))  # Currently not available in Daysim radiation results, defaults to 0
     surface_area["Aunderside"] = float(envelope_props.get("Aunderside", 0.0))
 
-    if float(geometry_props["floors_bg"]) == 0 and float(geometry_props.get("void_deck", 0)) > 0:
+    if float(geometry_props["floors_bg"]) == 0 and resolve_void_height_for_row(geometry_props) > 0:
         area_base = 0.0
     else:
         area_base = float(rc_model_props["footprint"])
@@ -482,8 +496,10 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
     - `biogenic`: the emissions that are stored within the material that
     would have otherwise been released during other processes or
     because of decay or wasting. In some results it's also called `uptake`.
-    - `demolition`: the emissions associated with the deconstruction and
-    disposal of building materials at the end of their service life.
+    - `demolition`: the emissions from transporting and treating building materials at the
+    end of their service life -- EN 15978 modules C2-C4 (transport to disposal, waste
+    processing, disposal), from KBOB *Entsorgung* data. The on-site deconstruction activity
+    itself (C1) is **not** included; see `AGENTS.md` for the full module coverage.
 
     The components include:
     - vertical surfaces (excluding windows)
@@ -523,7 +539,12 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
 
     _COLUMN_MAPPING = {f"{d}_kgCO2e": f"operation_{d}_kgCO2e" for d in _tech_name_mapping.keys()}
     _OPERATIONAL_COLS = list(_COLUMN_MAPPING.values())
-    _EMISSION_TYPES = ["production", "biogenic", "demolition"]
+    # EN 15978 modules, in reporting order: A1-A3, the biogenic reporting item, B2, B3,
+    # C2-C4. Maintenance and repair are proportions of production (see `log_emissions`).
+    _EMISSION_TYPES = ["production", "biogenic", "demolition", "maintenance", "repair"]
+    # The supply services whose assemblies name a conversion component. Electricity is
+    # absent: SUPPLY_ELECTRICITY describes a grid connection, not a component to replace.
+    _SUPPLY_SERVICES: tuple[str, ...] = ("hs", "cs", "dhw")
 
     def __init__(
         self,
@@ -531,6 +552,8 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
         building_name: str,
         locator: InputLocator,
         end_year: int,
+        maintenance_fraction: float = DEFAULT_MAINTENANCE_FRACTION,
+        repair_fraction: float = DEFAULT_REPAIR_FRACTION,
     ):
         """Initialize the BuildingEmissionTimeline object.
 
@@ -543,13 +566,23 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
         :type locator: InputLocator
         :param end_year: The last year that should exist in the building timeline.
         :type end_year: int
+        :param maintenance_fraction: B2 maintenance as a fraction of production emissions.
+            Defaults to the RICS 1% estimate; see `cea.default.config`.
+        :type maintenance_fraction: float
+        :param repair_fraction: B3 repair as a fraction of production emissions. Defaults to
+            the RICS 10% estimate; see `cea.default.config`.
+        :type repair_fraction: float
         """
         super().__init__(name=building_name, locator=locator)
+
+        self.maintenance_fraction = float(maintenance_fraction)
+        self.repair_fraction = float(repair_fraction)
 
         self._is_demolished = False
         self.geometry = building_properties.geometry[self.name]
         self.typology = building_properties.typology[self.name]
         self.envelope = building_properties.envelope[self.name]
+        self.supply_systems = building_properties.supply_systems[self.name]
         self.surface_area = get_component_quantities(building_properties, self.name)
         self.timeline = self.initialize_timeline(end_year)
         self._append_note(year=int(self.typology["year"]), message="Constructed")
@@ -585,6 +618,59 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
 
         self.timeline.to_csv(self.locator.get_lca_timeline_building(self.name), float_format='%.2f')
 
+    def _supply_components(self) -> list[tuple[str, str]]:
+        """The `(service, component code)` pairs this building actually has.
+
+        A service with no conversion component is written as `-` in the supply assemblies
+        (`SUPPLY_HEATING_AS0`, for instance) or is absent entirely, and reads back as NaN.
+        """
+        found: list[tuple[str, str]] = []
+        for service in self._SUPPLY_SERVICES:
+            code = self.supply_systems.get(f"primary_component_{service}")
+            if code is None or pd.isna(code):
+                continue
+            code = str(code).strip()
+            if code and code != "-":
+                found.append((service, code))
+        return found
+
+    def _log_technical_system_emissions(self, *, area: float, key: str) -> None:
+        """Log the technical-system stack, one replacement cycle per supply component.
+
+        Each service's component replaces on its own service life -- a 20-year boiler and a
+        25-year chiller are not renewed together -- and `log` is additive, so all of them
+        accumulate into the one reported `technical_systems` column. That keeps the output
+        shape unchanged while the schedule becomes per component.
+
+        The embodied intensity is still the blanket per-GFA constant, shared equally between
+        the services present: the per-component factor
+        (`component_lca.embodied_factor_for_component`) is capacity-based, and installed
+        capacities are not available here. Splitting a per-GFA figure keeps the building total
+        unchanged from the previous blanket treatment.
+        """
+        components = self._supply_components()
+
+        if not components:
+            # No conversion components at all (every service NONE, or a district connection
+            # whose plant is accounted for separately). Fall back to the previous behaviour so
+            # such a building is not silently given zero technical-system emissions.
+            self.log_emissions(
+                area, EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS, 0.0, 0.0,
+                SERVICE_LIFE_OF_TECHNICAL_SYSTEMS, key,
+                note_detail="blanket intensity, no supply components",
+            )
+            return
+
+        share = EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS / len(components)
+        for service, code in components:
+            service_life = service_life_for_component(code, self.locator)
+            note = f"{service}: {code}"
+            if service_life.is_assumed:
+                note += f" (service life assumed, {service_life.source})"
+            self.log_emissions(
+                area, share, 0.0, 0.0, service_life.years, key, note_detail=note,
+            )
+
     def log_emissions(
         self,
         area: float,
@@ -595,11 +681,28 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
         key: str,
         note_detail: str | None = None,
     ):
+        production = production_per_area * area
         self._log_emission_with_lifetime(
-            emission=production_per_area * area, lifetime=lifetime, col=f"production_{key}_kgCO2e"
+            emission=production, lifetime=lifetime, col=f"production_{key}_kgCO2e"
+        )
+        # B2 maintenance and B3 repair as proportions of production, per installed
+        # generation. RICS (2017) recommends 1% of A1-A5 for B2 and 10% of A1-A3 for B3;
+        # CEA models A1-A3 only, so B2 is estimated against that and is conservative.
+        # Unlike B4, neither formula carries a frequency term, so the allowance is charged
+        # once per installation rather than annually -- see Green Mark Version 7 Cn Technical
+        # Guide, Table 16 GWP Base Formulae.
+        self._log_emission_with_lifetime(
+            emission=production * self.maintenance_fraction,
+            lifetime=lifetime,
+            col=f"maintenance_{key}_kgCO2e",
         )
         self._log_emission_with_lifetime(
-            emission=-biogenic_per_area * area,
+            emission=production * self.repair_fraction,
+            lifetime=lifetime,
+            col=f"repair_{key}_kgCO2e",
+        )
+        self._log_emission_with_lifetime(
+            emission=biogenic_per_area * area,
             lifetime=lifetime,
             col=f"biogenic_{key}_kgCO2e",
         )
@@ -638,45 +741,25 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
             code_for_note: str | None = None
 
             if key == "technical_systems":
-                lifetime = SERVICE_LIFE_OF_TECHNICAL_SYSTEMS
-                production = EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS
-                biogenic = 0.0
-                demolition = 0.0  # FIXME: assuming recycling of systems require generates emission, which is false
-            else:
-                type_str = f"type_{value}"
-                lifetime_any = self.envelope_lookup.get_item_value(
-                    code=self.envelope[type_str], field="Service_Life"
-                )
-                code_for_note = str(self.envelope[type_str])
-                try: # if detailed LCA data (production + recycling) available, use it
-                    ghg_production_any = self.envelope_lookup.get_item_value(
-                        code=self.envelope[type_str], field="GHG_production_kgCO2m2"
-                    )
-                    ghg_recycling_any = self.envelope_lookup.get_item_value(
-                        code=self.envelope[type_str], field="GHG_recycling_kgCO2m2"
-                    )
-                except KeyError: # else use simplified data (one value only)
-                    ghg_production_any = self.envelope_lookup.get_item_value(
-                        code=self.envelope[type_str], field="GHG_kgCO2m2"
-                    )
-                    ghg_recycling_any = 0.0
+                self._log_technical_system_emissions(area=area, key=key)
+                continue
 
-                biogenic_any = self.envelope_lookup.get_item_value(
-                    code=self.envelope[type_str], field="GHG_biogenic_kgCO2m2"
+            type_str = f"type_{value}"
+            lifetime_any = self.envelope_lookup.get_item_value(
+                code=self.envelope[type_str], field="Service_Life"
+            )
+            code_for_note = str(self.envelope[type_str])
+            # Production/demolition come from the row's own material-derived split when
+            # it has one, otherwise from the lifecycle total with no demolition; the
+            # rules are shared with the pathway timeline.
+            production, demolition, biogenic = envelope_emission_intensities(
+                self.envelope_lookup, code_for_note
+            )
+            if lifetime_any is None:
+                raise ValueError(
+                    f"Envelope database has no Service_Life for item {code_for_note}."
                 )
-                if (
-                    lifetime_any is None
-                    or ghg_production_any is None
-                    or ghg_recycling_any is None
-                    or biogenic_any is None
-                ):
-                    raise ValueError(
-                        f"Envelope database returned None for one of the required fields for item {self.envelope[type_str]}."
-                    )
-                lifetime = int(lifetime_any)
-                production = float(ghg_production_any)
-                biogenic = float(biogenic_any)
-                demolition = float(ghg_recycling_any)
+            lifetime = int(lifetime_any)
             self.log_emissions(area, production, biogenic, demolition, lifetime, key, note_detail=code_for_note)
 
     def fill_pv_embodied_emissions(self, pv_codes: list[str]) -> None:
@@ -1027,23 +1110,17 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
         self.timeline.loc[self.timeline.index >= demolition_year_str, emission_cols] = 0.0
         for key, value in _MAPPING_DICT.items():
             if key == "technical_systems":
-                demolition_any = 0.0
+                demolition = 0.0
             else:
-                type_str = f"type_{value}"
-                try:
-                    demolition_any = self.envelope_lookup.get_item_value(
-                        code=self.envelope[type_str], field="GHG_recycling_kgCO2m2"
-                    )
-                except KeyError:  # if detailed LCA data not available, use simplified
-                    demolition_any = 0.0
-
-            if demolition_any is not None:
-                demolition = float(demolition_any)
-            else:
-                raise ValueError(
-                    f"Recycling column exists but without meaningful data for item {self.envelope[type_str]}."
+                # Same per-row rules as the construction-time split: a row with no
+                # material-derived demolition term reports none. Deciding on the row's value
+                # rather than the column's existence matters here too -- a file holding both
+                # kinds of row would otherwise yield NaN, which `float()` would carry into
+                # the timeline as a NaN emission.
+                _production, demolition, _biogenic = envelope_emission_intensities(
+                    self.envelope_lookup, str(self.envelope[f"type_{value}"])
                 )
-            
+
             area: float = self.surface_area[f"A{key}"]
             max_year = max(years_from_index(self.timeline.index))
             # if demolition_year > max_year, do nothing

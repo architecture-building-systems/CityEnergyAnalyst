@@ -87,23 +87,15 @@ Optimises decentralised energy supply systems for individual buildings. The feat
 
 ### Output Files
 
-**Pareto optimal solutions**: `{scenario}/outputs/data/optimisation/decentralized/pareto_solutions.csv`
-- Non-dominated solutions (cost-emission trade-offs)
-- Technology configurations for each solution
-- Costs, emissions, and energy metrics
-- System capacities
+> **Note the folder spelling.** Results are written to `outputs/data/optimization/` with a
+> **z**, even though the feature is named with an "s" elsewhere in the app.
 
-**Individual building results**: `{scenario}/outputs/data/optimisation/decentralized/BXXX_optimal_systems.csv`
-- Optimal system configuration for each building
-- Equipment sizing (kW)
-- Annual costs and emissions
-- Energy generation/consumption
+**Per-building results**: `{scenario}/outputs/data/optimization/decentralized/BXXX_{configuration}_result_cooling.csv`
+- One file per building and HVAC configuration (e.g. `AHU_ARU_SCU`)
+- Optimal system configuration for that building
+- Equipment sizing, annual costs and emissions
 
-**Summary statistics**: `{scenario}/outputs/data/optimisation/decentralized/optimisation_summary.csv`
-- Best solutions by objective
-- Min cost solution
-- Min emissions solution
-- Compromise solutions
+Heating results follow the same pattern in the same folder.
 
 ### Understanding Results
 
@@ -245,28 +237,31 @@ District optimisation must account for:
 
 ### Output Files
 
-**Pareto frontier**: `{scenario}/outputs/data/optimisation-new/pareto_optimal_solutions.csv`
-- Non-dominated system configurations
-- Cost, emissions, and energy for each solution
-- Network configurations
-- Plant capacities and locations
+All district results live under
+`{scenario}/outputs/data/optimization/centralized/{DES_id}/`, where `{DES_id}` identifies one
+near-Pareto-optimal district energy system (`current_DES` for the base case). Each candidate
+system gets its own folder, so the Pareto set is a set of *folders* rather than one file.
 
-**Optimal system configurations**: `{scenario}/outputs/data/optimisation-new/optimal_supply_systems_summary.csv`
-- Detailed technology mix for each Pareto solution
-- Equipment types and capacities
-- Network characteristics
+> **Note the folder spelling**: `optimization` with a **z**.
+
+**Supply systems summary**: `.../{DES_id}/Supply_systems/Supply_systems_summary.csv`
+- Technology mix, equipment types and capacities for that district energy system
 - Annual performance metrics
 
-**Building connections**: `{scenario}/outputs/data/optimisation-new/building_connections.csv`
-- Which buildings connect to district systems (per solution)
-- Substation sizing
-- Connection costs
+**Individual supply system structure**: `.../{DES_id}/Supply_systems/{system_id}_supply_system_structure.csv`
+- One file per network (`N0000`) or standalone building (`B0000`)
 
-**Hourly operation** (for selected solutions): `{scenario}/outputs/data/optimisation-new/hourly_operation/`
-- Plant dispatch schedules
-- Storage operation
-- Network flows
-- Import/export profiles
+**Network layout**: `.../{DES_id}/networks/{network_id}_layout.geojson`
+- The optimised network geometry
+
+**Network performance**: `.../{DES_id}/Supply_system_operation_details/network_performance.csv`
+- Detailed thermal and hydraulic performance of the networks
+
+**Hourly operation**: `.../{DES_id}/Supply_system_operation_details/{system_id}_operation.csv`
+- Plant dispatch and storage operation, hour by hour
+
+**Annual breakdown**: `.../{DES_id}/Supply_system_operation_details/{system_id}_annual_breakdown.csv`
+- Annual energy demand, generation and losses per system
 
 ### Understanding Results
 

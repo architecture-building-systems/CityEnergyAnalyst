@@ -62,7 +62,7 @@ For each building `BXXX`, the feature generates:
 - Hourly solar radiation values (W/m²) for every surface point
 - 8,760 hours × surface points matrix
 
-**Radiation metadata file**: `{scenario}/outputs/data/solar-radiation/BXXX_radiation_metadata.csv`
+**Radiation metadata file**: `{scenario}/outputs/data/solar-radiation/BXXX_geometry.csv`
 - Surface properties (area, orientation, tilt)
 - Annual cumulative radiation per surface
 - Surface coordinates
@@ -197,7 +197,8 @@ Use DAYSIM instead of CRAX when:
 - **Solution**: Use DAYSIM for accurate results; report discrepancy if CRAX shows systematic errors
 
 **Issue**: Void deck buildings fail
-- **Solution**: CRAX does not support void decks; use DAYSIM instead
+- **Solution**: CRAX does not support void decks; use DAYSIM instead. See
+  [Void Decks](08-data-management.md#void-decks) for how they are defined.
 
 ---
 

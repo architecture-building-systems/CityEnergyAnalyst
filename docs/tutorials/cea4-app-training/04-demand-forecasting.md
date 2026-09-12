@@ -27,9 +27,9 @@ Occupancy calculation can be computationally intensive and is often reused acros
 - Weather file
 
 ### Required Input Files
-- **Building internal loads** (`internal_loads.xlsx`) - Occupancy densities, appliances, lighting
-- **Building comfort** (`comfort.xlsx`) - Comfort setpoints and schedules
-- **Building architecture** (`architecture.xlsx`) - Floor areas and heights
+- **Building internal loads** (`internal_loads.csv`) - Occupancy densities, appliances, lighting
+- **Building comfort** (`indoor_comfort.csv`) - Comfort setpoints and schedules
+- **Building architecture** (`envelope.csv`) - Floor areas and heights
 - **Zone geometry** - Building footprints
 - **Weather file** - Climate data
 
@@ -61,7 +61,7 @@ Occupancy calculation can be computationally intensive and is often reused acros
 ### Output Files
 For each building `BXXX`:
 
-**Occupancy model**: `{scenario}/inputs/building-properties/occupancy/BXXX.csv`
+**Occupancy model**: `{scenario}/outputs/data/occupancy/BXXX.csv`
 - 8,760 hourly rows (one year)
 - Occupancy levels (people)
 - Internal heat gains from people (W)
@@ -84,7 +84,7 @@ Typical occupancy densities:
 - **School**: 0.30-0.50 people/m² GFA (during school hours)
 
 ### Tips
-- **Check schedules**: Review `internal_loads.xlsx` schedules before running
+- **Check schedules**: Review `internal_loads.csv` schedules before running
 - **Validate outputs**: Spot-check a few buildings' occupancy profiles for realism
 - **Reuse results**: Once calculated, occupancy can be reused unless building types change
 - **Custom occupancy**: For buildings with known occupancy, you can manually provide occupancy files
@@ -92,7 +92,7 @@ Typical occupancy densities:
 ### Troubleshooting
 
 **Issue**: Unrealistic occupancy patterns
-- **Solution**: Review and correct schedules in `internal_loads.xlsx`
+- **Solution**: Review and correct schedules in `internal_loads.csv`
 - **Solution**: Verify building use types are assigned correctly
 
 **Issue**: Missing occupancy files after completion
@@ -157,11 +157,11 @@ The feature calculates hourly demand for:
 - Zone geometry shapefile
 
 **Building Properties** (typically from Archetypes Mapper):
-- `architecture.xlsx` - Envelope, floors, windows
-- `internal_loads.xlsx` - Occupancy, appliances, lighting
-- `comfort.xlsx` - Setpoints and schedules
-- `air_conditioning.xlsx` - HVAC system types
-- `supply_systems.xlsx` - Energy supply configuration
+- `envelope.csv` - Envelope, floors, windows
+- `internal_loads.csv` - Occupancy, appliances, lighting
+- `indoor_comfort.csv` - Setpoints and schedules
+- `hvac.csv` - HVAC system types
+- `supply.csv` - Energy supply configuration
 
 **Databases**:
 - Envelope databases (walls, roofs, windows, floors)
@@ -220,7 +220,7 @@ The feature calculates hourly demand for:
 - Peak loads (kW)
 - Energy intensity (kWh/m²/year)
 
-**Demand Totals**: `{scenario}/outputs/data/demand/demand_totals.csv`
+**Hourly District Totals**: `{scenario}/outputs/data/demand/Total_demand_hourly.csv`
 - Hourly district-wide totals
 - Aggregated across all buildings
 - Used for district system sizing
@@ -287,7 +287,7 @@ When enabled (not for production):
 
 **Issue**: "Missing occupancy data" error
 - **Solution**: Run Energy Demand Part 1 (Building Occupancy) first
-- **Solution**: Check that occupancy files exist in `inputs/building-properties/occupancy/`
+- **Solution**: Check that occupancy files exist in `outputs/data/occupancy/`
 
 **Issue**: Very high or very low demand values
 - **Solution**: Verify building properties are correctly assigned

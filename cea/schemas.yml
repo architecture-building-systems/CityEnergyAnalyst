@@ -2123,6 +2123,152 @@ get_costs_whatif_components_file:
         min: 0.0
   used_by: []
 
+get_database_components_materials:
+  created_by:
+  - database_helper
+  file_path: inputs/database/COMPONENTS/MATERIALS/MATERIALS.csv
+  file_type: csv
+  schema:
+    columns:
+      ID:
+        description: KBOB material identifier, e.g. 7.001. Dotted codes, not a number.
+        type: string
+        unit: NA
+      UUID:
+        description: KBOB record identifier.
+        type: string
+        unit: NA
+      name:
+        description: Material name. Referenced by material_name_1..3 in the ENVELOPE assemblies.
+        primary: true
+        type: string
+        unit: NA
+      name_KBOB:
+        description: Material name as published by KBOB (German).
+        type: string
+        unit: NA
+      ID_disposal:
+        description: KBOB identifier of the disposal (Entsorgung) process, e.g. 91.175.01.
+        type: string
+        unit: NA
+      disposal_method:
+        description: End-of-life treatment assumed for the disposal figures, as published by
+          KBOB under Entsorgung - incineration, landfill or recycling processing.
+        type: string
+        unit: NA
+      density:
+        description: Bulk density [kg/m3]. Some entries are ranges, e.g. "1'400 - 1'500", so this is stored as text.
+        type: string
+        unit: '[kg/m3]'
+      unit:
+        description: Reference unit for the impact figures.
+        type: string
+        unit: NA
+      thermal_conductivity:
+        description: Thermal conductivity, used to derive U-values.
+        type: float
+        unit: '[W/mK]'
+      thermal_conductivity_source:
+        description: Source of the thermal conductivity value, e.g. a SIA standard.
+        type: string
+        unit: NA
+      UBP_total:
+        description: Total environmental impact points (UBP), the Swiss ecological scarcity indicator.
+        type: float
+        unit: '[UBP]'
+      UBP_production:
+        description: Environmental impact points (UBP) from production.
+        type: float
+        unit: '[UBP]'
+      UBP_disposal:
+        description: Environmental impact points (UBP) from end-of-life disposal.
+        type: float
+        unit: '[UBP]'
+      overall_energy_total:
+        description: Total primary energy demand, renewable and non-renewable.
+        type: float
+        unit: '[MJ]'
+      overall_energy_production:
+        description: Primary energy demand from production.
+        type: float
+        unit: '[MJ]'
+      overall_energy_production_in_process:
+        description: Primary energy demand from production, process share.
+        type: float
+        unit: '[MJ]'
+      overall_energy_prodution_in_material:
+        description: Primary energy demand from production, material share. Column name misspelt in the source data.
+        type: float
+        unit: '[MJ]'
+      overall_disposal:
+        description: Primary energy demand from end-of-life disposal.
+        type: float
+        unit: '[MJ]'
+      renewable_energy_total:
+        description: Renewable primary energy demand.
+        type: float
+        unit: '[MJ]'
+      renewable_energy_production:
+        description: Renewable primary energy demand from production.
+        type: float
+        unit: '[MJ]'
+      renewable_energy_production_in_process:
+        description: Renewable primary energy demand from production, process share.
+        type: float
+        unit: '[MJ]'
+      renewable_energy_prodution_in_material:
+        description: Renewable primary energy demand from production, material share. Column name misspelt in the source data.
+        type: float
+        unit: '[MJ]'
+      renewable_disposal:
+        description: Renewable primary energy demand from end-of-life disposal.
+        type: float
+        unit: '[MJ]'
+      unrenewable_energy_total:
+        description: Non-renewable primary energy demand.
+        type: float
+        unit: '[MJ]'
+      unrenewable_energy_production:
+        description: Non-renewable primary energy demand from production.
+        type: float
+        unit: '[MJ]'
+      unrenewable_energy_production_in_process:
+        description: Non-renewable primary energy demand from production, process share.
+        type: float
+        unit: '[MJ]'
+      unrenewable_energy_prodution_in_material:
+        description: Non-renewable primary energy demand from production, material share. Column name misspelt in the source data.
+        type: float
+        unit: '[MJ]'
+      unrenewable_disposal:
+        description: Non-renewable primary energy demand from end-of-life disposal.
+        type: float
+        unit: '[MJ]'
+      GHG_emission_total:
+        description: Total greenhouse gas emissions, used to derive embodied carbon.
+        type: float
+        unit: '[kgCO2eq/kg]'
+      GHG_emission_production:
+        description: Greenhouse gas emissions from production.
+        type: float
+        unit: '[kgCO2eq/kg]'
+      GHG_emission_disposal:
+        description: Greenhouse gas emissions from end-of-life disposal. EN 15978 modules
+          C2-C4 (transport to disposal, waste processing, disposal); excludes the C1
+          deconstruction activity. KBOB Entsorgung.
+        type: float
+        unit: '[kgCO2eq/kg]'
+      biogenic_carbon_in_product:
+        description: Biogenic carbon stored in the product, as a negative contribution to the
+          CO2 balance. Note this is the opposite sign to the KBOB source, which publishes a
+          positive magnitude; CEA stores stored carbon as negative throughout, matching
+          GHG_biogenic_* in the envelope assemblies derived from this column.
+        type: float
+        unit: '[kgCO2eq/kg]'
+        max: 0.0
+  used_by:
+  - emissions
+
 get_heat_rejection_buildings:
   created_by:
   - anthropogenic_heat
@@ -2292,9 +2438,15 @@ get_database_assemblies_envelope_floor:
   schema:
     # Per-row rule: each row must satisfy at least one of these column sets.
     # Rows with both will be cross-checked at load (materials canonical, 1% tolerance).
+    # The direct-property set is U + the lifecycle GHG total, matching what the loader
+    # requires: biogenic defaults to 0 when absent (v3-migrated datasets ship without it),
+    # and the production/demolition split is only ever derived.
     required_one_of:
-      - [U_base, GHG_floor_kgCO2m2, GHG_biogenic_floor_kgCO2m2]
-      - [material_name_1, thickness_1_m, material_name_2, thickness_2_m, material_name_3, thickness_3_m]
+      - [U_base, GHG_floor_kgCO2m2]
+      - any_pair_of:
+          - [material_name_1, thickness_1_m]
+          - [material_name_2, thickness_2_m]
+          - [material_name_3, thickness_3_m]
     columns:
       description:
         description: Describes the Type of floor
@@ -2304,7 +2456,7 @@ get_database_assemblies_envelope_floor:
         description: Service life of the floor assembly
         type: float
         unit: '[yr]'
-        min: 0.0
+        exclusive_min: 0.0
       GHG_floor_kgCO2m2:
         description: Embodied emissions per m2 of floor (entire building life cycle). Derivable from the material layer set.
         type: float
@@ -2317,11 +2469,29 @@ get_database_assemblies_envelope_floor:
         unit: '[kg CO2-eq/m2]'
         max: 0.0
         nullable: true
+      GHG_production_floor_kgCO2m2:
+        description: Production (cradle-to-gate) share of the embodied emissions per m2 of floors.
+          Together with GHG_demolition_floor_kgCO2m2 it splits GHG_floor_kgCO2m2; both are derived from
+          the material layer set and absent for databases without one.
+        type: float
+        unit: '[kg CO2-eq/m2]'
+        min: 0.0
+        nullable: true
+      GHG_demolition_floor_kgCO2m2:
+        description: End-of-life share of the embodied emissions per m2 of floors. EN 15978
+          modules C2-C4 (transport to disposal, waste processing, disposal) - not the C1
+          deconstruction activity, despite the column name. Together with
+          GHG_production_floor_kgCO2m2 it splits GHG_floor_kgCO2m2; both are derived from the
+          material layer set and absent for databases without one.
+        type: float
+        unit: '[kg CO2-eq/m2]'
+        min: 0.0
+        nullable: true
       U_base:
         description: Thermal transmittance of floor including linear losses (+10%). Defined according to ISO 13790. Derivable from the material layer set.
         type: float
         unit: '[-]'
-        min: 0.1
+        min: 0.05
         nullable: true
       code:
         description: Type of floor
@@ -2333,6 +2503,10 @@ get_database_assemblies_envelope_floor:
         type: string
         unit: NA
         nullable: true
+        choice:
+          lookup:
+            path: get_database_components_materials
+            column: name
       thickness_1_m:
         description: Layer 1 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused.
         type: float
@@ -2344,6 +2518,10 @@ get_database_assemblies_envelope_floor:
         type: string
         unit: NA
         nullable: true
+        choice:
+          lookup:
+            path: get_database_components_materials
+            column: name
       thickness_2_m:
         description: Layer 2 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused.
         type: float
@@ -2355,6 +2533,10 @@ get_database_assemblies_envelope_floor:
         type: string
         unit: NA
         nullable: true
+        choice:
+          lookup:
+            path: get_database_components_materials
+            column: name
       thickness_3_m:
         description: Layer 3 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused.
         type: float
@@ -2372,9 +2554,15 @@ get_database_assemblies_envelope_roof:
   schema:
     # Per-row rule: each row must satisfy at least one of these column sets.
     # Rows with both will be cross-checked at load (materials canonical, 1% tolerance).
+    # The direct-property set is U + the lifecycle GHG total, matching what the loader
+    # requires: biogenic defaults to 0 when absent (v3-migrated datasets ship without it),
+    # and the production/demolition split is only ever derived.
     required_one_of:
-      - [U_roof, GHG_roof_kgCO2m2, GHG_biogenic_roof_kgCO2m2]
-      - [material_name_1, thickness_1_m, material_name_2, thickness_2_m, material_name_3, thickness_3_m]
+      - [U_roof, GHG_roof_kgCO2m2]
+      - any_pair_of:
+          - [material_name_1, thickness_1_m]
+          - [material_name_2, thickness_2_m]
+          - [material_name_3, thickness_3_m]
     columns:
       description:
         description: Describes the Type of roof
@@ -2392,11 +2580,29 @@ get_database_assemblies_envelope_roof:
         unit: '[kg CO2-eq/m2]'
         max: 0.0
         nullable: true
+      GHG_production_roof_kgCO2m2:
+        description: Production (cradle-to-gate) share of the embodied emissions per m2 of roofs.
+          Together with GHG_demolition_roof_kgCO2m2 it splits GHG_roof_kgCO2m2; both are derived from
+          the material layer set and absent for databases without one.
+        type: float
+        unit: '[kg CO2-eq/m2]'
+        min: 0.0
+        nullable: true
+      GHG_demolition_roof_kgCO2m2:
+        description: End-of-life share of the embodied emissions per m2 of roofs. EN 15978
+          modules C2-C4 (transport to disposal, waste processing, disposal) - not the C1
+          deconstruction activity, despite the column name. Together with
+          GHG_production_roof_kgCO2m2 it splits GHG_roof_kgCO2m2; both are derived from the
+          material layer set and absent for databases without one.
+        type: float
+        unit: '[kg CO2-eq/m2]'
+        min: 0.0
+        nullable: true
       U_roof:
         description: Thermal transmittance of roof including linear losses (+10%). Defined according to ISO 13790. Derivable from the material layer set.
         type: float
         unit: '[-]'
-        min: 0.1
+        min: 0.05
         nullable: true
       a_roof:
         description: Solar absorption coefficient. Defined according to ISO 13790.
@@ -2408,7 +2614,7 @@ get_database_assemblies_envelope_roof:
         description: Service life of the roof assembly
         type: float
         unit: '[yr]'
-        min: 0.0
+        exclusive_min: 0.0
       code:
         description: Type of roof
         primary: true
@@ -2431,6 +2637,10 @@ get_database_assemblies_envelope_roof:
         type: string
         unit: NA
         nullable: true
+        choice:
+          lookup:
+            path: get_database_components_materials
+            column: name
       thickness_1_m:
         description: Layer 1 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused.
         type: float
@@ -2442,6 +2652,10 @@ get_database_assemblies_envelope_roof:
         type: string
         unit: NA
         nullable: true
+        choice:
+          lookup:
+            path: get_database_components_materials
+            column: name
       thickness_2_m:
         description: Layer 2 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused.
         type: float
@@ -2453,6 +2667,10 @@ get_database_assemblies_envelope_roof:
         type: string
         unit: NA
         nullable: true
+        choice:
+          lookup:
+            path: get_database_components_materials
+            column: name
       thickness_3_m:
         description: Layer 3 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused.
         type: float
@@ -2545,9 +2763,15 @@ get_database_assemblies_envelope_wall:
   schema:
     # Per-row rule: each row must satisfy at least one of these column sets.
     # Rows with both will be cross-checked at load (materials canonical, 1% tolerance).
+    # The direct-property set is U + the lifecycle GHG total, matching what the loader
+    # requires: biogenic defaults to 0 when absent (v3-migrated datasets ship without it),
+    # and the production/demolition split is only ever derived.
     required_one_of:
-      - [U_wall, GHG_wall_kgCO2m2, GHG_biogenic_wall_kgCO2m2]
-      - [material_name_1, thickness_1_m, material_name_2, thickness_2_m, material_name_3, thickness_3_m]
+      - [U_wall, GHG_wall_kgCO2m2]
+      - any_pair_of:
+          - [material_name_1, thickness_1_m]
+          - [material_name_2, thickness_2_m]
+          - [material_name_3, thickness_3_m]
     columns:
       description:
         description: Describes the Type of wall
@@ -2565,11 +2789,29 @@ get_database_assemblies_envelope_wall:
         unit: '[kg CO2-eq/m2]'
         max: 0.0
         nullable: true
+      GHG_production_wall_kgCO2m2:
+        description: Production (cradle-to-gate) share of the embodied emissions per m2 of walls.
+          Together with GHG_demolition_wall_kgCO2m2 it splits GHG_wall_kgCO2m2; both are derived from
+          the material layer set and absent for databases without one.
+        type: float
+        unit: '[kg CO2-eq/m2]'
+        min: 0.0
+        nullable: true
+      GHG_demolition_wall_kgCO2m2:
+        description: End-of-life share of the embodied emissions per m2 of walls. EN 15978
+          modules C2-C4 (transport to disposal, waste processing, disposal) - not the C1
+          deconstruction activity, despite the column name. Together with
+          GHG_production_wall_kgCO2m2 it splits GHG_wall_kgCO2m2; both are derived from the
+          material layer set and absent for databases without one.
+        type: float
+        unit: '[kg CO2-eq/m2]'
+        min: 0.0
+        nullable: true
       U_wall:
         description: Thermal transmittance of walls including linear losses (+10%). Defined according to ISO 13790. Derivable from the material layer set.
         type: float
         unit: '[-]'
-        min: 0.1
+        min: 0.05
         nullable: true
       a_wall:
         description: Solar absorption coefficient. Defined according to ISO 13790.
@@ -2598,12 +2840,16 @@ get_database_assemblies_envelope_wall:
         description: Service life of the wall assembly
         type: float
         unit: '[yr]'
-        min: 0.0
+        exclusive_min: 0.0
       material_name_1:
         description: Layer 1 material name; must match a `name` in MATERIALS.csv. Required when the material layer set is used.
         type: string
         unit: NA
         nullable: true
+        choice:
+          lookup:
+            path: get_database_components_materials
+            column: name
       thickness_1_m:
         description: Layer 1 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused.
         type: float
@@ -2615,6 +2861,10 @@ get_database_assemblies_envelope_wall:
         type: string
         unit: NA
         nullable: true
+        choice:
+          lookup:
+            path: get_database_components_materials
+            column: name
       thickness_2_m:
         description: Layer 2 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused.
         type: float
@@ -2626,6 +2876,10 @@ get_database_assemblies_envelope_wall:
         type: string
         unit: NA
         nullable: true
+        choice:
+          lookup:
+            path: get_database_components_materials
+            column: name
       thickness_3_m:
         description: Layer 3 thickness in metres. Required when the material layer set is used. Zero thickness leaves the slot unused.
         type: float
@@ -2658,10 +2912,14 @@ get_database_assemblies_envelope_window:
         unit: '[kg CO2-eq/m2]'
         min: 0.0
       GHG_biogenic_win_kgCO2m2:
-        description: Biogenic carbon storage per m2 of windows.(entire building life cycle)
+        description: Biogenic carbon storage per m2 of windows (entire building life cycle).
+          Optional - a database without this column is treated as storing no biogenic carbon in
+          its windows, the same way a missing demolition column is treated. Databases migrated
+          from CEA-3 do not have it.
         type: float
         unit: '[kg CO2-eq/m2]'
         max: 0.0
+        nullable: true
       G_win:
         description: Solar heat gain coefficient. A value of 1 means all solar heat is 
           gained. Defined according to ISO 13790.
@@ -3199,6 +3457,16 @@ get_database_components_conversion_absorption_chillers:
         min: 0.0
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this technology
         min: 0
@@ -3374,6 +3642,16 @@ get_database_components_conversion_boilers:
         min: 0.0
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this technology
         min: 0
@@ -3586,6 +3864,16 @@ get_database_components_conversion_cogeneration_plants:
         min: 0.0
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this technology
         min: 0
@@ -3716,6 +4004,16 @@ get_database_components_conversion_cooling_towers:
         min: 0.0
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this technology
         min: 0
@@ -3835,6 +4133,16 @@ get_database_components_conversion_fuel_cells:
         min: 0.0
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this technology
         min: 0
@@ -3919,6 +4227,16 @@ get_database_components_conversion_heat_exchangers:
         min: 0.0
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this technology
         min: 0
@@ -4046,6 +4364,16 @@ get_database_components_conversion_heat_pumps:
         min: 0.0
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this technology
         min: 0
@@ -4179,6 +4507,16 @@ get_database_components_conversion_bore_holes:
         min: 0.0
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this technology
         min: 0
@@ -4263,6 +4601,16 @@ get_database_components_conversion_hydraulic_pumps:
         min: 0.0
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this technology
         min: 0
@@ -4347,6 +4695,16 @@ get_database_components_conversion_photovoltaic_panels:
         min: 0.0
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this technology
         min: 0
@@ -4505,6 +4863,16 @@ get_database_components_conversion_photovoltaic_thermal_panels:
         min: 0.0
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this technology
         min: 0
@@ -4590,6 +4958,16 @@ get_database_components_conversion_power_transformers:
         min: 0.0
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this technology
         min: 0
@@ -4734,6 +5112,16 @@ get_database_components_conversion_solar_collectors:
         min: 0.0
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this technology
         min: 0
@@ -4950,6 +5338,16 @@ get_database_components_conversion_thermal_energy_storages:
         description: 'parameter in the investment cost function, f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x), where x is the capacity '
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this storage technology
         min: 0
@@ -5039,6 +5437,16 @@ get_database_components_conversion_unitary_air_conditioners:
         min: 0.0
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this technology
         min: 0
@@ -5149,6 +5557,16 @@ get_database_components_conversion_vapor_compression_chillers:
         min: 0.0
         type: float
         unit: '[-]'
+      GHG_embodied_kgCO2e_per_unit:
+        description: Embodied GHG emissions per one of this component's `unit` (see the unit
+          column - W, VA, m2, m3 or kWh depending on the technology), covering EN 15978
+          modules A1-A3. Capacity-based like the cost curve, so the installed emission is
+          this factor times the sized capacity. Optional - where absent, the emissions
+          timeline falls back to the blanket per-GFA intensity in cea/constants.py.
+        min: 0.0
+        type: float
+        unit: '[kg CO2-eq/unit]'
+        nullable: true
       LT_yr:
         description: lifetime of this technology
         min: 0
@@ -17593,7 +18011,13 @@ get_zone_geometry:
         type: string
         unit: NA
       floors_ag:
-        description: Number of floors above ground (incl. ground floor, minimum one floor is needed)
+        description: Number of floors above ground (incl. ground floor, minimum one floor is
+          needed). For a building with a void deck, what this counts depends on which void
+          column the scenario uses. With height_vd it counts only the ENCLOSED storeys above
+          the void deck. With the legacy void_deck column it counts EVERY storey, void ones
+          included, so the enclosed count is floors_ag minus void_deck. Either way height_ag
+          spans the void deck plus the enclosed building, and the storey height of the
+          enclosed part is (height_ag - void deck height) / enclosed floors.
         min: 1
         type: int
         unit: '[-]'
@@ -17603,12 +18027,36 @@ get_zone_geometry:
         unit: '[-]'
         min: 0
       void_deck:
-        description: Number of floors (from the ground up) with an open envelope (default = 0, should be lower than floors_ag.)
+        description: Legacy column - number of floors (from the ground up) with an open envelope (default
+          = 0, should be lower than floors_ag). Here floors_ag spans the whole above-ground
+          height, void storeys included, so the enclosed storey count is floors_ag minus
+          void_deck. Superseded by height_vd, which records the void in metres and is not tied
+          to whole storeys. Still fully supported - CEA-3 scenarios are migrated onto this
+          column unchanged. Where both are present, height_vd is used.
         type: int
         unit: '[-]'
         min: 0
+      height_vd:
+        description: Height of the void deck - the open, unenclosed portion at the bottom of the
+          building (default = 0, and it must leave at least 2 m of height per enclosed floor).
+          Optional. Replaces void_deck,
+          which could only express whole floors. IMPORTANT - when height_vd is used, floors_ag
+          counts only the ENCLOSED storeys sitting above the void deck, while height_ag still
+          spans the void deck plus the enclosed solid. This is what lets a void deck be taller
+          than a normal storey. With the legacy void_deck column, floors_ag instead spans the
+          whole height, void storeys included. A void deck is always at ground level; CEA does
+          not model an open storey part-way up a building. Where both columns are present,
+          height_vd is used for any building whose cell has a value - a blank cell falls
+          back to void_deck, so leaving it empty in an older scenario changes nothing.
+        type: float
+        unit: '[m]'
+        nullable: true
+        min: 0
       height_ag:
-        description: Height above ground (incl. ground floor, minimum one floor is needed)
+        description: Height above ground (incl. ground floor, minimum one floor is needed).
+          Always measured from the ground to the roof, so it spans any void deck as well as
+          the enclosed building above it. Because of that it is not floors_ag times the storey
+          height whenever a void deck is present - see floors_ag and height_vd.
         min: 2.0
         type: float
         unit: '[m]'
@@ -18379,19 +18827,38 @@ get_emissions_whatif_buildings_file:
         unit: NA
         nullable: true
       operation_kgCO2e:
-        description: Total annual operational GHG emissions
+        description: Total annual operational GHG emissions. EN 15978 module B6 (operational
+          energy); operational water use (B7) is not included.
         type: float
         unit: '[kgCO2e/yr]'
       production_kgCO2e:
-        description: Total lifecycle production (embodied) GHG emissions across all years
+        description: Total lifecycle production (embodied) GHG emissions across all years.
+          EN 15978 modules A1-A3 (cradle to gate), repeated at each component replacement
+          (B4). Transport to site (A4) and construction (A5) are not included.
         type: float
         unit: '[kgCO2e]'
       biogenic_kgCO2e:
-        description: Total lifecycle biogenic carbon storage across all years (negative = sequestration)
+        description: Total lifecycle biogenic carbon storage across all years (negative =
+          sequestration). Not an EN 15978 module; a separate reporting item per the RICS
+          Whole Life Carbon professional standard. Assumed not re-released at end of life.
         type: float
         unit: '[kgCO2e]'
+      maintenance_kgCO2e:
+        description: Total lifecycle maintenance GHG emissions across all years. EN 15978
+          module B2, estimated as a fraction of production emissions rather than modelled
+          (see emissions.maintenance-fraction-of-production; RICS 2017 recommends 1%).
+        type: float
+        unit: '[kg CO2-eq]'
+      repair_kgCO2e:
+        description: Total lifecycle repair GHG emissions across all years. EN 15978 module
+          B3, estimated as a fraction of production emissions rather than modelled
+          (see emissions.repair-fraction-of-production; RICS 2017 recommends 10%).
+        type: float
+        unit: '[kg CO2-eq]'
       demolition_kgCO2e:
-        description: Total lifecycle demolition GHG emissions across all years
+        description: Total lifecycle end-of-life GHG emissions across all years. EN 15978
+          modules C2-C4 (transport to disposal, waste processing, disposal). The on-site
+          deconstruction activity itself (C1) is not included.
         type: float
         unit: '[kgCO2e]'
       whatif_name:

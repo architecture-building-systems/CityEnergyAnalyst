@@ -80,7 +80,7 @@ Plant entities are never filtered by the building name list.
 - **[Thermal Network](05-thermal-network.md)** - Required for district-connected scenarios
 - **[Renewable Energy Assessment](03-renewable-energy.md)** - Solar potential affects embodied emissions
 - **[Visualisation](10-visualisation.md)** - Additional plotting tools
-- **[Export Results to CSV](01-import-export.md#export-results-to-csv-summary--analytics)** - Batch export of what-if results
+- **[Export Results to CSV](01-import-export.md#export-results-to-csv-summary-analytics)** - Batch export of what-if results
 
 ---
 

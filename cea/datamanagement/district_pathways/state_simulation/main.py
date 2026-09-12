@@ -178,6 +178,8 @@ def simulate_all_states(config: Configuration, pathway_name: str) -> None:
                 and phase == "simulated"
                 and not status.get("has_stale_phase")
             ):
+                # `simulated` already implies the outputs are on disk — collect_state_phase_status
+                # downgrades a year whose outputs were wiped, so a stale stamp can't skip it here.
                 skipped_years.append(int(year))
             else:
                 eligible.append(int(year))
@@ -323,27 +325,19 @@ def main(config: Configuration) -> None:
             f"District pathway emissions timeline saved with {len(df)} years.",
             flush=True,
         )
-    except Exception as exc:
-        # Surface the full traceback — the timeline CSV is what
-        # downstream pathway plots read, so swallowing this with
-        # only `{exc}` made the failure invisible to the user
-        # (their plot script later 404s on the missing CSV with no
-        # hint why). The state simulations themselves succeeded;
-        # we still don't re-raise, so the job overall is reported
-        # as successful and the user can retry timeline generation
-        # without re-running every state.
-        import traceback
-
+    except Exception:
+        # The timeline CSV is what the pathway plots read, so this failure has to reach the
+        # user. Reporting the job as successful without it is what sent them to the plot
+        # script, which then fails with "Pathway emissions timeline file not found" and no
+        # hint why. Re-raising costs nothing: the state years are already recorded as
+        # simulated, so re-running the pathway skips them and retries only the timeline.
         print(
-            f"Warning: Could not create pathway emissions timeline: {exc}",
+            "State simulations completed, but the pathway emissions timeline could not be "
+            "created. The state years are recorded as simulated, so re-running the pathway "
+            "will skip them and retry the timeline.",
             flush=True,
         )
-        print(traceback.format_exc(), flush=True)
-        print(
-            "State simulations completed successfully. "
-            "The emissions timeline can be generated separately once the issue is resolved.",
-            flush=True,
-        )
+        raise
 
 
 if __name__ == "__main__":

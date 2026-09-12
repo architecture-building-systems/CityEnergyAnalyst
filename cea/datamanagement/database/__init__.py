@@ -155,13 +155,20 @@ class BaseDatabase(Base):
                 
                 config = {}
 
-                # Get columns from schema if available
+                # Get columns from schema if available. Intersect with what the frame
+                # actually has: to_csv raises KeyError for any requested column that is
+                # absent, which would turn an empty table (user deleted every row) or a
+                # user file predating a schema column into a failed save of the WHOLE
+                # database, not just this table.
                 columns = self.schema().get(field.name, {}).get('schema', {}).get('columns', None)
                 if columns and isinstance(columns, dict):
-                    config['columns'] = list(columns.keys())
+                    config['columns'] = [c for c in columns if c in value.columns]
                 
                 if value.index.name in config.get('columns', []):
                     config['columns'].remove(value.index.name)
+                # A database predating this table has no folder for it yet (the _library
+                # branch below already does this).
+                os.makedirs(os.path.dirname(path), exist_ok=True)
                 value.to_csv(path, **config)
             elif isinstance(value, dict):
                 # Assume is _library with special index handling

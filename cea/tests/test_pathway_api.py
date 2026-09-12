@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import shutil
 from pathlib import Path
 from uuid import uuid4
@@ -305,6 +306,14 @@ def test_validate_state_records_status_and_timeline_detects_log_drift(pathway_ap
         built_at="2026-02-01T00:00:00",
         source_log_hash=source_hash,
     )
+    # A simulated state has results on disk. collect_state_phase_status reports
+    # `not_simulated` without them, so the record alone is not enough to stand in for a run.
+    os.makedirs(
+        os.path.join(
+            locator.get_state_in_time_scenario_folder("demo", 2030), "outputs"
+        ),
+        exist_ok=True,
+    )
     record_simulated_state(
         locator,
         pathway_name="demo",
@@ -349,6 +358,58 @@ def test_delete_manual_and_clear_mixed_state(pathway_api_fixture):
     assert mixed_clear.status_code == 200
     log_data = _read_log(locator, "demo")
     assert 2040 not in log_data
+
+
+def test_clear_state_outputs_only_keeps_inputs_and_log_entry(pathway_api_fixture):
+    client = pathway_api_fixture["client"]
+    locator = pathway_api_fixture["locator"]
+
+    _create_state_folder(locator, "demo", 2030, ["B1"])
+    state_folder = Path(locator.get_state_in_time_scenario_folder("demo", 2030))
+    (state_folder / "outputs").mkdir(parents=True, exist_ok=True)
+
+    response = client.delete(
+        "/pathways/demo/years/2030",
+        params={"delete_inputs": False, "delete_outputs": True},
+    )
+    assert response.status_code == 200
+    assert not (state_folder / "outputs").exists()
+    # Inputs and the pathway entry are untouched, so the year stays baked and re-simulatable.
+    assert (state_folder / "inputs").is_dir()
+    assert 2030 in _read_log(locator, "demo")
+
+
+def test_clear_state_inputs_takes_the_whole_state_folder(pathway_api_fixture):
+    """Results cannot outlive the scenario that produced them.
+
+    Keeping outputs/ after the log entry is dropped leaves a state folder that
+    `check_district_pathway_log_yaml_integrity` rejects as unexpected, which blocks
+    Simulate Pathway for the whole pathway.
+    """
+    client = pathway_api_fixture["client"]
+    locator = pathway_api_fixture["locator"]
+
+    _create_state_folder(locator, "demo", 2030, ["B1"])
+    state_folder = Path(locator.get_state_in_time_scenario_folder("demo", 2030))
+    (state_folder / "outputs").mkdir(parents=True, exist_ok=True)
+
+    response = client.delete(
+        "/pathways/demo/years/2030",
+        params={"delete_inputs": True, "delete_outputs": False},
+    )
+    assert response.status_code == 200
+    assert not state_folder.exists()
+    assert 2030 not in _read_log(locator, "demo")
+
+
+def test_clear_state_requires_a_selection(pathway_api_fixture):
+    client = pathway_api_fixture["client"]
+
+    response = client.delete(
+        "/pathways/demo/years/2030",
+        params={"delete_inputs": False, "delete_outputs": False},
+    )
+    assert response.status_code == 400
 
 
 def _write_zone_shapefile(locator: InputLocator) -> None:

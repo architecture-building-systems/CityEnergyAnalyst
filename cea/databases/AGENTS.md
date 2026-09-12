@@ -79,6 +79,31 @@ refs = assemblies['primary_components']  # e.g., "BO5"
 # Don't treat SUPPLY_ELECTRICITY.csv and GRID.csv as duplicates
 ```
 
+## Sign Conventions
+
+**Biogenic carbon is negative everywhere.** Stored carbon reduces the CO2 balance, so it is
+negative in `COMPONENTS/MATERIALS/MATERIALS.csv` (`biogenic_carbon_in_product`, enforced by
+`max: 0.0`) and negative in the envelope assemblies derived from it (`GHG_biogenic_*_kgCO2m2`).
+This is the opposite sign to the KBOB source, which publishes a positive magnitude.
+
+Consumers must pass the value through -- never negate it. A compensating negation inverts
+storage into emission with no error to reveal it; `cea/tests/test_biogenic_sign_convention.py`
+fails if one is reintroduced.
+
+**Embodied carbon is split by phase.** `GHG_*_kgCO2m2` in the envelope assemblies is the whole
+lifecycle; `GHG_production_*_kgCO2m2` and `GHG_demolition_*_kgCO2m2` split it and are derived
+from the material layers, so they are absent for a database with no `MATERIALS.csv`, for
+direct-property rows, and for windows. Read them through
+`envelope_emission_intensities`, which decides per row -- one file routinely holds both kinds,
+so testing whether the *column* exists gives NaN for the rows that lack a split.
+
+The demolition term derives from `MATERIALS.csv`'s `GHG_emission_disposal` -- KBOB's
+*Entsorgung* dataset, as every value in `disposal_method` confirms. It is EN 15978 **C2-C4**
+(transport to the disposal route plus incineration, landfill or recycling processing) and
+excludes the C1 deconstruction activity. Everything CEA derives from it is reported as
+`demolition`; read that as "end of life". See `cea/analysis/lca/AGENTS.md` for the full
+module coverage.
+
 ## Related Files
 - `cea/schemas.yml` - Database schema definitions
 - `cea/demand/building_properties/building_supply_systems.py` - ASSEMBLIES usage

@@ -2,7 +2,7 @@
 
 This category evaluates the potential for renewable energy generation from various sources including solar (PV, PVT, solar thermal), geothermal, water bodies, and sewage heat recovery.
 
-**💡 Customising Technology Databases**: All renewable energy technologies reference CEA databases for performance characteristics. You can customise these databases to test specific manufacturers' products or future technologies. Look for database files in `{scenario}/inputs/technology/components/CONVERSION/` and edit the relevant CSV files.
+**💡 Customising Technology Databases**: All renewable energy technologies reference CEA databases for performance characteristics. You can customise these databases to test specific manufacturers' products or future technologies. Look for database files in `{scenario}/inputs/database/COMPONENTS/CONVERSION/` and edit the relevant CSV files.
 
 ---
 
@@ -65,12 +65,12 @@ Calculates electricity generation potential from photovoltaic solar panels insta
 ### Output Files
 For each building `BXXX`:
 
-**PV results**: `{scenario}/outputs/data/potentials/solar/BXXX_PV.csv`
+**PV results**: `{scenario}/outputs/data/potentials/solar/PV/BXXX_{panel_type}.csv`
 - Hourly electricity generation (kWh)
 - 8,760 hours of generation data
 - Total annual generation
 
-**PV metadata**: `{scenario}/outputs/data/potentials/solar/BXXX_PV_sensors.csv`
+**PV metadata**: `{scenario}/outputs/data/potentials/solar/sensors/BXXX_PV_sensors.csv`
 - Panel locations and orientations
 - Installed capacity per surface (kWp)
 - Annual radiation per panel array
@@ -92,7 +92,7 @@ Typical values (Central Europe):
 ### Panel Types in CEA Database
 
 The CEA database includes various PV panel technologies with different efficiencies and performance characteristics. To see available panel types and their properties:
-1. Navigate to `{scenario}/inputs/technology/components/CONVERSION/PHOTOVOLTAIC_PANELS.csv`
+1. Navigate to `{scenario}/inputs/database/COMPONENTS/CONVERSION/PHOTOVOLTAIC_PANELS.csv`
 2. Review panel specifications (efficiency, temperature coefficients, etc.)
 
 **Customising the Database**:
@@ -149,7 +149,7 @@ Same as PV: solar radiation analysis must be completed
 - **Panel database**: Uses PVT-specific panel properties
 
 **PVT Panel Database**:
-- Navigate to `{scenario}/inputs/technology/components/CONVERSION/PHOTOVOLTAIC_THERMAL_PANELS.csv`
+- Navigate to `{scenario}/inputs/database/COMPONENTS/CONVERSION/PHOTOVOLTAIC_THERMAL_PANELS.csv`
 - You can customise by adding new PVT panel types with specific electrical and thermal performance characteristics
 - Reference custom panels in the "Type of PV panel" and "Type of SC panel" parameters
 
@@ -178,7 +178,7 @@ Similar to PV, plus:
 ### Output Files
 For each building `BXXX`:
 
-**PVT results**: `{scenario}/outputs/data/potentials/solar/BXXX_PVT.csv`
+**PVT results**: `{scenario}/outputs/data/potentials/solar/PVT/BXXX_{pv_panel}_{sc_panel}.csv`
 - Hourly electricity generation (kWh_el)
 - Hourly heat generation (kWh_th)
 - Panel temperatures
@@ -233,7 +233,7 @@ Solar radiation analysis must be completed
 ### Collector Types
 
 The CEA database includes various solar thermal collector technologies. To see available collector types:
-1. Navigate to `{scenario}/inputs/technology/components/CONVERSION/SOLAR_COLLECTORS.csv`
+1. Navigate to `{scenario}/inputs/database/COMPONENTS/CONVERSION/SOLAR_COLLECTORS.csv`
 2. Review collector specifications (efficiency curves, optical properties, etc.)
 
 **Customising the Database**:
@@ -367,7 +367,7 @@ The feature estimates:
 
 ### Output Files
 
-**Geothermal potential**: `{scenario}/outputs/data/potentials/geothermal_potential.csv`
+**Geothermal potential**: `{scenario}/outputs/data/potentials/Shallow_geothermal_potential.csv`
 - Available ground area per building
 - Number of possible boreholes
 - Heat extraction capacity (kW)
@@ -443,7 +443,7 @@ Estimates sustainable heat extraction based on:
 
 ### Output Files
 
-**Water body potential**: `{scenario}/outputs/data/potentials/water_body_potential.csv`
+**Water body potential**: `{scenario}/outputs/data/potentials/Water_body_potential.csv`
 - Available heat extraction capacity (kW)
 - Seasonal variation
 - Distance penalties
@@ -512,7 +512,7 @@ Estimates heat recovery based on:
 
 ### Output Files
 
-**Sewage potential**: `{scenario}/outputs/data/potentials/sewage_potential.csv`
+**Sewage potential**: `{scenario}/outputs/data/potentials/Sewage_heat_potential.csv`
 - Recoverable heat per building (kWh/yr)
 - Peak recovery capacity (kW)
 - Monthly variation
@@ -575,8 +575,8 @@ Annual recoverable heat (rule of thumb):
    - Geothermal (if ground access)
    - Water body (if nearby)
    - Sewage (if high water use)
-3. **Compare results** using [Export Results to CSV](01-import-export.md#export-results-to-csv-summary--analytics)
-4. **Visualise** using [Plot - Solar Technology](10-visualisation.md#plot-solar-technology)
+3. **Compare results** using [Export Results to CSV](01-import-export.md#export-results-to-csv-summary-analytics)
+4. **Visualise** using [Plot - Solar Technology](10-visualisation.md#plot---solar-technology)
 5. **Integrate into supply system optimisation**
 
 ---

@@ -53,7 +53,7 @@ Loads standard CEA databases into your current scenario. These databases contain
 
 The feature will copy all database files to:
 ```
-{CEA Project}/{Current Scenario}/inputs/technology/
+{CEA Project}/{Current Scenario}/inputs/database/
 ```
 
 ### Database Versions
@@ -128,9 +128,9 @@ The feature maps buildings to archetypes based on:
 The feature populates all building property files:
 - `envelope.csv` - Envelope properties, window-wall ratios, floor heights
 - `internal_loads.csv` - Occupancy densities, appliances, lighting
-- `comfort.csv` - Setpoint temperatures, acceptable ranges
-- `air_conditioning.csv` - HVAC system types
-- `supply_systems.csv` - Energy supply configuration
+- `indoor_comfort.csv` - Setpoint temperatures, acceptable ranges
+- `hvac.csv` - HVAC system types
+- `supply.csv` - Energy supply configuration
 
 ### Understanding Archetype Mapping
 
@@ -152,10 +152,10 @@ After running Archetypes Mapper, you can manually adjust properties:
 4. Proceed with CEA analysis
 
 Common adjustments:
-- Window-wall ratios (architecture.csv)
-- HVAC system types (air_conditioning.csv)
+- Window-wall ratios (envelope.csv)
+- HVAC system types (hvac.csv)
 - Occupancy schedules (internal_loads.csv)
-- Setpoint temperatures (comfort.csv)
+- Setpoint temperatures (indoor_comfort.csv)
 
 ### Tips
 - **Run before first demand calculation**: Mandatory step
@@ -547,7 +547,7 @@ Required attributes:
    - Provide tree data file
    - Click **Run**
 
-4. Trees saved to `{scenario}/inputs/building-geometry/trees.shp`
+4. Trees saved to `{scenario}/inputs/tree-geometry/trees.shp`
 
 ### Tree Shading Effects
 
@@ -575,6 +575,202 @@ Required attributes:
 **Issue**: Trees not affecting solar radiation results
 - **Solution**: Verify trees.shp is in correct location and format
 - **Solution**: Check tree heights are reasonable (>2m typically)
+
+---
+
+## Void Decks
+
+A **void deck** is the open, unenclosed portion at the bottom of a building — the open ground
+floors common in Singapore HDB blocks, or a building on stilts. It has no facade, contributes
+no floor area, and leaves the underside exposed to outside air.
+
+Record it in the zone geometry, in **metres**:
+
+| Column | Meaning |
+|---|---|
+| `height_vd` | Height of the void deck above ground, in metres. Optional; `0` or absent means none. |
+| `void_deck` | **Legacy.** The same void expressed as a whole number of floors. |
+
+### How `floors_ag` is counted
+
+This is the part to get right, because the two columns differ:
+
+| | `height_ag` | `floors_ag` |
+|---|---|---|
+| with `height_vd` | void deck **+** enclosed building | **enclosed storeys only** |
+| with `void_deck` (legacy) | void deck **+** enclosed building | **every storey**, void ones included |
+
+So the same building can be written either way:
+
+```
+A 15 m block: 6 m open void deck, then 3 enclosed floors of 3 m
+
+  legacy   void_deck = 2   floors_ag = 5   height_ag = 15
+  metres   height_vd = 6   floors_ag = 3   height_ag = 15
+```
+
+Both give the same floor area, the same storey height, and the same 3D solid.
+
+The storey height of the enclosed part is always
+
+```
+(height_ag − void deck height) ÷ enclosed floors
+```
+
+which is `(15 − 6) ÷ 3 = 3 m` either way. Note the denominator is the **enclosed** floor
+count — that is `floors_ag` itself with `height_vd`, but `floors_ag − void_deck` with the
+legacy column.
+
+### Why metres matter: a void deck taller than a storey
+
+A real void deck is often taller than the floors above it, and whole floors cannot express
+that. An HDB-style block with a 4.5 m void deck under four 2.8 m residential floors:
+
+```
+  height_vd = 4.5    floors_ag = 4    height_ag = 15.7
+  -> storey height (15.7 − 4.5) / 4 = 2.8 m, and 4 whole floors of area
+```
+
+Forcing that onto a single uniform storey grid would give a 3.14 m storey — neither the real
+void deck nor the real floor — and understate the floor area by about 11%.
+
+### Metres, not floors
+
+`void_deck` could only express whole storeys, so a 4.5 m void in a building with 3 m floors had
+to be rounded. `height_vd` records the height directly, so the void can sit anywhere.
+
+**Every new scenario gets `height_vd`, set to 0.** Whether you generate the zone from
+OpenStreetMap or upload your own, the column is created so you can edit it straight away
+without adding a field in GIS. `0` means the building is enclosed to the ground.
+
+**Existing scenarios keep working and are not modified.** Where `height_vd` is absent, CEA reads
+`void_deck` and converts it at that building's own storey height (`height_ag / floors_ag`) —
+the same conversion it always applied internally, so results do not change. Neither column is
+required; a scenario with neither simply has no void decks.
+
+Where both columns are present, CEA decides **per building, on the value**: a building whose
+`height_vd` cell has a number uses it (and CEA warns that its `void_deck` is being ignored),
+while a **blank** cell falls back to `void_deck`.
+
+That matters when you open an older scenario in the input editor: the editor shows every column
+in the schema, so you will see an empty `height_vd` column beside your populated `void_deck`.
+**This is expected and harmless** — leaving it empty changes nothing. Entering a value switches
+that building to metres; entering `0` removes its void deck.
+
+You never have to migrate a CEA-4 scenario by hand. Add or edit `height_vd` only when you want a
+void that is not a whole number of storeys.
+
+### Upgrading from CEA-3
+
+CEA-3 stored the void deck in `architecture.dbf`, in whole floors. The CEA-4 migration moves it
+into the zone geometry **as `void_deck`, unchanged** — it is not converted to metres.
+
+That is deliberate. Converting would mean redefining `floors_ag` to the enclosed count, and
+`floors_ag` is read elsewhere as the total above-ground storey count (the database migration
+rescales the occupied-area share `Ns` by `(floors_ag + floors_bg) / floors_ag`). Rewriting it
+would quietly change occupied areas and demand for every migrated building. A migrated scenario
+therefore keeps exactly the areas it had.
+
+To move a building to metres yourself, convert both columns together: set
+`height_vd = void_deck × (height_ag / floors_ag)`, reduce `floors_ag` by `void_deck`, and remove
+`void_deck`. For the example above: `void_deck = 2, floors_ag = 5` becomes
+`height_vd = 6, floors_ag = 3`.
+
+### What it affects
+
+- **Floor area** — the void contributes no GFA, so conditioned and occupied areas shrink with it
+- **Embodied emissions** — void storeys have no partitions, no floor slab and no technical
+  systems, so they are excluded from the embodied floor area as well
+- **Facade area** — no walls or windows over the void height, which lowers embodied emissions
+- **Heat loss** — the underside is exposed to outside air rather than sitting on the ground
+- **Radiation** — the building solid starts at the top of the void deck
+- **Radiation engine** — CRAX does not support void decks, so CEA falls back to DAYSIM when any
+  building has one (see [Solar Radiation](02-solar-radiation.md))
+
+### Rules
+
+- Always measured **from ground level up**. CEA does not model an open storey part-way up a
+  building.
+- Must leave at least **2 m of height per enclosed floor**. CEA measures this on the enclosed
+  part, not on `height_ag`, so a tall void deck cannot hide storeys squeezed into what is left.
+- Cannot be negative.
+
+---
+
+## Database Editor: Material Layers
+
+The Database Editor can now edit **material layers** for envelope assemblies, and derive the
+thermal and carbon properties from them rather than requiring you to enter those numbers by
+hand.
+
+### The materials database
+
+Materials live in `COMPONENTS/MATERIALS/MATERIALS.csv` and are referenced by name from the
+envelope assemblies.
+
+Only the **Swiss (CH)** database ships with a materials file. Open **COMPONENTS → MATERIALS**
+in a scenario built from another region and the editor explains this and offers to import the
+Swiss set, which is based on KBOB data.
+
+> **Use at your own risk.** The imported values are specific to Switzerland and may not
+> represent materials available in your region.
+
+### Building up an envelope from layers
+
+On the **ENVELOPE** tabs each assembly row carries up to three layers:
+
+| Column | Meaning |
+|---|---|
+| `material_name_1` … `material_name_3` | Material, chosen from a dropdown of the materials database |
+| `thickness_1_m` … `thickness_3_m` | Layer thickness in metres |
+
+The material dropdowns only list names that exist in your materials file, so a row cannot
+reference a material that is not there. These six columns appear only when a materials file
+is present.
+
+### Derived columns
+
+Once a row has at least one material with a thickness greater than zero, CEA derives its
+properties from the layers and **locks** the derived cells — they are computed, so editing
+them by hand would be silently overwritten:
+
+| Derived | Example column |
+|---|---|
+| U-value | `U_base` |
+| Total embodied carbon | `GHG_floor_kgCO2m2` |
+| Biogenic carbon | `GHG_biogenic_floor_kgCO2m2` |
+| Production carbon (A1-A3) | `GHG_production_floor_kgCO2m2` |
+| Disposal carbon (C2-C4) | `GHG_demolition_floor_kgCO2m2` |
+
+Splitting embodied carbon into **production** and **demolition** is what lets the
+[Emissions](06-2-emissions.md) feature report those EN 15978 modules separately.
+
+### What you must still provide
+
+Layers are optional — a database with no materials file keeps working exactly as before, with
+U-values and carbon entered directly.
+
+| Situation | Required |
+|---|---|
+| Row has at least one material with thickness > 0 | U-value and GHG columns may be left empty; they are derived |
+| Row has no usable material layer | U-value and GHG columns must be filled in |
+| Every row | Service life must be greater than zero |
+
+Values are validated when you save, and errors name the row and column at fault. A genuine
+zero is accepted — CEA distinguishes "zero" from "not filled in".
+
+### Cross-check
+
+Where a row has both derived values and values already in the file, CEA compares them and
+warns if they differ by more than **1%**. Small differences are expected: published totals are
+rounded, so production plus disposal rarely reproduces the stated total exactly.
+
+### Tips
+
+- Biogenic carbon is stored as a **negative** number throughout, representing carbon held in
+  the material. Do not enter it as positive.
+- After changing materials, re-run any analysis that reads envelope properties — the derived
+  values change with them.
 
 ---
 

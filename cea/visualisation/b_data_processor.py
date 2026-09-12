@@ -7,6 +7,7 @@ PlotFormatter – prepares the formatting settings for the Plotly graph
 import numpy as np
 import pandas as pd
 
+from cea import MissingInputDataException
 from cea.import_export.result_summary import (
     get_emission_context,
     month_hours,
@@ -22,6 +23,14 @@ __version__ = "0.1"
 __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+# x-sorted-by option -> the architecture column that supplies the sort value.
+SORTING_KEY_COLUMNS = {
+    'construction_year': 'construction_year',
+    'gross_floor_area': 'GFA_m2',
+    'conditioned_floor_area': 'Af_m2',
+    'roof_area': 'Aroof_m2',
+}
 
 x_to_plot_building = ['building', 'building_faceted_by_months', 'building_faceted_by_seasons', 'building_faceted_by_construction_type', 'building_faceted_by_main_use_type', 'building_faceted_by_decades']
 
@@ -417,34 +426,35 @@ class data_processor:
 
         return normaliser_m2
 
+    def _architecture_sorting_key(self, column):
+        """Sorting key taken from one architecture column, indexed by self.buildings.
+
+        `reindex` rather than `.loc[...]`: the entities being plotted come from the
+        results, which legitimately contain rows with no architecture record -- district
+        plants, and buildings present in a what-if run but not in zone.shp. Those get a
+        NaN key (sorted last) instead of raising KeyError.
+        """
+        if self.df_architecture_data is None:
+            raise MissingInputDataException(
+                f"Cannot sort by '{self.x_sorted_by}': no architecture data was loaded. "
+                "Expected the selected-buildings file in the scenario's export/plots folder."
+            )
+        return (self.df_architecture_data.set_index('name')[column]
+                .reindex(self.buildings).rename('sorting_key').to_frame())
+
     def process_sorting_key(self, df_to_plotly=None):
-        if self.x_sorted_by == 'default':
+        if self.x_sorted_by == 'default' and df_to_plotly is not None and 'X' in df_to_plotly.columns:
             # Sort by total bar height (sum of all numeric y-columns per building)
-            if df_to_plotly is not None and 'X' in df_to_plotly.columns:
-                numeric_cols = df_to_plotly.select_dtypes(include='number').columns.tolist()
-                totals = df_to_plotly.groupby('X')[numeric_cols].sum().sum(axis=1)
-                sorting_key = totals.to_frame(name='sorting_key')
-                sorting_key.index.name = 'name'
-            else:
-                sorting_key = self.df_architecture_data.set_index('name').loc[self.buildings].copy()
-                sorting_key['sorting_key'] = range(len(self.buildings))
-                sorting_key = sorting_key[['sorting_key']]
-        elif self.x_sorted_by == 'building_name':
-            sorting_key = self.df_architecture_data.set_index('name').loc[self.buildings].copy()
-            sorting_key['sorting_key'] = range(len(self.buildings))
-            sorting_key = sorting_key[['sorting_key']]
-        elif self.x_sorted_by == 'construction_year':
-            sorting_key = self.df_architecture_data.set_index('name').loc[self.buildings, ['construction_year']].copy()
-            sorting_key = sorting_key.rename(columns={'construction_year': 'sorting_key'})
-        elif self.x_sorted_by == 'gross_floor_area':
-            sorting_key = self.df_architecture_data.set_index('name').loc[self.buildings, ['GFA_m2']].copy()
-            sorting_key = sorting_key.rename(columns={'GFA_m2': 'sorting_key'})
-        elif self.x_sorted_by == 'conditioned_floor_area':
-            sorting_key = self.df_architecture_data.set_index('name').loc[self.buildings, ['Af_m2']].copy()
-            sorting_key = sorting_key.rename(columns={'Af_m2': 'sorting_key'})
-        elif self.x_sorted_by == 'roof_area':
-            sorting_key = self.df_architecture_data.set_index('name').loc[self.buildings, ['Aroof_m2']].copy()
-            sorting_key = sorting_key.rename(columns={'Aroof_m2': 'sorting_key'})
+            numeric_cols = df_to_plotly.select_dtypes(include='number').columns.tolist()
+            totals = df_to_plotly.groupby('X')[numeric_cols].sum().sum(axis=1)
+            sorting_key = totals.to_frame(name='sorting_key')
+            sorting_key.index.name = 'name'
+        elif self.x_sorted_by in ('default', 'building_name'):
+            # Keep self.buildings in its current order
+            sorting_key = pd.DataFrame({'sorting_key': range(len(self.buildings))},
+                                       index=pd.Index(self.buildings, name='name'))
+        elif self.x_sorted_by in SORTING_KEY_COLUMNS:
+            sorting_key = self._architecture_sorting_key(SORTING_KEY_COLUMNS[self.x_sorted_by])
         else:
             raise ValueError(f"Invalid x-sorted-by: {self.x_sorted_by}")
 

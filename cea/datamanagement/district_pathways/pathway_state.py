@@ -16,6 +16,7 @@ from cea.datamanagement.district_pathways.pathway_integrity import (
     merge_modify_recipes,
     scan_state_year_folders,
 )
+from cea.datamanagement.database.assemblies import DERIVED_LOOKUP_FIELDS
 from cea.datamanagement.district_pathways.envelope_topology import (
     ALL_MATERIAL_FIELDS,
     extract_material_fields,
@@ -31,6 +32,8 @@ from cea.datamanagement.district_pathways.pathway_log import (
 )
 from cea.datamanagement.district_pathways.pathway_status import (
     collect_state_phase_status,
+    state_inputs_folder_exists,
+    state_outputs_folder_exists,
     record_baked_state,
     record_simulated_state,
 )
@@ -77,8 +80,15 @@ class DistrictStateYear:
             self.pathway_name, int(self.year),
         )
 
-    def exists_on_disk(self) -> bool:
-        return os.path.exists(self.state_folder())
+    def has_inputs_on_disk(self) -> bool:
+        return state_inputs_folder_exists(
+            self.main_locator, pathway_name=self.pathway_name, year=int(self.year)
+        )
+
+    def has_outputs_on_disk(self) -> bool:
+        return state_outputs_folder_exists(
+            self.main_locator, pathway_name=self.pathway_name, year=int(self.year)
+        )
 
     def read_signature_record(self) -> dict[str, Any] | None:
         path = self.signature_path()
@@ -1248,24 +1258,34 @@ def _apply_state_construction_changes(
                         db_modified += 1
 
                 if db_modified:
-                    if is_material_promotion:
-                        # Clear stale direct-property cache; values will be re-derived from
-                        # materials by Envelope.from_locator on next load.
-                        suf = envelope_lookup._SUFFIX[envelope_db_name]
-                        derived_cols = (
-                            "U_base" if envelope_db_name == "floor" else f"U_{suf}",
-                            f"GHG_{suf}_kgCO2m2",
-                            f"GHG_biogenic_{suf}_kgCO2m2",
-                        )
-                        for c in derived_cols:
-                            if c in new_row.index:
-                                new_row[c] = None
-                        print(
-                            f"  Row '{code_new}' promoted to material-based from direct-property "
-                            f"source '{code_current}'; cleared stale {', '.join(derived_cols)} "
-                            f"(will be re-derived from materials on next load).",
-                            flush=True,
-                        )
+                    if material_fields_in_mod:
+                        # The copied cache describes the source's layers, not the new ones.
+                        # Blank it so the loader re-derives from materials — it rejects any
+                        # row whose cache has drifted from its own layers (issue #4059).
+                        derived_cols = [
+                            envelope_lookup._col(envelope_db_name, f)
+                            for f in DERIVED_LOOKUP_FIELDS
+                        ]
+                        # ...but keep anything the recipe set itself: materials plus an
+                        # explicit U means that U.
+                        explicitly_set = {
+                            envelope_lookup._col(envelope_db_name, field)
+                            for field, value in modifications.items()
+                            if value is not None and field not in ALL_MATERIAL_FIELDS
+                        }
+                        cleared = [
+                            c
+                            for c in derived_cols
+                            if c in new_row.index and c not in explicitly_set
+                        ]
+                        if cleared:
+                            new_row[cleared] = None
+                            print(
+                                f"  Row '{code_new}' materials changed from source "
+                                f"'{code_current}'; cleared stale {', '.join(cleared)} "
+                                f"(will be re-derived from materials on next load).",
+                                flush=True,
+                            )
 
                     # Only validate 3-layer topology when the new row claims a material set;
                     # pure direct-property modifications must not be required to pass it.

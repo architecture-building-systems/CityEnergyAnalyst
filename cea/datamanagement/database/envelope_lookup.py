@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 import pandas as pd
 
 from dataclasses import fields as dataclass_fields
@@ -23,7 +23,7 @@ class EnvelopeLookup:
         "U",
         "GHG_kgCO2m2",
         "GHG_production_kgCO2m2",
-        "GHG_recycling_kgCO2m2",
+        "GHG_demolition_kgCO2m2",
         "GHG_biogenic_kgCO2m2",
         "G_win",
         "e_win",
@@ -163,7 +163,7 @@ class EnvelopeLookup:
             "GHG_kgCO2m2",
             "GHG_biogenic_kgCO2m2",
             "GHG_production_kgCO2m2",
-            "GHG_recycling_kgCO2m2",
+            "GHG_demolition_kgCO2m2",
             "Service_Life",
         }
         if field in ghg_fields:
@@ -182,8 +182,8 @@ class EnvelopeLookup:
                 return f"GHG_biogenic_{suf}_kgCO2m2"
             if field == "GHG_production_kgCO2m2":
                 return f"GHG_production_{suf}_kgCO2m2"
-            if field == "GHG_recycling_kgCO2m2":
-                return f"GHG_recycling_{suf}_kgCO2m2"
+            if field == "GHG_demolition_kgCO2m2":
+                return f"GHG_demolition_{suf}_kgCO2m2"
             # Service_Life
             return f"Service_Life_{suf}"
 
@@ -235,3 +235,52 @@ class EnvelopeLookup:
             )
 
         df.at[code, col] = value
+
+def envelope_emission_intensities(
+    lookup: EnvelopeLookup, code: str
+) -> tuple[float, float, float]:
+    """Return (production, demolition, biogenic) in kgCO2e/m2 for an envelope code.
+
+    The production/demolition split is decided per row, not per file: one ENVELOPE_WALL.csv can
+    hold layered rows that derive a split alongside direct-property rows that do not, and
+    windows never have layers at all. Testing the row's *values* rather than whether the
+    column exists is what makes that work -- once any row derives a split the column exists
+    for every row, so a column-level test hands back NaN for the rest.
+
+    Without a split, `GHG_kgCO2m2` is the whole lifecycle: attributing it to production and
+    reporting no demolition keeps the total right and only the phase breakdown coarse.
+    """
+    # Optional like the split: the loader creates this column for wall/roof/floor when a
+    # database omits it, but not for windows, which are not derived from materials.
+    biogenic = _optional_field(lookup, code, "GHG_biogenic_kgCO2m2", default=0.0)
+
+    production = _optional_field(lookup, code, "GHG_production_kgCO2m2")
+    demolition = _optional_field(lookup, code, "GHG_demolition_kgCO2m2")
+    if production is not None and demolition is not None:
+        return production, demolition, biogenic
+
+    total = lookup.get_item_value(code, "GHG_kgCO2m2")
+    if total is None:
+        raise ValueError(
+            f"Envelope database has no GHG_kgCO2m2 for item {code}; cannot report emissions."
+        )
+    return float(total), 0.0, biogenic
+
+
+def _optional_field(
+    lookup: EnvelopeLookup, code: str, field: str, default: float | None = None
+) -> float | None:
+    """The field's value, or `default` when the column is absent or the row leaves it empty."""
+    try:
+        return _as_float(lookup.get_item_value(code, field), default=default)
+    except KeyError:
+        return default
+
+
+def _as_float(value: Any, default: float | None) -> float | None:
+    """Parse to float, treating None, unparseable values and NaN alike as absent."""
+    try:
+        result = float(value)
+    except (TypeError, ValueError):
+        return default
+    return default if pd.isna(result) else result

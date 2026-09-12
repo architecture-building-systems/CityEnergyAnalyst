@@ -174,7 +174,7 @@ Typical network characteristics:
 
 ---
 
-## Thermal Network Part 2: Flow & Sizing
+## Thermal Network Part 2a: Flow & Sizing (Single-Phase)
 
 ### Overview
 Performs detailed thermal hydraulic simulation of the network created in Part 1. This feature calculates mass flow rates, pipe sizes, temperatures, pressure drops, and pump requirements for district heating or cooling systems.
@@ -237,7 +237,7 @@ Performs detailed thermal hydraulic simulation of the network created in Part 1.
 
 2. **Configure parameters**:
    - Navigate to **Thermal Network Design**
-   - Select **Thermal Network Part 2: Flow & Sizing**
+   - Select **Thermal Network Part 2a: Flow & Sizing (Single-Phase)**
    - **Select network name** from dropdown (must be created in Part 1)
    - Select network type (must match the type used in Part 1)
    - Set supply/return temperatures:
@@ -266,7 +266,7 @@ All Part 2 outputs are written under `outputs/data/thermal-network/{network_name
 
 ### Pipe Cost Database
 
-Part 2 and Part 2b both read pipe costs from `{scenario}/inputs/technology/COMPONENTS/DISTRIBUTION/THERMAL_GRID.csv`. The following columns are **required** — any missing column will cause Part 2b (multi-phase sizing) to error out with a clear message pointing at the file:
+Part 2 and Part 2b both read pipe costs from `{scenario}/inputs/database/COMPONENTS/DISTRIBUTION/THERMAL_GRID.csv`. The following columns are **required** — any missing column will cause Part 2b (multi-phase sizing) to error out with a clear message pointing at the file:
 
 | Column | Meaning | Example |
 |--------|---------|---------|
@@ -362,7 +362,11 @@ If the required diameter produced by the simulation exceeds the largest DN in th
 
 ---
 
-## Thermal Network Part 2b: Multi-Phase Sizing
+## Thermal Network Part 2b: Flow & Sizing (Multiple-Phase)
+
+> **"Multiple-phase" means construction phases, not two-phase flow.** This feature is about
+> building a network out in stages over time. It has nothing to do with steam or two-phase
+> fluids — both 2a and 2b model single-phase liquid networks.
 
 ### Overview
 Optimises pipe sizing across a **sequence of networks** that represent a phased rollout (and/or phased decommissioning) of a thermal network over time. Instead of sizing each phase independently, Part 2b sees the full timeline at once and decides when each pipe should be installed, replaced, kept, or left idle — minimising total capital + replacement cost under a **sunk infrastructure** cost model.
