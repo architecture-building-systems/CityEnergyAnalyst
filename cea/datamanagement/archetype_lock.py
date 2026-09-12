@@ -1,4 +1,4 @@
-"""Archetype-Lock: keep the archetype-derived building properties consistent with `zone.shp`.
+"""Archetype Lock: keep the archetype-derived building properties consistent with `zone.shp`.
 
 `zone.shp` is authored by the user. The five building-property tables are *derived* from it by
 `archetypes_mapper`, which reads each building's archetype key and writes:

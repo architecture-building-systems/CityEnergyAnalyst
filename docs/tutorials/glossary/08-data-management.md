@@ -85,7 +85,7 @@ Files in this category: **67** (⚠️ 35 stale)
 - **Created by**: `archetypes_mapper`
 - **Used by**: `demand`
 
-HVAC system types per building. Derived from each building's archetype by the Archetypes Mapper - see Archetype-Lock. While the scenario is locked CEA owns this file and regenerates it when a building's archetype changes; while unlocked you own it.
+HVAC system types per building. Derived from each building's archetype by the Archetypes Mapper - see Archetype Lock. While the scenario is locked CEA owns this file and regenerates it when a building's archetype changes; while unlocked you own it.
 
 | Variable | Description | Type | Unit | Values |
 |----------|-------------|------|------|--------|
@@ -109,7 +109,7 @@ HVAC system types per building. Derived from each building's archetype by the Ar
 - **Created by**: `archetypes_mapper`
 - **Used by**: `demand`, `emissions`, `radiation`, `occupancy`
 
-Envelope properties per building. Derived from each building's archetype by the Archetypes Mapper - see Archetype-Lock. While the scenario is locked CEA owns this file and regenerates it when a building's archetype changes; while unlocked you own it.
+Envelope properties per building. Derived from each building's archetype by the Archetypes Mapper - see Archetype Lock. While the scenario is locked CEA owns this file and regenerates it when a building's archetype changes; while unlocked you own it.
 
 | Variable | Description | Type | Unit | Values |
 |----------|-------------|------|------|--------|
@@ -141,7 +141,7 @@ Envelope properties per building. Derived from each building's archetype by the 
 - **Created by**: `archetypes_mapper`
 - **Used by**: `demand`, `occupancy`
 
-Indoor comfort setpoints per building. Derived from each building's use type by the Archetypes Mapper - see Archetype-Lock. While the scenario is locked CEA owns this file and regenerates it when a building's archetype changes; while unlocked you own it.
+Indoor comfort setpoints per building. Derived from each building's use type by the Archetypes Mapper - see Archetype Lock. While the scenario is locked CEA owns this file and regenerates it when a building's archetype changes; while unlocked you own it.
 
 | Variable | Description | Type | Unit | Values |
 |----------|-------------|------|------|--------|
@@ -163,7 +163,7 @@ Indoor comfort setpoints per building. Derived from each building's use type by 
 - **Created by**: `archetypes_mapper`
 - **Used by**: `demand`
 
-Internal loads per building. Derived from each building's use type by the Archetypes Mapper - see Archetype-Lock. While the scenario is locked CEA owns this file and regenerates it when a building's archetype changes; while unlocked you own it.
+Internal loads per building. Derived from each building's use type by the Archetypes Mapper - see Archetype Lock. While the scenario is locked CEA owns this file and regenerates it when a building's archetype changes; while unlocked you own it.
 
 | Variable | Description | Type | Unit | Values |
 |----------|-------------|------|------|--------|
@@ -218,7 +218,7 @@ Internal loads per building. Derived from each building's use type by the Archet
 - **Created by**: `archetypes_mapper`
 - **Used by**: `decentralized`, `demand`, `emissions`, `system_costs`
 
-Supply system types per building. Derived from each building's archetype by the Archetypes Mapper - see Archetype-Lock. While the scenario is locked CEA owns this file and regenerates it when a building's archetype changes; while unlocked you own it.
+Supply system types per building. Derived from each building's archetype by the Archetypes Mapper - see Archetype Lock. While the scenario is locked CEA owns this file and regenerates it when a building's archetype changes; while unlocked you own it.
 
 | Variable | Description | Type | Unit | Values |
 |----------|-------------|------|------|--------|

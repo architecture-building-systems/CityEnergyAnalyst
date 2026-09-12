@@ -250,7 +250,7 @@ async def save_all_inputs(scenario: CEAScenario, form: InputForm):
     def fn():
         out = {'tables': {}, 'geojsons': {}, 'skipped_tables': []}
 
-        # Archetype-Lock. While locked, CEA owns the archetype-derived tables, so the payload's
+        # Archetype Lock. While locked, CEA owns the archetype-derived tables, so the payload's
         # copies of them are not written.
         #
         # This has to happen server-side, not only by grey-ing out the inputs: the editor holds

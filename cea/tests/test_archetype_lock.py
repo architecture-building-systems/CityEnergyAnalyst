@@ -1,4 +1,4 @@
-"""Archetype-Lock: CEA owns the archetype-derived tables while locked.
+"""Archetype Lock: CEA owns the archetype-derived tables while locked.
 
 `zone.shp` is authored; `envelope.csv`, `hvac.csv`, `indoor_comfort.csv`,
 `internal_loads.csv`, `supply.csv` and the per-building schedules are derived from it by

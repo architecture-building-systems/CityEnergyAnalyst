@@ -6,7 +6,7 @@ subset: mapping one building of fifteen left a one-row file and silently removed
 fourteen, across all five derived tables.
 
 Reachable from the CLI and the dashboard through `archetypes-mapper:buildings`, and from
-Archetype-Lock whenever a building's archetype changes.
+Archetype Lock whenever a building's archetype changes.
 """
 
 import pandas as pd

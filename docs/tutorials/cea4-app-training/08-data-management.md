@@ -176,7 +176,7 @@ Common adjustments:
 
 ---
 
-## Archetype-Lock
+## Archetype Lock
 
 Only the **zone** table is authored by you. Five of the other input-editor tabs are *derived*
 from it by the Archetypes Mapper, using each building's archetype:
@@ -189,7 +189,7 @@ Building **schedules** are derived too, though they are not a tab.
 
 Editing a derived table directly makes the construction type stop describing the building it
 labels — the archetype says one thing, the tables another, and nothing records that. The
-**Archetype-Lock** toggle in the input editor decides who owns those tables.
+**Archetype Lock** toggle in the input editor decides who owns those tables.
 
 ### Locked
 
