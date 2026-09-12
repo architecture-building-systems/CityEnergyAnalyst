@@ -290,6 +290,19 @@ async def save_all_inputs(scenario: CEAScenario, form: InputForm):
 
             if len(tables[db]):
                 if file_type == 'shp':
+                    # The editor sends back what the GET gave it, and the GET builds `tables`
+                    # and `geojsons` from two independent reads. When the geometry read failed
+                    # the table can arrive populated with no geojson beside it; writing the
+                    # shapefile needs the geometry, so skip rather than raise a TypeError from
+                    # `None['features']`.
+                    if not (geojsons.get(db) or {}).get('features'):
+                        logger.warning(
+                            f"Skipping {db}: its rows were sent without any geometry. The "
+                            f"geometry file likely failed to load - check the log from when "
+                            f"the scenario was opened.")
+                        out['tables'][db] = tables[db]
+                        continue
+
                     table_df = geopandas.GeoDataFrame.from_features(geojsons[db]['features'],
                                                                     crs=get_geographic_coordinate_system())
                     out['geojsons'][db] = json.loads(table_df.to_json())
@@ -544,6 +557,28 @@ def df_to_json(file_location, root=None):
             raise FileNotFoundError(f"File not found: {file_location}")
 
         table_df = geopandas.GeoDataFrame.from_file(file_location)
+
+        # Drop rows with no geometry, for display only.
+        #
+        # `get_lat_lon_projected_shapefile` rejects the whole file if any row fails validation,
+        # so a single row with a null footprint blanks the entire map -- every other building
+        # included -- while the table beside it still lists them all. For the editor it is more
+        # useful to draw what can be drawn and say what was left out; the row stays in the
+        # table, which is where the user can fix or delete it.
+        #
+        # Simulation scripts call the validator directly and still refuse to run, which is
+        # right: a missing footprint is a real error, not a display inconvenience.
+        missing_geometry = table_df.geometry.isna()
+        if missing_geometry.any():
+            names = table_df.loc[missing_geometry].get('name')
+            logger.warning(
+                f"{int(missing_geometry.sum())} row(s) in {os.path.basename(file_location)} "
+                f"have no geometry and are not drawn on the map"
+                + (f": {', '.join(map(str, names))}" if names is not None else "")
+                + ". They remain in the table - give them a footprint or delete them."
+            )
+            table_df = table_df.loc[~missing_geometry]
+
         # Save coordinate system
         if table_df.empty:
             # Set crs to generic projection if empty
@@ -560,10 +595,13 @@ def df_to_json(file_location, root=None):
         out = json.loads(out.to_json())
         return out, crs
     except (IOError, DriverError, FileNotFoundError) as e:
-        print(e)
+        # Through the logger, naming the file. Returning None here is invisible until a later
+        # save trips over it -- `save_all_inputs` reads `geojsons[db]['features']` -- so the
+        # 500 it eventually raises points at the save, not at whatever actually failed here.
+        logger.warning(f"Could not read geometry for the Input Editor from {file_location}: {e}")
         return None, None
     except Exception:
-        traceback.print_exc()
+        logger.exception(f"Could not read geometry for the Input Editor from {file_location}")
         return None, None
 
 

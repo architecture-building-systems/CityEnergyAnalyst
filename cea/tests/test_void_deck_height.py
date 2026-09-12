@@ -806,3 +806,44 @@ def test_the_input_editor_stops_offering_the_deprecated_column():
     # Already carries it: still editable, so existing data stays reachable.
     assert advertised({"name", "floors_ag", VOID_FLOORS_COLUMN, "height_ag"}) == [
         VOID_FLOORS_COLUMN, VOID_HEIGHT_COLUMN]
+
+
+def test_the_metre_column_is_declared_nullable():
+    """`height_vd` is optional, and the schema has to say so.
+
+    The input editor builds its validators from the schema. Without `nullable: true` it adds
+    `required`, so clicking into the blank cell of an older scenario and leaving it raised
+    "must be float type" and marked the cell red.
+
+    The red cell was the lesser problem. The editor's number mutator maps an empty string to
+    `Number('') === 0` unless the column is nullable, so the save would have written an
+    explicit `0` -- and by the per-value precedence rule an explicit 0 *overrides* `void_deck`,
+    silently deleting the building's void deck. The validation error was the only thing
+    stopping that.
+    """
+    from cea.schemas import schemas
+
+    column = schemas(plugins=[])["get_zone_geometry"]["schema"]["columns"][VOID_HEIGHT_COLUMN]
+
+    assert column.get("nullable") is True, (
+        "height_vd must be nullable: it is optional, and a blank cell must stay blank rather "
+        "than being written as a real 0")
+
+
+def test_a_blank_cell_and_an_explicit_zero_mean_different_things():
+    """The distinction the nullable flag protects.
+
+    Blank falls back to `void_deck`; 0 is a value and overrides it. If the editor cannot tell
+    them apart, an older scenario loses its void deck simply by being looked at.
+    """
+    legacy = {"floors_ag": [5], "height_ag": [15.0], VOID_FLOORS_COLUMN: [4]}
+
+    blank = pd.DataFrame({**legacy, VOID_HEIGHT_COLUMN: [np.nan]})
+    assert resolve_void_height(blank).iloc[0] == pytest.approx(12.0)
+    assert resolve_enclosed_floors_ag(blank).iloc[0] == 1.0
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        explicit_zero = pd.DataFrame({**legacy, VOID_HEIGHT_COLUMN: [0.0]})
+        assert resolve_void_height(explicit_zero).iloc[0] == 0.0
+        assert resolve_enclosed_floors_ag(explicit_zero).iloc[0] == 5.0
