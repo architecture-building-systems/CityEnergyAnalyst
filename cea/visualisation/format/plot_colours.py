@@ -28,6 +28,9 @@ COLOURS_TO_RGB = {
     "yellow": "rgb(255,209,29)",
     "yellow_light": "rgb(255,225,133)",
     "yellow_lighter": "rgb(255,243,211)",
+    # Completes the family: red, green and blue each have a `_lightest` tier, and it is always
+    # the `_lighter` tone blended half-way to white. Same rule applied here.
+    "yellow_lightest": "rgb(255,249,233)",
 
     "brown": "rgb(174,148,72)",
     "brown_light": "rgb(201,183,135)",

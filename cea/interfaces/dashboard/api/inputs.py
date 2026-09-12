@@ -428,6 +428,28 @@ def df_to_json(file_location, root=None):
             raise FileNotFoundError(f"File not found: {file_location}")
 
         table_df = geopandas.GeoDataFrame.from_file(file_location)
+
+        # Drop rows with no geometry, for display only.
+        #
+        # `get_lat_lon_projected_shapefile` rejects the whole file if any row fails validation,
+        # so a single row with a null footprint blanks the entire map -- every other building
+        # included -- while the table beside it still lists them all. For the editor it is more
+        # useful to draw what can be drawn and say what was left out; the row stays in the
+        # table, which is where the user can fix or delete it.
+        #
+        # Simulation scripts call the validator directly and still refuse to run, which is
+        # right: a missing footprint is a real error, not a display inconvenience.
+        missing_geometry = table_df.geometry.isna()
+        if missing_geometry.any():
+            names = table_df.loc[missing_geometry].get('name')
+            logger.warning(
+                f"{int(missing_geometry.sum())} row(s) in {os.path.basename(file_location)} "
+                f"have no geometry and are not drawn on the map"
+                + (f": {', '.join(map(str, names))}" if names is not None else "")
+                + ". They remain in the table - give them a footprint or delete them."
+            )
+            table_df = table_df.loc[~missing_geometry]
+
         # Save coordinate system
         if table_df.empty:
             # Set crs to generic projection if empty
