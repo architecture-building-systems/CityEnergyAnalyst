@@ -781,6 +781,26 @@ class StringParameter(Parameter):
     """Default Parameter type"""""
 
 
+# Shared by every name-like StringParameter subclass below whose value is later joined into
+# a filesystem path (what-if/network/phasing-plan/export-folder names): reject path
+# separators and other filesystem-reserved characters so a name can never escape its
+# intended directory (e.g. via `..` combined with `/`) or break path construction on
+# Windows. This is a security check (used by encode() AND decode()), not a business rule --
+# see the decode()/encode() split documented in cea/CLAUDE.md.
+_FILESYSTEM_INVALID_CHARS = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
+
+
+def _validate_no_filesystem_invalid_chars(value: str, label: str) -> str:
+    """Raise ValueError if `value` contains a filesystem-reserved character; otherwise
+    return it unchanged. `label` names the field in the error message (e.g. "Network name")."""
+    if any(char in value for char in _FILESYSTEM_INVALID_CHARS):
+        raise ValueError(
+            f"{label} contains invalid characters. "
+            f"Avoid: {' '.join(_FILESYSTEM_INVALID_CHARS)}"
+        )
+    return value
+
+
 class WhatIfNameParameter(StringParameter):
     """
     Parameter for what-if scenario names with collision detection.
@@ -791,17 +811,7 @@ class WhatIfNameParameter(StringParameter):
         """
         Validate what-if name for invalid characters and collision with existing scenarios.
         """
-        value = value.strip()
-
-        # Check for invalid filesystem characters
-        invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
-        if any(char in value for char in invalid_chars):
-            raise ValueError(
-                f"What-if name contains invalid characters. "
-                f"Avoid: {' '.join(invalid_chars)}"
-            )
-
-        return value
+        return _validate_no_filesystem_invalid_chars(value.strip(), "What-if name")
 
     def encode(self, value):
         """
@@ -824,18 +834,35 @@ class WhatIfNameParameter(StringParameter):
         if not value:
             return ""
 
-        value = value.strip()
-
         # Only validate filesystem characters (security concern)
         # Collision check is encode's job when creating new scenarios
-        invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
-        if any(char in value for char in invalid_chars):
-            raise ValueError(
-                f"What-if name contains invalid characters. "
-                f"Avoid: {' '.join(invalid_chars)}"
-            )
+        return _validate_no_filesystem_invalid_chars(value.strip(), "What-if name")
 
-        return value
+
+class ExportFolderNameParameter(StringParameter):
+    """
+    Parameter for the results-export subfolder name.
+
+    The value is joined (with a timestamp suffix) into
+    `scenario/export/results/{name}-{timestamp}` -- see
+    `InputLocator.get_export_results_summary_folder`. Rejecting path separators here, not
+    just at the point of use, keeps the export confined to the scenario's export folder
+    regardless of which caller builds the path.
+    """
+
+    def encode(self, value):
+        """Validate and encode the export folder name; empty is allowed (falls back to
+        "summary" at the point of use)."""
+        if not value or str(value).strip() == '':
+            return ''
+        return _validate_no_filesystem_invalid_chars(str(value).strip(), "Export folder name")
+
+    def decode(self, value):
+        """Parse the export folder name from the config file. Lenient like the other
+        name parameters: only the filesystem-character security check runs here."""
+        if not value:
+            return ''
+        return _validate_no_filesystem_invalid_chars(value.strip(), "Export folder name")
 
 
 class NetworkLayoutNameParameter(StringParameter):
@@ -848,17 +875,7 @@ class NetworkLayoutNameParameter(StringParameter):
         """
         Validate network name for invalid characters and collision with existing networks.
         """
-        value = value.strip()
-
-        # Check for invalid filesystem characters
-        invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
-        if any(char in value for char in invalid_chars):
-            raise ValueError(
-                f"Network name contains invalid characters. "
-                f"Avoid: {' '.join(invalid_chars)}"
-            )
-
-        return value
+        return _validate_no_filesystem_invalid_chars(value.strip(), "Network name")
 
     def encode(self, value):
         """
@@ -881,18 +898,9 @@ class NetworkLayoutNameParameter(StringParameter):
         if not value:
             return ""
 
-        value = value.strip()
-
         # Only validate filesystem characters (security concern)
         # Collision check is encode's job when creating new networks
-        invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
-        if any(char in value for char in invalid_chars):
-            raise ValueError(
-                f"Network name contains invalid characters. "
-                f"Avoid: {' '.join(invalid_chars)}"
-            )
-
-        return value
+        return _validate_no_filesystem_invalid_chars(value.strip(), "Network name")
 
 
 class OptimizationIndividualListParameter(ListParameter):
@@ -1164,15 +1172,9 @@ class PhasingPlanChoiceParameter(StringParameter):
     """
 
     def _validate_phasing_plan_name(self, value) -> str:
-        value = value.strip()
-
-        # Check for invalid filesystem characters
-        invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
-        if any(char in value for char in invalid_chars):
-            raise ValueError(
-                f"Phasing plan name contains invalid characters. "
-                f"Avoid: {' '.join(invalid_chars)}"
-            )
+        """Validate phasing plan name for invalid characters and collision with existing
+        plans."""
+        value = _validate_no_filesystem_invalid_chars(value.strip(), "Phasing plan name")
 
         # Check for collision with existing phasing plans
         scenario = self.config.scenario
@@ -1195,22 +1197,47 @@ class PhasingPlanChoiceParameter(StringParameter):
         return self._validate_phasing_plan_name(str(value))
 
     def decode(self, value):
+        """Parse the phasing plan name from the config file. Lenient: only the
+        filesystem-character security check runs here; collision is encode's job."""
         if not value:
             return ''
-        value = value.strip()
-        invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
-        if any(char in value for char in invalid_chars):
-            raise ValueError(
-                f"Phasing plan name contains invalid characters. "
-                f"Avoid: {' '.join(invalid_chars)}"
-            )
-        return value
+        return _validate_no_filesystem_invalid_chars(value.strip(), "Phasing plan name")
 
 
-class WhatIfNameChoiceParameter(ChoiceParameter):
+class WhatIfNameChoicesMixin:
+    """Shared `mode` lookup for the what-if name parameters below.
+
+    `mode` (`final_energy`, `emissions`, `costs`, `heat_rejection`, or unset) picks which
+    what-if output the dropdown requires to exist. It is also read back by
+    `deconstruct_parameters` (api/utils.py) so the GUI can word its "no choices" message
+    with the right tool name instead of hardcoding "Run Final Energy first" for all modes.
+    """
+
+    config: Configuration
+
+    @property
+    def mode(self) -> str | None:
+        return self.config.default_config.get(self.section.name, f"{self.name}.mode", fallback=None)
+
+    def _mode_output_path_fn(self, locator):
+        """Locator method returning the mode-specific output file whose existence proves
+        an analysis subfolder actually has this mode's results -- shared between the
+        single- and multi-choice what-if selectors so both filter consistently by every
+        supported mode (not just final_energy). Returns None for an unset/unrecognised
+        mode, meaning "no mode-specific filtering"."""
+        return {
+            'final_energy':   locator.get_final_energy_buildings_file,
+            'heat_rejection': locator.get_heat_rejection_whatif_buildings_file,
+            'costs':          locator.get_costs_whatif_buildings_file,
+            'emissions':      locator.get_emissions_whatif_buildings_file,
+        }.get(self.mode)
+
+
+class WhatIfNameChoiceParameter(WhatIfNameChoicesMixin, ChoiceParameter):
     """
     Parameter for selecting an existing what-if scenario name from a dropdown.
-    Scans outputs/data/analysis/ for existing subfolders.
+    Scans outputs/data/analysis/ for existing subfolders, filtered to those with the
+    mode-specific output -- see WhatIfNameChoicesMixin.
     """
 
     @property
@@ -1220,13 +1247,13 @@ class WhatIfNameChoiceParameter(ChoiceParameter):
             analysis_root = os.path.dirname(locator.get_analysis_folder('__probe__'))
             if not os.path.exists(analysis_root):
                 return []
-            mode = self.config.default_config.get(self.section.name, f"{self.name}.mode", fallback=None)
             names = sorted(
                 name for name in os.listdir(analysis_root)
                 if os.path.isdir(os.path.join(analysis_root, name))
             )
-            if mode == 'final_energy':
-                names = [name for name in names if os.path.exists(locator.get_final_energy_folder(name))]
+            mode_path_fn = self._mode_output_path_fn(locator)
+            if mode_path_fn is not None:
+                names = [name for name in names if os.path.exists(mode_path_fn(name))]
             return names
         except Exception:
             return []
@@ -1469,11 +1496,12 @@ class NetworkLayoutMultiChoiceParameter(NetworkLayoutChoicesMixin, MultiChoicePa
         return value
 
 
-class WhatIfNameMultiChoiceParameter(MultiChoiceParameter):
+class WhatIfNameMultiChoiceParameter(WhatIfNameChoicesMixin, MultiChoiceParameter):
     """
     Multi-choice version of WhatIfNameChoiceParameter.
     Scans outputs/data/analysis/ for existing subfolders and allows selecting multiple.
-    Supports mode=final_energy to filter to scenarios with final-energy output.
+    Filters to scenarios with the mode-specific output, per `mode` (final_energy,
+    heat_rejection, costs, or emissions) -- see WhatIfNameChoicesMixin.
     """
 
     empty_means_all = False
@@ -1486,7 +1514,6 @@ class WhatIfNameMultiChoiceParameter(MultiChoiceParameter):
             analysis_root = os.path.dirname(locator.get_analysis_folder('__probe__'))
             if not os.path.exists(analysis_root):
                 return []
-            mode = self.config.default_config.get(self.section.name, f"{self.name}.mode", fallback=None)
             # Per mode, pick the specific output file whose mtime we'll
             # sort by. Overwriting a file doesn't reliably bump the
             # parent folder's mtime on common filesystems, so sorting
@@ -1494,12 +1521,7 @@ class WhatIfNameMultiChoiceParameter(MultiChoiceParameter):
             # their old position. Sorting by the key file's mtime
             # (and filtering out names whose file is missing) makes
             # the just-run what-if appear first in the dropdown.
-            mode_path_fn = {
-                'final_energy':   locator.get_final_energy_buildings_file,
-                'heat_rejection': locator.get_heat_rejection_whatif_buildings_file,
-                'costs':          locator.get_costs_whatif_buildings_file,
-                'emissions':      locator.get_emissions_whatif_buildings_file,
-            }.get(mode)
+            mode_path_fn = self._mode_output_path_fn(locator)
             entries = []
             for name in os.listdir(analysis_root):
                 if name.startswith('.'):
@@ -1609,7 +1631,11 @@ class ComponentMultiChoiceParameter(MultiChoiceParameter):
                 return []
             shared = component_sets[0].intersection(*component_sets[1:])
             return sorted(shared)
-        except Exception:
+        except (OSError, AttributeError, KeyError, ValueError) as e:
+            import logging
+            logging.getLogger(__name__).warning(
+                "ComponentMultiChoiceParameter(%s): could not build choices: %s", self.name, e
+            )
             return []
 
     empty_means_all = False

@@ -4,8 +4,9 @@
 # Future phase (separate plan): PUT /projects/{id}/scenarios/{name}/... — requires a projects
 # table mapping project_id → path for both local and non-local modes. See AGENTS.md for details.
 
+import configparser
 import os
-from typing import Optional
+from typing import Any, Optional
 
 import cea.config
 import cea.inputlocator
@@ -186,19 +187,169 @@ def split_scenario_subpath(scenario_name: str, project: str) -> tuple:
     return project, scenario_name
 
 
-def deconstruct_parameters(p: cea.config.Parameter, config=None):
+def _missing_source_database(
+    p: cea.config.Parameter, config, locator: cea.inputlocator.InputLocator | None = None
+) -> str | None:
+    """The database file this parameter needs, if it is absent from the scenario.
+
+    Only `.requires-database` is checked here (inputs that are only meaningful when that
+    database exists, e.g. a layer thickness beside a material dropdown) -- not `.locator`.
+    `.locator` names the method `ChoiceParameterBase`/`ColumnChoicesMixin` calls to build
+    a parameter's own choices, sometimes with required `.kwargs` (see `type-pvpanel`); it
+    is not always a zero-argument call, and not always a file (e.g. a pathway container
+    folder that legitimately does not exist yet on a fresh scenario). A choice parameter's
+    own `_choices` failing is already reported by the caller below. A scenario whose
+    `.requires-database` file is missing is a normal situation, not an error -- the form
+    drops those inputs and says why, rather than failing to load at all.
+    """
+    if config is None:
+        return None
+    try:
+        locator_name = p.config.default_config.get(
+            p.section.name, f"{p.name}.requires-database"
+        )
+    except (configparser.NoSectionError, configparser.NoOptionError):
+        return None
+    if locator is None:
+        locator = cea.inputlocator.InputLocator(config.scenario)
+    method = getattr(locator, locator_name, None)
+    if method is None:
+        return None
+    try:
+        path = method()
+    except Exception as e:
+        logger.warning(
+            "Could not resolve %s.requires-database (%s) for %s: %s",
+            p.name, locator_name, p.fqname, e,
+        )
+        return None
+    if not os.path.exists(path):
+        return path
+    return None
+
+
+def normalize_choice_value(param: cea.config.ChoiceParameterBase, value: Any, choices: list[str]) -> Any:
+    """Coerce a stored choice-parameter value against a freshly-computed `choices` list.
+
+    `value` lives in the shared, non-scenario-scoped `~/cea.config` (see `Configuration.__init__`),
+    while a scenario-relative parameter's `choices` (e.g. `WhatIfNameMultiChoiceParameter`, scanning
+    `outputs/data/analysis/`) are recomputed per request from whichever scenario is currently active.
+    Switching scenarios can therefore leave a value selected that the new scenario's choices no
+    longer contain. Multi-choice values are silently filtered down to the valid subset; a single
+    choice value falls back to the first available choice (or `None` if nullable).
+    """
+    valid_choices = set(choices)
+    is_multi_choice = isinstance(param, cea.config.MultiChoiceParameter)
+
+    def _raise_missing_choices_error(reason: str) -> None:
+        message = f"No choices available for non-nullable parameter {param.fqname} while {reason}."
+        logger.error(message)
+        raise ValueError(message)
+
+    if is_multi_choice:
+        if value is None:
+            return []
+
+        if isinstance(value, list):
+            raw_values = value
+        elif isinstance(value, str):
+            raw_values = [v.strip() for v in value.split(',') if v.strip()]
+        else:
+            raw_values = [value]
+
+        return [str(v).strip() for v in raw_values if str(v).strip() in valid_choices]
+
+    if value is None:
+        if param.nullable:
+            return None
+        if not choices:
+            _raise_missing_choices_error("normalising a missing value")
+        return choices[0]
+
+    normalized_value = str(value).strip()
+    if param.nullable and normalized_value == '':
+        return None
+
+    if normalized_value in valid_choices:
+        return normalized_value
+
+    if not choices and not param.nullable:
+        _raise_missing_choices_error(f"normalising value {normalized_value}")
+
+    return choices[0] if choices else None
+
+
+def deconstruct_parameters(
+    p: cea.config.Parameter, config=None, locator: cea.inputlocator.InputLocator | None = None
+):
+    """Serialise one config Parameter into the GUI's parameter-metadata dict: current
+    value, choices (if any), and an `unavailable` reason when its source database is
+    missing or its choices failed to load. `locator`, if given, is reused for the
+    `.requires-database` check instead of constructing a new one per parameter."""
     params = {'name': p.name, 'type': type(p).__name__, 'nullable': p.nullable, 'help': p.help}
     try:
         if isinstance(p, cea.config.BuildingsParameter):
             params['value'] = []
         else:
             params["value"] = p.get()
-    except (cea.ConfigError, ValueError) as e:
-        print(e)
+    except (cea.ConfigError, ValueError, OSError) as e:
+        # OSError (e.g. FileNotFoundError): some ColumnChoicesMixin-backed multi-choice
+        # parameters (empty_means_all=True) decode '' by evaluating their own `_choices`,
+        # which reads a database CSV via the locator -- on a fresh scenario with no
+        # database yet, that raises here rather than being caught by the `_choices`
+        # try/except below (this happens inside decode(), before choices are even
+        # requested for this parameter). Pre-existing gap, unrelated to choice-value
+        # normalisation: this must not fail the whole tool-properties response either.
+        logger.warning("Could not get value for %s: %s", p.fqname, e)
         params["value"] = ""
 
+    missing_database = _missing_source_database(p, config, locator)
+    if missing_database is not None:
+        # The form hides these inputs and reports the missing file once, instead of the
+        # whole tool-properties request failing on the first unreadable database. The path
+        # is scenario-relative: it is sent to the browser, and an absolute server
+        # filesystem path has no business there.
+        relative_missing_database = (
+            os.path.relpath(missing_database, config.scenario) if config else missing_database
+        )
+        params["unavailable"] = {
+            "reason": f"{os.path.basename(missing_database)} is not in this scenario's database.",
+            "missing_file": relative_missing_database,
+        }
+
     if isinstance(p, cea.config.ChoiceParameterBase):
-        params['choices'] = p._choices
+        if missing_database is not None:
+            # Already explained above; reading the options would just fail again.
+            params['choices'] = []
+        else:
+            try:
+                params['choices'] = p._choices
+            except Exception as e:
+                logger.warning("Could not build choices for %s: %s", p.fqname, e)
+                params['choices'] = []
+                params["unavailable"] = {
+                    "reason": f"Options for this input could not be read: {e}",
+                    "missing_file": None,
+                }
+
+        # `value` may predate the choices just computed above -- e.g. a
+        # WhatIfNameMultiChoiceParameter selection saved while a different scenario was
+        # active. Multi-choice only: normalize_choice_value's multi-choice branch only ever
+        # narrows the list to the currently-valid subset, which is always safe. Its
+        # single-choice branch can fall back to `choices[0]` when the value doesn't match --
+        # correct for POST .../parameter-metadata's original use (a value just invalidated
+        # by the user's own live edit of a field it depends on), but wrong here: some single
+        # ChoiceParameterBase subclasses (e.g. ScenarioNameParameter, whose decode()
+        # deliberately allows any string -- "allow scenario name to be non-existing folder
+        # when reading from config file") treat `choices` as a UI suggestion list, not an
+        # exhaustive valid set. Applying the same fallback there would silently overwrite a
+        # legitimate but currently-unlisted value with an unrelated `choices[0]` on every
+        # GET, and a subsequent Save would persist that corruption.
+        if isinstance(p, cea.config.MultiChoiceParameter):
+            try:
+                params['value'] = normalize_choice_value(p, params['value'], params['choices'])
+            except ValueError as e:
+                logger.warning("Could not normalise value for %s: %s", p.fqname, e)
 
     if isinstance(p, cea.config.WeatherPathParameter):
         locator = cea.inputlocator.InputLocator(config.scenario)
@@ -219,6 +370,13 @@ def deconstruct_parameters(p: cea.config.Parameter, config=None):
         params["depends_on"] = p.depends_on
     else:
         params["depends_on"] = None
+
+    # WhatIfNameChoiceParameter / WhatIfNameMultiChoiceParameter (WhatIfNameChoicesMixin):
+    # which what-if output this dropdown requires (final_energy/emissions/costs/
+    # heat_rejection), so the GUI can name the right tool in its "no choices" message
+    # instead of hardcoding "Run Final Energy first" for every mode.
+    if isinstance(p, cea.config.WhatIfNameChoicesMixin):
+        params["mode"] = p.mode
 
     return params
 

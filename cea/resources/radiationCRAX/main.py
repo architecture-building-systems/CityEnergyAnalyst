@@ -25,7 +25,7 @@ from cea.datamanagement.utils import migrate_void_deck_data
 from cea.resources.radiation import geometry_generator
 from cea.resources.radiation.daysim import GridSize, calc_sensors_building
 from cea.resources.radiation.geometry_generator import BuildingGeometry
-from cea.resources.radiation.main import read_surface_properties
+from cea.resources.radiation.main import buildings_to_simulate, read_surface_properties
 from cea.resources.radiationCRAX import CRAXModel
 from cea.utilities.parallel import vectorize
 
@@ -326,8 +326,9 @@ def sensor_generate_cea_daysim(building_names, locator, grid_size: GridSize, geo
 
 
 def run_daysim_sensor_generate(zone_building_names, locator, settings, geometry_pickle_dir, num_processes):
-    list_of_building_names = [building_name for building_name in settings.buildings
-                              if building_name in zone_building_names]
+    """Generate DAYSIM radiation sensors for the selected buildings
+    (`buildings_to_simulate`), one building per chunk."""
+    list_of_building_names = buildings_to_simulate(settings, zone_building_names)
     # get chunks of buildings to iterate
     n_buildings_in_chunk = 1
     chunks = [list_of_building_names[i:i + n_buildings_in_chunk] for i in
@@ -450,12 +451,19 @@ def check_os():
         raise ValueError("Intel Macs are not supported.")
 
 def main(config):
+    """CRAX radiation entry point: validate the building selection up front (before
+    cleaning previous outputs or paying for geometry setup), then run the CRAX radiation
+    workflow for every selected building."""
     check_os()
 
     print("Creating building geometry data CSV file for CRAX")
     #  reference case need to be provided here
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     migrate_void_deck_data(locator)
+    # Check here rather than in run_daysim_sensor_generate alone: that runs only on the
+    # CEA-sensor branch, and only after cleanup_output_folder has deleted the previous
+    # run's results and the geometry setup has been paid for.
+    buildings_to_simulate(config.radiation_crax, locator.get_zone_building_names())
     # Remove stale radiation outputs from a previous run
     from cea.utilities.output_cleanup import cleanup_output_folder
     cleanup_output_folder(locator.get_solar_radiation_folder())

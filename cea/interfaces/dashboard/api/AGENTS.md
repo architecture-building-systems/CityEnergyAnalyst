@@ -9,6 +9,7 @@
 - `POST /pathways/{pathway_name}/years/{year}/apply-templates` - Apply Step 2 templates directly from the panel.
 - `PUT /pathways/{pathway_name}/years/{year}/yaml` - Expert-mode YAML save.
 - `POST /pathways/{pathway_name}/years/{year}/validate-state` - Manual baked-state validation.
+- `DELETE /pathways/{pathway_name}/years/{year}` - Clear a state year's data (`delete_inputs`, `delete_outputs` query params, both default `true`). See the 409 note below — this route does not raise one.
 
 ## Route Design Principles
 
@@ -102,6 +103,20 @@ return await run_in_threadpool(get_pathway_timeline, config, pathway_name)
 ### DO: Preserve structured 409 payloads for stock-only edit rules
 ```python
 detail={"message": str(exc), "state_kind": "stock", "requires_edit": True}
+```
+This applies to `POST`/`PUT` create/edit routes (`post_year`, `StockYearRequiresEditError`).
+`DELETE .../years/{year}` (`delete_year` → `clear_state`) does **not** 409 on a stock year —
+clearing inputs there only removes the regenerable bake, not the stock year itself, so it is
+allowed and returns 200 with `state_kind` in the payload instead. Do not "restore" a 409 here.
+
+### DO: Report a missing source database as `unavailable`, not a request failure
+`deconstruct_parameters` (`api/utils.py`) checks a parameter's `.requires-database` locator
+method (only that option — not `.locator`, which is not always a zero-argument file lookup,
+see `type-pvpanel`'s `.kwargs`) and, if the file does not exist in this scenario, sets
+`params["unavailable"] = {"reason": ..., "missing_file": <scenario-relative path>}` and empties
+`choices` instead of letting the whole tool-properties request fail on the first missing file.
+```python
+wall-thickness-1-m.requires-database = get_database_components_materials
 ```
 
 ### DO: Guard user-derived path segments before filesystem checks

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import re
 import shutil
@@ -32,10 +33,6 @@ from cea.datamanagement.district_pathways.pathway_validation import (
     validate_pathway_log_data,
 )
 from cea.inputlocator import InputLocator
-
-
-class StockOnlyStateError(ValueError):
-    """Raised when a stock-only state is targeted by a delete action."""
 
 
 class YearRequiresEditError(ValueError):
@@ -255,45 +252,72 @@ def create_pathway_year(
     )
 
 
-def delete_or_clear_state(config: Configuration, pathway_name: str, year: int) -> dict[str, Any]:
+def clear_state(
+    config: Configuration,
+    pathway_name: str,
+    year: int,
+    *,
+    delete_inputs: bool = True,
+    delete_outputs: bool = True,
+) -> dict[str, Any]:
+    """Clear a state year's data on disk, and its log entry when clearing inputs.
+
+    `delete_inputs` drops the whole state folder and the year's manual content from the
+    pathway log, since the bake is built from that entry. Results cannot outlive the
+    scenario that produced them, so clearing inputs takes the outputs with it -- see
+    `_delete_state_artifacts`. `delete_outputs` alone removes only the results, leaving the
+    state baked and ready to re-simulate.
+    """
+    if not delete_inputs and not delete_outputs:
+        raise ValueError("Select inputs, outputs, or both to clear.")
+
+    year = int(year)
     validated_name = _require_existing_pathway(config, pathway_name)
     pathway = DistrictEvolutionPathway(config, pathway_name=validated_name)
-    row = build_pathway_year_row(pathway=pathway, year=int(year), issues=[])
+    state_kind = build_pathway_year_row(pathway=pathway, year=year, issues=[])["state_kind"]
 
-    if row["state_kind"] == "stock":
-        raise StockOnlyStateError(
-            f"Year {int(year)} is a stock-only state and cannot be deleted."
-        )
+    # Outputs cannot outlive the inputs that produced them, so `delete_inputs=True` always
+    # takes the outputs with it -- `delete_outputs` only has an independent effect when
+    # inputs are kept (see `_delete_state_artifacts`).
+    messages = ["Deleted the simulation outputs if they existed."]
+    if delete_inputs:
+        messages.append("Deleted the baked state folder and its status record if they existed.")
+        if not delete_outputs:
+            messages.append(
+                "Outputs were removed as part of clearing inputs, even though outputs "
+                "alone were not selected: results cannot be kept without the inputs "
+                "that produced them."
+            )
+        if state_kind == "stock":
+            # Clearing inputs here only removes the regenerable bake -- the stock year
+            # itself is not in the log and cannot be deleted -- but the year still counts
+            # towards `required_state_years()`, so the pathway now reports as not fully
+            # baked/simulated until it is re-baked.
+            messages.append(
+                "The stock-driven state remains available in the timeline, but Simulate "
+                "Pathway will need to re-bake it before the pathway is fully baked again."
+            )
+        else:
+            pathway.log_data.pop(year, None)
+            pathway.save()
+            messages.append("Removed the year's manual content from the pathway log.")
+            if state_kind == "mixed":
+                messages.append("The stock-driven state remains available in the timeline.")
 
-    if row["state_kind"] == "manual":
-        pathway.log_data.pop(int(year), None)
-        pathway.save()
-        _delete_state_artifacts(pathway.main_locator, validated_name, int(year))
-        return _action_payload(
-            pathway=pathway,
-            year=int(year),
-            action="deleted_state",
-            message=f"Deleted explicit pathway state {int(year)}.",
-            messages=[
-                "Removed the year entry from the pathway log.",
-                "Deleted the baked state folder if it existed.",
-                "Deleted the saved state-status record if it existed.",
-            ],
-        )
-
-    pathway.log_data.pop(int(year), None)
-    pathway.save()
-    _delete_state_artifacts(pathway.main_locator, validated_name, int(year))
+    _delete_state_artifacts(
+        pathway.main_locator,
+        validated_name,
+        year,
+        delete_inputs=delete_inputs,
+        delete_outputs=delete_outputs,
+    )
     return _action_payload(
         pathway=pathway,
-        year=int(year),
-        action="cleared_manual_changes",
-        message=f"Cleared manual changes for year {int(year)}.",
-        messages=[
-            "Removed the explicit pathway entry for this year.",
-            "The stock-driven state remains available in the timeline.",
-            "Deleted any baked state folder and saved state-status record for this year.",
-        ],
+        year=year,
+        action="cleared_state",
+        message=f"Cleared state {year}.",
+        messages=messages,
+        state_kind=state_kind,
     )
 
 
@@ -572,9 +596,47 @@ def _parse_year_yaml(raw_yaml: str, year: int) -> dict[str, Any]:
     return cast(dict[str, Any], parsed)
 
 
-def _delete_state_artifacts(locator: InputLocator, pathway_name: str, year: int) -> None:
+def _delete_state_artifacts(
+    locator: InputLocator,
+    pathway_name: str,
+    year: int,
+    *,
+    delete_inputs: bool,
+    delete_outputs: bool,
+) -> None:
+    """Remove a state year's outputs, and its whole folder when clearing inputs.
+
+    Inputs cannot be cleared while keeping the outputs: the state folder is itself a
+    scenario, so results without inputs can be neither regenerated nor interpreted, and once
+    the year leaves the log the orphaned folder fails
+    `check_district_pathway_log_yaml_integrity`, which blocks Simulate Pathway for the whole
+    pathway. So `delete_inputs` always takes the outputs with it, whatever `delete_outputs`
+    says; `delete_outputs` only has an independent effect when `delete_inputs` is False, and
+    `clear_state` already rejects the case where both are False.
+    """
     state_folder = locator.get_state_in_time_scenario_folder(pathway_name, int(year))
-    shutil.rmtree(state_folder, ignore_errors=True)
-    status_file = locator.get_district_pathway_state_status_file(pathway_name, int(year))
-    if os.path.exists(status_file):
-        os.remove(status_file)
+    if delete_inputs:
+        shutil.rmtree(state_folder, ignore_errors=True)
+        # Both stamps bind the bake to the inputs, so neither survives it.
+        for stamp in (
+            locator.get_district_pathway_state_status_file(pathway_name, int(year)),
+            locator.get_district_pathway_state_signature_file(pathway_name, int(year)),
+        ):
+            if os.path.exists(stamp):
+                os.remove(stamp)
+        return
+
+    assert delete_outputs, "clear_state rejects delete_inputs=False, delete_outputs=False"
+    shutil.rmtree(InputLocator(state_folder).get_output_folder(), ignore_errors=True)
+    # The bake survives but the simulation it recorded does not. collect_state_phase_status
+    # requires the outputs folder for the "simulated" phase, so this signature update is
+    # belt-and-braces rather than load-bearing -- but the phase check reads the signature
+    # for the timestamp, so keep it accurate.
+    signature = locator.get_district_pathway_state_signature_file(pathway_name, int(year))
+    if os.path.exists(signature):
+        with open(signature, "r", encoding="utf-8") as handle:
+            record = json.load(handle) or {}
+        record["simulation_status"] = "needs_simulation"
+        record["simulated_at"] = None
+        with open(signature, "w", encoding="utf-8") as handle:
+            json.dump(record, handle, indent=2)

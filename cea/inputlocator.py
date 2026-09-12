@@ -67,6 +67,9 @@ class InputLocator(object):
 
     # SCENARIO
     def __init__(self, scenario, plugins=None):
+        """Bind this locator to `scenario`'s folder and wrap every schema-declared locator
+        method for read()/write() access. The temporary-file directory is not created here;
+        see `get_temporary_folder`."""
         if not plugins:
             plugins = []
         self.scenario = scenario
@@ -76,8 +79,13 @@ class InputLocator(object):
         self.plugins = plugins
         self.optimization_run = None
 
-        self._temp_directory = tempfile.mkdtemp()
-        atexit.register(self._cleanup_temp_directory)
+        # Created lazily (see get_temporary_folder) -- most locators never touch it, and
+        # mkdtemp()/atexit.register() on every one of the ~200+ construction sites left
+        # orphaned temp directories and an ever-growing atexit list for the process lifetime.
+        self.__temp_directory = None
+        # PID of the process that created the directory. Only that process may remove it:
+        # an unpickled copy in a worker must not delete what the parent is still reading.
+        self.__temp_directory_pid = None
 
     def __getstate__(self):
         """Make sure we can pickle an InputLocator..."""
@@ -86,10 +94,17 @@ class InputLocator(object):
             "db_path": self.db_path,
             "weather_path": self.weather_path,
             "plugins": [str(p) for p in self.plugins],
-            "_temp_directory": self._temp_directory
+            # Materialise before crossing a process boundary. Workers write per-building
+            # files here that the parent reads back (see demand_writers), so every copy of
+            # this locator has to name the same directory -- if each side created its own on
+            # first use, they would never see each other's files.
+            "_temp_directory": self.get_temporary_folder(),
+            "_temp_directory_pid": self.__temp_directory_pid,
         }
 
     def __setstate__(self, state):
+        """Restore an unpickled InputLocator, re-registering temp-directory cleanup if the
+        pickled instance had already created one (see `get_temporary_folder`)."""
         from cea.plugin import instantiate_plugin
 
         self.scenario = state["scenario"]
@@ -97,12 +112,23 @@ class InputLocator(object):
         self.weather_path = state["weather_path"]
         self.plugins = [instantiate_plugin(plugin_fqname) for plugin_fqname in state["plugins"]]
         self._wrap_locator_methods(self.plugins)
-        self._temp_directory = state["_temp_directory"]
+        self.__temp_directory = state["_temp_directory"]
+        self.__temp_directory_pid = state["_temp_directory_pid"]
+        # `__getstate__` materialises the directory, so there is always one to clean up here.
+        # Whether this copy is allowed to is decided by `_cleanup_temp_directory`.
+        atexit.register(self._cleanup_temp_directory)
 
     def _cleanup_temp_directory(self):
-        # Cleanup the temporary directory when the object is destroyed
-        if os.path.exists(self._temp_directory):
-            shutil.rmtree(self._temp_directory)
+        """atexit callback: remove this locator's temporary directory, if one was ever
+        created (see `get_temporary_folder`).
+
+        Only the creating process deletes it. Worker processes hold unpickled copies naming
+        the parent's directory, and deleting it on their way out would take the results with
+        it while the parent is still reading them."""
+        if self.__temp_directory_pid != os.getpid():
+            return
+        if self.__temp_directory is not None and os.path.exists(self.__temp_directory):
+            shutil.rmtree(self.__temp_directory)
 
     def _wrap_locator_methods(self, plugins):
         """
@@ -170,6 +196,10 @@ class InputLocator(object):
     def get_input_folder(self):
         """Returns the inputs folder of a scenario"""
         return os.path.join(self.scenario, "inputs")
+
+    def get_output_folder(self):
+        """Returns the outputs folder of a scenario"""
+        return os.path.join(self.scenario, "outputs")
 
     def get_export_folder(self):
         """Returns the export folder of a scenario"""
@@ -2223,8 +2253,17 @@ class InputLocator(object):
 
     # OTHER
     def get_temporary_folder(self):
-        """Temporary folder as returned by `tempfile`."""
-        return self._temp_directory
+        """Temporary folder as returned by `tempfile`, created on first use.
+
+        Deferred rather than created in `__init__`: most locators never call this, and
+        eagerly creating one per instance leaked a directory plus a permanent
+        `atexit` callback for every one of the many `InputLocator` instantiations
+        throughout a run."""
+        if self.__temp_directory is None:
+            self.__temp_directory = tempfile.mkdtemp()
+            self.__temp_directory_pid = os.getpid()
+            atexit.register(self._cleanup_temp_directory)
+        return self.__temp_directory
 
     def get_temporary_file(self, filename):
         """Returns the path to a file in the temporary folder with the name `filename`"""

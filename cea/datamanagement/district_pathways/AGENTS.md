@@ -8,6 +8,7 @@
 - `validate_pathway_log_data(config, pathway_name, log_data) -> dict[str, Any]` - Validate log/schema content without touching baked state folders.
 - `create_pathway_year(config, pathway_name, year) -> dict` - Validate whether a year already exists; do not create empty placeholders.
 - `delete_pathway(config, pathway_name) -> dict[str, Any]` - Delete one whole pathway folder, including saved states and state-status artefacts.
+- `clear_state(config, pathway_name, year, *, delete_inputs, delete_outputs) -> dict[str, Any]` - Clear one state year's data. `delete_outputs` alone removes the results and leaves the state baked. `delete_inputs` removes the whole state folder (results cannot outlive their scenario, and an orphaned folder fails the integrity check) plus the year's manual content in the log; a stock-only year keeps its timeline slot.
 - `get_pathway_overview(config) -> dict` - Lightweight multi-pathway lane data for the GUI.
 - `get_pathway_timeline(config, pathway_name) -> dict` - Active-pathway timeline rows with status, YAML preview, and validation.
 - `update_year_building_events(...) -> dict` - Save explicit building add/remove edits for one year.
@@ -34,6 +35,17 @@ years = pathway.required_state_years()
 ```python
 record_baked_state(locator, pathway_name="demo", year=2030, ...)
 collect_state_phase_status(locator, pathway_name="demo", year=2030, ...)
+```
+
+### DO: Let `collect_state_phase_status` own "are there results?"
+Phase freshness comes from recorded hashes, but the `simulated` phase additionally requires
+the state's `outputs/` folder to exist — the stamp outlives its results whenever cleanup
+wipes outputs for a re-run that then fails. `record_simulated_state` refuses to write the
+stamp without outputs (as `record_baked_state` does for `inputs/`), and the phase check
+refuses to trust one. Callers trust the phase; don't re-check disk:
+```python
+if phase == "simulated" and not stale:
+    skip(year)  # phase already guarantees outputs are present
 ```
 
 ### DO: Print flushed progress hints from long-running pathway entrypoints

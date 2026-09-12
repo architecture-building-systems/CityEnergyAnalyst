@@ -4,6 +4,7 @@ Read and summarise CEA results over all scenarios in a project.
 """
 import itertools
 import os
+import tempfile
 import pandas as pd
 import numpy as np
 import cea.config
@@ -1160,7 +1161,13 @@ def slice_hourly_results_for_custom_time_period(hour_start, hour_end, df):
 
 
 def exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings, bool_analytics=False, network_name=''):
+    """Locate, read, and hour-slice the CEA result files for `list_metrics`, or (for the
+    `architecture` feature) compute per-building areas from zone geometry + architecture
+    instead of reading a time series.
 
+    :return: (list_list_useful_cea_results, list_appendix) -- per-source-file result
+        DataFrames and their matching appendix labels (e.g. network name).
+    """
     # map the CEA Feature for the selected metrics
     cea_feature = map_metrics_cea_features(list_metrics)
 
@@ -1196,6 +1203,11 @@ def exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildi
         else:
             raise KeyError(f"Zone geometry must have either 'Name' or 'name' column. Available columns: {zone_raw.columns.tolist()}")
         zone_df = zone_raw.set_index(name_col)
+        # Normalise to 'name' regardless of which casing the source used: calc_useful_areas
+        # merges index-to-index and inherits this name, and the reset_index() below turns it
+        # back into a column that filter_cea_results_by_buildings and the later merge both
+        # require to be lowercase 'name'.
+        zone_df.index.name = 'name'
 
         architecture_df = pd.read_csv(locator.get_building_architecture()).set_index('name')
 
@@ -2890,6 +2902,71 @@ def filter_buildings(locator, list_buildings,
     return df_buildings, list_buildings_out
 
 
+def write_selected_buildings_file(locator, buildings_path, list_buildings,
+                                  integer_year_start, integer_year_end, list_standard,
+                                  list_main_use_type, ratio_main_use_type,
+                                  bool_use_acronym):
+    """Filter the zone's buildings, attach their architecture areas, and write the
+    selected-buildings CSV that plotting reads back as `df_architecture_data`.
+
+    It carries the GFA/Af/Aroof columns that y-normalisation divides by and the
+    construction_year / use-type columns that x-sorting and faceting key on, so every
+    path that produces plot input has to write it.
+
+    Filtering, the architecture merge, and saving the result are all a prerequisite for
+    what follows: `calc_ubem_analytics_normalised` and `plot_input_processor` both read
+    `buildings_path` back. Unlike the per-metric exports below, there is nothing to
+    continue with if any of these fail, so a write failure propagates instead of being
+    recorded and swallowed -- a previous run's file must never be left in place as if it
+    were current. The parent directory is created if missing, and the write is atomic
+    (temp file + replace) so a failure partway through never leaves a truncated CSV.
+
+    :return: the filtered building names.
+    """
+    df_buildings, list_buildings = filter_buildings(
+        locator, list_buildings,
+        integer_year_start, integer_year_end, list_standard,
+        list_main_use_type, ratio_main_use_type,
+    )
+
+    # Architecture metrics come from the zone geometry and architecture CSV rather than
+    # a time series, so the hour range and network name exec_read_and_slice takes for
+    # other features are not read here.
+    list_list_useful_cea_results, _ = exec_read_and_slice(
+        0, 0, locator, list_metrics_architecture, list_buildings,
+    )
+    list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(
+        bool_use_acronym, list_list_useful_cea_results, list_buildings,
+    )
+    df_buildings = pd.merge(df_buildings, list_list_useful_cea_results_buildings[0][0],
+                            on='name', how='inner')
+
+    numeric_columns = df_buildings.select_dtypes(include=[np.number]).columns
+    df_buildings[numeric_columns] = df_buildings[numeric_columns].round(2)
+
+    os.makedirs(os.path.dirname(buildings_path), exist_ok=True)
+    # A fixed `.tmp` suffix collides under concurrent writers targeting the same
+    # buildings_path (e.g. multiple plot panels for one scenario, or two sessions on a
+    # multi-worker dashboard deployment): one call's write, or its except-branch cleanup,
+    # could clobber another's in-flight temp file. mkstemp guarantees a unique path per
+    # call, so concurrent writers never share one.
+    tmp_fd, tmp_path = tempfile.mkstemp(
+        dir=os.path.dirname(buildings_path),
+        prefix=f"{os.path.basename(buildings_path)}.",
+        suffix=".tmp",
+    )
+    os.close(tmp_fd)
+    try:
+        df_buildings.to_csv(tmp_path, index=False, float_format="%.2f")
+        os.replace(tmp_path, buildings_path)
+    except Exception:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+        raise
+
+    return list_buildings
+
+
 def replace_hyphens_with_underscores(string_list):
     """
     Replaces all hyphens (-) with underscores (_) in each string of the input list.
@@ -3300,32 +3377,18 @@ def process_building_summary(config, locator,
         summary_folder = locator.get_export_plots_folder()
     os.makedirs(summary_folder, exist_ok=True)
 
-    # Step 3: Get & Filter Buildings
-    df_buildings, list_buildings = filter_buildings(locator, list_buildings,
-                             integer_year_start, integer_year_end, list_standard,
-                             list_main_use_type, ratio_main_use_type)
-
-    # Step 4: Get Building GFA & Merge with df_buildings
-    list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics_architecture, list_buildings, network_name=network_name)
-    list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_results, list_buildings)
-    df_buildings = pd.merge(df_buildings, list_list_useful_cea_results_buildings[0][0], on='name', how='inner')
-
-    # Step 5: Save Building Summary to Disk
-    try:
-        # Round all numeric columns to 2 decimal places
-        numeric_columns = df_buildings.select_dtypes(include=[np.number]).columns
-        df_buildings[numeric_columns] = df_buildings[numeric_columns].round(2)
-
-        if not plot:
-            buildings_path = locator.get_export_results_summary_selected_building_file(summary_folder)
-        else:
-            buildings_path = locator.get_export_plots_selected_building_file()
-        df_buildings.to_csv(buildings_path, index=False, float_format="%.2f")
-    except Exception as e:
-        error_msg = f"Step 5 (Save Building Summary): {str(e)}"
-        errors_encountered.append(error_msg)
-        print(f"Warning: {error_msg}")
-        print("         Continuing with remaining steps...")
+    # Steps 3-5: Filter buildings, attach architecture areas, save to disk. All of this is
+    # a prerequisite for every step below and for the readers of buildings_path, so there
+    # is nothing to continue with if any of it fails (see write_selected_buildings_file).
+    if not plot:
+        buildings_path = locator.get_export_results_summary_selected_building_file(summary_folder)
+    else:
+        buildings_path = locator.get_export_plots_selected_building_file()
+    list_buildings = write_selected_buildings_file(
+        locator, buildings_path, list_buildings,
+        integer_year_start, integer_year_end, list_standard,
+        list_main_use_type, ratio_main_use_type, bool_use_acronym,
+    )
 
     # Step 6: Export Results Without Date (Non-8760 Hours, Aggregate by Building)
     for list_metrics in list_list_metrics_without_date:

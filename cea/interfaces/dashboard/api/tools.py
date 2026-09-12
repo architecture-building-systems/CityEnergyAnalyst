@@ -13,7 +13,7 @@ import cea.config
 import cea.inputlocator
 import cea.scripts
 from cea.schemas import schemas
-from .utils import deconstruct_parameters
+from .utils import deconstruct_parameters, normalize_choice_value
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError, secure_join_under_root
 from cea.interfaces.dashboard.dependencies import CEAConfig
 from cea.interfaces.dashboard.api.utils import CEAScenario, CEAScenarioLenient
@@ -22,48 +22,6 @@ from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 router = APIRouter()
 logger = getCEAServerLogger("cea-server-tools")
 
-
-
-def _normalize_choice_value(param: cea.config.ChoiceParameterBase, value: Any, choices: list[str]) -> Any:
-    valid_choices = set(choices)
-    is_multi_choice = isinstance(param, cea.config.MultiChoiceParameter)
-
-    def _raise_missing_choices_error(reason: str) -> None:
-        message = f"No choices available for non-nullable parameter {param.fqname} while {reason}."
-        logger.error(message)
-        raise ValueError(message)
-
-    if is_multi_choice:
-        if value is None:
-            return []
-
-        if isinstance(value, list):
-            raw_values = value
-        elif isinstance(value, str):
-            raw_values = [v.strip() for v in value.split(',') if v.strip()]
-        else:
-            raw_values = [value]
-
-        return [str(v).strip() for v in raw_values if str(v).strip() in valid_choices]
-
-    if value is None:
-        if param.nullable:
-            return None
-        if not choices:
-            _raise_missing_choices_error("normalising a missing value")
-        return choices[0]
-
-    normalized_value = str(value).strip()
-    if param.nullable and normalized_value == '':
-        return None
-
-    if normalized_value in valid_choices:
-        return normalized_value
-
-    if not choices and not param.nullable:
-        _raise_missing_choices_error(f"normalising value {normalized_value}")
-
-    return choices[0] if choices else None
 
 
 def validate_parameter(parameter, value, parameter_name: str | None = None) -> tuple[bool, str | None]:
@@ -143,12 +101,18 @@ async def get_tool_list(config: CEAConfig) -> Dict[str, List[ToolDescription]]:
 
 
 def _build_tool_properties(tool_name: str, config) -> ToolProperties:
+    """Build the GUI-facing parameter metadata for one tool: every matching config
+    parameter, deconstructed (value, choices, availability) and grouped by category."""
     # TODO: Add plugin support
     script = cea.scripts.by_name(tool_name, plugins=config.plugins)
     parameters = []
     categories = defaultdict(list)
+    # Built once per request rather than once per parameter -- InputLocator construction is
+    # not free (it wraps every locator method against schemas.yml), and a tool can have
+    # dozens of parameters checked against it.
+    locator = cea.inputlocator.InputLocator(config.scenario)
     for _, parameter in config.matching_parameters(script.parameters):
-        parameter_dict = deconstruct_parameters(parameter, config)
+        parameter_dict = deconstruct_parameters(parameter, config, locator)
         if parameter.category:
             categories[parameter.category].append(parameter_dict)
         else:
@@ -201,10 +165,14 @@ async def restore_default_config(config: CEAConfig, tool_name: str, scenario: CE
 
 
 @router.post('/{tool_name}/save-config')
-async def save_tool_config(config: CEAConfig, tool_name: str, payload: Dict[str, Any], scenario: CEAScenarioLenient):
+async def save_tool_config(config: CEAConfig, tool_name: str, payload: Dict[str, Any], scenario: CEAScenarioLenient) -> ToolProperties:
     """
     Save the configuration for this tool to the configuration file.
     Validates all parameters before saving and returns field-level errors if validation fails.
+
+    Returns the rebuilt tool properties (same shape as GET /{tool_name} and
+    /{tool_name}/default) so callers can adopt the saved state directly instead of
+    issuing a follow-up GET.
     """
     config.scenario = scenario
     field_errors = {}
@@ -235,7 +203,7 @@ async def save_tool_config(config: CEAConfig, tool_name: str, payload: Dict[str,
             parameter.set(value)
 
     config.save()
-    return 'Success'
+    return _build_tool_properties(tool_name, config)
 
 
 @router.post('/{tool_name}/validate-field')
@@ -327,7 +295,7 @@ async def get_parameter_metadata(config: CEAConfig, tool_name: str, payload: Dic
         if isinstance(param, cea.config.ChoiceParameterBase):
             try:
                 choices = param._choices  # type: ignore[attr-defined]
-                current_value = _normalize_choice_value(param, param.get(), choices)
+                current_value = normalize_choice_value(param, param.get(), choices)
 
                 result[param.name] = {
                     'choices': choices,
