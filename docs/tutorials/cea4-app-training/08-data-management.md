@@ -195,7 +195,7 @@ labels — the archetype says one thing, the tables another, and nothing records
 
 CEA owns the derived tables.
 
-- The five derived tabs are **read-only** (bulk *Edit Selection* too).
+- The five derived tabs are **read-only** (bulk *Edit Selection*, the pen icon, too).
 - **The zone tab stays fully editable** — geometry, names, everything.
 - Change a building's **archetype** in the zone tab and CEA regenerates its derived tables when
   you save. Add a building and it gets its derived rows the same way.
