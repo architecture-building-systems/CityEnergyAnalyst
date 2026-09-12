@@ -95,7 +95,8 @@ def get_lat_lon_projected_shapefile(data):
     return lat, lon
 
 
-def validate_geometries_before_crs_transform(gdf: geopandas.GeoDataFrame, shapefile_name: str = "shapefile") -> None:
+def validate_geometries_before_crs_transform(gdf: geopandas.GeoDataFrame, shapefile_name: str = "shapefile",
+                                             require_geometry: bool = True) -> None:
     """
     Validate that all geometries are valid before CRS transformation.
 
@@ -105,15 +106,27 @@ def validate_geometries_before_crs_transform(gdf: geopandas.GeoDataFrame, shapef
     (self-intersecting, unclosed). Reporting both as "invalid" sends people looking for the
     wrong thing.
 
+    An *empty* geometry (`POLYGON EMPTY`) counts as missing. It passes both `isna` and
+    `is_valid`, so it would otherwise slip through -- but a shapefile write turns it into a
+    null geometry on read-back, which is the very thing the missing check exists to catch.
+
     :param gdf: GeoDataFrame to validate
     :param shapefile_name: Name of shapefile for error messages (e.g., "zone", "streets")
+    :param require_geometry: when False, rows with no footprint are tolerated and only
+        malformed shapes are reported. The input editor saves with this off: it cannot give a
+        building a footprint, so refusing the save would leave deleting the row as the only way
+        out -- which is the data loss the check exists to prevent. Simulation scripts leave it
+        on and still refuse to run.
     :raises ValueError: If any geometries are missing or invalid
     """
     def row_name(index, row):
         return str(row.get('name', row.get('Name', f'index_{index}')))
 
-    missing = gdf[gdf.geometry.isna()]
-    malformed = gdf[~gdf.geometry.isna() & ~gdf.geometry.is_valid]
+    absent = gdf.geometry.isna() | gdf.geometry.is_empty
+    # The toggle applies once, here: with `require_geometry` off there is simply nothing in the
+    # missing bucket, and the rest of the function does not need to know about it.
+    missing = gdf[absent] if require_geometry else gdf.iloc[0:0]
+    malformed = gdf[~absent & ~gdf.geometry.is_valid]
 
     if missing.empty and malformed.empty:
         return

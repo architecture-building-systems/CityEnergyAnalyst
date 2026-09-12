@@ -35,6 +35,7 @@ Each file has a heading with its **locator method** (the function on `InputLocat
 - **Path** — relative to the scenario folder
 - **File type** — `csv`, `shp`, `dbf`, `xlsx`, `epw`, `tif`, etc.
 - **Created by** — the script that writes the file (empty for user inputs)
+- a short paragraph, where the file needs one beyond its columns
 - **Used by** — scripts that read the file downstream
 - A column table with **Variable**, **Description**, **Type**, **Unit**, and **Values**
 
