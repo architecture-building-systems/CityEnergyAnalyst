@@ -248,16 +248,17 @@ def shapefile_payload_problems(db: str, table: Any, geojson: Any) -> list[str]:
     write -- a failure discovered halfway leaves the scenario partly updated with the client
     still holding the version it thought it saved.
 
-    Three ways a payload can be unsafe:
+    Only what the user just did and can undo:
 
-    - a footprint is missing or malformed (self-intersecting, unclosed). Malformed geometry
-      cannot reach here today, because `df_to_json` fails to read such a file at all and the
-      caller skips the table; the check is what makes editing geometry safe to add.
+    - a footprint is malformed (self-intersecting, unclosed). Cannot reach here today, because
+      `df_to_json` fails to read such a file at all and the caller skips the table; the check
+      is what makes editing geometry safe to add.
     - two rows share a name. The write does `set_index('name')`, so one would silently win.
-    - a row exists in the table with no feature beside it. The shapefile is rebuilt from the
-      features alone, so that row would be dropped from the file without a word. This is
-      reachable now: `df_to_json` drops null-geometry rows for display while
-      `get_building_properties` keeps them in the table.
+
+    A *missing* footprint is deliberately not a reason to refuse. The editor offers no way to
+    give a building one, so rejecting the save would leave deleting the row as the only escape
+    -- the very data loss this guards against. `restore_rows_without_geometry` carries those
+    rows through the write instead, and the banner in the editor says they are there.
 
     :param db: input name, used in the messages (e.g. ``zone``).
     :param table: the table as sent by the client, ``{name: {column: value}}``.
@@ -281,7 +282,8 @@ def shapefile_payload_problems(db: str, table: Any, geojson: Any) -> list[str]:
 
     problems = []
     try:
-        validate_geometries_before_crs_transform(gdf, shapefile_name=db)
+        validate_geometries_before_crs_transform(
+            gdf, shapefile_name=db, require_geometry=False)
     except ValueError as e:
         problems.append(str(e))
 
@@ -296,16 +298,45 @@ def shapefile_payload_problems(db: str, table: Any, geojson: Any) -> list[str]:
             f"{db}: more than one row is named {', '.join(duplicated)}. "
             f"Names must be unique - saving would keep only one row of each.")
 
-    without_geometry = sorted(set(map(str, table or {})) - set(names))
-    if without_geometry:
-        count = len(without_geometry)
-        problems.append(
-            f"{db}: {count} {'row has' if count == 1 else 'rows have'} no footprint and would "
-            f"be deleted from the file by this save: {', '.join(without_geometry)}. "
-            f"Give {'it' if count == 1 else 'them'} a geometry or delete "
-            f"{'the row' if count == 1 else 'the rows'}.")
-
     return problems
+
+
+def restore_rows_without_geometry(table_df: geopandas.GeoDataFrame, table: Any) -> geopandas.GeoDataFrame:
+    """Put back the rows the client could not send a footprint for.
+
+    `df_to_json` drops null-geometry rows so the map can still draw, while
+    `get_building_properties` keeps them in the table. The shapefile is rebuilt from the
+    features alone, so without this those rows are deleted from the file on the next save --
+    silently, and with their attributes.
+
+    A shapefile stores a null geometry happily and reads it back as `None`, so the row survives
+    a round trip intact and can be fixed or deleted later.
+
+    :param table_df: the frame built from the payload's features.
+    :param table: the table as sent by the client, ``{name: {column: value}}``.
+    :return: `table_df` with any table-only rows appended, geometry unset.
+    """
+    if 'name' not in table_df.columns or not table:
+        return table_df
+
+    present = set(table_df['name'].astype(str))
+    absent = [name for name in table if str(name) not in present]
+    if not absent:
+        return table_df
+
+    logger.warning(
+        f"{len(absent)} row(s) have no footprint and were written without one: "
+        f"{', '.join(map(str, absent))}")
+
+    restored = geopandas.GeoDataFrame(
+        [{**table[name], 'name': name} for name in absent],
+        geometry=[None] * len(absent),
+        crs=table_df.crs,
+    )
+    # Reindexed to the written columns so a stray key in the table cannot add one, and a
+    # column the row never had arrives as NA rather than shifting the frame.
+    restored = restored.reindex(columns=table_df.columns)
+    return pd.concat([table_df, restored], ignore_index=True)
 
 
 @router.put('/all-inputs')
@@ -393,6 +424,7 @@ async def save_all_inputs(scenario: CEAScenario, form: InputForm):
 
                     table_df = geopandas.GeoDataFrame.from_features(geojsons[db]['features'],
                                                                     crs=get_geographic_coordinate_system())
+                    table_df = restore_rows_without_geometry(table_df, tables[db])
                     out['geojsons'][db] = json.loads(table_df.to_json())
                     table_df = table_df.to_crs(crs[db])
                     table_df.to_file(location, driver='ESRI Shapefile', encoding='ISO-8859-1')
