@@ -13,6 +13,7 @@ from datetime import datetime, UTC
 import cea.inputlocator
 import geopandas as gpd
 from cea.analysis.lca.emission_timeline import _MAPPING_DICT
+from cea.utilities import validate_path_within_root
 
 from cea.demand.building_properties.useful_areas import calc_useful_areas
 
@@ -2943,6 +2944,11 @@ def write_selected_buildings_file(locator, buildings_path, list_buildings,
 
     numeric_columns = df_buildings.select_dtypes(include=[np.number]).columns
     df_buildings[numeric_columns] = df_buildings[numeric_columns].round(2)
+
+    # Resolve and contain buildings_path under the scenario before touching the
+    # filesystem: the export folder name it is built from is user-supplied, so this
+    # guards against it escaping the scenario via a traversal segment.
+    buildings_path = validate_path_within_root(buildings_path, locator.scenario)
 
     os.makedirs(os.path.dirname(buildings_path), exist_ok=True)
     # A fixed `.tmp` suffix collides under concurrent writers targeting the same

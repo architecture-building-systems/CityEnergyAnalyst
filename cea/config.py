@@ -788,11 +788,20 @@ class StringParameter(Parameter):
 # Windows. This is a security check (used by encode() AND decode()), not a business rule --
 # see the decode()/encode() split documented in cea/CLAUDE.md.
 _FILESYSTEM_INVALID_CHARS = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
+_FILESYSTEM_RESERVED_NAMES = {'.', '..'}
 
 
 def _validate_no_filesystem_invalid_chars(value: str, label: str) -> str:
-    """Raise ValueError if `value` contains a filesystem-reserved character; otherwise
-    return it unchanged. `label` names the field in the error message (e.g. "Network name")."""
+    """Raise ValueError if `value` contains a filesystem-reserved character, is a bare
+    `.`/`..` traversal segment, starts with `~`, or contains a control character;
+    otherwise return it unchanged. `label` names the field in the error message
+    (e.g. "Network name")."""
+    if value in _FILESYSTEM_RESERVED_NAMES:
+        raise ValueError(f"{label} cannot be '{value}'.")
+    if value.startswith('~'):
+        raise ValueError(f"{label} cannot start with '~'.")
+    if any(ord(char) < 0x20 or ord(char) == 0x7f for char in value):
+        raise ValueError(f"{label} cannot contain control characters.")
     if any(char in value for char in _FILESYSTEM_INVALID_CHARS):
         raise ValueError(
             f"{label} contains invalid characters. "

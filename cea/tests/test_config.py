@@ -101,6 +101,14 @@ class TestConfiguration(unittest.TestCase):
         with self.assertRaises(ValueError):
             parameter.decode('../../escape')
 
+        # Bare traversal segments and home-relative names must also be rejected: a
+        # blacklist of separators alone lets '..' or '~' through as a "valid" name.
+        for value in ('.', '..', '~', '~escape'):
+            with self.assertRaises(ValueError):
+                parameter.encode(value)
+            with self.assertRaises(ValueError):
+                parameter.decode(value)
+
         self.assertEqual(parameter.encode('my-summary'), 'my-summary')
         self.assertEqual(parameter.encode(''), '')
         self.assertEqual(parameter.decode(''), '')

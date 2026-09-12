@@ -328,7 +328,7 @@ def deconstruct_parameters(
                 logger.warning("Could not build choices for %s: %s", p.fqname, e)
                 params['choices'] = []
                 params["unavailable"] = {
-                    "reason": f"Options for this input could not be read: {e}",
+                    "reason": "Options for this input could not be read.",
                     "missing_file": None,
                 }
 
