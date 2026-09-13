@@ -1,18 +1,5 @@
 # CEA Database Structure
 
-## File Hierarchy
-
-```
-databases/{region}/
-├── ASSEMBLIES/           # Simplified system packages for building-level analysis
-│   ├── SUPPLY/          # Generation systems (CAPEX, efficiency, lifespan)
-│   ├── HVAC/            # Distribution/emission (temperatures, capacities)
-│   └── ENVELOPE/        # Building envelope (U-values, windows, shading)
-└── COMPONENTS/          # Detailed equipment for optimization
-    ├── CONVERSION/      # Boilers, chillers, heat pumps (cost curves)
-    └── FEEDSTOCKS/      # Grid electricity, fuels (hourly OPEX, emissions)
-```
-
 ## Key Patterns
 
 ### COMPONENTS vs ASSEMBLIES

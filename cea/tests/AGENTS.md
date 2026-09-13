@@ -45,6 +45,13 @@ cea.api.pathway_validate_all_states(...)
 # Simulate cache.get / RedLock / cache.set failures without depending on Redis.
 ```
 
+### DON'T: Patch a class at module import time
+```python
+# Bad: leaks into every test that runs afterwards, in any file.
+InputLocator._cleanup_temp_directory = lambda self: None
+# Good: an autouse fixture with monkeypatch, which restores after each test.
+```
+
 ### DON'T: Depend on the developer's real projects or config
 ```python
 # Bad: tests must create their own pathway folders and logs.
@@ -70,4 +77,6 @@ cea.api.pathway_validate_all_states(...)
   and demolition split it, derived per row. One file can hold split and unsplit rows.
 - `test_biogenic_sign_convention.py` - Biogenic carbon is negative at every level, and no consumer
   may negate it. Scans shipped databases and the source tree.
+- `test_inputlocator_temp_directory.py` - One temp directory per run, shared across pickled
+  copies and deleted only by the process that created it. Creation stays lazy.
 - `paths.py` - Shared repo/examples/workflows filesystem anchors; use instead of `__file__`-relative math.

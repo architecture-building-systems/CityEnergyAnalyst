@@ -906,6 +906,8 @@ class csv_pointer:
         # bypassing process_building_summary -- which is what writes
         # selected_buildings.csv for every other feature. Without it the plot has no
         # architecture data to normalise or sort by, so write it here for all of them.
+        # write_selected_buildings_file raises on failure rather than swallowing it, so a
+        # bad write aborts the plot instead of reading back a previous run's data.
         if self.plot_cea_feature in WHATIF_PLOT_FEATURES and self.whatif_names:
             write_selected_buildings_file(
                 self.locator, self.locator.get_export_plots_selected_building_file(),

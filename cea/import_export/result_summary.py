@@ -4,6 +4,7 @@ Read and summarise CEA results over all scenarios in a project.
 """
 import itertools
 import os
+import tempfile
 import pandas as pd
 import numpy as np
 import cea.config
@@ -12,6 +13,7 @@ from datetime import datetime, UTC
 import cea.inputlocator
 import geopandas as gpd
 from cea.analysis.lca.emission_timeline import _MAPPING_DICT
+from cea.utilities import validate_path_within_root
 
 from cea.demand.building_properties.useful_areas import calc_useful_areas
 
@@ -1160,7 +1162,13 @@ def slice_hourly_results_for_custom_time_period(hour_start, hour_end, df):
 
 
 def exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings, bool_analytics=False, network_name=''):
+    """Locate, read, and hour-slice the CEA result files for `list_metrics`, or (for the
+    `architecture` feature) compute per-building areas from zone geometry + architecture
+    instead of reading a time series.
 
+    :return: (list_list_useful_cea_results, list_appendix) -- per-source-file result
+        DataFrames and their matching appendix labels (e.g. network name).
+    """
     # map the CEA Feature for the selected metrics
     cea_feature = map_metrics_cea_features(list_metrics)
 
@@ -1196,6 +1204,11 @@ def exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildi
         else:
             raise KeyError(f"Zone geometry must have either 'Name' or 'name' column. Available columns: {zone_raw.columns.tolist()}")
         zone_df = zone_raw.set_index(name_col)
+        # Normalise to 'name' regardless of which casing the source used: calc_useful_areas
+        # merges index-to-index and inherits this name, and the reset_index() below turns it
+        # back into a column that filter_cea_results_by_buildings and the later merge both
+        # require to be lowercase 'name'.
+        zone_df.index.name = 'name'
 
         architecture_df = pd.read_csv(locator.get_building_architecture()).set_index('name')
 
@@ -2901,6 +2914,14 @@ def write_selected_buildings_file(locator, buildings_path, list_buildings,
     construction_year / use-type columns that x-sorting and faceting key on, so every
     path that produces plot input has to write it.
 
+    Filtering, the architecture merge, and saving the result are all a prerequisite for
+    what follows: `calc_ubem_analytics_normalised` and `plot_input_processor` both read
+    `buildings_path` back. Unlike the per-metric exports below, there is nothing to
+    continue with if any of these fail, so a write failure propagates instead of being
+    recorded and swallowed -- a previous run's file must never be left in place as if it
+    were current. The parent directory is created if missing, and the write is atomic
+    (temp file + replace) so a failure partway through never leaves a truncated CSV.
+
     :return: the filtered building names.
     """
     df_buildings, list_buildings = filter_buildings(
@@ -2924,8 +2945,30 @@ def write_selected_buildings_file(locator, buildings_path, list_buildings,
     numeric_columns = df_buildings.select_dtypes(include=[np.number]).columns
     df_buildings[numeric_columns] = df_buildings[numeric_columns].round(2)
 
+    # Resolve and contain buildings_path under the scenario before touching the
+    # filesystem: the export folder name it is built from is user-supplied, so this
+    # guards against it escaping the scenario via a traversal segment.
+    buildings_path = validate_path_within_root(buildings_path, locator.scenario)
+
     os.makedirs(os.path.dirname(buildings_path), exist_ok=True)
-    df_buildings.to_csv(buildings_path, index=False, float_format="%.2f")
+    # A fixed `.tmp` suffix collides under concurrent writers targeting the same
+    # buildings_path (e.g. multiple plot panels for one scenario, or two sessions on a
+    # multi-worker dashboard deployment): one call's write, or its except-branch cleanup,
+    # could clobber another's in-flight temp file. mkstemp guarantees a unique path per
+    # call, so concurrent writers never share one.
+    tmp_fd, tmp_path = tempfile.mkstemp(
+        dir=os.path.dirname(buildings_path),
+        prefix=f"{os.path.basename(buildings_path)}.",
+        suffix=".tmp",
+    )
+    os.close(tmp_fd)
+    try:
+        df_buildings.to_csv(tmp_path, index=False, float_format="%.2f")
+        os.replace(tmp_path, buildings_path)
+    except Exception:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+        raise
 
     return list_buildings
 
@@ -3340,9 +3383,9 @@ def process_building_summary(config, locator,
         summary_folder = locator.get_export_plots_folder()
     os.makedirs(summary_folder, exist_ok=True)
 
-    # Steps 3-5: Filter buildings, attach architecture areas, save to disk.
-    # A prerequisite for every step below, so unlike the per-metric exports there is
-    # nothing to continue with if it fails.
+    # Steps 3-5: Filter buildings, attach architecture areas, save to disk. All of this is
+    # a prerequisite for every step below and for the readers of buildings_path, so there
+    # is nothing to continue with if any of it fails (see write_selected_buildings_file).
     if not plot:
         buildings_path = locator.get_export_results_summary_selected_building_file(summary_folder)
     else:

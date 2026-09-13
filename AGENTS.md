@@ -40,14 +40,4 @@ City Energy Analyst (CEA) - Urban building energy simulation platform for low-ca
 
 ## Environment Setup
 
-**Pixi (Recommended)**:
-```bash
-pixi install && pixi run setup-dev
-pixi run cea dashboard  # Run dashboard
-```
-
-**Docker**:
-```bash
-docker build -t cea .
-docker run -p 5050:5050 cea  # Dashboard on port 5050
-```
+See `pyproject.toml` for the `setup-dev` and `cea` pixi tasks, and `Dockerfile` for the container build.

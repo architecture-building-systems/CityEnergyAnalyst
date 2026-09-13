@@ -22,6 +22,9 @@ def build_pathway_year_row(
     year: int,
     issues: list[str],
 ) -> dict[str, Any]:
+    """Project one pathway year into the shared row shape timeline reads and editor
+    preflight both consume: state kind (manual/stock/mixed), pending building events and
+    modifications, disk presence of inputs/outputs, and hash-backed phase status."""
     entry_exists = int(year) in pathway.log_data
     entry = pathway.log_data.get(int(year), {}) or {}
     modifications = deepcopy(entry.get("modifications", {}) or {})

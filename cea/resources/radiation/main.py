@@ -95,6 +95,8 @@ def buildings_to_simulate(settings, zone_building_names) -> list[str]:
 
 
 def run_daysim_simulation(cea_daysim: CEADaySim, zone_building_names, locator, settings, geometry_pickle_dir, num_processes):
+    """Run DAYSIM radiation for the selected buildings (`buildings_to_simulate`), in
+    chunks of `settings.n_buildings_in_chunk`, and write each building's radiation CSV."""
     weather_path = locator.get_weather_file()
     # check inconsistencies and replace by max value of weather file
     weatherfile = epwreader.epw_reader(weather_path)

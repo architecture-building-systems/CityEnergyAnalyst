@@ -53,10 +53,9 @@ from cea.datamanagement.district_pathways.pathway_validation import (
 
 def _cleanup_state_outputs(state_locator: InputLocator, year: int) -> None:
     """Remove previous simulation outputs from a state folder to allow re-runs."""
-    import os
     import shutil
 
-    outputs_folder = os.path.join(state_locator.scenario, "outputs")
+    outputs_folder = state_locator.get_output_folder()
     if os.path.isdir(outputs_folder):
         print(f"State {year}: Cleaning previous outputs...", flush=True)
         shutil.rmtree(outputs_folder)
@@ -165,7 +164,7 @@ def simulate_all_states(config: Configuration, pathway_name: str) -> None:
                 state_folder = main_locator.get_state_in_time_scenario_folder(
                     pathway_name=pathway_name, year_of_state=year
                 )
-                outputs_folder = os.path.join(state_folder, "outputs")
+                outputs_folder = InputLocator(state_folder).get_output_folder()
                 if not os.path.isdir(outputs_folder):
                     raise ValueError(
                         f"Cannot skip custom state {year} — it has no simulation outputs.\n"
@@ -204,77 +203,95 @@ def simulate_all_states(config: Configuration, pathway_name: str) -> None:
         )
 
     simulated_years: list[int] = []
-    for year in years_to_simulate:
-        # Clean previous simulation outputs to allow re-runs
-        state_locator = InputLocator(
-            main_locator.get_state_in_time_scenario_folder(
-                pathway_name=pathway_name, year_of_state=year
-            )
-        )
-        _cleanup_state_outputs(state_locator, year)
+    failed_years: list[tuple[int, str]] = []
+    try:
+        for year in years_to_simulate:
+            try:
+                # Clean previous simulation outputs to allow re-runs
+                state_locator = InputLocator(
+                    main_locator.get_state_in_time_scenario_folder(
+                        pathway_name=pathway_name, year_of_state=year
+                    )
+                )
+                _cleanup_state_outputs(state_locator, year)
 
-        print(json.dumps({
-            "__cea_progress__": "pathway-state-started",
-            "pathway_name": pathway_name,
-            "year": int(year),
-        }), flush=True)
+                print(json.dumps({
+                    "__cea_progress__": "pathway-state-started",
+                    "pathway_name": pathway_name,
+                    "year": int(year),
+                }), flush=True)
 
-        base_workflow = workflow_assembly.prepare_base_workflow_for_state(
-            config=config,
-            pathway_name=pathway_name,
-            year=int(year),
-        )
-        print(f"\n--- Simulating state {year}: base workflow ---", flush=True)
-        state = DistrictStateYear(
-            pathway_name=pathway.pathway_name,
-            year=int(year),
-            modifications={},
-            main_locator=pathway.main_locator,
-        )
-        state.simulate(config, workflow=base_workflow, mark_simulated=False)
+                base_workflow = workflow_assembly.prepare_base_workflow_for_state(
+                    config=config,
+                    pathway_name=pathway_name,
+                    year=int(year),
+                )
+                print(f"\n--- Simulating state {year}: base workflow ---", flush=True)
+                state = DistrictStateYear(
+                    pathway_name=pathway.pathway_name,
+                    year=int(year),
+                    modifications={},
+                    main_locator=pathway.main_locator,
+                )
+                state.simulate(config, workflow=base_workflow, mark_simulated=False)
 
-        print(
-            f"\n--- Simulating state {year}: post-demand workflow ---",
-            flush=True,
-        )
-        post_demand_workflow = workflow_assembly.prepare_post_demand_workflow_for_state(
-            config=config,
-            pathway_name=pathway_name,
-            year=int(year),
-            state_years=state_years,
-            phase_mode=phase_mode,
-            connections_by_year=connections_by_year,
-        )
-        full_workflow = deepcopy(base_workflow) + deepcopy(post_demand_workflow)
-        state.simulate(
-            config,
-            workflow=post_demand_workflow,
-            recorded_workflow=full_workflow,
-        )
+                print(
+                    f"\n--- Simulating state {year}: post-demand workflow ---",
+                    flush=True,
+                )
+                post_demand_workflow = workflow_assembly.prepare_post_demand_workflow_for_state(
+                    config=config,
+                    pathway_name=pathway_name,
+                    year=int(year),
+                    state_years=state_years,
+                    phase_mode=phase_mode,
+                    connections_by_year=connections_by_year,
+                )
+                full_workflow = deepcopy(base_workflow) + deepcopy(post_demand_workflow)
+                state.simulate(
+                    config,
+                    workflow=post_demand_workflow,
+                    recorded_workflow=full_workflow,
+                )
 
-        entry = pathway.log_data.get(int(year), {}) or {}
-        entry["simulation_workflow"] = full_workflow
-        simulated_at = str(pd.Timestamp.now())
-        entry["latest_simulated_at"] = simulated_at
-        pathway.log_data[int(year)] = entry
-        record_simulated_state(
-            pathway.main_locator,
-            pathway_name=pathway_name,
-            year=int(year),
-            simulated_at=simulated_at,
-            source_log_hash=pathway.source_log_hash_for_year(int(year)),
-            workflow=full_workflow,
-        )
+                # record_simulated_state raises if the year produced no outputs (see its
+                # docstring) -- resolve that before touching pathway.log_data, so a failed
+                # year's log entry is never stamped as simulated.
+                simulated_at = str(pd.Timestamp.now())
+                record_simulated_state(
+                    pathway.main_locator,
+                    pathway_name=pathway_name,
+                    year=int(year),
+                    simulated_at=simulated_at,
+                    source_log_hash=pathway.source_log_hash_for_year(int(year)),
+                    workflow=full_workflow,
+                )
+                entry = pathway.log_data.get(int(year), {}) or {}
+                entry["simulation_workflow"] = full_workflow
+                entry["latest_simulated_at"] = simulated_at
+                pathway.log_data[int(year)] = entry
 
-        simulated_years.append(int(year))
-        print(json.dumps({
-            "__cea_progress__": "pathway-state-simulated",
-            "pathway_name": pathway_name,
-            "year": int(year),
-        }), flush=True)
-        print(f"Simulation for pathway state year {year} completed.", flush=True)
-
-    pathway.save()
+                simulated_years.append(int(year))
+                print(json.dumps({
+                    "__cea_progress__": "pathway-state-simulated",
+                    "pathway_name": pathway_name,
+                    "year": int(year),
+                }), flush=True)
+                print(f"Simulation for pathway state year {year} completed.", flush=True)
+            except Exception as exc:
+                # One year's failure must not cost every other year's already-completed
+                # `pathway.log_data` update -- without this, a raise here would skip the
+                # `pathway.save()` below entirely and silently discard
+                # `simulation_workflow`/`latest_simulated_at` for every year simulated
+                # earlier in this same run.
+                failed_years.append((int(year), str(exc)))
+                print(
+                    f"Warning: Simulation for pathway state year {year} failed: {exc}",
+                    flush=True,
+                )
+                print("         Continuing with remaining years...", flush=True)
+    finally:
+        pathway.save()
 
     write_pathway_metadata(
         InputLocator(config.scenario),
@@ -290,8 +307,19 @@ def simulate_all_states(config: Configuration, pathway_name: str) -> None:
     if skipped_years:
         print(f"Years skipped: {skipped_years}", flush=True)
 
+    if failed_years:
+        details = "\n".join(f"  {year}: {message}" for year, message in failed_years)
+        raise ValueError(
+            f"Simulation failed for {len(failed_years)} pathway state year(s):\n{details}\n"
+            f"Years already simulated in this run remain recorded; re-running the pathway "
+            f"will skip them and retry only the years listed above."
+        )
+
 
 def main(config: Configuration) -> None:
+    """Step 4 CLI entry point: simulate every pending pathway state year
+    (`simulate_all_states`), then build the pathway emissions timeline. Raises if any state
+    year's simulation failed, after saving the pathway log for the years that succeeded."""
     pathway_name = config.pathway_simulations.existing_pathway_name
     if not pathway_name:
         raise ValueError(

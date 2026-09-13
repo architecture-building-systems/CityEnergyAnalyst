@@ -6,6 +6,8 @@ from cea.datamanagement.district_pathways.pathway_timeline import clear_state
 
 
 def main(config: Configuration) -> dict:
+    """CLI/job entry point: clear the selected pathway's selected state year (`clear_state`)
+    using the `[pathway-state-edit]` config section, and log the result to Job Info."""
     names = config.pathway_state_edit.existing_pathway_names or []
     if not names:
         raise ValueError("Select an existing pathway before deleting a state year.")
