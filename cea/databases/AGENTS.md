@@ -88,8 +88,8 @@ The demolition term derives from `MATERIALS.csv`'s `GHG_emission_disposal` -- KB
 *Entsorgung* dataset, as every value in `disposal_method` confirms. It is EN 15978 **C2-C4**
 (transport to the disposal route plus incineration, landfill or recycling processing) and
 excludes the C1 deconstruction activity. Everything CEA derives from it is reported as
-`demolition`; read that as "end of life". See `cea/analysis/lca/AGENTS.md` for the full
-module coverage.
+`demolition`; read that as "end of life". See `docs/developer/lca-standard-coverage.md` for
+the full module coverage.
 
 ## Related Files
 - `cea/schemas.yml` - Database schema definitions
