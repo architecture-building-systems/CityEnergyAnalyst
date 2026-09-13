@@ -585,7 +585,8 @@ async def seed_materials_database(scenario: CEAScenario, payload: SeedMaterialsD
     # Contain the derived path under the scenario before touching the filesystem: CEAScenario
     # sanitises `scenario` itself, but that doesn't statically prove to a scanner that a path
     # a locator method derives from it stays inside the scenario too.
-    destination = validate_path_within_root(locator.get_database_components_materials(), scenario)
+    destination = locator.get_database_components_materials()
+    destination = validate_path_within_root(destination, scenario)
     if os.path.exists(destination):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
