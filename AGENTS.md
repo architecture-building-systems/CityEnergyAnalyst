@@ -22,7 +22,8 @@
 - **Scannable structure** - Use headers, bullets, and short paragraphs
 
 **Updating existing agent documentation**:
-- **IMPORTANT**: When making code changes in a directory, ALWAYS update the corresponding `AGENTS.md` file in that directory
+- **IMPORTANT**: When a code change makes AGENTS.md content in that directory inaccurate (a documented pattern, gotcha, limitation, or API changed) — or introduces a new pattern/gotcha as non-obvious as what's already there — update AGENTS.md in the same change: fix or remove what's now wrong, add what's now missing.
+- **Never add**: status/progress notes, "completed features" checklists, changelog entries, or time/scope estimates. That's PR-description content — it goes stale immediately and isn't actionable guidance.
 - **Create comprehensive user documentation** - When detailed explanations are needed, create proper documentation in `docs/` with sections, examples, and context for human readers. AGENTS.md should remain concise LLM reference only
 
 **Code quality directives**:

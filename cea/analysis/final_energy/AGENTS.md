@@ -232,16 +232,7 @@ booster_fuel_kWh = booster_demand_kWh / efficiency
 - Read from `supply.csv` with `building_supply['supply_type_hs']`
 - No scale labels in CSV, use raw codes
 
-## Implementation Status
-
-**✅ Completed Features:**
-- Building-scale final energy calculation (gas boilers, heat pumps, chillers)
-- District heating/cooling (reads from thermal-network substation files)
-- Booster systems (space heating + hot water)
-- District plant final energy calculation (heating plant + pumping)
-- What-if mode with assembly override logic
-- Validation: all district buildings use same assembly
-- Aggregation: buildings + plants in summary and breakdown files
+## Prerequisites and Limitations
 
 **Prerequisites:**
 - **Demand calculation**: `cea demand` must run first
