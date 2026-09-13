@@ -568,6 +568,13 @@ class SeedMaterialsDatabase(BaseModel):
     source: Literal['CH']
 
 
+# Maps each allowed `source` literal to its region-database folder name. A dict lookup
+# keeps the path segment bounded to a hardcoded set of values instead of interpolating
+# the request payload directly, so static analysis (and any future literal added here)
+# can't mistake it for an unbounded, user-controlled path component.
+_MATERIALS_SEED_SOURCE_FOLDERS = {'CH': 'CH'}
+
+
 @router.post('/databases/components/materials')
 async def seed_materials_database(scenario: CEAScenario, payload: SeedMaterialsDatabase):
     """Give a scenario a MATERIALS.csv it does not have yet."""
@@ -585,7 +592,7 @@ async def seed_materials_database(scenario: CEAScenario, payload: SeedMaterialsD
     # is a locator change rather than a locator change plus this literal.
     source = os.path.join(
         databases_folder_path,
-        payload.source,
+        _MATERIALS_SEED_SOURCE_FOLDERS[payload.source],
         os.path.relpath(destination, locator.get_db4_folder()),
     )
 
