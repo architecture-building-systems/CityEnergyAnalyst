@@ -119,6 +119,34 @@ UI language hides scalability assumptions that hold for a single local user but 
 
 The user describing a feature may not be a software engineer and won't catch an architectural shortcut. When a request is ambiguous, prefer the more separated/conservative design and explain the tradeoff in plain language rather than guessing.
 
+## File-based storage under concurrency
+
+Scenarios are folders of CSV/shapefiles, not a database (see root `AGENTS.md`), and this
+dashboard is deployed both as a single-user local tool and as a web app serving concurrent
+users, potentially over network-backed storage. An operation that is cheap on a local SSD for
+one user is not automatically cheap once it runs per-request, per-user, against a large
+district over a network filesystem. Concretely, before adding any of the following, check what
+it costs at scale, not just correctness:
+
+- **Hashing or walking a whole folder to detect change** (e.g. a content fingerprint used only
+  to answer "did anything change") costs O(files × bytes), repeated from scratch on every call
+  with no caching. If the check fires once per user action across many buildings, that is O(N)
+  file reads per request. Prefer the cheapest signal that still answers the actual question —
+  often a boolean set by the write that would have caused the change, not content hashing after
+  the fact. (This is not hypothetical: Archetype Lock's drift check used to hash the entire
+  `building-properties/` folder, including one schedule file per building, on every page load
+  and every save — see `docs/developer/archetype-lock-drift-review.md`.)
+- **Reading/writing a large file on every request when only a summary is needed.** Read what
+  the request actually requires, not the whole backing file, when the two diverge.
+- **Any per-request cost that scales with scenario size** (building count, schedule count, file
+  size) should be flagged explicitly when proposed — say so in the response, don't let it pass
+  silently as "this works" from a one-building local test.
+
+When a fix trades cheap-but-imprecise for expensive-but-exact (e.g. "assume changed" instead of
+"prove changed"), that tradeoff is usually correct here: CEA is a file-based tool a user can
+always edit outside the app anyway, so an expensive in-app check often cannot deliver the
+precision it appears to promise.
+
 ## Statelessness (important for container scaling)
 
 Treat the dashboard server as stateless. Do not persist request-scoped selections (e.g. scenario) to `config` or any server-side store. Pass context per request via `X-CEA-*` headers; do not use `config.save()` to persist request-scoped scenario selection.
