@@ -23,7 +23,6 @@ from cea.datamanagement.archetype_lock import (
     ARCHETYPE_DERIVED_TABS,
     ARCHETYPE_KEY_COLUMNS,
     archetype_key_changed,
-    derived_signature,
     is_drifted,
     read_lock,
     write_lock,
@@ -50,7 +49,7 @@ def test_a_scenario_without_a_lock_file_reads_as_unlocked(tmp_path):
 
     state = read_lock(InputLocator(str(tmp_path)))
     assert state.locked is False
-    assert state.mapped_signature is None
+    assert state.mapped_at is None
 
 
 def test_an_unreadable_lock_file_reads_as_unlocked(tmp_path):
@@ -65,50 +64,34 @@ def test_an_unreadable_lock_file_reads_as_unlocked(tmp_path):
     assert read_lock(locator).locked is False
 
 
-# --------------------------------------------------------------------------- signature
+# --------------------------------------------------------------------------- drift
 
 
-def test_the_signature_tracks_the_derived_tables(locator):
-    signature = derived_signature(locator)
-    write_lock(locator, locked=True, signature=signature)
-    assert is_drifted(locator) is False
-
-    path = locator.get_building_architecture()
-    original = pd.read_csv(path)
-    try:
-        edited = original.copy()
-        edited.loc[0, "Hs"] = 0.42
-        edited.to_csv(path, index=False)
-        assert is_drifted(locator) is True
-    finally:
-        # The scenario fixture is module-scoped, so put the file back or later tests inherit
-        # a hand-edit and start asserting against the wrong baseline.
-        original.to_csv(path, index=False)
-        write_lock(locator, locked=True, signature=derived_signature(locator))
-
+def test_a_locked_scenario_is_not_drifted(locator):
+    write_lock(locator, locked=True)
     assert is_drifted(locator) is False
 
 
-def test_a_scenario_that_was_never_mapped_is_not_drifted(tmp_path):
+def test_an_unlocked_but_never_mapped_scenario_is_not_drifted(tmp_path):
     """Nothing to drift from -- do not warn about a scenario CEA has never mapped."""
     from cea.inputlocator import InputLocator
 
     assert is_drifted(InputLocator(str(tmp_path))) is False
 
 
-def test_the_signature_survives_duplicating_a_scenario(locator, tmp_path):
-    """Users duplicate scenarios constantly; that must not read as drift.
+def test_a_previously_mapped_scenario_reads_as_drifted_once_unlocked(locator):
+    """Drift is not verified against file contents -- unlocking alone is the signal.
 
-    `hash_folder` keys on paths relative to the folder, so the digest does not move with the
-    scenario. Hashing absolute paths would have made every copy look modified.
+    Checking content would mean hashing every derived table (and every building's schedule
+    file) on every check. Since a user can hand-edit those files outside the dashboard
+    regardless of what any hash says, unlocking is treated as "can no longer vouch for this"
+    from the moment it happens, without reading a single derived-table byte.
     """
-    import shutil
+    write_lock(locator, locked=True)
+    assert is_drifted(locator) is False
 
-    from cea.inputlocator import InputLocator
-
-    copy = tmp_path / "copy"
-    shutil.copytree(locator.scenario, copy)
-    assert derived_signature(InputLocator(str(copy))) == derived_signature(locator)
+    write_lock(locator, locked=False, mapped_at=read_lock(locator).mapped_at)
+    assert is_drifted(locator) is True
 
 
 # --------------------------------------------------------------------------- archetype key
@@ -200,7 +183,7 @@ def envelope_value(locator, building="B1000", column="Hs"):
 
 def test_a_locked_save_does_not_write_the_derived_tables(locator):
     """The stale-client case. The editor sends these tables on every save."""
-    write_lock(locator, locked=True, signature=derived_signature(locator))
+    write_lock(locator, locked=True)
     before = envelope_value(locator)
 
     store_tables = {"envelope": {"B1000": {"Hs": 0.99}}}
@@ -223,7 +206,7 @@ def test_the_remap_does_not_truncate_the_derived_tables(locator):
     given, so this would leave a one-row `envelope.csv`. It now merges the subset in -- see
     `test_archetypes_mapper_subset.py` -- and this asserts the lock depends on that.
     """
-    write_lock(locator, locked=True, signature=derived_signature(locator))
+    write_lock(locator, locked=True)
     building_count = len(pd.read_csv(locator.get_building_architecture()))
     assert building_count > 1, "the fixture must have several buildings for this to mean anything"
 
@@ -242,7 +225,7 @@ def test_the_save_response_returns_the_remapped_tables(locator):
     That is the failure this feature exists to prevent, and it happens on the *second* save of
     an ordinary edit -- not in any adversarial case.
     """
-    write_lock(locator, locked=True, signature=derived_signature(locator))
+    write_lock(locator, locked=True)
     result = save(locator, zone_overrides={"B1000": {"const_type": "STANDARD1"}})
 
     assert result["remapped_buildings"] == ["B1000"]
@@ -252,8 +235,8 @@ def test_the_save_response_returns_the_remapped_tables(locator):
 
 
 def test_a_locked_save_leaves_the_scenario_undrifted(locator):
-    """The signature is refreshed after the save, including when schedules were rewritten."""
-    write_lock(locator, locked=True, signature=derived_signature(locator))
+    """Staying locked is what matters -- drift is never checked against file contents."""
+    write_lock(locator, locked=True)
     save(locator, zone_overrides={"B1000": {"const_type": "STANDARD2"}})
     assert is_drifted(locator) is False
 
@@ -276,7 +259,7 @@ def test_the_derived_tabs_are_exactly_what_the_mapper_writes(locator):
 
 def test_an_unlocked_save_behaves_exactly_as_before(locator):
     """Unlocked is the pre-existing behaviour: no skipping, no mapper, no lock writes."""
-    write_lock(locator, locked=False, signature=None)
+    write_lock(locator, locked=False)
     before = envelope_value(locator)
 
     from cea.interfaces.dashboard.api.inputs import get_building_properties
@@ -316,30 +299,21 @@ def set_locked(locator, locked):
         return asyncio.run(set_archetype_lock(locator.scenario, ArchetypeLockForm(locked=locked)))
 
 
-def test_unlocking_keeps_the_fingerprint_so_drift_stays_measurable(locator):
-    """Unlocking must carry the last mapping's fingerprint forward.
+def test_unlocking_immediately_reads_as_drifted(locator):
+    """Unlocking itself is the drift signal -- no hand-edit needed, no file read either.
 
-    Clearing it makes `is_drifted` fall back to "never mapped", so every subsequent edit reads
-    as no-drift -- and marking the drifted `const_type` cells is the entire reason for
-    unlocking. The bug is silent: the UI simply never warns.
+    There is no folder hash to wait on any more: the moment CEA can no longer vouch for the
+    derived tables (locked -> unlocked), the UI is expected to say so, before a single byte on
+    disk changes. Verifying content first would mean hashing every derived table (and every
+    building's schedule file) on every check -- see `docs/developer/archetype-lock-drift-review.md`.
     """
     set_locked(locator, True)
     assert lock_state(locator) == (True, False)
 
     set_locked(locator, False)
-    assert lock_state(locator) == (False, False), "unlocking alone changes nothing"
+    assert lock_state(locator) == (False, True), "unlocking a mapped scenario reads as drifted right away"
 
-    path = locator.get_building_architecture()
-    original = pd.read_csv(path)
-    try:
-        edited = original.copy()
-        edited.loc[0, "Hs"] = 0.11
-        edited.to_csv(path, index=False)
-        assert lock_state(locator) == (False, True), "an edit while unlocked must show as drift"
-    finally:
-        original.to_csv(path, index=False)
-
-    assert archetype_lock.read_lock(locator).mapped_signature is not None
+    assert archetype_lock.read_lock(locator).mapped_at is not None, "the last mapping time is preserved"
 
 
 def test_relocking_remaps_and_clears_the_drift(locator):
@@ -364,12 +338,12 @@ def test_relocking_remaps_and_clears_the_drift(locator):
 def test_unlocking_never_touches_the_files(locator):
     """Only re-locking is destructive. Unlocking is a statement of ownership."""
     set_locked(locator, True)
-    before = derived_signature(locator)
+    before = pd.read_csv(locator.get_building_architecture())
 
     result = set_locked(locator, False)
 
     assert result["remapped"] is False
-    assert derived_signature(locator) == before
+    pd.testing.assert_frame_equal(pd.read_csv(locator.get_building_architecture()), before)
 
 
 # --------------------------------------------------------------------------- added buildings
@@ -407,7 +381,7 @@ def test_adding_a_building_while_locked_gives_it_derived_rows(locator):
         save_all_inputs,
     )
 
-    write_lock(locator, locked=True, signature=derived_signature(locator))
+    write_lock(locator, locked=True)
     envelope_before = set(pd.read_csv(locator.get_building_architecture())["name"])
     assert "B_NEW" not in envelope_before
 
@@ -448,7 +422,7 @@ def test_zone_stays_editable_while_locked(locator):
     for tab in ("zone", "surroundings", "trees"):
         assert tab not in ARCHETYPE_DERIVED_TABS
 
-    write_lock(locator, locked=True, signature=derived_signature(locator))
+    write_lock(locator, locked=True)
     zone = gpd.read_file(locator.get_zone_geometry()).set_index("name")
     before = float(zone.loc["B1000", "height_ag"])
 

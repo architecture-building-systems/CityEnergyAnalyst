@@ -211,14 +211,12 @@ async def set_archetype_lock(scenario: CEAScenario, form: ArchetypeLockForm):
 
     def fn():
         if not form.locked:
-            # Keep the fingerprint from the last mapping. It is the only record of what the
-            # derived tables looked like when they matched their archetypes, so discarding it
-            # here would make every later edit undetectable -- and detecting them is the
-            # reason for unlocking in the first place.
+            # Keep the previous `mapped_at`: unlocking has not just mapped anything, so there
+            # is nothing new to stamp, and the timestamp of the last real mapping stays useful
+            # as long as it is not overwritten with "now".
             previous = archetype_lock.read_lock(locator)
             archetype_lock.write_lock(
-                locator, locked=False,
-                signature=previous.mapped_signature, mapped_at=previous.mapped_at)
+                locator, locked=False, mapped_at=previous.mapped_at)
             return {'locked': False,
                     'drifted': archetype_lock.is_drifted(locator),
                     'remapped': False}
@@ -234,8 +232,7 @@ async def set_archetype_lock(scenario: CEAScenario, form: ArchetypeLockForm):
             update_schedule_operation_cea=True,
             list_buildings=buildings,
         )
-        state = archetype_lock.write_lock(
-            locator, locked=True, signature=archetype_lock.derived_signature(locator))
+        state = archetype_lock.write_lock(locator, locked=True)
         return {'locked': True, 'drifted': False, 'remapped': True,
                 'building_count': len(buildings), 'mapped_at': state.mapped_at}
 
@@ -503,9 +500,9 @@ async def save_all_inputs(scenario: CEAScenario, form: InputForm):
                         out['tables'][tab] = json.loads(
                             remapped.set_index('name').to_json(orient='index'))
 
-            # Re-fingerprint either way: the save may have touched schedules.
-            archetype_lock.write_lock(
-                locator, locked=True, signature=archetype_lock.derived_signature(locator))
+                # Advance `mapped_at`: the mapper just ran. A save with no archetype changes
+                # has nothing new to record, so it does not touch the lock file at all.
+                archetype_lock.write_lock(locator, locked=True)
 
         return out
 

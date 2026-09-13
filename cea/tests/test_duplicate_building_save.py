@@ -19,7 +19,6 @@ import pytest
 
 from cea.datamanagement.archetype_lock import (
     ARCHETYPE_DERIVED_TABS,
-    derived_signature,
     write_lock,
 )
 from cea.inputlocator import InputLocator
@@ -88,7 +87,7 @@ def save_with_duplicate(locator, source, copy):
 
 @pytest.fixture(scope="module")
 def saved(locator):
-    write_lock(locator, locked=True, signature=derived_signature(locator))
+    write_lock(locator, locked=True)
     return save_with_duplicate(locator, SOURCE, COPY)
 
 
@@ -173,7 +172,7 @@ def test_the_duplicate_does_not_copy_values_that_diverge_from_the_archetype():
     rather than left to be discovered.
     """
     fresh = fresh_scenario()
-    write_lock(fresh, locked=True, signature=derived_signature(fresh))
+    write_lock(fresh, locked=True)
 
     stored = pd.read_csv(fresh.get_building_supply()).set_index("name").loc[SOURCE]
     save_with_duplicate(fresh, SOURCE, COPY)

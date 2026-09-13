@@ -10,8 +10,13 @@ describing the building it labels, with nothing recording that it happened.
 
 When **locked**, CEA owns those tables: the input editor renders them read-only, the save
 endpoint refuses to write them, and changing a building's archetype key re-runs the mapper for
-that building. When **unlocked**, the user owns them and CEA records that they may no longer
-match, so the editor can say so.
+that building. When **unlocked**, the user owns them, and from that moment CEA can no longer
+vouch that they still match -- so the editor treats a previously-mapped-but-now-unlocked
+scenario as presumed drifted. This is not verified against file contents (that would mean
+hashing the whole derived-tables tree, including one schedule file per building, on every
+check and every save -- see `docs/developer/archetype-lock-drift-review.md` for why that was
+tried and removed): unlocking itself is the signal, since a user can always hand-edit these
+CSVs outside the dashboard regardless of what any in-scenario record claims.
 
 A scenario with no lock file reads as unlocked. That is deliberate: an existing scenario may
 already hold hand-edits, and claiming they match the archetype would licence overwriting them.
@@ -24,8 +29,6 @@ import json
 import os
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, NamedTuple
-
-from cea.utilities.fingerprint import hash_folder
 
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
@@ -50,11 +53,10 @@ class LockState(NamedTuple):
     """The lock as recorded on disk."""
 
     locked: bool
-    mapped_signature: str | None
     mapped_at: str | None
 
 
-UNLOCKED = LockState(locked=False, mapped_signature=None, mapped_at=None)
+UNLOCKED = LockState(locked=False, mapped_at=None)
 
 
 def read_lock(locator: InputLocator) -> LockState:
@@ -75,7 +77,6 @@ def read_lock(locator: InputLocator) -> LockState:
 
     return LockState(
         locked=bool(payload.get("locked", False)),
-        mapped_signature=payload.get("mapped_signature"),
         mapped_at=payload.get("mapped_at"),
     )
 
@@ -84,24 +85,18 @@ def write_lock(
     locator: InputLocator,
     *,
     locked: bool,
-    signature: str | None,
     mapped_at: str | None = None,
 ) -> LockState:
     """Record the lock state.
 
-    :param signature: the fingerprint of the derived tables as just mapped, or the previous
-        one when unlocking. **Unlocking must carry the previous signature forward**: it is the
-        only record of what the tables looked like when they last matched their archetypes,
-        and without it drift cannot be measured -- which is the whole point of unlocking.
-    :param mapped_at: when that signature was taken. Defaults to now, which is right for a
-        fresh mapping and wrong for a signature being carried forward, so unlock passes the
-        stored value.
+    :param mapped_at: when `archetypes_mapper` was last run for this scenario. Defaults to
+        now, which is right whenever this call follows an actual mapper run (locking, or an
+        auto-remap during save). Unlocking has not just mapped anything, so it passes the
+        previously recorded value through instead of stamping a new one.
     """
     state = LockState(
         locked=bool(locked),
-        mapped_signature=signature,
-        mapped_at=(mapped_at or datetime.now(timezone.utc).isoformat(timespec="seconds"))
-        if signature else None,
+        mapped_at=mapped_at or datetime.now(timezone.utc).isoformat(timespec="seconds"),
     )
     path = locator.get_archetype_lock_file()
     locator.ensure_parent_folder_exists(path)
@@ -110,32 +105,18 @@ def write_lock(
     return state
 
 
-def derived_signature(locator: InputLocator) -> str | None:
-    """Fingerprint of the archetype-derived tables, or None if they do not exist yet.
-
-    The whole `building-properties/` folder, because it holds exactly the derived set -- the
-    five tables and `schedules/` -- and nothing the user authors. `hash_folder` keys on paths
-    *relative* to the folder, so duplicating or moving a scenario does not shift the
-    signature, and it skips OS junk such as `.DS_Store` that drifts on its own.
-    """
-    folder = locator.get_building_properties_folder()
-    if not os.path.isdir(folder):
-        return None
-    return hash_folder(folder)
-
-
 def is_drifted(locator: InputLocator) -> bool:
-    """True when the derived tables no longer match the last recorded mapping.
+    """True once a scenario CEA has mapped before is no longer locked.
 
-    Recomputed from disk every call rather than trusting a stored flag: a flag left behind by
-    an interrupted write would silently claim the tables are consistent.
+    Not verified against file contents -- that would mean hashing the whole derived-tables
+    tree (including one schedule file per building) on every check, for a guarantee unlocking
+    already defeats: the user can hand-edit these CSVs outside the dashboard regardless of what
+    any hash claims. Unlocking is itself the signal that CEA can no longer vouch for them.
 
     A scenario that has never been mapped is not "drifted" -- there is nothing to drift from.
     """
     state = read_lock(locator)
-    if state.mapped_signature is None:
-        return False
-    return derived_signature(locator) != state.mapped_signature
+    return not state.locked and state.mapped_at is not None
 
 
 def _comparable(value: Any) -> str:
