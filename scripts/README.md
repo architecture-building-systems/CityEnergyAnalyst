@@ -22,3 +22,13 @@ python scripts/config_type_generator.py
 ```
 
 Also runs automatically via `.github/workflows/update-config-stubs.yml`.
+
+### record_osm_fixtures.py
+Refreshes `cea/tests/fixtures/osm_zug/`, the recorded Overpass API responses that
+`test_inputs_setup_workflow.py` replays instead of hitting the live API (which has
+repeatedly timed out from GitHub-hosted CI runners). Run manually only if the workflow
+starts calling `osmnx.features_from_polygon`/`osmnx.graph_from_bbox` differently:
+
+```bash
+python scripts/record_osm_fixtures.py
+```
