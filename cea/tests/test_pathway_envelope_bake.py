@@ -35,14 +35,14 @@ LAYERS = {
 DERIVED_U = 0.3335  # 1 / (0.20/0.6 + 0.10/0.04 + 0.02/0.8), to 4 s.f.
 DERIVED_GHG = 160.0  # 0.5 kgCO2/kg x (200 + 100 + 20) kg/m2
 DERIVED_GHG_PRODUCTION = 128.0  # 0.4 kgCO2/kg x 320 kg/m2
-DERIVED_GHG_RECYCLING = 32.0  # 0.1 kgCO2/kg x 320 kg/m2
+DERIVED_GHG_DEMOLITION = 32.0  # 0.1 kgCO2/kg x 320 kg/m2
 
 ROOF_CACHE_COLS = (
     "U_roof",
     "GHG_roof_kgCO2m2",
     "GHG_biogenic_roof_kgCO2m2",
     "GHG_production_roof_kgCO2m2",
-    "GHG_recycling_roof_kgCO2m2",
+    "GHG_demolition_roof_kgCO2m2",
 )
 
 
@@ -89,8 +89,8 @@ def baked_state(monkeypatch):
                 "unit": "kg",
                 "GHG_emission_total": 0.5,
                 "GHG_emission_production": 0.4,
-                "GHG_emission_recycling": 0.1,
-                "biogenic_carbon_in_product": 0.05,
+                "GHG_emission_disposal": 0.1,
+                "biogenic_carbon_in_product": -0.05,
             }
             for name, conductivity in (("brick", 0.6), ("insulation", 0.04), ("plaster", 0.8))
         ],
@@ -113,9 +113,7 @@ def baked_state(monkeypatch):
             "Service_Life_roof": 40,
             "U_roof": DERIVED_U,
             "GHG_roof_kgCO2m2": DERIVED_GHG,
-            "GHG_biogenic_roof_kgCO2m2": 16.0,  # 320 kg/m2 x 0.05
-            "GHG_production_roof_kgCO2m2": DERIVED_GHG_PRODUCTION,
-            "GHG_recycling_roof_kgCO2m2": DERIVED_GHG_RECYCLING,
+            "GHG_biogenic_roof_kgCO2m2": -16.0,  # 320 kg/m2 x -0.05
         }],
     )
 
@@ -167,7 +165,7 @@ def test_editing_layers_clears_the_stale_cache(baked_state):
     # The production/recycling split must be re-derived too, not just left blank -- the
     # emissions timeline prefers these over the recomputed total when both are present.
     assert float(reloaded["GHG_production_roof_kgCO2m2"]) == pytest.approx(168.0, rel=1e-3)
-    assert float(reloaded["GHG_recycling_roof_kgCO2m2"]) == pytest.approx(42.0, rel=1e-3)
+    assert float(reloaded["GHG_demolition_roof_kgCO2m2"]) == pytest.approx(42.0, rel=1e-3)
 
 
 def test_explicit_value_in_the_recipe_survives(baked_state):
@@ -192,7 +190,7 @@ def test_non_material_edit_keeps_the_cache(baked_state):
     assert float(row["U_roof"]) == pytest.approx(DERIVED_U, rel=1e-3)
     assert float(row["GHG_roof_kgCO2m2"]) == pytest.approx(DERIVED_GHG, rel=1e-3)
     assert float(row["GHG_production_roof_kgCO2m2"]) == pytest.approx(DERIVED_GHG_PRODUCTION, rel=1e-3)
-    assert float(row["GHG_recycling_roof_kgCO2m2"]) == pytest.approx(DERIVED_GHG_RECYCLING, rel=1e-3)
+    assert float(row["GHG_demolition_roof_kgCO2m2"]) == pytest.approx(DERIVED_GHG_DEMOLITION, rel=1e-3)
 
 
 def test_promotion_still_requires_the_full_material_set(baked_state):

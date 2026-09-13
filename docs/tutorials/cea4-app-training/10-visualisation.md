@@ -108,9 +108,9 @@ Creates bar charts of building energy demand results, showing heating, cooling, 
 
 ---
 
-## Plot - Final Energy
+## Plot - Energy by Carrier
 
-See [Final Energy > Plot - Final Energy](06-1-final-energy.md#plot---final-energy) for full documentation.
+See [Final Energy > Plot - Energy by Carrier](06-1-final-energy.md#plot---energy-by-carrier) for full documentation.
 
 Bar charts of final energy consumption by carrier (grid, gas, oil, coal, wood) for buildings and plants under a what-if scenario.
 
@@ -140,17 +140,17 @@ Bar charts of operational emissions by service or energy carrier, with solar off
 
 ---
 
-## Plot - Cost Sankey
+## Plot - System Cost Sankey
 
-See [System Costs > Plot - Cost Sankey](06-3-system-costs.md#plot---cost-sankey) for full documentation.
+See [System Costs > Plot - System Cost Sankey](06-3-system-costs.md#plot---system-cost-sankey) for full documentation.
 
 Sankey diagram showing cost flows from components through services to total costs, with annualised or total CAPEX views.
 
 ---
 
-## Plot - Heat Rejection
+## Plot - Anthropogenic Heat Rejection
 
-See [Heat Rejection > Plot - Heat Rejection](06-4-heat-rejection.md#plot---heat-rejection) for full documentation.
+See [Heat Rejection > Plot - Anthropogenic Heat Rejection](06-4-heat-rejection.md#plot---anthropogenic-heat-rejection) for full documentation.
 
 Bar charts of waste heat rejected to the environment by buildings and district plants.
 
@@ -244,13 +244,13 @@ Plots comfort and discomfort hours for buildings based on thermal comfort analys
 - By building and by zone (if multi-zone)
 
 **Comfort Standards**:
-- Based on setpoints in `comfort.xlsx`
+- Based on setpoints in `indoor_comfort.csv`
 - Typically ASHRAE 55 or EN 15251 criteria
 - Adaptive comfort models (if configured)
 
 ### Prerequisites
 - Energy Demand Part 2 completed
-- Comfort setpoints defined in `comfort.xlsx`
+- Comfort setpoints defined in `indoor_comfort.csv`
 
 ### How to Use
 
@@ -377,6 +377,55 @@ Plots Pareto frontiers from optimisation results, visualising trade-offs between
 
 ---
 
+## Plot - Pathway Emission Timeline
+
+Cumulative lifecycle emissions for one **district pathway**, across its state years, broken
+down by source. The pathway equivalent of Plot - Emission Timeline.
+
+Requires a pathway with simulated states — see
+[District Evolution Pathways](11-district-pathways.md).
+
+---
+
+## Plot - Cost Breakdown
+
+Cost breakdown for energy supply systems. Supports both **baseline costs** and **what-if
+scenario costs**, so it can be used before or after a what-if has been defined.
+
+See [System Costs](06-3-system-costs.md) for the underlying results.
+
+---
+
+## Plot - Energy Flow Sankey
+
+Annual energy flows for a what-if scenario as a Sankey diagram, running from energy carrier
+through conversion to end use. Use it to see where carriers enter the district and what they
+ultimately serve.
+
+See [Final Energy](06-1-final-energy.md) for the underlying results.
+
+---
+
+## Plot - Load Duration Curve by Component
+
+One load duration curve per selected supply component — annual hourly loads sorted from
+highest to lowest. Reading the curve tells you how a component is actually used: a steep,
+short curve indicates peaking duty, a long flat one indicates base load.
+
+Useful for sanity-checking sizing before reading cost results.
+
+See [Final Energy](06-1-final-energy.md) for the underlying results.
+
+---
+
+## Plot - Supply System
+
+Plots the components of energy supply systems, showing what the optimisation selected.
+
+See [Energy Supply System Optimisation](07-supply-optimisation.md).
+
+---
+
 ## Common Visualisation Workflow
 
 ### Standard Visualisation Sequence
@@ -388,12 +437,12 @@ After completing CEA analyses:
    - Validate results before proceeding
 
 2. **Life Cycle Analysis Plots** (per what-if scenario):
-   - [Plot - Final Energy](06-1-final-energy.md#plot---final-energy) (carrier breakdown)
+   - [Plot - Energy by Carrier](06-1-final-energy.md#plot---energy-by-carrier) (carrier breakdown)
    - [Plot - Lifecycle Emissions](06-2-emissions.md#plot---lifecycle-emissions) (full lifecycle carbon)
    - [Plot - Emission Timeline](06-2-emissions.md#plot---emission-timeline) (cumulative trajectory)
    - [Plot - Operational Emissions](06-2-emissions.md#plot---operational-emissions) (operational carbon)
-   - [Plot - Cost Sankey](06-3-system-costs.md#plot---cost-sankey) (cost flow diagram)
-   - [Plot - Heat Rejection](06-4-heat-rejection.md#plot---heat-rejection) (waste heat)
+   - [Plot - System Cost Sankey](06-3-system-costs.md#plot---system-cost-sankey) (cost flow diagram)
+   - [Plot - Anthropogenic Heat Rejection](06-4-heat-rejection.md#plot---anthropogenic-heat-rejection) (waste heat)
 
 3. **Renewable Energy Plots**:
    - Plot - Solar Technology (if solar assessments done)
@@ -472,8 +521,8 @@ For publication-quality figures:
 - **[Life Cycle Analysis](06-0-life-cycle-analysis.md)** - Provides emissions data
 - **[Renewable Energy](03-renewable-energy.md)** - Provides solar generation data
 - **[Supply System Optimisation](07-supply-optimisation.md)** - Provides Pareto frontier data
-- **[Export Results to CSV](01-import-export.md#export-results-to-csv)** - Export data for custom plots
+- **[Export Results to CSV](01-import-export.md#export-results-to-csv-summary-analytics)** - Export data for custom plots
 
 ---
 
-[← Back: Utilities](09-utilities.md) | [Back to Index](index.md)
+[← Back: Utilities](09-utilities.md) | [Back to Index](index.md) | [Next: District Evolution Pathways →](11-district-pathways.md)

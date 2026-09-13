@@ -132,11 +132,12 @@ Files in this category: **6**
 | Variable | Description | Type | Unit | Values |
 |----------|-------------|------|------|--------|
 | `const_type` | Construction Archetypes | string | `[-]` | alphanumeric |
-| `floors_ag` | Number of floors above ground (incl. ground floor, minimum one floor is needed) | int | `[-]` | {1...n} |
+| `floors_ag` | Number of floors above ground (incl. ground floor, minimum one floor is needed). For a building with a void deck, what this counts depends on which void column the scenario uses. With height_vd it counts only the ENCLOSED storeys above the void deck. With the legacy void_deck column it counts EVERY storey, void ones included, so the enclosed count is floors_ag minus void_deck. Either way height_ag spans the void deck plus the enclosed building, and the storey height of the enclosed part is (height_ag - void deck height) / enclosed floors. | int | `[-]` | {1...n} |
 | `floors_bg` | Number of floors below ground (basement) | int | `[-]` | {0...n} |
 | `geometry` | Shapefile POLYGON | Polygon | `NA` |  |
-| `height_ag` | Height above ground (incl. ground floor, minimum one floor is needed) | float | `[m]` | {2.0...n} |
+| `height_ag` | Height above ground (incl. ground floor, minimum one floor is needed). Always measured from the ground to the roof, so it spans any void deck as well as the enclosed building above it. Because of that it is not floors_ag times the storey height whenever a void deck is present - see floors_ag and height_vd. | float | `[m]` | {2.0...n} |
 | `height_bg` | Height below ground (basement) | float | `[m]` | {0.0...n} |
+| `height_vd` | Height of the void deck - the open, unenclosed portion at the bottom of the building (default = 0, and it must leave at least 2 m of height per enclosed floor). Optional. Replaces void_deck, which could only express whole floors. IMPORTANT - when height_vd is used, floors_ag counts only the ENCLOSED storeys sitting above the void deck, while height_ag still spans the void deck plus the enclosed solid. This is what lets a void deck be taller than a normal storey. With the legacy void_deck column, floors_ag instead spans the whole height, void storeys included. A void deck is always at ground level; CEA does not model an open storey part-way up a building. Where both columns are present, height_vd is used for any building whose cell has a value - a blank cell falls back to void_deck, so leaving it empty in an older scenario changes nothing. | float | `[m]` | {0.0...n} |
 | `name` | Unique building ID. It must start with a letter. | string | `NA` | alphanumeric |
 | `reference` | Reference to data (if any) | string | `NA` | alphanumeric |
 | `use_type1` | First (Main) Use type of the building | string | `[-]` | alphanumeric |
@@ -145,7 +146,7 @@ Files in this category: **6**
 | `use_type2r` | Fraction of gross floor area for second Use Type | float | `[m2/m2]` | {0.0...1.0} |
 | `use_type3` | Third Use type of the building | string | `[-]` | alphanumeric |
 | `use_type3r` | Fraction of gross floor area for third Use Type | float | `[m2/m2]` | {0.0...1.0} |
-| `void_deck` | Number of floors (from the ground up) with an open envelope (default = 0, should be lower than floors_ag.) | int | `[-]` | {0...n} |
+| `void_deck` | Legacy column - number of floors (from the ground up) with an open envelope (default = 0, should be lower than floors_ag). Here floors_ag spans the whole above-ground height, void storeys included, so the enclosed storey count is floors_ag minus void_deck. Superseded by height_vd, which records the void in metres and is not tied to whole storeys. Still fully supported - CEA-3 scenarios are migrated onto this column unchanged. Where both are present, height_vd is used. | int | `[-]` | {0...n} |
 | `year` | Construction year | int | `[-]` | {0...n} |
 
 ---

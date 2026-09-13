@@ -30,6 +30,7 @@ import cea
 import cea.config
 import cea.inputlocator
 import cea.utilities.parallel
+from cea.datamanagement.utils import resolve_enclosed_floors_ag, resolve_void_height
 
 if TYPE_CHECKING:
     import geopandas as gpd
@@ -203,40 +204,86 @@ def calc_building_solids(buildings_df: gpd.GeoDataFrame,
     geometries = buildings_df.geometry.simplify(geometry_simplification, preserve_topology=True)
 
     height = buildings_df['height_ag'].astype(float)
-    nfloors = buildings_df['floors_ag'].astype(int)
-    void_decks = buildings_df['void_deck'].astype(int)
-    if not all(void_decks <= nfloors):
-        raise ValueError(f"Void deck values must be less than or equal to the number of floors for each building. "
-                         f"Found void_deck values: {void_decks.values} and number of floors: {nfloors.values}.")
-    
-    range_floors = [range(void_deck, floors + 1) for void_deck, floors in zip(void_decks, nfloors)]
-    floor_to_floor_height = height / nfloors
+    void_heights = resolve_void_height(buildings_df)
+    enclosed_floors = resolve_enclosed_floors_ag(buildings_df)
+
+    too_tall = void_heights >= height
+    if too_tall.any():
+        names = buildings_df.index[too_tall].tolist()
+        raise ValueError(
+            f"The void deck must be lower than the building. These buildings have a void deck "
+            f"at or above their full height: {names}."
+        )
+
+    z_levels = [calc_z_levels(v, h, n) for v, h, n in zip(void_heights, height, enclosed_floors)]
 
     n = len(geometries)
     out = cea.utilities.parallel.vectorize(process_geometries, num_processes,
                                            on_complete=print_terrain_intersection_progress)(
-        geometries, repeat(elevation_map, n), range_floors, floor_to_floor_height)
+        geometries, repeat(elevation_map, n), z_levels)
 
     solids, elevations = zip(*out)
     return list(solids), list(elevations)
 
-def process_geometries(geometry: shapely.Polygon, 
-                       elevation_map: ElevationMap, 
-                       range_floors: range, 
-                       floor_to_floor_height: float,
+# Two lofted faces closer than this are treated as the same level. `make_loft` builds the
+# vertical shell between consecutive faces, and a near-zero-height segment produces a
+# degenerate face that can stop the solid from closing. A void deck sitting exactly on a
+# storey line is the ordinary way to hit this, so it must be handled, not guarded against.
+Z_LEVEL_TOLERANCE_M = 1e-6
+
+
+def calc_z_levels(void_height: float, height_ag: float, enclosed_floors: float) -> list:
+    """Ascending heights of the faces that make up one building solid.
+
+    The first is the underside -- the top of the void deck, or the ground where there is none
+    -- and the last is the roof. The storey lines in between are kept because they subdivide
+    the facade, which is what gives the radiation model its wall mesh.
+
+    The enclosed height is divided evenly among the enclosed storeys, so the void deck is
+    independent of the storey grid and may be taller or shorter than a normal storey.
+
+    A void deck is always at the *bottom* of the building; CEA does not model an open storey
+    part-way up.
+
+    :param void_height: height of the open void deck in metres, 0 for none.
+    :param height_ag: total height above ground in metres, void deck included.
+    :param enclosed_floors: number of enclosed storeys sitting above the void deck.
+    :return: ascending list of z offsets in metres, first = underside, last = roof.
+    """
+    void_height = float(void_height)
+    height_ag = float(height_ag)
+    storeys = max(int(round(enclosed_floors)), 1)
+    storey_height = (height_ag - void_height) / storeys
+
+    levels = [void_height]
+    for floor in range(1, storeys + 1):
+        level = void_height + floor * storey_height
+        # Strictly above the running last level, so a degenerate storey cannot produce a
+        # zero-height loft segment and stop the solid closing.
+        if level > levels[-1] + Z_LEVEL_TOLERANCE_M:
+            levels.append(level)
+
+    # Accumulated storey heights reach `height_ag` only up to floating-point error; pin the
+    # roof to the reported height so the solid is exactly as tall as the building.
+    levels[-1] = height_ag
+    return levels
+
+
+def process_geometries(geometry: shapely.Polygon,
+                       elevation_map: ElevationMap,
+                       z_levels: list,
                        ) -> Tuple[TopoDS_Solid, float]:
     """
-    gets the 2D geometry as well as the height and number of floors, and returns a solid representing the building. 
+    gets the 2D geometry as well as the vertical levels, and returns a solid representing the building.
     Also returns the elevation of the building footprint using elevation_map.
 
     :param geometry: one building geometry from the buildings GeoDataFrame.
     :type geometry: shapely.Polygon
     :param elevation_map: the elevation map for the whole site.
     :type elevation_map: ElevationMap
-    :param range_floors: range of floors for the building. For example, a building of 3 floors will have `range(4) = [0, 1, 2, 3]`.
-    :type range_floors: range
-    :param floor_to_floor_height: the height of each level of the building. 
-    :type floor_to_floor_height: float
+    :param z_levels: ascending heights in metres of the faces making up the solid, from
+        `calc_z_levels`. The first is the underside, the last is the roof.
+    :type z_levels: list[float]
     :return: a solid representing the building, made from footprint + vertical external walls + roof.
     :rtype: OCCsolid
     :return: the elevation of the terrain at the footprint of the building.
@@ -246,7 +293,7 @@ def process_geometries(geometry: shapely.Polygon,
     # burn buildings footprint into the terrain and return the location of the new face
     face_footprint, elevation = burn_buildings(geometry, elevation_map_for_geometry, 1e-12)
     # create floors and form a solid
-    building_solid = calc_solid(face_footprint, range_floors, floor_to_floor_height)
+    building_solid = calc_solid(face_footprint, z_levels)
 
     return building_solid, elevation
 
@@ -313,7 +360,7 @@ def building_2d_to_3d(zone_df: gpd.GeoDataFrame,
     print('Calculating terrain intersection of building geometries')
     zone_buildings_df: pd.DataFrame = zone_df.set_index('name')
     # merge architecture wwr data into zone buildings dataframe with "name" column,
-    # because we want to use void_deck when creating the building solid.
+    # because we want to use the void deck when creating the building solid.
     zone_building_names = zone_buildings_df.index.values
     zone_building_solid_list, zone_elevations = calc_building_solids(zone_buildings_df, zone_simplification,
                                                                      elevation_map, num_processes)
@@ -321,9 +368,8 @@ def building_2d_to_3d(zone_df: gpd.GeoDataFrame,
     # Check if there are any buildings in surroundings_df before processing
     if not surroundings_df.empty:
         surroundings_buildings_df = surroundings_df.set_index('name')
-        if 'void_deck' not in surroundings_buildings_df.columns:
-            surroundings_buildings_df['void_deck'] = 0
-            
+        # Surroundings carry neither void-deck column; `resolve_void_height` returns 0 for
+        # them, which is the right assumption for context geometry.
         surroundings_building_names = surroundings_buildings_df.index.values
         surroundings_building_solid_list, _ = calc_building_solids(
             surroundings_buildings_df, surroundings_simplification, elevation_map, num_processes)
@@ -564,47 +610,43 @@ def burn_buildings(geometry: shapely.Polygon,
     return face, inter_pt.Z()
 
 
-def calc_solid(face_footprint: TopoDS_Face, 
-               range_floors: range, 
-               floor_to_floor_height: float,
+def calc_solid(face_footprint: TopoDS_Face,
+               z_levels: list,
                ) -> TopoDS_Solid:
     """
     extrudes the footprint surface into a 3D solid.
 
-    :param face_footprint: footprint of the building. 
+    :param face_footprint: footprint of the building.
     :type face_footprint: OCCface
-    :param range_floors: 
-        range of floors for the building. 
-        For example, a building of 3 floors will have `range(4) = [0, 1, 2, 3]`, 
-        because it has 4 floors (1 ground + 2 middle + 1 roof).
-    :type range_floors: range
-    :param floor_to_floor_height: the height of each level of the building.
-        For example, if the building has 3 floors and a height of 9m, then `floor_to_floor_height = 9 / 3 = 3`.
-    :type floor_to_floor_height: float
+    :param z_levels:
+        ascending heights in metres of the faces making up the solid, from `calc_z_levels`.
+        The first is the underside of the building -- the top of the void deck, or the ground
+        where there is none -- and the last is the roof. Levels in between subdivide the
+        facade for the radiation mesh.
+    :type z_levels: list[float]
     :return: a solid representing the building, made from footprint + vertical external walls + roof.
     :rtype: OCCsolid
     """
-    # create faces for every floor and extrude the solid
+    # create faces for every level and extrude the solid
 
-    def cal_face_list(floor_counter):
+    def cal_face_list(dist2mve):
         """
-        This function moves the face_footprint to the correct height for a given floor_counter level.
+        This function moves the face_footprint up to the given height.
 
-        :param floor_counter: number of the floor to be offset. 0 stands for the ground floor.
-        :type floor_counter: int
-        :return: vertically offset face on the given floor height (0m for ground floor)
+        :param dist2mve: height in metres to offset the face to.
+        :type dist2mve: float
+        :return: vertically offset face at the given height
         :rtype: OCCface
         """
-        dist2mve = floor_counter * floor_to_floor_height
         # get midpt of face
         orig_pt = calculate.face_midpt(face_footprint)
-        # move the pt 1 level up
+        # move the pt to the level
         dest_pt = modify.move_pt(orig_pt, (0, 0, 1), dist2mve)
         moved_face = modify.move(orig_pt, dest_pt, face_footprint)
 
         return moved_face
 
-    moved_face_list = np.vectorize(cal_face_list)(range_floors)
+    moved_face_list = np.vectorize(cal_face_list)(z_levels)
     # make checks to satisfy a closed geometry also called a shell
 
     vertical_shell = construct.make_loft(moved_face_list)

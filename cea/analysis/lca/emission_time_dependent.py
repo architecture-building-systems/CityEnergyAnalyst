@@ -239,6 +239,8 @@ def total_yearly(config: Configuration) -> None:
             building_name=building,
             locator=locator,
             end_year=end_year,
+            maintenance_fraction=config.emissions.maintenance_fraction_of_production,
+            repair_fraction=config.emissions.repair_fraction_of_production,
         )
         timeline.fill_embodied_emissions()
         if consider_pv:
@@ -754,6 +756,8 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
         production_total = 0.0
         biogenic_total = 0.0
         demolition_total = 0.0
+        maintenance_total = 0.0
+        repair_total = 0.0
         operation_total = 0.0
         try:
             timeline = BuildingEmissionTimeline(
@@ -761,6 +765,8 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
                 building_name=building_name,
                 locator=locator,
                 end_year=end_year,
+                maintenance_fraction=config.emissions.maintenance_fraction_of_production,
+                repair_fraction=config.emissions.repair_fraction_of_production,
             )
             timeline.fill_embodied_emissions()
             solar_config = supply_cfg.get('solar', {})
@@ -791,6 +797,12 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
             demolition_total = float(timeline.timeline[
                 [c for c in tl_cols if c.startswith('demolition_')]
             ].sum().sum())
+            maintenance_total = float(timeline.timeline[
+                [c for c in tl_cols if c.startswith('maintenance_')]
+            ].sum().sum())
+            repair_total = float(timeline.timeline[
+                [c for c in tl_cols if c.startswith('repair_')]
+            ].sum().sum())
             operation_total = float(timeline.timeline[
                 [c for c in tl_cols if c.startswith('operation_')]
             ].sum().sum())
@@ -799,6 +811,8 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
             production_total = 0.0
             biogenic_total = 0.0
             demolition_total = 0.0
+            maintenance_total = 0.0
+            repair_total = 0.0
             operation_total = 0.0
 
         buildings_rows_out.append({
@@ -813,6 +827,8 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
             'operation_kgCO2e': operation_total,
             'production_kgCO2e': production_total,
             'biogenic_kgCO2e': biogenic_total,
+            'maintenance_kgCO2e': maintenance_total,
+            'repair_kgCO2e': repair_total,
             'demolition_kgCO2e': demolition_total,
             'whatif_name': whatif_name,
         })
@@ -911,6 +927,8 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
             'operation_kgCO2e': plant_op_lifecycle,
             'production_kgCO2e': 0.0,
             'biogenic_kgCO2e': 0.0,
+            'maintenance_kgCO2e': 0.0,
+            'repair_kgCO2e': 0.0,
             'demolition_kgCO2e': 0.0,
             'whatif_name': whatif_name,
         })

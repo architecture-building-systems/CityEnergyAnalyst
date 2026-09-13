@@ -40,7 +40,11 @@ CATEGORIES: list[tuple[str, str]] = [
 ]
 
 CATEGORY_ALIASES = {
+    # Both the historical and current scripts.yml labels map to the same page. The feature
+    # was renamed to "(LCA)"; without the second alias every LCA locator falls through to
+    # "Other" and page 06 silently empties.
     "Life Cycle Analysis": "Life Cycle Analysis (BETA)",
+    "Life Cycle Analysis (LCA)": "Life Cycle Analysis (BETA)",
     # scripts.yml top-level `default:` is a catch-all for legacy/internal scripts;
     # the only data-producing one here is multi-criteria-analysis, which fits Utilities.
     "default": "Utilities",

@@ -99,24 +99,46 @@ def validate_geometries_before_crs_transform(gdf: geopandas.GeoDataFrame, shapef
     """
     Validate that all geometries are valid before CRS transformation.
 
+    A row with no geometry at all is reported separately from one whose geometry is malformed.
+    Both fail `is_valid`, but they need different fixes -- a missing footprint means the row
+    should be given one or deleted, while a malformed polygon means the shape itself is broken
+    (self-intersecting, unclosed). Reporting both as "invalid" sends people looking for the
+    wrong thing.
+
     :param gdf: GeoDataFrame to validate
     :param shapefile_name: Name of shapefile for error messages (e.g., "zone", "streets")
-    :raises ValueError: If any geometries are invalid
+    :raises ValueError: If any geometries are missing or invalid
     """
-    invalid_before = gdf[~gdf.geometry.is_valid]
-    if not invalid_before.empty:
-        invalid_names_before = []
-        for idx, row in invalid_before.iterrows():
-            name = row.get('name', row.get('Name', f'index_{idx}'))
-            invalid_names_before.append(str(name))
+    def row_name(index, row):
+        return str(row.get('name', row.get('Name', f'index_{index}')))
 
-        # Show all geometry names
-        invalid_list = ', '.join(invalid_names_before)
+    missing = gdf[gdf.geometry.isna()]
+    malformed = gdf[~gdf.geometry.isna() & ~gdf.geometry.is_valid]
 
-        raise ValueError(
-            f"Invalid geometries found in the original {shapefile_name} (before CRS transformation). "
-            f"{len(invalid_names_before)} geometries must be fixed in the source file:\n{invalid_list}"
+    if missing.empty and malformed.empty:
+        return
+
+    problems = []
+    if not missing.empty:
+        names = ', '.join(row_name(i, r) for i, r in missing.iterrows())
+        count = len(missing)
+        problems.append(
+            f"{count} {'row has' if count == 1 else 'rows have'} no geometry at all. "
+            f"Give {'it' if count == 1 else 'them'} a footprint or delete "
+            f"{'the row' if count == 1 else 'the rows'}: {names}"
         )
+    if not malformed.empty:
+        names = ', '.join(row_name(i, r) for i, r in malformed.iterrows())
+        count = len(malformed)
+        problems.append(
+            f"{count} {'geometry is' if count == 1 else 'geometries are'} malformed "
+            f"(self-intersecting or unclosed) and must be fixed in the source file: {names}"
+        )
+
+    raise ValueError(
+        f"Problems found in the original {shapefile_name} (before CRS transformation).\n"
+        + "\n".join(problems)
+    )
 
 
 def validate_geometries_after_crs_transform(gdf: geopandas.GeoDataFrame, original_crs, shapefile_name: str = "shapefile") -> geopandas.GeoDataFrame:

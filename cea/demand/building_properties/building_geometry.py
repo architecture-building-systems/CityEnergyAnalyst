@@ -4,7 +4,10 @@ Building geometry properties
 from __future__ import annotations
 from geopandas import GeoDataFrame as Gdf
 
-from cea.datamanagement.databases_verification import COLUMNS_ZONE_GEOMETRY
+from cea.datamanagement.databases_verification import (
+    COLUMNS_ZONE_GEOMETRY,
+    OPTIONAL_COLUMNS_ZONE_GEOMETRY,
+)
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
 
 from typing import TYPE_CHECKING
@@ -26,7 +29,12 @@ class BuildingGeometry:
         :param locator: an InputLocator for locating the input files
         :param building_names: list of buildings to read properties for
         """
-        prop_geometry = Gdf.from_file(locator.get_zone_geometry())[COLUMNS_ZONE_GEOMETRY + ['geometry']].set_index('name').loc[building_names]
+        zone_gdf = Gdf.from_file(locator.get_zone_geometry())
+        # `height_vd` is optional -- scenarios predating it carry `void_deck` instead -- so it
+        # is selected only when present. Dropping it here would silently hide every void deck
+        # from the demand calculation.
+        optional = [c for c in OPTIONAL_COLUMNS_ZONE_GEOMETRY if c in zone_gdf.columns]
+        prop_geometry = zone_gdf[COLUMNS_ZONE_GEOMETRY + optional + ['geometry']].set_index('name').loc[building_names]
 
         # reproject to projected coordinate system (in meters) to calculate area
         lat, lon = get_lat_lon_projected_shapefile(prop_geometry)

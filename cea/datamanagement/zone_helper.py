@@ -15,7 +15,8 @@ import pandas as pd
 
 import cea.config
 import cea.inputlocator
-from cea.datamanagement.databases_verification import COLUMNS_ZONE
+from cea.datamanagement.databases_verification import COLUMNS_ZONE, MINIMUM_STOREY_HEIGHT_M
+from cea.datamanagement.utils import VOID_HEIGHT_COLUMN
 from cea.demand import constants
 from cea.datamanagement.constants import OSM_BUILDING_CATEGORIES, OTHER_OSM_CATEGORIES_UNCONDITIONED, GRID_SIZE_M, EARTH_RADIUS_M
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_geographic_coordinate_system, \
@@ -123,7 +124,9 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
         shapefile["floors_ag"] = [int(x) if not np.isnan(x) else data_osm_floors_joined for x in
                                   shapefile['building:levels'] + shapefile['roof:levels']]
 
-        shapefile["void_deck"] = 0 # assume no void decks by default
+        # Always written, so the column is there for the user to edit. 0 means the
+        # building is enclosed to the ground, which is the right default from OSM.
+        shapefile[VOID_HEIGHT_COLUMN] = 0.0
 
         if 'height' in list_of_columns:
             #  Replaces 'nan' values with CEA assumption
@@ -137,11 +140,6 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
                                                                   shapefile["floors_ag"] * constants.H_F).astype(float)
         else:
             shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
-
-        # make sure each floor is at least 1m
-        # we assume floors_ag is accurate and adjust height_ag accordingly
-        less_than_1m = shapefile['height_ag'] < shapefile['floors_ag']
-        shapefile.loc[less_than_1m, ['height_ag']] = shapefile[less_than_1m]['floors_ag']
 
         # add fields for floors and height below ground
         shapefile["height_bg"] = pd.Series(np.nan)
@@ -174,6 +172,27 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
         # add fields for floors and height below ground
         shapefile["height_bg"] = [buildings_height_below_ground] * no_buildings
         shapefile["floors_bg"] = [buildings_floors_below_ground] * no_buildings
+
+    # Make the geometry plausible, for whichever branch produced it. This runs for both the
+    # OSM path and the user-assumption path, because both can emit a building CEA then refuses
+    # to open -- and a scenario the Zone Helper just created failing verification is the worst
+    # possible first experience.
+    #
+    # At least one storey. `floor(height_ag / H_F)` is 0 for anything under one storey tall,
+    # which fails the "floors_ag >= 1" rule.
+    shapefile["floors_ag"] = shapefile["floors_ag"].clip(lower=1).astype(int)
+
+    # A plausible storey height. OSM tags `height` and `building:levels` independently and they
+    # often disagree -- a height meant for one storey against a levels count for the whole
+    # block, say -- and a user can enter a conflicting pair by hand. Keep floors_ag and rebuild
+    # the height from CEA's assumed storey height, as the height repairs above already do.
+    #
+    # The OSM path used to set `height_ag = floors_ag`, i.e. 1 m per floor. That satisfied the
+    # old "at least 1 m" check arithmetically while producing a building no one could occupy,
+    # and it is why OSM imports were full of 1 m storeys.
+    implausible = shapefile['height_ag'] < shapefile['floors_ag'] * MINIMUM_STOREY_HEIGHT_M
+    shapefile.loc[implausible, 'height_ag'] = (
+        shapefile.loc[implausible, 'floors_ag'] * constants.H_F).astype(float)
 
     # add description
     if "description" in list_of_columns:

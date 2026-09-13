@@ -533,12 +533,21 @@ def migrate_cea3_to_cea4(scenario, verbose=False):
                         zone_df_4 = pd.merge(zone_df_3, typology_df, left_on=['name'], right_on=["Name"], how='left')
                         zone_df_4.drop(columns=['Name'], inplace=True)
 
-                        # bring void_deck from architecture.dbf to zone.shp
+                        # bring void_deck from architecture.dbf to zone.shp, unchanged.
+                        #
+                        # It is deliberately NOT converted to `height_vd` here. The metre form
+                        # redefines `floors_ag` to count only the enclosed storeys, and
+                        # `floors_ag` is read elsewhere as the total above-ground storey count
+                        # -- `cea4_migrate_db` rescales `Ns` by
+                        # `(floors_ag + floors_bg) / floors_ag`, for one. Rewriting it here
+                        # would silently shift occupied areas and demand for every migrated
+                        # building. A CEA-3 scenario therefore stays on the legacy column, which
+                        # is fully supported; `height_vd` is for new and hand-authored scenarios.
                         if 'void_deck' not in list_missing_columns_architecture_4:
                             void_deck_df = dbf_to_dataframe(path_to_input_file_without_db_3(scenario, 'architecture'))[['Name', 'void_deck']]
                             zone_df_4 = pd.merge(zone_df_4, void_deck_df, left_on=['name'], right_on=["Name"], how='left')
                         else:
-                            zone_df_4['void_deck'] = 0  # if void deck already does not exist in the architecture/envelope file, create a new column in the zone.shp with zeros
+                            zone_df_4['void_deck'] = 0  # no void deck recorded anywhere
 
                         zone_df_4 = zone_df_4[COLUMNS_ZONE_4]
                         replace_shapefile_dbf(scenario, 'zone', zone_df_4, COLUMNS_ZONE_3)

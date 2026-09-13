@@ -3,6 +3,8 @@ import shutil
 import tempfile
 import unittest
 
+import pandas as pd
+
 from cea.databases import CEADatabase, databases_folder_path
 from cea.inputlocator import InputLocator
 
@@ -49,6 +51,55 @@ class TestDatabase(unittest.TestCase):
         self.assertIsNotNone(db.assemblies)
         self.assertIsNotNone(db.components)
 
+
+    def test_materials_round_trip(self):
+        """MATERIALS.csv survives load -> dict -> save with every column intact.
+
+        The schemas.yml `columns` list is the write-time whitelist, so an incomplete one
+        silently drops columns from the user's file.
+        """
+        source = os.path.join(
+            databases_folder_path, "CH", "COMPONENTS", "MATERIALS", "MATERIALS.csv"
+        )
+        before = pd.read_csv(source)
+
+        CEADatabase.from_dict(self._get_db_dict()).save(self.locator)
+        after = pd.read_csv(self.locator.get_database_components_materials())
+
+        self.assertEqual(set(before.columns), set(after.columns))
+        self.assertEqual(len(before), len(after))
+        # Some CH densities are ranges ("1'400 - 1'500"); typing them as float in
+        # schemas.yml would mangle them, so compare the column verbatim.
+        pd.testing.assert_series_equal(
+            before.set_index("name")["density"].sort_index(),
+            after.set_index("name")["density"].sort_index(),
+        )
+
+    def test_database_without_materials(self):
+        """Regions that ship no MATERIALS.csv must still load.
+
+        Uses SG rather than deleting the file from CH: CH's envelope rows are defined by
+        material layers, so removing MATERIALS.csv makes every ENVELOPE row unresolvable.
+        SG defines its envelope by direct properties and genuinely has no materials file.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            locator = InputLocator(tmp)
+            os.makedirs(locator.get_db4_folder(), exist_ok=True)
+            shutil.copytree(
+                os.path.join(databases_folder_path, "SG"),
+                locator.get_db4_folder(),
+                dirs_exist_ok=True,
+            )
+            self.assertFalse(os.path.exists(locator.get_database_components_materials()))
+
+            db = CEADatabase.from_locator(locator=locator)
+            self.assertIsNone(db.components.materials.materials)
+
+            # Still serialises, and the key is present-but-null so the editor renders the
+            # dataset and can offer the import action.
+            db_dict = db.to_dict()
+            self.assertIn("materials", db_dict["components"])
+            self.assertIsNone(db_dict["components"]["materials"]["materials"])
 
     def test_schema(self):
         schema = CEADatabase.schema()

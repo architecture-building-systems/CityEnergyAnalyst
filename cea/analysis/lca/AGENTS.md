@@ -17,6 +17,64 @@
 | `embodied.py` | `lca_embodied(year, locator)` — legacy embodied LCA (60-year payoff method) |
 | `operation.py` | `lca_operation(locator)` — legacy operational LCA from demand results |
 
+## Life-Cycle Module Coverage (EN 15978)
+
+See `docs/developer/lca-standard-coverage.md` for the full EN 15978 phase-coverage table
+(what's modelled, estimated, or not covered) and why the `demolition` phase is C2-C4, not C1.
+
+### Maintenance (B2) and repair (B3) are estimated, not modelled
+
+Both are proportions of the production term rather than simulated activities, because CEA has
+no maintenance schedules or spare-part inventories. RICS (2017) sanctions this, and Green Mark
+Version 7's Cn Technical Guide adopts it (Table 16, GWP Base Formulae):
+
+| module | RICS basis | CEA default |
+|---|---|---|
+| B2 maintenance | 1% of A1-A5 | `emissions:maintenance-fraction-of-production` = 0.01 |
+| B3 repair | 10% of A1-A3 | `emissions:repair-fraction-of-production` = 0.10 |
+
+Two deliberate deviations, both conservative:
+
+- **RICS states B2 against A1-A5**, and CEA models A1-A3 only (no A4 transport, no A5
+  construction). The 1% is therefore applied to a smaller base, so B2 is under-stated.
+- **Neither RICS formula carries a frequency term**, unlike B4 replacement (`A1-A4 x
+  frequency`). CEA charges the allowance once per *installed generation* -- on the component's
+  own replacement cycle -- rather than annually, reading it as a per-installation allowance.
+  An annual reading would give a figure tens of times larger.
+
+Set either fraction to 0 to exclude that module. The defaults are also available as
+`DEFAULT_MAINTENANCE_FRACTION` / `DEFAULT_REPAIR_FRACTION` for callers without a
+Configuration.
+
+### Technical systems (MEP) are counted, but not per device
+
+**Replacement is per component; intensity is still blanket.**
+`_log_technical_system_emissions` resolves each supply service's `primary_component_{hs,cs,dhw}`
+(exposed by `BuildingSupplySystems`) to that component's own `LT_yr` via
+`component_lca.service_life_for_component`, and logs one replacement cycle per component. A
+20-year boiler and a 25-year chiller therefore renew independently. `log` is additive, so all
+of them accumulate into the single reported `technical_systems` column -- the output shape is
+unchanged.
+
+The **embodied intensity** is still `EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS` (35 kgCO2e/m2 GFA),
+shared equally between the services present, so the building total is unchanged from the
+previous blanket treatment. Per-component carbon awaits capacities:
+`component_lca.embodied_factor_for_component` reads the optional capacity-based
+`GHG_embodied_kgCO2e_per_unit` (in the component's own `unit` -- W, VA, m2, m3, kWh, like the
+cost curve), but installed capacities are not available in the timeline, and no family except
+`PHOTOVOLTAIC_PANELS` carries data yet.
+
+Two deliberate exclusions:
+
+- **Electricity** has no component. `SUPPLY_ELECTRICITY` describes a grid connection, so
+  `_SUPPLY_SERVICES` covers heating, cooling and hot water only.
+- **A building with no components at all** (every service `NONE`, or a district connection
+  whose plant is accounted for separately) keeps the old blanket cycle rather than dropping
+  to zero.
+
+An assumed service life is named in the timeline note, since it changes the replacement
+count.
+
 ## Two Paths: What-If vs Legacy
 
 ### What-If Path (current, recommended)
@@ -82,8 +140,13 @@ Buildings using DH/DC have **zero** operational emissions for those services at 
 
 Indexed by `period` (`Y_XXXX`), columns:
 
-**Embodied** (3 types × 10 components = 30 columns):
-- `{emission}_{component}_kgCO2e` where emission ∈ {`production`, `biogenic`, `demolition`}
+**Embodied** (5 types × 10 components = 50 columns):
+- `{emission}_{component}_kgCO2e` where emission ∈ {`production`, `biogenic`, `demolition`,
+  `maintenance`, `repair`}
+  - `biogenic` values are negative (stored carbon): the database column is already negative,
+    so it is logged as-is. Do not negate it -- see `cea/databases/AGENTS.md`.
+  - `maintenance` and `repair` are fractions of `production`, not independent quantities --
+    see Maintenance (B2) and repair (B3) above.
 - Components: `wall_ag`, `wall_bg`, `wall_part`, `win_ag`, `roof`, `upperside`, `underside`, `floor`, `base`, `technical_systems`
 
 **Operational** (6 columns):

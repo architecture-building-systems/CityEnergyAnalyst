@@ -151,14 +151,16 @@ Files in this category: **24**
 
 | Variable | Description | Type | Unit | Values |
 |----------|-------------|------|------|--------|
-| `biogenic_kgCO2e` | Total lifecycle biogenic carbon storage across all years (negative = sequestration) | float | `[kgCO2e]` | {n...n} |
+| `biogenic_kgCO2e` | Total lifecycle biogenic carbon storage across all years (negative = sequestration). Not an EN 15978 module; a separate reporting item per the RICS Whole Life Carbon professional standard. Assumed not re-released at end of life. | float | `[kgCO2e]` | {n...n} |
 | `case` | Connectivity case number from final-energy | float | `NA` | {n...n} |
 | `case_description` | Human-readable description of connectivity case | string | `NA` | alphanumeric |
-| `demolition_kgCO2e` | Total lifecycle demolition GHG emissions across all years | float | `[kgCO2e]` | {n...n} |
+| `demolition_kgCO2e` | Total lifecycle end-of-life GHG emissions across all years. EN 15978 modules C2-C4 (transport to disposal, waste processing, disposal). The on-site deconstruction activity itself (C1) is not included. | float | `[kgCO2e]` | {n...n} |
 | `GFA_m2` | Gross floor area (null for plants) | float | `[m2]` | {0.0...n} |
+| `maintenance_kgCO2e` | Total lifecycle maintenance GHG emissions across all years. EN 15978 module B2, estimated as a fraction of production emissions rather than modelled (see emissions.maintenance-fraction-of-production; RICS 2017 recommends 1%). | float | `[kg CO2-eq]` | {n...n} |
 | `name` | Building name or plant identifier (e.g. B1001, NODE16) | string | `NA` | alphanumeric |
-| `operation_kgCO2e` | Total annual operational GHG emissions | float | `[kgCO2e/yr]` | {n...n} |
-| `production_kgCO2e` | Total lifecycle production (embodied) GHG emissions across all years | float | `[kgCO2e]` | {n...n} |
+| `operation_kgCO2e` | Total annual operational GHG emissions. EN 15978 module B6 (operational energy); operational water use (B7) is not included. | float | `[kgCO2e/yr]` | {n...n} |
+| `production_kgCO2e` | Total lifecycle production (embodied) GHG emissions across all years. EN 15978 modules A1-A3 (cradle to gate), repeated at each component replacement (B4). Transport to site (A4) and construction (A5) are not included. | float | `[kgCO2e]` | {n...n} |
+| `repair_kgCO2e` | Total lifecycle repair GHG emissions across all years. EN 15978 module B3, estimated as a fraction of production emissions rather than modelled (see emissions.repair-fraction-of-production; RICS 2017 recommends 10%). | float | `[kg CO2-eq]` | {n...n} |
 | `scale` | System scale (BUILDING for standalone, DISTRICT for networked) | string | `NA` | alphanumeric |
 | `type` | Entity type (building or plant) | string | `NA` | {building, plant} |
 | `whatif_name` | What-if scenario name | string | `NA` | alphanumeric |
