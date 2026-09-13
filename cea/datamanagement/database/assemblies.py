@@ -37,9 +37,14 @@ def _to_float(value: Any) -> float | None:
 
 
 def _calc_u(materials: list[dict[str, Any]], kind: Literal["floor", "roof", "wall"]) -> float | None:
-    """Compute U-value as 1 / sum(thickness_i / conductivity_i).
+    """Compute the assembly U-value [W/m2K].
 
-    Returns None if any layer lacks required data or resistance is zero.
+    U = 1 / (R_si + sum(thickness_i [m] / conductivity_i [W/mK]) + R_se)
+
+    R_si / R_se are the internal/external surface resistances [m2K/W] from
+    SURFACE_RESISTANCES, added once per assembly (not per layer).
+
+    Returns None if any layer lacks required data or the total resistance is zero.
     """
     total_thermal_resistance = 0.0
     has_conductivity_values = False
@@ -64,15 +69,18 @@ def _calc_u(materials: list[dict[str, Any]], kind: Literal["floor", "roof", "wal
 def _calc_ghg(
     materials: list[dict[str, Any]],
 ) -> tuple[float | None, float | None, float | None, float | None]:
-    """Compute GHG per m2 for kg-based entries.
+    """Compute embodied GHG per m2 [kgCO2e/m2] for kg-based entries.
 
-    Uses mass_per_m2 = density * thickness (m, kg/m3 → kg/m2).
+    mass_per_m2 [kg/m2] = density [kg/m3] * thickness [m]
+    GHG per m2 = sum(mass_per_m2 * emission_factor [kgCO2e/kg]) over layers
+
     Disallows any material with unit 'm2'.
-    Returns tuple: (total, production, demolition, biogenic). Each may be None if
-    insufficient data. The demolition term comes from the material's end-of-life column,
-    `GHG_emission_disposal` (KBOB *Entsorgung*): EN 15978 modules C2-C4 -- transport to the
-    disposal route plus incineration, landfill or recycling processing. Excludes the C1
-    deconstruction activity.
+
+    Returns tuple: (total, production, demolition, biogenic) [kgCO2e/m2 each]. Each may
+    be None if insufficient data. The demolition term comes from the material's
+    end-of-life column, `GHG_emission_disposal` (KBOB *Entsorgung*): EN 15978 modules
+    C2-C4 -- transport to the disposal route plus incineration, landfill or recycling
+    processing. Excludes the C1 deconstruction activity.
     """
     total_emissions = 0.0
     production_emissions = 0.0
@@ -224,6 +232,20 @@ def _row_has_usable_material_layer(row: pd.Series) -> bool:
             return False
         usable_layers += 1
     return usable_layers >= 1
+
+
+def _row_has_malformed_material_layer(row: pd.Series) -> bool:
+    """True iff any layer has a positive thickness but a blank material name.
+
+    Not folded into `_row_has_usable_material_layer`: a malformed layer must reject the
+    row outright, even when the row also carries complete direct-property values -- the
+    caller must not let has_direct's fallback silently drop it.
+    """
+    for i in (1, 2, 3):
+        t = _to_float(row.get(f"thickness_{i}_m"))
+        if t is not None and t > 0 and _is_blank_name(row.get(f"material_name_{i}")):
+            return True
+    return False
 
 
 def _row_has_complete_direct_set(row: pd.Series, kind: str) -> bool:
@@ -452,6 +474,14 @@ class Envelope(BaseAssemblyDatabase):
 
             for code, row in df.iterrows():
                 code_str = str(code)
+
+                # A malformed layer (thickness > 0, no material name) is always an error,
+                # even when the row also has complete direct properties -- checked before
+                # has_direct's fallback, or the fallback would silently drop it.
+                if _row_has_malformed_material_layer(row):
+                    malformed.append(code_str)
+                    continue
+
                 has_materials = _row_has_usable_material_layer(row)
                 has_direct = _row_has_complete_direct_set(row, kind)
 

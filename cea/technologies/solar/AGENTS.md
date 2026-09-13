@@ -93,12 +93,6 @@ config values all use DB codes directly.
 | **Migration script** | One-shot tool that renames `potentials/solar/SC/B####_FP.csv` to `B####_SC1.csv` in existing scenarios; ditto for totals, PVT compound names, and any cached intermediates. ~50 lines. |
 | **Config compat shim** | At `config.py` load time, translate old `SC_FP` → `SC1` with a one-time warning. Keep for one release; remove after. |
 
-### Scope estimate
-
-- **Optimistic**: 4 days focused work.
-- **Realistic**: 6–7 days including CSV schema fallout (emissions, costs, visualisation, exports).
-- **With surprise edge cases in `optimization_new` / `what_ifs` / plot tools**: up to 10 days.
-
 ### UX concern to resolve before starting Option A
 
 `SC1` / `SC2` are opaque compared to `SC_FP` / `SC_ET`. The dropdown UI should
@@ -276,8 +270,7 @@ prefixes make parsing unambiguous.
 - Losses localise at the component that owns them. No SOLAR-means-two-things
   anomaly.
 
-**Migration scope** (~1 week, similar shape to the solar three-namespace
-migration above):
+**Migration scope** (similar shape to the solar three-namespace migration above):
 
 | Touched | What changes |
 |---|---|

@@ -30,6 +30,7 @@ from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 import cea.schemas
 from cea.databases import CEADatabase, CEADatabaseException, databases_folder_path
 from cea.datamanagement.database.assemblies import CROSS_CHECK_REL_TOLERANCE
+from cea.utilities import validate_path_within_root
 from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
 
 from cea.interfaces.dashboard.utils import (
@@ -817,13 +818,24 @@ class SeedMaterialsDatabase(BaseModel):
     source: Literal['CH']
 
 
+# Maps each allowed `source` literal to its region-database folder name. A dict lookup
+# keeps the path segment bounded to a hardcoded set of values instead of interpolating
+# the request payload directly, so static analysis (and any future literal added here)
+# can't mistake it for an unbounded, user-controlled path component.
+_MATERIALS_SEED_SOURCE_FOLDERS = {'CH': 'CH'}
+
+
 @router.post('/databases/components/materials')
 async def seed_materials_database(scenario: CEAScenario, payload: SeedMaterialsDatabase):
     """Give a scenario a MATERIALS.csv it does not have yet."""
     # Only the CH database ships one, and every existing copy path is folder-granular
     # (`database_helper` copytree's the whole COMPONENTS tree, clobbering the siblings).
     locator = cea.inputlocator.InputLocator(scenario)
+    # Contain the derived path under the scenario before touching the filesystem: CEAScenario
+    # sanitises `scenario` itself, but that doesn't statically prove to a scanner that a path
+    # a locator method derives from it stays inside the scenario too.
     destination = locator.get_database_components_materials()
+    destination = validate_path_within_root(destination, scenario)
     if os.path.exists(destination):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -834,7 +846,7 @@ async def seed_materials_database(scenario: CEAScenario, payload: SeedMaterialsD
     # is a locator change rather than a locator change plus this literal.
     source = os.path.join(
         databases_folder_path,
-        payload.source,
+        _MATERIALS_SEED_SOURCE_FOLDERS[payload.source],
         os.path.relpath(destination, locator.get_db4_folder()),
     )
 
