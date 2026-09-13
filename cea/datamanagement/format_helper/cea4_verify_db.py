@@ -8,6 +8,7 @@ import os
 from typing import Dict, List
 import cea.config
 from cea.utilities import validate_path_within_root
+from cea.datamanagement.database.assemblies import _is_blank_name
 import time
 import pandas as pd
 import numpy as np
@@ -325,7 +326,19 @@ def verify_file_against_schema_4_db(scenario, item, sheet_name=None):
         for idx in df.index:
             row = df.loc[idx]
             row_id = df.at[idx, id_column] if id_column in df.columns else idx
-            if not any(
+            # A malformed material layer (thickness > 0, no material name) is always an
+            # error -- even if the row also satisfies the direct-property alternative, the
+            # same way Envelope.from_locator's own loader never silently drops it (see
+            # _row_has_usable_material_layer in assemblies.py).
+            if any(
+                _alternative_has_malformed_layer(alternative, row, df.columns)
+                for alternative in required_one_of
+            ):
+                errors.append(
+                    f"Row '{row_id}' has a material layer with thickness_N_m > 0 but no "
+                    f"material_name_N. Fill in the material name or clear the thickness."
+                )
+            elif not any(
                 _alternative_satisfied(alternative, row, df.columns)
                 for alternative in required_one_of
             ):
@@ -355,7 +368,7 @@ def _alternative_satisfied(alternative, row, columns) -> bool:
         def pair_satisfied(name_col: str, amount_col: str) -> bool:
             if name_col not in columns or amount_col not in columns:
                 return False
-            if pd.isnull(row.get(name_col)):
+            if _is_blank_name(row.get(name_col)):
                 return False
             amount = pd.to_numeric(row.get(amount_col), errors='coerce')
             return bool(pd.notna(amount) and amount > 0)
@@ -369,6 +382,23 @@ def _alternative_satisfied(alternative, row, columns) -> bool:
         (col in columns) and (not pd.isnull(row.get(col)))
         for col in alternative
     )
+
+
+def _alternative_has_malformed_layer(alternative, row, columns) -> bool:
+    """True iff an `any_pair_of` alternative has a slot with a positive amount but a
+    blank (None/NaN/stripped-empty) name. Not part of `_alternative_satisfied` itself:
+    a malformed layer must reject the row outright, not just fail to satisfy this one
+    alternative -- see the caller.
+    """
+    if not isinstance(alternative, dict):
+        return False
+    for name_col, amount_col in alternative.get('any_pair_of') or []:
+        if name_col not in columns or amount_col not in columns:
+            continue
+        amount = pd.to_numeric(row.get(amount_col), errors='coerce')
+        if pd.notna(amount) and amount > 0 and _is_blank_name(row.get(name_col)):
+            return True
+    return False
 
 
 def _describe_alternative(alternative) -> str:

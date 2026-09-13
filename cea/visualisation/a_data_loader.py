@@ -909,7 +909,10 @@ class csv_pointer:
         # write_selected_buildings_file raises on failure rather than swallowing it, so a
         # bad write aborts the plot instead of reading back a previous run's data.
         if self.plot_cea_feature in WHATIF_PLOT_FEATURES and self.whatif_names:
-            write_selected_buildings_file(
+            # write_selected_buildings_file returns the criteria-filtered building names --
+            # assign it back, or year/construction-type/use-type filters change
+            # selected_buildings.csv while the excluded buildings stay in the plot data.
+            self.buildings = write_selected_buildings_file(
                 self.locator, self.locator.get_export_plots_selected_building_file(),
                 self.buildings,
                 self.integer_year_start, self.integer_year_end, self.list_construction_type,
