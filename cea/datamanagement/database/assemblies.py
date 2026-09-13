@@ -432,7 +432,6 @@ class Envelope(BaseAssemblyDatabase):
             """
             df = df.copy()
             derived_cols = DERIVED_COLS_BY_KIND[kind]
-            detail_ghg_cols = DETAIL_GHG_COLS_BY_KIND[kind]
 
             # Make sure derived columns exist so downstream readers never KeyError. Hold them
             # as float: a column read as all-zero ints cannot take a derived value in place.
@@ -490,9 +489,6 @@ class Envelope(BaseAssemblyDatabase):
                     malformed.append(code_str)
                     continue
 
-                mats = _gather_materials_for_row(row, material_db)
-                _, ghg_prod, ghg_recyc, _ = _calc_ghg(mats)
-
                 # Cross-check every on-disk value that is present, column by column. A row
                 # that fills in only some of the direct properties is not a complete direct
                 # set, but the values it does carry are still claims about this construction
@@ -520,11 +516,6 @@ class Envelope(BaseAssemblyDatabase):
                 # show what the file actually holds rather than a silently corrected number.
                 for col, derived in zip(derived_cols, derived_values):
                     if derived is not None and col not in conflicting:
-                        df.loc[code_str, col] = derived
-                # Detail production/recycling split, not part of the legacy contract above
-                # (so not cross-checked or required), but still stale cache if left alone.
-                for col, derived in zip(detail_ghg_cols, (ghg_prod, ghg_recyc)):
-                    if derived is not None:
                         df.loc[code_str, col] = derived
 
             if not strict:
