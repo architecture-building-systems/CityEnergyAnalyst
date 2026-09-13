@@ -28,6 +28,7 @@ from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 import cea.schemas
 from cea.databases import CEADatabase, CEADatabaseException, databases_folder_path
 from cea.datamanagement.database.assemblies import CROSS_CHECK_REL_TOLERANCE
+from cea.utilities import validate_path_within_root
 from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
 
 from cea.interfaces.dashboard.utils import (
@@ -581,7 +582,10 @@ async def seed_materials_database(scenario: CEAScenario, payload: SeedMaterialsD
     # Only the CH database ships one, and every existing copy path is folder-granular
     # (`database_helper` copytree's the whole COMPONENTS tree, clobbering the siblings).
     locator = cea.inputlocator.InputLocator(scenario)
-    destination = locator.get_database_components_materials()
+    # Contain the derived path under the scenario before touching the filesystem: CEAScenario
+    # sanitises `scenario` itself, but that doesn't statically prove to a scanner that a path
+    # a locator method derives from it stays inside the scenario too.
+    destination = validate_path_within_root(locator.get_database_components_materials(), scenario)
     if os.path.exists(destination):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
