@@ -115,12 +115,17 @@ def _filter_routes(
 # on every call (see download_input_database in inputs.py) - real disk I/O an
 # anonymous caller could trigger repeatedly for a scenario that never changes,
 # with no cacheable benefit since the payload is a binary zip, not JSON.
+# /archetype-lock excluded: it is editor state for a control the demo surface
+# has no use for - it reports whether CEA owns the archetype-derived tables so
+# the client can render a lock/unlock toggle. The write half (PUT) is already
+# gone via the verb filter; leaving the read half in would let an anonymous
+# client render a toggle it can never actually operate.
 
 app.include_router(
     _filter_routes(
         inputs_module.router,
         allowed_methods={"GET"},
-        exclude_paths={"/databases/download"},
+        exclude_paths={"/databases/download", "/archetype-lock"},
     ),
     prefix="/scenarios/{demo_id}/inputs",
     dependencies=_demo_guard,
