@@ -27,6 +27,7 @@ from cea.datamanagement.archetype_lock import (
     read_lock,
     write_lock,
 )
+from cea.datamanagement.archetype_lock import _read_computed_values, _read_use_types
 
 
 @pytest.fixture(scope="module")
@@ -79,19 +80,91 @@ def test_an_unlocked_but_never_mapped_scenario_is_not_drifted(tmp_path):
     assert is_drifted(InputLocator(str(tmp_path))) is False
 
 
-def test_a_previously_mapped_scenario_reads_as_drifted_once_unlocked(locator):
-    """Drift is not verified against file contents -- unlocking alone is the signal.
-
-    Checking content would mean hashing every derived table (and every building's schedule
-    file) on every check. Since a user can hand-edit those files outside the dashboard
-    regardless of what any hash says, unlocking is treated as "can no longer vouch for this"
-    from the moment it happens, without reading a single derived-table byte.
-    """
+def test_unlocking_keeps_the_baseline_and_the_scenario_undrifted(locator):
+    """Unlocking with the baseline carried forward: the `use_type` keys have not moved, so the
+    coarse fallback -- all it can check without the tables loaded -- reports no drift."""
     write_lock(locator, locked=True)
+    previous = read_lock(locator)
+    assert previous.mapped_use_types is not None, "locking stamps what it mapped against"
+    assert previous.mapped_computed_values is not None
+
+    write_lock(locator, locked=False, mapped_at=previous.mapped_at,
+               mapped_use_types=previous.mapped_use_types,
+               mapped_computed_values=previous.mapped_computed_values)
     assert is_drifted(locator) is False
 
-    write_lock(locator, locked=False, mapped_at=read_lock(locator).mapped_at)
+
+def test_a_sidecar_written_before_the_baseline_existed_reads_as_drifted(tmp_path):
+    """A scenario mapped by an older CEA has `mapped_at` but no `mapped_use_types`.
+
+    There is no baseline to compare against, so the honest answer is "cannot vouch for it" --
+    one re-lock re-baselines it. Written as raw JSON on purpose: this is the on-disk shape of
+    the file an older CEA left behind, not something `write_lock` can still produce.
+    """
+    from cea.inputlocator import InputLocator
+
+    locator = InputLocator(str(tmp_path))
+    (tmp_path / "inputs").mkdir()
+    with open(locator.get_archetype_lock_file(), "w", encoding="utf-8") as handle:
+        json.dump({"locked": False, "mapped_at": "2026-01-01T00:00:00+00:00"}, handle)
+
+    assert read_lock(locator).mapped_use_types is None
     assert is_drifted(locator) is True
+
+
+# ------------------------------------------------------------------ computed-tab baseline (unit)
+
+
+def test_read_computed_values_matches_the_csv_on_disk(locator):
+    """The baseline captured for the two computed tabs is the raw column values, not a digest
+    of them -- so the frontend can compare it directly with a plain value-equality check
+    instead of reimplementing this module's hashing/normalisation."""
+    values = _read_computed_values(locator)
+
+    comfort_on_disk = pd.read_csv(locator.get_building_comfort()).set_index("name")
+    building = comfort_on_disk.index[0]
+    for column in archetype_lock.computed_tab_columns()["indoor-comfort"]:
+        assert values[building]["indoor-comfort"][column] == pytest.approx(
+            comfort_on_disk.loc[building, column])
+
+
+def test_read_computed_values_only_carries_the_tabs_own_columns(locator):
+    """A stray column (`name`, `REFERENCE`, or another tab's field) must not leak into the
+    baseline -- only the tab's own fixed column list, so an unrelated schema addition elsewhere
+    cannot flip the comparison."""
+    values = _read_computed_values(locator)
+    building = next(iter(values))
+    assert set(values[building]["indoor-comfort"]) == set(
+        archetype_lock.computed_tab_columns()["indoor-comfort"])
+
+
+def test_read_computed_values_normalises_missing_to_none(tmp_path):
+    """A `NaN` cell (pandas' spelling for missing) must come back JSON-safe (`None`), not a
+    float `json.dump` cannot serialise -- a fresh scenario copy, not the shared module-scoped
+    fixture, since this leaves a blanked cell on disk."""
+    import math
+    import shutil
+
+    from cea.inputlocator import InputLocator, ReferenceCaseOpenLocator
+
+    source = ReferenceCaseOpenLocator()
+    scenario_copy = tmp_path / "scenario"
+    shutil.copytree(source.scenario, scenario_copy)
+    isolated = InputLocator(str(scenario_copy))
+
+    path = isolated.get_building_comfort()
+    table = pd.read_csv(path)
+    table.loc[0, "Ve_lsp"] = math.nan
+    table.to_csv(path, index=False)
+
+    values = _read_computed_values(isolated)
+    building = table.loc[0, "name"]
+    assert values[building]["indoor-comfort"]["Ve_lsp"] is None
+
+
+def test_the_two_computed_tabs_do_not_share_a_column_list():
+    assert set(archetype_lock.computed_tab_columns()["indoor-comfort"]).isdisjoint(
+        archetype_lock.computed_tab_columns()["internal-loads"])
 
 
 # --------------------------------------------------------------------------- archetype key
@@ -226,9 +299,27 @@ def test_the_save_response_returns_the_remapped_tables(locator):
 
 
 def test_a_locked_save_leaves_the_scenario_undrifted(locator):
-    """Staying locked is what matters -- drift is never checked against file contents."""
+    """Staying locked short-circuits `is_drifted` before any comparison runs."""
     write_lock(locator, locked=True)
     save(locator, zone_overrides={"B1000": {"const_type": "STANDARD2"}})
+    assert is_drifted(locator) is False
+
+
+def test_a_locked_save_rebaselines_the_whole_district_not_just_the_remapped_building(locator):
+    """A save re-maps only the buildings whose key moved, but `write_lock` re-reads `zone.shp`
+    and both derived tables in full -- the baseline must cover every building, not just the one
+    that changed, or the very next unlock would read every untouched building as drifted."""
+    write_lock(locator, locked=True)
+    result = save(locator, zone_overrides={"B1000": {"use_type1": "MULTI_RES"}})
+    assert result["remapped_buildings"] == ["B1000"], "a partial remap is the case under test"
+
+    previous = read_lock(locator)
+    assert set(previous.mapped_use_types) >= {"B1000", "B1010"}, (
+        "the baseline must name buildings this save never touched too")
+
+    write_lock(locator, locked=False, mapped_at=previous.mapped_at,
+               mapped_use_types=previous.mapped_use_types,
+               mapped_computed_values=previous.mapped_computed_values)
     assert is_drifted(locator) is False
 
 
@@ -290,25 +381,80 @@ def set_locked(locator, locked):
         return asyncio.run(set_archetype_lock(locator.scenario, ArchetypeLockForm(locked=locked)))
 
 
-def test_unlocking_immediately_reads_as_drifted(locator):
-    """Unlocking itself is the drift signal -- no hand-edit needed, no file read either.
+def toggle_zone_use_type1(locator, building):
+    """Flip `use_type1` straight in `zone.shp`, the way an external tool (QGIS, a script) would.
 
-    There is no folder hash to wait on any more: the moment CEA can no longer vouch for the
-    derived tables (locked -> unlocked), the UI is expected to say so, before a single byte on
-    disk changes. Verifying content first would mean hashing every derived table (and every
-    building's schedule file) on every check -- see `docs/developer/archetype-lock-drift-review.md`.
+    Deliberately not through `save_all_inputs`: the coarse fallback exists to catch exactly
+    this -- a key moved by something other than the dashboard -- so the test has to move it the
+    same way, not through the very save path this feature does not need to be told about.
+
+    Toggles between two known-valid use types rather than setting a fixed target: `locator` is
+    a module-scoped fixture other tests in this file also save `use_type1` edits against, so a
+    hardcoded target could coincide with whatever an earlier test already left on disk and
+    silently turn this into a no-op.
+    """
+    zone = gpd.read_file(locator.get_zone_geometry())
+    current = zone.loc[zone["name"] == building, "use_type1"].iloc[0]
+    new_value = "MULTI_RES" if current != "MULTI_RES" else "OFFICE"
+    zone.loc[zone["name"] == building, "use_type1"] = new_value
+    zone.to_file(locator.get_zone_geometry())
+    return new_value
+
+
+def test_unlocking_a_freshly_mapped_scenario_is_not_drifted(locator):
+    """Unlocking is a change of ownership, not evidence of a change of content.
+
+    The `use_type` keys the derived tables were mapped from are still the keys on disk, so the
+    coarse fallback -- comparing exactly those -- still says they match. It just no longer
+    promises to keep matching from here.
     """
     set_locked(locator, True)
     assert lock_state(locator) == (True, False)
+    before = archetype_lock.read_lock(locator)
 
     set_locked(locator, False)
-    assert lock_state(locator) == (False, True), "unlocking a mapped scenario reads as drifted right away"
 
-    assert archetype_lock.read_lock(locator).mapped_at is not None, "the last mapping time is preserved"
+    assert lock_state(locator) == (False, False)
+    after = archetype_lock.read_lock(locator)
+    assert after.mapped_at == before.mapped_at, "unlocking has not mapped anything"
+    assert after.mapped_use_types == before.mapped_use_types, "and must not move the baseline"
+    assert after.mapped_computed_values == before.mapped_computed_values
+
+
+def test_an_external_key_edit_while_unlocked_reads_as_drifted(locator):
+    """The scenario this coarse fallback exists for: a `use_type` moved by something other than
+    the dashboard, while unlocked, so no auto-remap ever saw it."""
+    set_locked(locator, True)
+    set_locked(locator, False)
+    assert lock_state(locator) == (False, False)
+
+    toggle_zone_use_type1(locator, "B1000")
+    assert lock_state(locator) == (False, True)
 
 
 def test_relocking_remaps_and_clears_the_drift(locator):
-    """Re-locking is the point of no return: it regenerates the derived tables."""
+    """Re-locking is the point of no return: it regenerates the derived tables and re-baselines
+    against whatever `zone.shp` says right now."""
+    set_locked(locator, True)
+    set_locked(locator, False)
+
+    toggle_zone_use_type1(locator, "B1000")
+    assert lock_state(locator) == (False, True)
+
+    result = set_locked(locator, True)
+
+    assert result["remapped"] is True
+    assert lock_state(locator) == (True, False)
+
+    set_locked(locator, False)
+    assert lock_state(locator) == (False, False), "re-locking re-baselined against the new key"
+
+
+def test_relocking_overwrites_a_hand_edited_derived_table(locator):
+    """Re-locking is destructive to the derived tables regardless of whether the coarse
+    server-side fallback happened to notice anything -- `envelope.csv` is a lookup tab, which
+    this fallback never checks (that verification lives client-side against the live database),
+    so this deliberately does not assert drift mid-test, only that locking always regenerates."""
     set_locked(locator, True)
     set_locked(locator, False)
 
@@ -316,25 +462,28 @@ def test_relocking_remaps_and_clears_the_drift(locator):
     edited = pd.read_csv(path)
     edited.loc[0, "Hs"] = 0.11
     edited.to_csv(path, index=False)
-    assert lock_state(locator) == (False, True)
 
     result = set_locked(locator, True)
 
     assert result["remapped"] is True
     assert result["building_count"] == len(pd.read_csv(path))
     assert pd.read_csv(path).loc[0, "Hs"] != 0.11, "the hand-edit is replaced by the archetype value"
-    assert lock_state(locator) == (True, False)
 
 
 def test_unlocking_never_touches_the_files(locator):
     """Only re-locking is destructive. Unlocking is a statement of ownership."""
     set_locked(locator, True)
     before = pd.read_csv(locator.get_building_architecture())
+    before_state = archetype_lock.read_lock(locator)
 
     result = set_locked(locator, False)
 
     assert result["remapped"] is False
     pd.testing.assert_frame_equal(pd.read_csv(locator.get_building_architecture()), before)
+    after_state = archetype_lock.read_lock(locator)
+    assert (after_state.mapped_at, after_state.mapped_use_types, after_state.mapped_computed_values) == (
+        before_state.mapped_at, before_state.mapped_use_types, before_state.mapped_computed_values), (
+        "unlocking flips one flag and records nothing new")
 
 
 # --------------------------------------------------------------------------- added buildings
@@ -400,6 +549,13 @@ def test_adding_a_building_while_locked_gives_it_derived_rows(locator):
     assert "B_NEW" in result["remapped_buildings"], "a new building must trigger the mapper"
     envelope_after = set(pd.read_csv(locator.get_building_architecture())["name"])
     assert "B_NEW" in envelope_after, "the new building must get derived rows"
+
+    previous = read_lock(locator)
+    assert "B_NEW" in previous.mapped_use_types, "the remap that added it must also baseline it"
+    write_lock(locator, locked=False, mapped_at=previous.mapped_at,
+               mapped_use_types=previous.mapped_use_types,
+               mapped_computed_values=previous.mapped_computed_values)
+    assert is_drifted(locator) is False
 
 
 def test_zone_stays_editable_while_locked(locator):
@@ -549,7 +705,7 @@ def test_a_database_remap_advances_the_lock_and_stays_undrifted(locator):
     import time
 
     write_lock(locator, locked=True)
-    mapped_at_before = read_lock(locator).mapped_at
+    before = read_lock(locator)
     time.sleep(1.1)  # `mapped_at`'s resolution is whole seconds (see `write_lock`)
 
     def bump_hs(payload):
@@ -564,8 +720,10 @@ def test_a_database_remap_advances_the_lock_and_stays_undrifted(locator):
 
     state = read_lock(locator)
     assert state.locked is True
-    assert state.mapped_at != mapped_at_before
+    assert state.mapped_at != before.mapped_at
     assert is_drifted(locator) is False
+    assert state.mapped_computed_values == before.mapped_computed_values, (
+        "a const_type-only database edit does not touch a single use_type-derived row")
 
 
 def test_deleting_a_referenced_const_type_reports_a_remap_error_without_failing_the_save(locator):

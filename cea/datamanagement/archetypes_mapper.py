@@ -26,6 +26,36 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
+# The columns `indoor_comfort_mapper`/`internal_loads_mapper` write, excluding `name`. Module
+# constants (not inline literals in those functions) so `archetype_lock.py` can hash exactly the
+# columns the mapper produces, without a second, hand-maintained copy that could drift from it.
+INDOOR_COMFORT_FIELDS = (
+    'Tcs_set_C',
+    'Ths_set_C',
+    'Tcs_setb_C',
+    'Ths_setb_C',
+    'Ve_lsp',
+    'RH_min_pc',
+    'RH_max_pc',
+)
+
+INTERNAL_LOADS_FIELDS = (
+    'Occ_m2p',
+    'Qs_Wp',
+    'X_ghp',
+    'Ea_Wm2',
+    'El_Wm2',
+    'Ed_Wm2',
+    'Ev_kWveh',
+    'Qcre_Wm2',
+    'Vww_ldp',
+    'Vw_ldp',
+    'Qhpro_Wm2',
+    'Qcpro_Wm2',
+    'Epro_Wm2',
+)
+
+
 def archetypes_mapper(locator: cea.inputlocator.InputLocator,
                       update_architecture_dbf: bool,
                       update_air_conditioning_systems_dbf: bool,
@@ -161,14 +191,7 @@ def indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typol
     # define comfort
     prop_comfort_df = building_typology_df.merge(comfort_DB, left_on='use_type1', right_on='use_type')
     # write to shapefile
-    fields = ['name',
-              'Tcs_set_C',
-              'Ths_set_C',
-              'Tcs_setb_C',
-              'Ths_setb_C',
-              'Ve_lsp',
-              'RH_min_pc',
-              'RH_max_pc']
+    fields = ['name', *INDOOR_COMFORT_FIELDS]
     prop_comfort_df_merged = calculate_average_multiuse(fields,
                                                         prop_comfort_df,
                                                         occupant_densities,
@@ -182,20 +205,7 @@ def internal_loads_mapper(list_uses, locator, occupant_densities, building_typol
     # define comfort
     prop_internal_df = building_typology_df.merge(internal_DB, left_on='use_type1', right_on='use_type')
     # write to shapefile
-    fields = ['name',
-              'Occ_m2p',
-              'Qs_Wp',
-              'X_ghp',
-              'Ea_Wm2',
-              'El_Wm2',
-              'Ed_Wm2',
-              'Ev_kWveh',
-              'Qcre_Wm2',
-              'Vww_ldp',
-              'Vw_ldp',
-              'Qhpro_Wm2',
-              'Qcpro_Wm2',
-              'Epro_Wm2']
+    fields = ['name', *INTERNAL_LOADS_FIELDS]
     prop_internal_df_merged = calculate_average_multiuse(fields,
                                                          prop_internal_df,
                                                          occupant_densities,

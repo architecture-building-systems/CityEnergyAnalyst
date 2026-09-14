@@ -204,17 +204,27 @@ def remap_and_relock(locator: cea.inputlocator.InputLocator, buildings: list[str
 
 @router.get('/archetype-lock')
 async def get_archetype_lock(scenario: CEAScenario):
-    """The lock state, plus whether the derived tables have drifted from the last mapping."""
+    """The lock state, plus the baselines the input editor needs to determine per-building,
+    per-tab drift itself (see `archetype_lock`'s module docstring for why that check lives
+    client-side rather than here). `drifted` is a cheap, coarse fallback only -- it does not
+    reflect a `const_type`-only change or a hand-edited derived table.
+    """
     locator = cea.inputlocator.InputLocator(scenario)
 
     def fn():
         state = archetype_lock.read_lock(locator)
         return {
             'locked': state.locked,
-            'drifted': archetype_lock.is_drifted(locator),
+            'drifted': archetype_lock.is_drifted(locator, state),
             'mapped_at': state.mapped_at,
             'derived_tabs': list(archetype_lock.ARCHETYPE_DERIVED_TABS),
             'archetype_key_columns': list(archetype_lock.ARCHETYPE_KEY_COLUMNS),
+            'mapped_use_types': state.mapped_use_types,
+            # Raw column values, not a digest of them -- the client diffs each column against
+            # this with a plain value-equality check (the same one it already uses for
+            # `mapped_use_types` and the lookup tabs), so it needs no column list of its own to
+            # know what to compare: the keys of each building's own baseline are enough.
+            'mapped_computed_values': state.mapped_computed_values,
         }
 
     return await run_in_threadpool(fn)
@@ -234,14 +244,16 @@ async def set_archetype_lock(scenario: CEAScenario, form: ArchetypeLockForm):
 
     def fn():
         if not form.locked:
-            # Keep the previous `mapped_at`: unlocking has not just mapped anything, so there
-            # is nothing new to stamp, and the timestamp of the last real mapping stays useful
-            # as long as it is not overwritten with "now".
+            # Keep the previous `mapped_at`/baselines: unlocking has not just mapped anything,
+            # so there is nothing new to stamp, and dropping them would fall back to the
+            # legacy "no baseline" case and read as drifted regardless of actual content.
             previous = archetype_lock.read_lock(locator)
-            archetype_lock.write_lock(
-                locator, locked=False, mapped_at=previous.mapped_at)
+            state = archetype_lock.write_lock(
+                locator, locked=False, mapped_at=previous.mapped_at,
+                mapped_use_types=previous.mapped_use_types,
+                mapped_computed_values=previous.mapped_computed_values)
             return {'locked': False,
-                    'drifted': archetype_lock.is_drifted(locator),
+                    'drifted': archetype_lock.is_drifted(locator, state),
                     'remapped': False}
 
         buildings = list(locator.get_zone_building_names())
