@@ -29,6 +29,7 @@ from cea.datamanagement.utils import VOID_FLOORS_COLUMN
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 import cea.schemas
 from cea.databases import CEADatabase, CEADatabaseException, databases_folder_path
+from cea.datamanagement.database.archetypes import Archetypes
 from cea.datamanagement.database.assemblies import CROSS_CHECK_REL_TOLERANCE
 from cea.utilities import validate_path_within_root
 from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
@@ -179,6 +180,28 @@ class ArchetypeLockForm(BaseModel):
     locked: bool
 
 
+def remap_and_relock(locator: cea.inputlocator.InputLocator, buildings: list[str]) -> archetype_lock.LockState:
+    """Re-derive the archetype-owned tables for `buildings` and advance the lock timestamp.
+
+    Shared by every path that upholds Archetype Lock's guarantee: (re-)locking the whole
+    district, an auto-remap after `zone.shp` moved a building's archetype key, and an
+    auto-remap after the archetype database itself changed. All three run the same six-flag
+    mapper call and then stamp `mapped_at` to now -- the mapper just ran, so the lock file's
+    record of "last mapped" needs to say so.
+    """
+    archetypes_mapper(
+        locator=locator,
+        update_architecture_dbf=True,
+        update_air_conditioning_systems_dbf=True,
+        update_indoor_comfort_dbf=True,
+        update_internal_loads_dbf=True,
+        update_supply_systems_dbf=True,
+        update_schedule_operation_cea=True,
+        list_buildings=buildings,
+    )
+    return archetype_lock.write_lock(locator, locked=True)
+
+
 @router.get('/archetype-lock')
 async def get_archetype_lock(scenario: CEAScenario):
     """The lock state, plus whether the derived tables have drifted from the last mapping."""
@@ -222,17 +245,7 @@ async def set_archetype_lock(scenario: CEAScenario, form: ArchetypeLockForm):
                     'remapped': False}
 
         buildings = list(locator.get_zone_building_names())
-        archetypes_mapper(
-            locator=locator,
-            update_architecture_dbf=True,
-            update_air_conditioning_systems_dbf=True,
-            update_indoor_comfort_dbf=True,
-            update_internal_loads_dbf=True,
-            update_supply_systems_dbf=True,
-            update_schedule_operation_cea=True,
-            list_buildings=buildings,
-        )
-        state = archetype_lock.write_lock(locator, locked=True)
+        state = remap_and_relock(locator, buildings)
         return {'locked': True, 'drifted': False, 'remapped': True,
                 'building_count': len(buildings), 'mapped_at': state.mapped_at}
 
@@ -491,17 +504,9 @@ async def save_all_inputs(scenario: CEAScenario, form: InputForm):
                 # Only the buildings whose archetype moved, or that are new. `archetypes_mapper`
                 # merges a subset into the existing tables rather than replacing them, so the
                 # rest of the district is left alone -- and a district-wide re-derive on every
-                # `const_type` edit would be needlessly slow for a large scenario.
-                archetypes_mapper(
-                    locator=locator,
-                    update_architecture_dbf=True,
-                    update_air_conditioning_systems_dbf=True,
-                    update_indoor_comfort_dbf=True,
-                    update_internal_loads_dbf=True,
-                    update_supply_systems_dbf=True,
-                    update_schedule_operation_cea=True,
-                    list_buildings=remap_buildings,
-                )
+                # `const_type` edit would be needlessly slow for a large scenario. A save with
+                # no archetype changes never reaches this branch, so the lock file is untouched.
+                remap_and_relock(locator, remap_buildings)
                 out['remapped_buildings'] = remap_buildings
 
                 # Hand back what the mapper wrote. Without this the client keeps the values it
@@ -512,10 +517,6 @@ async def save_all_inputs(scenario: CEAScenario, form: InputForm):
                         remapped = pd.read_csv(tab_location)
                         out['tables'][tab] = json.loads(
                             remapped.set_index('name').to_json(orient='index'))
-
-                # Advance `mapped_at`: the mapper just ran. A save with no archetype changes
-                # has nothing new to record, so it does not touch the lock file at all.
-                archetype_lock.write_lock(locator, locked=True)
 
         return out
 
@@ -789,19 +790,55 @@ async def put_input_database_data(
     save is refused (409) unless `overwrite_derived` is set. Refusing everything rather than
     the offending rows keeps the file consistent with what the user last saw: a partial save
     would leave the editor showing values that were not written.
+
+    While Archetype Lock is on, this also re-runs `archetypes_mapper` for the buildings whose
+    `const_type` or `use_type` archetype just changed -- the mapper reads this database, so
+    without this a locked scenario would silently keep every building mapped against the old
+    values (see `docs/developer/archetype-lock-drift-review.md`). Unlocked, nothing here
+    changes: the user owns the derived tables and the mapper is not run.
     """
     locator = cea.inputlocator.InputLocator(scenario)
     try:
         def fn():
+            lock = archetype_lock.read_lock(locator)
+            # Snapshot before the write -- once `db.save` runs, the old values are gone and
+            # there is nothing left to diff against.
+            existing_archetypes = Archetypes.from_locator(locator) if lock.locked else None
+
             db = CEADatabase.from_dict(payload)
             materials = getattr(db.components.materials, 'materials', None)
             conflicts = db.assemblies.envelope.apply_material_derivation(materials)
             if conflicts and not overwrite_derived:
-                return conflicts
+                return {'conflicts': conflicts}
             db.save(locator)
-            return None
 
-        conflicts = await run_in_threadpool(fn)
+            result = {}
+            if lock.locked:
+                const_types, use_types = archetype_lock.changed_archetype_codes(
+                    db.archetypes, existing_archetypes)
+                buildings = []
+                if const_types or use_types:
+                    try:
+                        zone_df = geopandas.read_file(locator.get_zone_geometry())
+                        buildings = archetype_lock.buildings_using_archetypes(
+                            zone_df, const_types=const_types, use_types=use_types)
+                    except (IOError, DriverError, ValueError, KeyError, FileNotFoundError) as e:
+                        logger.warning(f"Could not compare archetype codes, skipping the re-map: {e}")
+                if buildings:
+                    try:
+                        remap_and_relock(locator, buildings)
+                        result['remapped_buildings'] = buildings
+                    except Exception as e:
+                        # The database is already saved and `CEADatabase.save` has no
+                        # rollback, so a mapper failure here (e.g. a building still
+                        # references a `const_type` that was just deleted) must not report
+                        # a successful write as a failure.
+                        logger.warning(f"Archetype re-map after database save failed: {e}")
+                        result['remap_error'] = str(e)
+            return result
+
+        result = await run_in_threadpool(fn)
+        conflicts = result.get('conflicts')
         if conflicts:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
@@ -815,7 +852,12 @@ async def put_input_database_data(
                     'conflicts': conflicts,
                 },
             )
-        return {'message': 'Database updated'}
+        response = {'message': 'Database updated'}
+        if result.get('remapped_buildings'):
+            response['remapped_buildings'] = result['remapped_buildings']
+        if result.get('remap_error'):
+            response['remap_error'] = result['remap_error']
+        return response
     except CEADatabaseException as e:
         print(e)
         raise HTTPException(

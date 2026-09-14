@@ -141,6 +141,12 @@ it costs at scale, not just correctness:
 - **Any per-request cost that scales with scenario size** (building count, schedule count, file
   size) should be flagged explicitly when proposed — say so in the response, don't let it pass
   silently as "this works" from a one-building local test.
+- **Prefer a diff over a district-wide recompute when a write only ever touches a bounded
+  subset.** `PUT /inputs/databases` re-runs `archetypes_mapper` after a locked-scenario save, but
+  only for the buildings whose archetype code actually changed (`archetype_lock.
+  changed_archetype_codes` / `buildings_using_archetypes`) — the decision cost is O(archetype
+  rows), not O(buildings); only the mapper run itself, when triggered, is O(affected buildings).
+  See `docs/developer/archetype-lock-drift-review.md`'s "Database-save trigger" section.
 
 When a fix trades cheap-but-imprecise for expensive-but-exact (e.g. "assume changed" instead of
 "prove changed"), that tradeoff is usually correct here: CEA is a file-based tool a user can

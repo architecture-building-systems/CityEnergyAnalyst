@@ -12,6 +12,7 @@ never meant to touch.
 """
 
 import json
+import os
 import warnings
 
 import geopandas as gpd
@@ -432,3 +433,209 @@ def test_zone_stays_editable_while_locked(locator):
     assert after == pytest.approx(before + 6.0), "a zone edit lands while locked"
     # Geometry is not an archetype key, so nothing needed re-deriving.
     assert result.get("remapped_buildings", []) == []
+
+
+# --------------------------------------------------------------------------- database-save trigger
+#
+# `zone.shp`-side drift (a building's archetype key moving) is covered above via `save()` /
+# `save_all_inputs`. This covers the other side: editing the archetype *database* itself, which
+# `archetypes_mapper` reads from but `save_all_inputs` never touches.
+
+
+def save_database(locator, mutate):
+    """Drive `PUT /inputs/databases` the way the database editor does.
+
+    :param mutate: called with the dict `GET /inputs/databases` returned; edits it in place.
+    """
+    import asyncio
+
+    from cea.interfaces.dashboard.api.inputs import (
+        get_input_database_data,
+        put_input_database_data,
+    )
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        payload = asyncio.run(get_input_database_data(locator.scenario))
+        mutate(payload)
+        return asyncio.run(put_input_database_data(locator.scenario, payload))
+
+
+def test_editing_a_const_type_remaps_only_buildings_using_it(locator):
+    """`const_type` drives envelope/hvac/supply. STANDARD4 belongs to B1010 alone."""
+    write_lock(locator, locked=True)
+    before = envelope_value(locator, building="B1010", column="Hs")
+
+    result = save_database(
+        locator,
+        lambda payload: payload["archetypes"]["construction"]["construction_types"]
+        ["STANDARD4"].__setitem__("Hs", before + 0.05),
+    )
+
+    assert result["remapped_buildings"] == ["B1010"]
+    assert envelope_value(locator, building="B1010", column="Hs") == pytest.approx(before + 0.05)
+    # A building with a different const_type must be untouched.
+    assert envelope_value(locator, building="B1000") != pytest.approx(before + 0.05)
+
+
+def test_editing_a_use_type_remaps_buildings_referencing_it_in_any_slot(locator):
+    """`use_type1/2/3` all drive indoor comfort and internal loads.
+
+    SERVERROOM appears only as B1011's `use_type2` -- not its primary use -- so this also
+    checks the second/third slots are read, not only `use_type1`.
+    """
+    write_lock(locator, locked=True)
+
+    result = save_database(
+        locator,
+        lambda payload: payload["archetypes"]["use"]["use_types"]["SERVERROOM"]
+        .__setitem__("El_Wm2", 999.0),
+    )
+
+    assert result["remapped_buildings"] == ["B1011"]
+
+
+def test_editing_a_schedule_library_file_remaps_its_use_type(locator):
+    """The per-use schedule CSVs are a source the mapper reads, same as the two archetype
+    tables -- an edit there must trigger the same targeted re-map and rewrite the affected
+    buildings' schedule files."""
+    write_lock(locator, locked=True)
+    schedule_path = locator.get_building_weekly_schedules("B1011")
+    before_mtime = os.path.getmtime(schedule_path)
+
+    def edit_servreroom_library(payload):
+        rows = payload["archetypes"]["use"]["schedules"]["_library"]["SERVERROOM"]
+        for row in rows:
+            row["appliances"] = (row["appliances"] or 0) + 1
+
+    result = save_database(locator, edit_servreroom_library)
+
+    assert "B1011" in result["remapped_buildings"]
+    assert os.path.getmtime(schedule_path) != before_mtime, "the schedule file must be rewritten"
+
+
+def test_a_components_only_edit_does_not_remap_anything(locator):
+    """The mapper never reads COMPONENTS or ASSEMBLIES -- nothing there can invalidate a
+    derived table, so a save touching only those must not run the mapper at all."""
+    write_lock(locator, locked=True)
+    before = envelope_value(locator, building="B1010")
+
+    result = save_database(locator, lambda payload: None)
+
+    assert result.get("remapped_buildings", []) == []
+    assert envelope_value(locator, building="B1010") == before
+
+
+def test_a_byte_identical_resave_does_not_remap_anything(locator):
+    """A JSON round trip must not look like a change -- `2000` vs `"2000"`, `NaN` vs `None`.
+
+    Mirrors `test_a_json_round_trip_does_not_look_like_a_change` for the zone-key side.
+    """
+    write_lock(locator, locked=True)
+
+    result = save_database(locator, lambda payload: None)
+
+    assert result.get("remapped_buildings", []) == []
+
+
+def test_an_unlocked_database_save_does_not_remap_anything(locator):
+    """Unlocked means the user owns the derived tables -- CEA must not touch them here either,
+    for the same reason `save_all_inputs` skips its own auto-remap while unlocked."""
+    write_lock(locator, locked=False)
+    before = envelope_value(locator, building="B1010")
+
+    result = save_database(
+        locator,
+        lambda payload: payload["archetypes"]["construction"]["construction_types"]
+        ["STANDARD4"].__setitem__("Hs", before + 0.05),
+    )
+
+    assert "remapped_buildings" not in result
+    assert envelope_value(locator, building="B1010") == before
+
+
+def test_a_database_remap_advances_the_lock_and_stays_undrifted(locator):
+    """The scenario must still read as locked and not drifted, with `mapped_at` advanced."""
+    import time
+
+    write_lock(locator, locked=True)
+    mapped_at_before = read_lock(locator).mapped_at
+    time.sleep(1.1)  # `mapped_at`'s resolution is whole seconds (see `write_lock`)
+
+    def bump_hs(payload):
+        # Bump relative to the database's own current value, not the envelope's -- an earlier
+        # test in this module may have left the two diverged (that is the unlocked case's
+        # whole point), and comparing against the wrong side could coincidentally match what
+        # is already on disk and silently skip the re-map this test means to trigger.
+        row = payload["archetypes"]["construction"]["construction_types"]["STANDARD4"]
+        row["Hs"] = row["Hs"] + 0.05
+
+    save_database(locator, bump_hs)
+
+    state = read_lock(locator)
+    assert state.locked is True
+    assert state.mapped_at != mapped_at_before
+    assert is_drifted(locator) is False
+
+
+def test_deleting_a_referenced_const_type_reports_a_remap_error_without_failing_the_save(locator):
+    """The database write already succeeded and cannot be rolled back (`CEADatabase.save`'s
+    own FIXME), so a mapper failure afterwards -- here, deleting a `const_type` a building
+    (B1010) still references -- must surface as `remap_error` in a 200, not turn an already-
+    successful save into a 500."""
+    import asyncio
+
+    from cea.interfaces.dashboard.api.inputs import get_input_database_data
+
+    write_lock(locator, locked=True)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        original_row = asyncio.run(get_input_database_data(locator.scenario))[
+            "archetypes"]["construction"]["construction_types"]["STANDARD4"]
+
+    try:
+        result = save_database(
+            locator,
+            lambda payload: payload["archetypes"]["construction"]["construction_types"]
+            .pop("STANDARD4"),
+        )
+
+        assert "remap_error" in result
+        assert "remapped_buildings" not in result
+        assert "STANDARD4" in result["remap_error"]
+    finally:
+        # Restore it -- this module-scoped fixture is shared with every test after this one.
+        save_database(
+            locator,
+            lambda payload: payload["archetypes"]["construction"]["construction_types"]
+            .__setitem__("STANDARD4", original_row),
+        )
+
+
+def test_create_new_scenario_locks_right_after_it_maps(tmp_path):
+    """A freshly mapped scenario has nothing to distrust yet, so it should start locked rather
+    than requiring the user to toggle Archetype Lock on by hand -- matching this module's own
+    docstring claim ("Scenarios CEA creates are written locked, because they have just been
+    mapped"), which nothing enforced before this change.
+
+    `create_new_scenario` (`cea/interfaces/dashboard/api/project.py`) is a large, multi-step
+    FastAPI route with no existing test scaffold -- zone/surroundings/weather/terrain/street
+    generation are internal closures, not patchable module attributes -- so a full end-to-end
+    drive of the route is disproportionate here (it is covered manually instead, see the
+    plan's verification section: "Create a new scenario and confirm Archetype Lock reads as
+    on"). This instead guards the specific ordering by inspecting the source: `write_lock`
+    must be called, and it must come after `archetypes_mapper` and before the temp scenario is
+    moved to its final path -- moved too early and `write_lock` would write the lock file into
+    a directory `shutil.move` is about to relocate out from under it.
+    """
+    import inspect
+
+    import cea.interfaces.dashboard.api.project as project_api
+
+    source = inspect.getsource(project_api.create_new_scenario)
+    mapper_pos = source.index("archetypes_mapper(config)")
+    lock_pos = source.index("archetype_lock.write_lock(locator, locked=True)")
+    move_pos = source.index("shutil.move(")
+
+    assert mapper_pos < lock_pos < move_pos, (
+        "the new scenario must be mapped, then locked, before it is moved to its final path")

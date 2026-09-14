@@ -591,6 +591,11 @@ async def create_new_scenario(cea_project: CEAProject, scenario_form: Annotated[
             from cea.datamanagement.archetypes_mapper import main as archetypes_mapper
             archetypes_mapper(config)
 
+            # The scenario has just been mapped, so it starts locked: CEA owns the
+            # archetype-derived tables until the user chooses to take them over.
+            from cea.datamanagement import archetype_lock
+            archetype_lock.write_lock(locator, locked=True)
+
             # Move temp scenario to correct path
             print(f"Moving from {config.scenario} to {new_scenario_path}")
             shutil.move(config.scenario, new_scenario_path)
