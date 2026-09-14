@@ -45,13 +45,13 @@ ARCHETYPE_DERIVED_TABS = ("envelope", "hvac", "indoor-comfort", "internal-loads"
 
 # The `zone.shp` columns that select a building's archetype. Editing any of them invalidates
 # the derived tables. Not `const_type` alone: `use_type1` and its ratios drive indoor comfort
-# and internal loads, and `year` selects the archetype vintage.
+# and internal loads.
+
 ARCHETYPE_KEY_COLUMNS = (
     "const_type",
     "use_type1", "use_type1r",
     "use_type2", "use_type2r",
     "use_type3", "use_type3r",
-    "year",
 )
 
 

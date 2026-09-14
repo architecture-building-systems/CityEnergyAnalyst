@@ -22,7 +22,6 @@ import pytest
 from cea.datamanagement import archetype_lock
 from cea.datamanagement.archetype_lock import (
     ARCHETYPE_DERIVED_TABS,
-    ARCHETYPE_KEY_COLUMNS,
     archetype_key_changed,
     is_drifted,
     read_lock,
@@ -98,21 +97,12 @@ def test_a_previously_mapped_scenario_reads_as_drifted_once_unlocked(locator):
 # --------------------------------------------------------------------------- archetype key
 
 
-def test_the_archetype_key_is_more_than_const_type():
-    """`use_type1` drives indoor comfort and internal loads, `year` selects the vintage.
-
-    Re-mapping only on `const_type` would leave a building switched from OFFICE to MULTI_RES
-    with stale comfort and loads, and nothing saying so.
-    """
-    for column in ("const_type", "use_type1", "use_type1r", "year"):
-        assert column in ARCHETYPE_KEY_COLUMNS
-
-
 def zone_on_disk():
     return pd.DataFrame({
         "name": ["B1", "B2"],
         "const_type": ["STANDARD1", "STANDARD2"],
         "use_type1": ["OFFICE", "MULTI_RES"],
+        "use_type1r": [1.0, 1.0],
         "year": [2000, 1990],
         "height_ag": [9.0, 12.0],
     }).set_index("name")
@@ -122,9 +112,9 @@ def zone_on_disk():
     ({"B1": {"const_type": "STANDARD1", "use_type1": "OFFICE"}}, []),
     ({"B1": {"const_type": "STANDARD4"}}, ["B1"]),
     ({"B1": {"use_type1": "MULTI_RES"}}, ["B1"]),
-    ({"B1": {"year": 2001}}, ["B1"]),
+    ({"B1": {"year": 2001}}, []),                # year is not an archetype key -- see test_year_is_not_an_archetype_key
     ({"B1": {"height_ag": 99.0}}, []),          # geometry is not an archetype key
-    ({"B2": {"year": 1991}, "B1": {"const_type": "X"}}, ["B1", "B2"]),
+    ({"B2": {"year": 1991}, "B1": {"const_type": "X"}}, ["B1"]),
     ({"B9": {"const_type": "STANDARD1"}}, []),  # new building, no previous key
 ])
 def test_archetype_key_changes_are_detected_server_side(payload, expected):
@@ -133,12 +123,12 @@ def test_archetype_key_changes_are_detected_server_side(payload, expected):
 
 
 def test_a_json_round_trip_does_not_look_like_a_change():
-    """`year` arrives as 2000 or "2000" depending on the client.
+    """A ratio arrives as 0.5 or "0.5" depending on the client.
 
     Comparing them as strings would re-run the mapper on every save of every building.
     """
-    assert archetype_key_changed({"B1": {"year": "2000"}}, zone_on_disk()) == []
-    assert archetype_key_changed({"B1": {"year": 2000.0}}, zone_on_disk()) == []
+    assert archetype_key_changed({"B1": {"use_type1r": "1.0"}}, zone_on_disk()) == []
+    assert archetype_key_changed({"B1": {"use_type1r": 1.0}}, zone_on_disk()) == []
 
 
 # --------------------------------------------------------------------------- enforcement
