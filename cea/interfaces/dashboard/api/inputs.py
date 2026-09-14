@@ -446,13 +446,26 @@ async def save_all_inputs(scenario: CEAScenario, form: InputForm):
 
                     out['tables'][db] = []
 
-                elif os.path.isfile(location):
-                    if file_type == 'shp':
-                        import glob
-                        for filepath in glob.glob(os.path.join(locator.get_building_geometry_folder(), '%s.*' % db)):
-                            os.remove(filepath)
-                    elif file_type == 'dbf':
-                        os.remove(location)
+                else:
+                    if os.path.isfile(location):
+                        if file_type == 'shp':
+                            import glob
+                            for filepath in glob.glob(os.path.join(locator.get_building_geometry_folder(), '%s.*' % db)):
+                                os.remove(filepath)
+                        elif file_type in ('dbf', 'csv'):
+                            # `csv` was missing here: a cleared derived table (envelope,
+                            # internal-loads, indoor-comfort, hvac, supply) never actually lost
+                            # its file, so the stale rows survived on disk under a response that
+                            # (once reported at all) claimed the table was empty.
+                            os.remove(location)
+
+                    # Report the clearing, same as the `surroundings` branch above -- the
+                    # response is a complete echo of every table's new state, not just the
+                    # ones that ended up with rows. A key silently missing here would read as
+                    # "this save didn't touch it" and leave a stale, non-empty table sitting
+                    # in the client's cache (see `useSaveInputs.js`, which trusts this response
+                    # instead of refetching).
+                    out['tables'][db] = {}
 
                 if file_type == 'shp':
                     out['geojsons'][db] = {}
