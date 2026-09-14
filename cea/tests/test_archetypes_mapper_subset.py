@@ -9,6 +9,11 @@ Reachable from the CLI and the dashboard through `archetypes-mapper:buildings`, 
 Archetype Lock whenever a building's archetype changes.
 """
 
+import os
+import shutil
+import tempfile
+
+import geopandas as gpd
 import pandas as pd
 import pytest
 
@@ -20,6 +25,20 @@ def locator():
     from cea.inputlocator import ReferenceCaseOpenLocator
 
     return ReferenceCaseOpenLocator()
+
+
+def fresh_locator():
+    """An isolated copy of the reference case, for tests that must not affect the others.
+
+    The shared `locator` fixture is mutated in place across every test in this module in
+    sequence; a test that removes a building from the zone or corrupts a CSV's schema would
+    otherwise leak that damage into every test that runs after it.
+    """
+    from cea.inputlocator import InputLocator, ReferenceCaseOpenLocator
+
+    scenario = os.path.join(tempfile.mkdtemp(), "baseline")
+    shutil.copytree(ReferenceCaseOpenLocator().scenario, scenario)
+    return InputLocator(scenario)
 
 
 def map_buildings(locator, buildings):
@@ -109,3 +128,42 @@ def test_the_merge_matches_on_columns_regardless_of_their_order(locator):
     map_buildings(locator, ["B1000"])
 
     assert set(pd.read_csv(path)["name"]) == before, "column order must not defeat the merge"
+
+
+def test_a_full_run_drops_a_building_removed_from_the_zone():
+    """A full-district run is authoritative over the whole zone -- a building deleted from
+    `zone.shp` must not survive as an orphan row in the derived tables just because nothing
+    ever explicitly asked to remove it.
+    """
+    isolated = fresh_locator()
+    zone = gpd.read_file(isolated.get_zone_geometry())
+    assert "B1000" in set(zone["name"]), "fixture assumption: B1000 exists in the zone"
+
+    remaining = zone[zone["name"] != "B1000"]
+    remaining.to_file(isolated.get_zone_geometry())
+
+    map_buildings(isolated, list(remaining["name"]))
+
+    for path in derived_paths(isolated).values():
+        assert "B1000" not in set(pd.read_csv(path)["name"]), (
+            f"{path} kept a row for a building no longer in the zone")
+
+
+def test_a_subset_run_refuses_to_merge_into_a_differently_shaped_file():
+    """A subset run cannot safely blend into a file from an older/different CEA schema.
+
+    Overwriting silently would keep only the mapped subset and delete every other building's
+    row; the correct outcome is to stop before writing anything.
+    """
+    isolated = fresh_locator()
+    path = isolated.get_building_architecture()
+    before = pd.read_csv(path)
+    mismatched = before.drop(columns=[before.columns[-1]])
+    mismatched.to_csv(path, index=False)
+
+    with pytest.raises(ValueError):
+        map_buildings(isolated, ["B1000"])
+
+    # Nothing was written -- the file other buildings depend on is exactly as this test left it.
+    after = pd.read_csv(path)
+    pd.testing.assert_frame_equal(mismatched, after)

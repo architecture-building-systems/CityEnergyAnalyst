@@ -11,7 +11,7 @@ Thermal network modeling in CEA is split into two distinct phases. Understanding
 ### Phase 1: Network Layout Generation
 - **Script:** `Network Layout`
 - **Purpose:** Determines **which** buildings are connected and **where** the pipes (edges) and nodes are located.
-- **Inputs:** `zone.shp`, `street_network.shp`, `supply_systems.csv`, and `assemblies_supply_*.csv`.
+- **Inputs:** `zone.shp`, `street_network.shp`, `supply.csv`, and `assemblies_supply_*.csv`.
 - **Key Output:** A folder containing `nodes.shp`, `edges.shp`, and `building_services.json`.
 - **Constraint:** All building selection and service configuration decisions are finalized during this phase.
 
@@ -32,14 +32,14 @@ There are two ways to determine building connectivity during the **Layout Phase*
 
 #### Mode A: Supply.csv Mode (Default)
 Set `overwrite-supply-settings = False`.
-CEA reads `inputs/building-properties/supply_systems.csv`.
+CEA reads `inputs/building-properties/supply.csv`.
 1.  **Lookup Scale:** For each building, CEA looks up the `supply_type_hs` (heating), `supply_type_dhw` (hot water), and `supply_type_cs` (cooling) codes in the corresponding assemblies database (e.g., `databases/CH/systems/assemblies_supply_heating.csv`).
 2.  **Filter by Scale:** If the code's `scale` property in the database is `DISTRICT`, the building is assigned that service.
 3.  **Connection Rule:** A building is included in the network if **at least one** of its services is set to `DISTRICT`.
 
 #### Mode B: Manual/What-if Mode
 Set `overwrite-supply-settings = True`.
-CEA ignores `supply_systems.csv`.
+CEA ignores `supply.csv`.
 1.  **Connected Buildings:** Uses the `connected-buildings` parameter. If blank, **all** zone buildings are included.
 2.  **Global Services:** Every included building is assigned **all** services specified in the `itemised-dh-services` parameter.
 
@@ -73,8 +73,8 @@ The service configuration is encoded into the `Type` field of the Plant nodes:
 
 ## 4. File Formats Reference
 
-### Input: `supply_systems.csv`
-- **Location:** `inputs/building-properties/supply_systems.csv`
+### Input: `supply.csv`
+- **Location:** `inputs/building-properties/supply.csv`
 - **Key Columns:** `name`, `supply_type_hs`, `supply_type_dhw`, `supply_type_cs`.
 
 ### Output: `nodes.shp`
