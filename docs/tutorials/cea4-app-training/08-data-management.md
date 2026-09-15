@@ -42,6 +42,48 @@ Loads standard CEA databases into your current scenario. These databases contain
 - Storage systems (thermal, battery)
 - Cost and performance data
 
+**Materials** (`COMPONENTS/MATERIALS/MATERIALS.csv`):
+- One row per material — brick, insulation, glazing, plaster and so on
+- Density, thermal conductivity, and the embodied-carbon factors per kilogram
+- The layer library the envelope assemblies are built from
+
+### Materials: the layer library
+
+Materials sit one level below the envelope assemblies. A wall, roof or floor assembly does not
+carry a U-value and an emission factor of its own; it names up to three material layers and
+their thicknesses, and CEA derives both from them:
+
+```
+ENVELOPE_WALL row          MATERIALS rows
+  material_name_1  ───────►  brick        conductivity, density, GHG factors
+  thickness_1_m
+  material_name_2  ───────►  insulation
+  thickness_2_m
+  material_name_3  ───────►  plaster
+  thickness_3_m
+```
+
+From those layers CEA computes the assembly's U-value, and splits its embodied carbon into the
+phases the emissions timeline needs:
+
+| from the material | becomes |
+|---|---|
+| `thermal_conductivity`, `thickness` | the assembly's U-value |
+| `GHG_emission_production` | `GHG_production_*_kgCO2m2` — EN 15978 modules A1–A3 |
+| `GHG_emission_disposal` | `GHG_demolition_*_kgCO2m2` — modules C2–C4 |
+| `biogenic_carbon_in_product` | `GHG_biogenic_*_kgCO2m2`, carried as a negative number |
+
+That is why editing a material changes results across the whole scenario: every assembly built
+from it is re-derived.
+
+**Only the Swiss (CH) database ships a materials file.** It holds 122 materials with Swiss
+(KBOB) data. The DE and SG databases have none, so scenarios built from them have no materials
+library until you supply one — the Database Editor offers to import the Swiss set, with the
+caveat that the values are specific to Switzerland.
+
+Assemblies that carry direct U-value and emission numbers instead of layers keep working; the
+material route is an alternative, not a requirement.
+
 ### How to Use
 
 1. Navigate to **Data Management**
@@ -205,22 +247,60 @@ The archetype is more than `const_type`. These columns all select it:
 ```
 const_type
 use_type1, use_type1r, use_type2, use_type2r, use_type3, use_type3r
-year
 ```
 
 Changing `use_type1` matters as much as changing `const_type`: use type drives indoor comfort
 and internal loads, construction type drives envelope, HVAC and supply.
 
-Editing geometry — `height_ag`, `floors_ag`, the footprint — does **not** trigger a
-regeneration, because it does not change which archetype applies.
+`year` is **not** in that list. It labels the building's vintage but the Archetypes Mapper does
+not read it, so editing it changes nothing in the derived tables and does not trigger a
+regeneration.
+
+Editing geometry — `height_ag`, `floors_ag`, `height_vd`, the footprint — does **not** trigger a
+regeneration either, because it does not change which archetype applies.
+
+### Editing the database also regenerates
+
+The derived tables depend on two things: each building's archetype, and the archetype
+**databases** those archetypes point at. So while locked, saving a change in the Database
+Editor regenerates the derived tables too — for the buildings that reference the codes you
+changed, not the whole district.
+
+CEA works out which codes moved by comparing what you saved against what was on disk, across
+every source the Archetypes Mapper reads:
+
+| you changed | it re-derives |
+|---|---|
+| a `const_type` in `CONSTRUCTION_TYPE.csv` | envelope, HVAC, supply |
+| a `use_type` in `USE_TYPE.csv` | indoor comfort, internal loads, schedules |
+| a monthly multiplier or a schedule in the library | the same use-type set |
+
+**Deleting** a code counts as a change too — a building still pointing at one you removed
+cannot be quietly left alone.
+
+Without this, editing a construction type would leave every building using it with stale
+envelope, HVAC and supply values, and nothing would say so.
 
 ### Unlocked
 
 You own the derived tables and may edit them freely. Nothing on disk changes when you unlock.
 
-Once your edits mean the derived tables no longer match the archetypes, CEA marks the
-**archetype columns in the zone tab**, with a tooltip. The construction type shown there no
-longer describes the building, and the mark is there so a reader knows not to trust it.
+Once a value no longer matches what the archetype would produce, CEA marks it — per building
+and per tab, not as a blanket warning on the scenario. What gets marked depends on how the tab
+is derived:
+
+| tab | how it is checked | what you see |
+|---|---|---|
+| envelope, HVAC, supply | a direct lookup on `const_type`, compared live against the construction-type database | the **cell** is marked |
+| indoor comfort, internal loads | computed from the `use_type` mix, compared against the values recorded at the last lock | the **row** is marked |
+| zone | rolled up from the above | the archetype columns are marked |
+
+Envelope, HVAC and supply are a pure lookup, so CEA can point at the exact cell that disagrees.
+Indoor comfort and internal loads are weighted averages across the use-type mix, so a change
+cannot be pinned to one cell — the row is marked instead.
+
+Every mark carries a tooltip saying why, and a stripe as well as a tint, so the meaning does not
+depend on seeing colour.
 
 ### Re-locking
 
@@ -243,6 +323,41 @@ when you are ready for CEA to regenerate its derived tables.
 
 Read-only tabs are the visible half. CEA also refuses to write the derived tables while locked,
 whatever is sent to it — so a browser tab left open from before the lock cannot overwrite them.
+
+---
+
+## Duplicating a building
+
+Select a single building on the **zone** tab and press the duplicate icon in the table toolbar.
+A dialog proposes a name — the original's with an underscore, `B1000_` — which you can change
+before confirming. The copy appears in the table straight away; nothing is written until you
+save.
+
+**The button is only available while Archetype Lock is on.** A new building has no envelope,
+HVAC, comfort, loads or supply rows of its own: CEA generates them on save, from the copy's
+archetype, and that only happens while locked. Unlocked, you would be left with a building that
+every downstream script reads as missing data.
+
+### What is copied, and what is not
+
+| | |
+|---|---|
+| copied | the zone row — archetype, geometry, every attribute |
+| generated on save | envelope, HVAC, indoor comfort, internal loads, supply, and the schedule file |
+
+The derived tables are **re-derived from the archetype, not cloned**. If you had hand-edited the
+original's envelope while unlocked, the copy gets the archetype's values, not your edits. That
+follows from CEA owning those tables while locked, but it does surprise people.
+
+### The copy sits on the original's footprint
+
+The duplicate keeps the original's geometry exactly, so the two buildings overlap. That is fine
+for setting up attributes, but overlapping footprints distort solar radiation and demand — move
+or redraw one before simulating.
+
+Names must be unique, and because a building name becomes a file name
+(`inputs/building-properties/schedules/{name}.csv`) the dialog rejects path separators and the
+characters `< > : " ' | ? *`.
 
 ---
 

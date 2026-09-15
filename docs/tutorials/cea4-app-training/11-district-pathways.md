@@ -17,6 +17,8 @@ sense together.
 - [The four phases of a state](#the-four-phases-of-a-state)
 - [A worked example](#a-worked-example)
 - [Workflow](#workflow)
+- [Using the Pathway Builder panel](#using-the-pathway-builder-panel)
+- [Step by step: your first pathway](#step-by-step-your-first-pathway)
 - [Where the files live](#where-the-files-live)
 - [Troubleshooting](#troubleshooting)
 
@@ -280,6 +282,188 @@ year rather than per scenario.
 - **Clear State** — one year's data. `delete-outputs` keeps the state baked; `delete-inputs`
   removes the whole folder.
 - **Delete Pathway** — an entire pathway, including all baked states.
+
+## Using the Pathway Builder panel
+
+The workflow above names the scripts. In the app you drive nearly all of it from the **Pathway
+Builder** panel, opened from the bottom toolbar (marked *BETA*). The panel is not available in
+the public demo.
+
+It opens as a card along the bottom of the map. Drag the grey handle at its top edge to resize
+it, or use the expand control to take over the window when you are editing a busy timeline.
+
+### Choosing a pathway
+
+The top row selects the pathway. **Create Pathway** starts a new one against the active
+scenario; the icons beside the selector duplicate or delete the one you are on. Until a pathway
+is selected the rest of the panel is inert and prompts you to *Create or select a Pathway*.
+
+Deleting a pathway removes its baked states with it. That is the point — the states are derived
+data — but it is not recoverable from inside the app.
+
+### Reading the timeline
+
+The timeline is the row of year nodes. Each node's fill tells you how far that year has got:
+
+| fill | meaning |
+|---|---|
+| grey | defined but not baked — nothing to simulate yet |
+| blue | **baked** — the state folder exists with its inputs written |
+| black | **simulated** — results exist for that state |
+| purple | **custom** — the state's inputs were edited directly rather than generated |
+
+Two accents overlay that fill: **amber** where a state has changed since it was baked or
+simulated, and **red** where validation found a problem. Both mean the results you can see no
+longer match the definition.
+
+Each year also carries a label saying why it is on the timeline:
+
+| label | why the year exists |
+|---|---|
+| `Auto-Stock` | derived from building construction years in `zone.shp` — you did not create it |
+| `Construct-Event` | buildings are added in this year |
+| `Demolish-Event` | buildings are removed in this year |
+| `Custom-Input` | the state's inputs were edited directly |
+
+`Auto-Stock` years are the ones that surprise people. See [stock-only years](#stock-only-years):
+they appear because a building is born that year, and they stay informational until you add
+something to them.
+
+### Editing a year
+
+Select a year to open its editor.
+
+- **Create Building Event** — add or remove buildings for that year. This is the *stock* half.
+- **Apply Selected Intervention** — apply one or more intervention templates to the year. Pick
+  templates in the selector first; the button then reports how many it will apply.
+- **Copy State** — seed this year from another one, rather than rebuilding its edits by hand.
+
+Templates are edited and deleted from the same selector. Applying several at once merges them,
+and CEA refuses overlapping templates — see [Everything is cumulative](#everything-is-cumulative)
+for why, and what counts as an overlap.
+
+A **stock-only** year is locked against intervention edits: it exists only because buildings
+appear or disappear in it. If you genuinely want to author interventions there, **Edit anyway**
+takes the lock off and the year becomes a normal edited year.
+
+### Baking, simulating and clearing
+
+**Bake** builds the state folders from the definition. **Simulate Pathway** runs the configured
+simulations across them. Both report progress through the normal job system, so you can watch
+them in the Jobs card.
+
+**Clear State** removes a year's data, and asks what to clear: *inputs*, *outputs*, or both.
+Clearing outputs only keeps the state baked, so you can re-simulate without re-baking. **Delete
+Log** removes a year's job log.
+
+### When validation complains
+
+Validation issues appear as banners above the timeline, split in two:
+
+- issues on **any** year in the pathway
+- issues on the year you currently have selected
+
+Both are warnings rather than blocks — CEA tells you the definition and the baked state have
+drifted apart, and leaves it to you to re-bake or accept.
+
+---
+
+## Step by step: your first pathway
+
+A complete run-through, from a scenario that has never seen a pathway to results you can read
+side by side. The example insulates one archetype in 2030 and adds two buildings in 2040.
+
+### Before you start
+
+You need a scenario that already works on its own:
+
+- **`zone.shp` must have a `year` column.** Pathways read it to seed the timeline, and refuse to
+  start without it.
+- **The archetype databases must be loaded**, since interventions are written against archetypes
+  rather than buildings.
+- **A weather file must be present.** Scenarios created through the app already have one — the
+  wizard runs the Weather Helper — so this only bites if you assembled the scenario by hand.
+
+You do *not* need to have run demand or emissions on the base scenario. Simulation runs them
+per state.
+
+### 1. Create the pathway
+
+Open **Pathway Builder** from the bottom toolbar, then **Create Pathway** and give it a name —
+`retrofit_2050`. It is created against the scenario you have open.
+
+The timeline fills immediately with grey `Auto-Stock` nodes, one per distinct construction year
+in `zone.shp`. You did not create these and you do not have to use them; see
+[stock-only years](#stock-only-years).
+
+### 2. Define an intervention template
+
+Interventions are reusable bundles, defined once per scenario. Use **Define Intervention
+Template** and describe what changes, by archetype and component:
+
+```yaml
+deep_insulation:
+  description: 150 mm glass wool to walls
+  modifications:
+    STANDARD4:
+      wall:
+        material_name_1: glass_wool
+        thickness_1_m: 0.15
+```
+
+Define the template before you need it — a template is not attached to any year until you apply
+it.
+
+### 3. Add the years you care about
+
+Pick the year on the timeline, or add it if it is not there yet.
+
+- **2030** — select the `deep_insulation` template, then **Apply Selected Intervention**.
+- **2040** — apply any template for that year *and* use **Create Building Event** to record the
+  two new buildings. Interventions and stock are different axes; a year can carry both.
+
+Remember every change is [cumulative](#everything-is-cumulative): 2040 inherits the 2030
+insulation without you restating it.
+
+### 4. Bake
+
+**Bake** turns definitions into real scenario folders. Nothing can be simulated before this.
+
+The nodes you baked turn **blue**. Baking overwrites the inputs of the states it rebuilds, so
+anything you hand-edited inside a state folder is lost — that is what the purple *custom* state
+exists to warn you about.
+
+### 5. Simulate
+
+**Simulate Pathway** runs the whole chain for each state year — radiation, occupancy, demand,
+PV where emissions include it, the thermal network where the state needs district services, and
+emissions last. It then assembles the pathway emissions timeline.
+
+This is the long step. Nodes turn **black** as each year completes.
+
+Two options are worth knowing:
+
+- **Skip already-simulated states** (on by default) leaves black, up-to-date nodes alone. Stale
+  and baked-only nodes are always re-run.
+- **Skip custom states** (off by default) leaves purple, hand-edited states out of the automatic
+  run — turn it on when you want to simulate those yourself.
+
+### 6. Read the results
+
+Results live per year rather than per scenario, so the ordinary single-scenario plots only show
+you one slice. Open **[Canvas Builder](12-canvas-builder.md)** and create a view in
+**Pathway (single)** mode: each column becomes one state year, and every card you add is drawn
+for all of them at once.
+
+Start with [Your first canvas](12-canvas-builder.md#your-first-canvas).
+
+### 7. Change your mind
+
+Move the electrification to 2045: edit the definition and **Bake** again. Validation flags 2040
+and 2050 as drifted until you do, and the affected nodes carry an amber accent — the results on
+screen no longer match the definition behind them.
+
+---
 
 ## Where the files live
 

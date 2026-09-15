@@ -521,7 +521,7 @@ For publication-quality figures:
 - **[Life Cycle Analysis](06-0-life-cycle-analysis.md)** - Provides emissions data
 - **[Renewable Energy](03-renewable-energy.md)** - Provides solar generation data
 - **[Supply System Optimisation](07-supply-optimisation.md)** - Provides Pareto frontier data
-- **[Export Results to CSV](01-import-export.md#export-results-to-csv-summary-analytics)** - Export data for custom plots
+- **[Export Results to CSV](01-import-export.md#export-results-to-csv-summary-and-analytics)** - Export data for custom plots
 
 ---
 
