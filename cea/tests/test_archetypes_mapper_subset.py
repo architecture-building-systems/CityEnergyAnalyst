@@ -193,3 +193,23 @@ def test_a_subset_run_refuses_to_merge_into_a_differently_shaped_file():
     # Nothing was written -- the file other buildings depend on is exactly as this test left it.
     after = pd.read_csv(path)
     pd.testing.assert_frame_equal(mismatched, after)
+
+
+def test_a_monthly_multiplier_subset_run_refuses_to_merge_into_a_differently_shaped_file():
+    """Same failure mode as `test_a_subset_run_refuses_to_merge_into_a_differently_shaped_file`,
+    for `save_cea_monthly_multipliers` -- a separate write path that went through the same bug
+    (see its module-level test above) but is not `write_building_properties` itself, so its own
+    fix needs its own regression test.
+    """
+    isolated = fresh_locator()
+    path = isolated.get_building_weekly_schedules_monthly_multiplier_csv()
+    before = pd.read_csv(path)
+    mismatched = before.drop(columns=[before.columns[-1]])
+    mismatched.to_csv(path, index=False)
+
+    with pytest.raises(ValueError):
+        map_buildings(isolated, ["B1000"], update_schedule_operation_cea=True)
+
+    # Nothing was written -- the file other buildings depend on is exactly as this test left it.
+    after = pd.read_csv(path)
+    pd.testing.assert_frame_equal(mismatched, after)
