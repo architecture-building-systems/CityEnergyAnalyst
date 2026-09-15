@@ -41,7 +41,7 @@ catch {
 # for correctness (the installer overwrites it on the next run) and must never
 # affect the exit code, so failures here are swallowed too.
 try {
-    Remove-Item -Path $PSCommandPath -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath $PSCommandPath -Force -ErrorAction SilentlyContinue
 }
 catch {
 }

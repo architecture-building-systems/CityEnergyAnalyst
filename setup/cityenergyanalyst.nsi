@@ -207,6 +207,11 @@ Function BaseInstallationSection
         Abort "Installation failed - see Details"
     ${EndIf}
     ${IfNot} ${FileExists} "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"
+        ; $0 still holds "0" from the ExecWait above (a real success code, not a
+        ; failure), so overwrite it before SendTelemetry (via .onInstFailed)
+        ; reports it as error_code - otherwise this failure would look like a
+        ; successful install.
+        StrCpy $0 "gui_dir_missing"
         Abort "Installation failed: Something went wrong with CEA Desktop setup. Install directory not found."
     ${EndIf}
     Delete "$INSTDIR\gui_setup.exe"
