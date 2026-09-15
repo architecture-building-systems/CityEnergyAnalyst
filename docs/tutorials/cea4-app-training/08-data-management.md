@@ -824,9 +824,19 @@ void deck nor the real floor — and understate the floor area by about 11%.
 `void_deck` could only express whole storeys, so a 4.5 m void in a building with 3 m floors had
 to be rounded. `height_vd` records the height directly, so the void can sit anywhere.
 
-**Every new scenario gets `height_vd`, set to 0.** Whether you generate the zone from
-OpenStreetMap or upload your own, the column is created so you can edit it straight away
-without adding a field in GIS. `0` means the building is enclosed to the ground.
+**A new scenario gets `height_vd`, set to 0**, so the column is there to edit without adding a
+field in GIS. `0` means the building is enclosed to the ground.
+
+There is one exception, and it is deliberate. If you **upload** a `zone.shp` that already
+carries `void_deck`, CEA keeps your column as it is and does **not** add `height_vd` beside it —
+converting would rewrite your data, and two columns for one concept is worse than one. Generate
+the zone from OpenStreetMap, or upload one carrying neither column, and you get `height_vd = 0`.
+
+| how the zone arrives | what you end up with |
+|---|---|
+| generated from OpenStreetMap | `height_vd = 0` |
+| uploaded, carrying neither column | `height_vd = 0` |
+| uploaded, already carrying `void_deck` | your `void_deck`, untouched — no `height_vd` |
 
 **Existing scenarios keep working and are not modified.** Where `height_vd` is absent, CEA reads
 `void_deck` and converts it at that building's own storey height (`height_ag / floors_ag`) —

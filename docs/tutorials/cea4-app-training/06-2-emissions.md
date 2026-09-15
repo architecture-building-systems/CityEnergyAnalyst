@@ -88,10 +88,12 @@ Set either fraction to `0` to exclude that module entirely.
 | Parameter | Description |
 |-----------|-------------|
 | **What-if name** | Which final-energy scenario to calculate emissions for |
+| **Year end** | Last year of the emission timeline projection. Leave blank for 2100 |
 | **Grid decarbonisation reference year** | Base year for grid emission factor (optional) |
 | **Grid decarbonisation target year** | Target year for reduced grid emissions (optional) |
 | **Grid decarbonisation target emission factor** | Target kgCO2/kWh at target year (optional) |
 | **Grid carbon intensity dataset CSV** | External 8760-row hourly grid intensity file (optional) |
+| **CSV carbon intensity column name** | Which column in that file holds the intensity, in gCO2e/kWh. Required whenever the CSV is given |
 | **Maintenance fraction of production** | EN 15978 B2 as a share of production emissions (default 0.01; `0` excludes B2) |
 | **Repair fraction of production** | EN 15978 B3 as a share of production emissions (default 0.10; `0` excludes B3) |
 
