@@ -22,11 +22,14 @@ from pydantic import BaseModel, Field
 import cea.config
 import cea.databases
 import cea.inputlocator
+from cea.datamanagement import archetype_lock
+from cea.datamanagement.archetypes_mapper import archetypes_mapper
 from cea.datamanagement.district_pathways.pathway_timeline import PathwayChildScenario
 from cea.datamanagement.utils import VOID_FLOORS_COLUMN
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 import cea.schemas
 from cea.databases import CEADatabase, CEADatabaseException, databases_folder_path
+from cea.datamanagement.database.archetypes import Archetypes
 from cea.datamanagement.database.assemblies import CROSS_CHECK_REL_TOLERANCE
 from cea.utilities import validate_path_within_root
 from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
@@ -42,7 +45,10 @@ from cea.plots.variable_naming import get_color_array
 from cea.technologies.network_layout.main import auto_layout_network, NetworkLayout
 from cea.utilities.file_lock import FileLock
 from cea.utilities.schedule_reader import schedule_to_file, read_cea_schedule, save_cea_schedules
-from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
+from cea.utilities.standardize_coordinates import (
+    get_geographic_coordinate_system,
+    validate_geometries_before_crs_transform,
+)
 
 router = APIRouter()
 
@@ -170,6 +176,192 @@ class InputForm(BaseModel):
     schedules: Dict[str, Any] = Field(default_factory=dict)
 
 
+class ArchetypeLockForm(BaseModel):
+    locked: bool
+
+
+def remap_and_relock(locator: cea.inputlocator.InputLocator, buildings: list[str]) -> archetype_lock.LockState:
+    """Re-derive the archetype-owned tables for `buildings` and advance the lock timestamp.
+
+    Shared by every path that upholds Archetype Lock's guarantee: (re-)locking the whole
+    district, an auto-remap after `zone.shp` moved a building's archetype key, and an
+    auto-remap after the archetype database itself changed. All three run the same six-flag
+    mapper call and then stamp `mapped_at` to now -- the mapper just ran, so the lock file's
+    record of "last mapped" needs to say so.
+    """
+    archetypes_mapper(
+        locator=locator,
+        update_architecture_dbf=True,
+        update_air_conditioning_systems_dbf=True,
+        update_indoor_comfort_dbf=True,
+        update_internal_loads_dbf=True,
+        update_supply_systems_dbf=True,
+        update_schedule_operation_cea=True,
+        list_buildings=buildings,
+    )
+    return archetype_lock.write_lock(locator, locked=True)
+
+
+@router.get('/archetype-lock')
+async def get_archetype_lock(scenario: CEAScenario):
+    """The lock state, plus the baselines the input editor needs to determine per-building,
+    per-tab drift itself (see `archetype_lock`'s module docstring for why that check lives
+    client-side rather than here). `drifted` is a cheap, coarse fallback only -- it does not
+    reflect a `const_type`-only change or a hand-edited derived table.
+    """
+    locator = cea.inputlocator.InputLocator(scenario)
+
+    def fn():
+        state = archetype_lock.read_lock(locator)
+        return {
+            'locked': state.locked,
+            'drifted': archetype_lock.is_drifted(locator, state),
+            'mapped_at': state.mapped_at,
+            'derived_tabs': list(archetype_lock.ARCHETYPE_DERIVED_TABS),
+            'archetype_key_columns': list(archetype_lock.ARCHETYPE_KEY_COLUMNS),
+            'mapped_use_types': state.mapped_use_types,
+            # Raw column values, not a digest of them -- the client diffs each column against
+            # this with a plain value-equality check (the same one it already uses for
+            # `mapped_use_types` and the lookup tabs), so it needs no column list of its own to
+            # know what to compare: the keys of each building's own baseline are enough.
+            'mapped_computed_values': state.mapped_computed_values,
+        }
+
+    return await run_in_threadpool(fn)
+
+
+@router.put('/archetype-lock')
+async def set_archetype_lock(scenario: CEAScenario, form: ArchetypeLockForm):
+    """Lock or unlock the archetype-derived tables.
+
+    Unlocking changes nothing on disk -- the user simply takes ownership of those tables.
+
+    Locking regenerates all five of them, plus schedules, from each building's archetype, so
+    any edits made while unlocked are lost. The client is expected to have confirmed that;
+    this is the point of no return, not the modal.
+    """
+    locator = cea.inputlocator.InputLocator(scenario)
+
+    def fn():
+        if not form.locked:
+            # Keep the previous `mapped_at`/baselines: unlocking has not just mapped anything,
+            # so there is nothing new to stamp, and dropping them would fall back to the
+            # legacy "no baseline" case and read as drifted regardless of actual content.
+            previous = archetype_lock.read_lock(locator)
+            state = archetype_lock.write_lock(
+                locator, locked=False, mapped_at=previous.mapped_at,
+                mapped_use_types=previous.mapped_use_types,
+                mapped_computed_values=previous.mapped_computed_values)
+            return {'locked': False,
+                    'drifted': archetype_lock.is_drifted(locator, state),
+                    'remapped': False}
+
+        buildings = list(locator.get_zone_building_names())
+        state = remap_and_relock(locator, buildings)
+        return {'locked': True, 'drifted': False, 'remapped': True,
+                'building_count': len(buildings), 'mapped_at': state.mapped_at}
+
+    return await run_in_threadpool(fn)
+
+
+def shapefile_payload_problems(db: str, table: Any, geojson: Any) -> list[str]:
+    """Reasons a shapefile payload must not be written, as user-facing sentences.
+
+    The save writes each table in turn, so anything wrong has to be found before the first
+    write -- a failure discovered halfway leaves the scenario partly updated with the client
+    still holding the version it thought it saved.
+
+    Only what the user just did and can undo:
+
+    - a footprint is malformed (self-intersecting, unclosed). Cannot reach here today, because
+      `df_to_json` fails to read such a file at all and the caller skips the table; the check
+      is what makes editing geometry safe to add.
+    - two rows share a name. The write does `set_index('name')`, so one would silently win.
+
+    A *missing* footprint is deliberately not a reason to refuse. The editor offers no way to
+    give a building one, so rejecting the save would leave deleting the row as the only escape
+    -- the very data loss this guards against. `restore_rows_without_geometry` carries those
+    rows through the write instead, and the banner in the editor says they are there.
+
+    :param db: input name, used in the messages (e.g. ``zone``).
+    :param table: the table as sent by the client, ``{name: {column: value}}``.
+    :param geojson: the matching geojson as sent by the client.
+    :return: problems found, empty when the payload is safe to write.
+    """
+    features = (geojson or {}).get('features')
+    if not features:
+        # Geometry that failed to load is skipped by the caller, not rejected.
+        return []
+
+    try:
+        gdf = geopandas.GeoDataFrame.from_features(
+            features, crs=get_geographic_coordinate_system())
+    except Exception as e:
+        # Deliberately broad. This is arbitrary client input, and the ways it can fail to parse
+        # are open-ended -- shapely alone raises `GeometryTypeError` for an unknown `type`.
+        # Whatever it is, the answer is the same: tell the user we could not read it, rather
+        # than let a traceback out as a 500.
+        return [f"{db}: the geometry sent could not be read ({type(e).__name__}: {e})."]
+
+    problems = []
+    try:
+        validate_geometries_before_crs_transform(
+            gdf, shapefile_name=db, require_geometry=False)
+    except ValueError as e:
+        problems.append(str(e))
+
+    if 'name' not in gdf.columns:
+        return problems
+
+    names = gdf['name'].astype(str)
+
+    duplicated = sorted(set(names[names.duplicated()]))
+    if duplicated:
+        problems.append(
+            f"{db}: more than one row is named {', '.join(duplicated)}. "
+            f"Names must be unique - saving would keep only one row of each.")
+
+    return problems
+
+
+def restore_rows_without_geometry(table_df: geopandas.GeoDataFrame, table: Any) -> geopandas.GeoDataFrame:
+    """Put back the rows the client could not send a footprint for.
+
+    `df_to_json` drops null-geometry rows so the map can still draw, while
+    `get_building_properties` keeps them in the table. The shapefile is rebuilt from the
+    features alone, so without this those rows are deleted from the file on the next save --
+    silently, and with their attributes.
+
+    A shapefile stores a null geometry happily and reads it back as `None`, so the row survives
+    a round trip intact and can be fixed or deleted later.
+
+    :param table_df: the frame built from the payload's features.
+    :param table: the table as sent by the client, ``{name: {column: value}}``.
+    :return: `table_df` with any table-only rows appended, geometry unset.
+    """
+    if 'name' not in table_df.columns or not table:
+        return table_df
+
+    present = set(table_df['name'].astype(str))
+    absent = [name for name in table if str(name) not in present]
+    if not absent:
+        return table_df
+
+    logger.warning(
+        f"{len(absent)} row(s) have no footprint and were written without one: "
+        f"{', '.join(map(str, absent))}")
+
+    restored = geopandas.GeoDataFrame(
+        [{**table[name], 'name': name} for name in absent],
+        geometry=[None] * len(absent),
+        crs=table_df.crs,
+    )
+    # Reindexed to the written columns so a stray key in the table cannot add one, and a
+    # column the row never had arrives as NA rather than shifting the frame.
+    restored = restored.reindex(columns=table_df.columns)
+    return pd.concat([table_df, restored], ignore_index=True)
+
+
 @router.put('/all-inputs')
 async def save_all_inputs(scenario: CEAScenario, form: InputForm):
     locator = cea.inputlocator.InputLocator(scenario)
@@ -180,7 +372,54 @@ async def save_all_inputs(scenario: CEAScenario, form: InputForm):
     schedules = form.schedules
 
     def fn():
-        out = {'tables': {}, 'geojsons': {}}
+        out = {'tables': {}, 'geojsons': {}, 'skipped_tables': []}
+
+        # Archetype Lock. While locked, CEA owns the archetype-derived tables, so the payload's
+        # copies of them are not written.
+        #
+        # This has to happen server-side, not only by grey-ing out the inputs: the editor holds
+        # every table in memory and PUTs all of them on each save, so a client that is merely
+        # *stale* -- one opened before the lock, or one whose copy predates an auto-remap --
+        # would otherwise overwrite tables it never meant to touch.
+        #
+        # Skipped rather than rejected: the derived tables are in every payload, so rejecting
+        # their presence would reject every save. They are reported back in `skipped_tables`
+        # so the UI can say what was ignored, rather than dropping them silently.
+        lock = archetype_lock.read_lock(locator)
+        if lock.locked:
+            for tab in archetype_lock.ARCHETYPE_DERIVED_TABS:
+                if tables.get(tab):
+                    out['skipped_tables'].append(tab)
+                    tables[tab] = None
+
+        # Which buildings changed archetype, decided here rather than trusted from the client.
+        remap_buildings = []
+        if lock.locked and tables.get('zone'):
+            try:
+                existing_zone = geopandas.read_file(locator.get_zone_geometry())
+                existing_zone = pd.DataFrame(existing_zone.drop(columns='geometry')).set_index('name')
+                remap_buildings = archetype_lock.buildings_needing_remap(
+                    tables['zone'], existing_zone)
+            except (IOError, DriverError, ValueError, KeyError, FileNotFoundError) as e:
+                logger.warning(f"Could not compare archetype keys, skipping the re-map: {e}")
+
+        # Nothing is written until every shapefile payload has been checked. The loop below
+        # writes tables one at a time, so a problem found partway through would leave the
+        # scenario half-updated -- and unlike a rejected save, there is no way back from that.
+        geometry_problems = []
+        for db, db_info in INPUTS.items():
+            if db_info['file_type'] == 'shp' and tables.get(db):
+                geometry_problems.extend(
+                    shapefile_payload_problems(db, tables[db], geojsons.get(db)))
+        if geometry_problems:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    'message': 'Nothing was saved: the geometry has problems that would '
+                               'corrupt the scenario.',
+                    'problems': geometry_problems,
+                },
+            )
 
         # TODO: Maybe save the files to temp location in case something fails
         for db in INPUTS:
@@ -208,6 +447,7 @@ async def save_all_inputs(scenario: CEAScenario, form: InputForm):
 
                     table_df = geopandas.GeoDataFrame.from_features(geojsons[db]['features'],
                                                                     crs=get_geographic_coordinate_system())
+                    table_df = restore_rows_without_geometry(table_df, tables[db])
                     out['geojsons'][db] = json.loads(table_df.to_json())
                     table_df = table_df.to_crs(crs[db])
                     table_df.to_file(location, driver='ESRI Shapefile', encoding='ISO-8859-1')
@@ -231,13 +471,26 @@ async def save_all_inputs(scenario: CEAScenario, form: InputForm):
 
                     out['tables'][db] = []
 
-                elif os.path.isfile(location):
-                    if file_type == 'shp':
-                        import glob
-                        for filepath in glob.glob(os.path.join(locator.get_building_geometry_folder(), '%s.*' % db)):
-                            os.remove(filepath)
-                    elif file_type == 'dbf':
-                        os.remove(location)
+                else:
+                    if os.path.isfile(location):
+                        if file_type == 'shp':
+                            import glob
+                            for filepath in glob.glob(os.path.join(locator.get_building_geometry_folder(), '%s.*' % db)):
+                                os.remove(filepath)
+                        elif file_type in ('dbf', 'csv'):
+                            # `csv` was missing here: a cleared derived table (envelope,
+                            # internal-loads, indoor-comfort, hvac, supply) never actually lost
+                            # its file, so the stale rows survived on disk under a response that
+                            # (once reported at all) claimed the table was empty.
+                            os.remove(location)
+
+                    # Report the clearing, same as the `surroundings` branch above -- the
+                    # response is a complete echo of every table's new state, not just the
+                    # ones that ended up with rows. A key silently missing here would read as
+                    # "this save didn't touch it" and leave a stale, non-empty table sitting
+                    # in the client's cache (see `useSaveInputs.js`, which trusts this response
+                    # instead of refetching).
+                    out['tables'][db] = {}
 
                 if file_type == 'shp':
                     out['geojsons'][db] = {}
@@ -257,6 +510,25 @@ async def save_all_inputs(scenario: CEAScenario, form: InputForm):
                     data = pd.concat([df, data], ignore_index=True)
                 save_cea_schedules(data.to_dict('list'), schedule_path)
                 print('Schedule file written to {}'.format(schedule_path))
+
+        if lock.locked:
+            if remap_buildings:
+                # Only the buildings whose archetype moved, or that are new. `archetypes_mapper`
+                # merges a subset into the existing tables rather than replacing them, so the
+                # rest of the district is left alone -- and a district-wide re-derive on every
+                # `const_type` edit would be needlessly slow for a large scenario. A save with
+                # no archetype changes never reaches this branch, so the lock file is untouched.
+                remap_and_relock(locator, remap_buildings)
+                out['remapped_buildings'] = remap_buildings
+
+                # Hand back what the mapper wrote. Without this the client keeps the values it
+                # sent, and its next save would write them straight back over the re-map.
+                for tab in archetype_lock.ARCHETYPE_DERIVED_TABS:
+                    tab_location = getattr(locator, INPUTS[tab]['location'])()
+                    if os.path.isfile(tab_location):
+                        remapped = pd.read_csv(tab_location)
+                        out['tables'][tab] = json.loads(
+                            remapped.set_index('name').to_json(orient='index'))
 
         return out
 
@@ -530,19 +802,55 @@ async def put_input_database_data(
     save is refused (409) unless `overwrite_derived` is set. Refusing everything rather than
     the offending rows keeps the file consistent with what the user last saw: a partial save
     would leave the editor showing values that were not written.
+
+    While Archetype Lock is on, this also re-runs `archetypes_mapper` for the buildings whose
+    `const_type` or `use_type` archetype just changed -- the mapper reads this database, so
+    without this a locked scenario would silently keep every building mapped against the old
+    values (see `docs/developer/archetype-lock-drift-review.md`). Unlocked, nothing here
+    changes: the user owns the derived tables and the mapper is not run.
     """
     locator = cea.inputlocator.InputLocator(scenario)
     try:
         def fn():
+            lock = archetype_lock.read_lock(locator)
+            # Snapshot before the write -- once `db.save` runs, the old values are gone and
+            # there is nothing left to diff against.
+            existing_archetypes = Archetypes.from_locator(locator) if lock.locked else None
+
             db = CEADatabase.from_dict(payload)
             materials = getattr(db.components.materials, 'materials', None)
             conflicts = db.assemblies.envelope.apply_material_derivation(materials)
             if conflicts and not overwrite_derived:
-                return conflicts
+                return {'conflicts': conflicts}
             db.save(locator)
-            return None
 
-        conflicts = await run_in_threadpool(fn)
+            result = {}
+            if lock.locked:
+                const_types, use_types = archetype_lock.changed_archetype_codes(
+                    db.archetypes, existing_archetypes)
+                buildings = []
+                if const_types or use_types:
+                    try:
+                        zone_df = geopandas.read_file(locator.get_zone_geometry())
+                        buildings = archetype_lock.buildings_using_archetypes(
+                            zone_df, const_types=const_types, use_types=use_types)
+                    except (IOError, DriverError, ValueError, KeyError, FileNotFoundError) as e:
+                        logger.warning(f"Could not compare archetype codes, skipping the re-map: {e}")
+                if buildings:
+                    try:
+                        remap_and_relock(locator, buildings)
+                        result['remapped_buildings'] = buildings
+                    except Exception as e:
+                        # The database is already saved and `CEADatabase.save` has no
+                        # rollback, so a mapper failure here (e.g. a building still
+                        # references a `const_type` that was just deleted) must not report
+                        # a successful write as a failure.
+                        logger.warning(f"Archetype re-map after database save failed: {e}")
+                        result['remap_error'] = str(e)
+            return result
+
+        result = await run_in_threadpool(fn)
+        conflicts = result.get('conflicts')
         if conflicts:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
@@ -556,7 +864,12 @@ async def put_input_database_data(
                     'conflicts': conflicts,
                 },
             )
-        return {'message': 'Database updated'}
+        response = {'message': 'Database updated'}
+        if result.get('remapped_buildings'):
+            response['remapped_buildings'] = result['remapped_buildings']
+        if result.get('remap_error'):
+            response['remap_error'] = result['remap_error']
+        return response
     except CEADatabaseException as e:
         print(e)
         raise HTTPException(

@@ -37,9 +37,11 @@ Occupancy calculation can be computationally intensive and is often reused acros
 
 | Parameter | Description | Typical Value |
 |-----------|-------------|---------------|
+| **Occupancy model** | `deterministic` uses your schedules directly. `stochastic` treats them as presence probabilities and samples a two-state Markov chain (Page et al., 2008), giving less synchronised, more realistic occupancy | Deterministic |
 | **Multiprocessing** | Enable parallel processing | Enabled |
 | **Number of CPUs to keep free** | CPUs reserved | 1-2 |
 | **Debug mode** | Detailed logging | Disabled |
+| **Buildings** | Specific buildings or all | All |
 
 ### How to Use
 
@@ -181,8 +183,9 @@ The feature calculates hourly demand for:
 | **Multiprocessing** | Enable parallel processing | Enabled |
 | **Number of CPUs to keep free** | CPUs reserved | 1-2 |
 | **Use dynamic infiltration** | Weather-dependent infiltration | Enabled |
-| **Resolution output** | Hourly detail level | 1 hour |
 | **Debug mode** | Instant visualisation + detailed outputs | Disabled |
+| **Overheating warning** | Abort the run if a building's modelled temperature leaves -30 to 50 degC. A debugging aid, not a comfort check | Disabled |
+| **Retain technical results** | Keep the detailed technical result files. Uses considerably more disc space | Disabled |
 | **Buildings** | Specific buildings or all | All |
 
 ### How to Use
@@ -267,9 +270,25 @@ When enabled (not for production):
 - Significantly increases file sizes and computation time
 - Use only for troubleshooting specific buildings
 
-#### Resolution Output
-- Default: 1 hour (8,760 timesteps/year)
-- Can be increased for sub-hourly analysis (experimental)
+#### Retain Technical Results
+Off by default. The hourly building files always carry the end-use loads you need for
+downstream Features; this switch adds the intermediate technical columns on top:
+- Per-component loads, mass flows and temperatures used inside the HVAC model
+- Useful for diagnosing a system that behaves unexpectedly
+- Considerably larger files, so leave it off unless you are investigating something
+
+#### Overheating Warning
+Off by default. Despite the name it is a hard stop, not a message: when on, the simulation
+**aborts** as soon as any building's RC-model temperature leaves the range -30 to 50 degC, in
+either direction. Such a temperature means the model has gone physically implausible, usually
+from a very small building footprint or an `Hs_ag` (heated-floor fraction) too low for the
+geometry.
+
+Turn it on when you are debugging a scenario and want the run to stop at the first sign of
+trouble, with the building name and timestep named. Leave it off for production runs, where an
+implausible hour in one building should not abandon the whole district.
+
+Results are hourly (8,760 timesteps per year). Sub-hourly simulation is not supported.
 
 ### Tips
 
@@ -288,6 +307,13 @@ When enabled (not for production):
 **Issue**: "Missing occupancy data" error
 - **Solution**: Run Energy Demand Part 1 (Building Occupancy) first
 - **Solution**: Check that occupancy files exist in `outputs/data/occupancy/`
+
+**Issue**: "Temperature in RC-Model of building X out of bounds!"
+- **Cause**: Overheating warning is on and the building's modelled temperature left -30 to 50 degC
+- **Solution**: The message names the building and timestep. Check that building's footprint size
+  and its `Hs_ag` in `envelope.csv` -- a very small building, or too low a heated-floor fraction,
+  is the usual cause
+- **Solution**: If the behaviour is expected, turn off Overheating warning to let the run continue
 
 **Issue**: Very high or very low demand values
 - **Solution**: Verify building properties are correctly assigned

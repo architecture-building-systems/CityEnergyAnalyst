@@ -999,7 +999,7 @@ def _apply_state_construction_changes(
 
     2. **Regenerate per-building property files** (in `inputs/building-properties/`):
        - Calls `archetypes_mapper` to derive building properties from the modified archetypes
-       - Updates: architecture.dbf, air_conditioning_systems.csv, indoor_comfort.csv,
+       - Updates: envelope.csv, hvac.csv, indoor_comfort.csv,
          internal_loads.csv, supply.csv, and schedule files
        - Buildings don't store envelope data directly â€” they reference archetypes
 

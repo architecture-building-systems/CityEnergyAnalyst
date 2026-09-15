@@ -6,6 +6,8 @@ building properties algorithm
 # J. A. Fonseca  script development          22.03.15
 
 
+import os
+
 import numpy as np
 import pandas as pd
 import geopandas as gpd
@@ -22,6 +24,36 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+
+# The columns `indoor_comfort_mapper`/`internal_loads_mapper` write, excluding `name`. Module
+# constants (not inline literals in those functions) so `archetype_lock.py` can hash exactly the
+# columns the mapper produces, without a second, hand-maintained copy that could drift from it.
+INDOOR_COMFORT_FIELDS = (
+    'Tcs_set_C',
+    'Ths_set_C',
+    'Tcs_setb_C',
+    'Ths_setb_C',
+    'Ve_lsp',
+    'RH_min_pc',
+    'RH_max_pc',
+)
+
+INTERNAL_LOADS_FIELDS = (
+    'Occ_m2p',
+    'Qs_Wp',
+    'X_ghp',
+    'Ea_Wm2',
+    'El_Wm2',
+    'Ed_Wm2',
+    'Ev_kWveh',
+    'Qcre_Wm2',
+    'Vww_ldp',
+    'Vw_ldp',
+    'Qhpro_Wm2',
+    'Qcpro_Wm2',
+    'Epro_Wm2',
+)
 
 
 def archetypes_mapper(locator: cea.inputlocator.InputLocator,
@@ -64,6 +96,15 @@ def archetypes_mapper(locator: cea.inputlocator.InputLocator,
 
     verify_building_standards(building_typology_df, db_standards)
 
+    # Every building actually in the zone right now, independent of `list_buildings`. Passed
+    # down to `write_building_properties` so it knows the mapping's real scope first-hand,
+    # rather than guessing "was this a subset run?" from whether the on-disk CSV happens to
+    # have the same columns as the fields it is about to write. That guess broke both ways: a
+    # subset run against an old/differently-shaped file overwrote it with just the subset
+    # (deleting every other building), and a full run after a building was deleted from the
+    # zone left its now-orphaned row behind because the file's shape still matched.
+    zone_buildings = set(building_typology_df['name'])
+
     # Filter by selected buildings
     building_typology_df = building_typology_df[building_typology_df['name'].isin(list_buildings)]
 
@@ -72,76 +113,109 @@ def archetypes_mapper(locator: cea.inputlocator.InputLocator,
 
     # Get properties about the construction and architecture
     if update_architecture_dbf:
-        architecture_mapper(locator, building_typology_df)
+        architecture_mapper(locator, building_typology_df, zone_buildings=zone_buildings)
 
     # Get properties about types of HVAC systems
     if update_air_conditioning_systems_dbf:
-        aircon_mapper(locator, building_typology_df)
+        aircon_mapper(locator, building_typology_df, zone_buildings=zone_buildings)
 
     if update_indoor_comfort_dbf:
-        indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typology_df)
+        indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typology_df,
+                              zone_buildings=zone_buildings)
 
     if update_internal_loads_dbf:
-        internal_loads_mapper(list_uses, locator, occupant_densities, building_typology_df)
+        internal_loads_mapper(list_uses, locator, occupant_densities, building_typology_df,
+                              zone_buildings=zone_buildings)
 
     if update_schedule_operation_cea:
-        calc_mixed_schedule(locator, building_typology_df)
+        calc_mixed_schedule(locator, building_typology_df, zone_buildings=zone_buildings)
 
     if update_supply_systems_dbf:
-        supply_mapper(locator, building_typology_df)
+        supply_mapper(locator, building_typology_df, zone_buildings=zone_buildings)
 
 
 
-def indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typology_df):
+def write_building_properties(mapped_df, fields, path, locator, *, zone_buildings):
+    """Write mapped building properties, preserving buildings this run did not map.
+
+    Each mapper builds its frame from `building_typology_df`, which `archetypes_mapper` has
+    already filtered to `list_buildings`. Writing that frame straight out replaced the whole
+    file with the subset -- mapping one building of fifteen left a one-row file and silently
+    deleted the other fourteen.
+
+    Rows for buildings in `mapped_df` are replaced; rows for any other building still in the
+    zone are kept, in their existing order, with newly-mapped buildings appended. A building no
+    longer in the zone at all is dropped, whether or not this run was the one that remapped it --
+    an orphaned row must not outlive the building it describes. A full-district run maps every
+    zone building at once, so nothing else is left to keep; it behaves exactly as before.
+
+    :param mapped_df: the freshly mapped properties, including a `name` column.
+    :param fields: the columns to write, in order.
+    :param path: the file to write.
+    :param locator: used to create the parent folder.
+    :param zone_buildings: every building currently in `zone.shp`, regardless of whether this
+        run mapped it -- the caller's first-hand knowledge of the mapping's scope, rather than
+        an inference this function would otherwise have to make from the on-disk CSV's columns.
+    """
+    locator.ensure_parent_folder_exists(path)
+    mapped = mapped_df[fields].set_index('name')
+    is_subset_run = not set(zone_buildings) <= set(mapped.index)
+
+    if os.path.isfile(path):
+        existing = pd.read_csv(path)
+        # Compared as sets: the file on disk stores these columns in a different order from
+        # `fields`, and requiring the same order meant the merge never ran at all.
+        if 'name' in existing.columns and set(existing.columns) == set(fields):
+            existing = existing.set_index('name')
+            # Drop buildings no longer in the zone before deciding what to keep -- otherwise a
+            # building removed from zone.shp would sit in this file forever, since nothing ever
+            # asks the mapper to "remap" a building that no longer exists to remove it.
+            existing = existing.loc[existing.index.isin(zone_buildings)]
+            kept = existing.drop(index=mapped.index, errors='ignore')
+            order = list(existing.index) + [n for n in mapped.index if n not in existing.index]
+            mapped = pd.concat([kept, mapped]).reindex(order)
+        elif 'name' in existing.columns and is_subset_run:
+            # A subset run cannot safely blend into a file from an older/different CEA schema:
+            # writing just the subset under the new columns would silently delete every building
+            # this run did not touch. Stop rather than do that quietly. A full run has no such
+            # risk -- it is about to write every zone building regardless.
+            raise ValueError(
+                f"Cannot merge a partial archetype re-map into {path}: its columns do not match "
+                f"the current schema. Re-run the mapper for the whole district to rewrite it.")
+
+    mapped.reset_index()[fields].to_csv(path, index=False)
+
+
+def indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typology_df, *, zone_buildings):
     comfort_DB = pd.read_csv(locator.get_database_archetypes_use_type())
     # define comfort
     prop_comfort_df = building_typology_df.merge(comfort_DB, left_on='use_type1', right_on='use_type')
     # write to shapefile
-    fields = ['name',
-              'Tcs_set_C',
-              'Ths_set_C',
-              'Tcs_setb_C',
-              'Ths_setb_C',
-              'Ve_lsp',
-              'RH_min_pc',
-              'RH_max_pc']
+    fields = ['name', *INDOOR_COMFORT_FIELDS]
     prop_comfort_df_merged = calculate_average_multiuse(fields,
                                                         prop_comfort_df,
                                                         occupant_densities,
                                                         list_uses,
                                                         comfort_DB)
-    locator.ensure_parent_folder_exists(locator.get_building_comfort())
-    prop_comfort_df_merged[fields].to_csv(locator.get_building_comfort(), index=False)
+    write_building_properties(prop_comfort_df_merged, fields, locator.get_building_comfort(), locator,
+                              zone_buildings=zone_buildings)
 
-def internal_loads_mapper(list_uses, locator, occupant_densities, building_typology_df):
+def internal_loads_mapper(list_uses, locator, occupant_densities, building_typology_df, *, zone_buildings):
     internal_DB = pd.read_csv(locator.get_database_archetypes_use_type())
     # define comfort
     prop_internal_df = building_typology_df.merge(internal_DB, left_on='use_type1', right_on='use_type')
     # write to shapefile
-    fields = ['name',
-              'Occ_m2p',
-              'Qs_Wp',
-              'X_ghp',
-              'Ea_Wm2',
-              'El_Wm2',
-              'Ed_Wm2',
-              'Ev_kWveh',
-              'Qcre_Wm2',
-              'Vww_ldp',
-              'Vw_ldp',
-              'Qhpro_Wm2',
-              'Qcpro_Wm2',
-              'Epro_Wm2']
+    fields = ['name', *INTERNAL_LOADS_FIELDS]
     prop_internal_df_merged = calculate_average_multiuse(fields,
                                                          prop_internal_df,
                                                          occupant_densities,
                                                          list_uses,
                                                          internal_DB)
-    locator.ensure_parent_folder_exists(locator.get_building_internal())
-    prop_internal_df_merged[fields].to_csv(locator.get_building_internal(), index=False)
+    write_building_properties(prop_internal_df_merged, fields, locator.get_building_internal(), locator,
+                              zone_buildings=zone_buildings)
 
 
-def supply_mapper(locator, building_typology_df):
+def supply_mapper(locator, building_typology_df, *, zone_buildings):
     supply_DB = pd.read_csv(locator.get_database_archetypes_construction_type())
     prop_supply_df = building_typology_df.merge(supply_DB, left_on='const_type', right_on='const_type')
     fields = ['name',
@@ -149,10 +223,10 @@ def supply_mapper(locator, building_typology_df):
               'supply_type_hs',
               'supply_type_dhw',
               'supply_type_el']
-    locator.ensure_parent_folder_exists(locator.get_building_supply())
-    prop_supply_df[fields].to_csv(locator.get_building_supply(), index=False)
+    write_building_properties(prop_supply_df, fields, locator.get_building_supply(), locator,
+                              zone_buildings=zone_buildings)
 
-def aircon_mapper(locator, typology_df):
+def aircon_mapper(locator, typology_df, *, zone_buildings):
     air_conditioning_DB = pd.read_csv(locator.get_database_archetypes_construction_type())
     # define HVAC systems types
     prop_HVAC_df = typology_df.merge(air_conditioning_DB, left_on='const_type', right_on='const_type')
@@ -167,11 +241,11 @@ def aircon_mapper(locator, typology_df):
               'hvac_heat_ends',
               'hvac_cool_starts',
               'hvac_cool_ends']
-    locator.ensure_parent_folder_exists(locator.get_building_air_conditioning())
-    prop_HVAC_df[fields].to_csv(locator.get_building_air_conditioning(), index=False)
+    write_building_properties(prop_HVAC_df, fields, locator.get_building_air_conditioning(), locator,
+                              zone_buildings=zone_buildings)
 
 
-def architecture_mapper(locator, typology_df):
+def architecture_mapper(locator, typology_df, *, zone_buildings):
     architecture_DB = pd.read_csv(locator.get_database_archetypes_construction_type())
     prop_architecture_df = typology_df.merge(architecture_DB, left_on='const_type', right_on='const_type')
     fields = ['name',
@@ -192,8 +266,8 @@ def architecture_mapper(locator, typology_df):
               'type_wall',
               'type_win',
               'type_shade']
-    locator.ensure_parent_folder_exists(locator.get_building_architecture())
-    prop_architecture_df[fields].to_csv(locator.get_building_architecture(), index=False)
+    write_building_properties(prop_architecture_df, fields, locator.get_building_architecture(), locator,
+                              zone_buildings=zone_buildings)
 
 def calc_code(code1, code2, code3, code4):
     return str(code1) + str(code2) + str(code3) + str(code4)

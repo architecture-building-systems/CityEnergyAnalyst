@@ -114,6 +114,8 @@ def baked_state(monkeypatch):
             "U_roof": DERIVED_U,
             "GHG_roof_kgCO2m2": DERIVED_GHG,
             "GHG_biogenic_roof_kgCO2m2": -16.0,  # 320 kg/m2 x -0.05
+            "GHG_production_roof_kgCO2m2": DERIVED_GHG_PRODUCTION,
+            "GHG_demolition_roof_kgCO2m2": DERIVED_GHG_DEMOLITION,
         }],
     )
 
@@ -162,7 +164,7 @@ def test_editing_layers_clears_the_stale_cache(baked_state):
     envelope = EnvelopeLookup.from_locator(state)
     reloaded = envelope._df_for("roof").loc[row.name]
     assert float(reloaded["U_roof"]) != pytest.approx(DERIVED_U, rel=0.01)
-    # The production/recycling split must be re-derived too, not just left blank -- the
+    # The production/demolition split must be re-derived too, not just left blank -- the
     # emissions timeline prefers these over the recomputed total when both are present.
     assert float(reloaded["GHG_production_roof_kgCO2m2"]) == pytest.approx(168.0, rel=1e-3)
     assert float(reloaded["GHG_demolition_roof_kgCO2m2"]) == pytest.approx(42.0, rel=1e-3)

@@ -192,6 +192,14 @@ def render_locator(name: str, info: dict, *, is_stale: bool = False, string_refe
         out.append("- **Used by**: _(none)_")
     out.append("")
 
+    # A file-level `description:` in schemas.yml, for what the columns cannot say -- where the
+    # file comes from, who owns it, when it is regenerated. Only the column descriptions were
+    # rendered before, so anything written here was silently dropped.
+    file_description = (info.get("description") or "").strip()
+    if file_description:
+        out.append(" ".join(file_description.split()))
+        out.append("")
+
     schema = info.get("schema")
     if not schema:
         out.append("_No column schema._")
@@ -389,6 +397,7 @@ def render_index(written: list[tuple[str, str, int]], stale_count: int = 0) -> s
     lines.append("- **Path** — relative to the scenario folder")
     lines.append("- **File type** — `csv`, `shp`, `dbf`, `xlsx`, `epw`, `tif`, etc.")
     lines.append("- **Created by** — the script that writes the file (empty for user inputs)")
+    lines.append("- a short paragraph, where the file needs one beyond its columns")
     lines.append("- **Used by** — scripts that read the file downstream")
     lines.append("- A column table with **Variable**, **Description**, **Type**, **Unit**, and **Values**")
     lines.append("")

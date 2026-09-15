@@ -540,10 +540,15 @@ def hs_bg_in_envelope(scenario):
 
 
 def hs_bg_in_db(scenario):
-    if os.path.isfile(
-            os.path.join(scenario, "inputs", "database", "archetypes", "CONSTRUCTION", "CONSTRUCTION_TYPES.csv")):
-        construction = pd.read_csv(
-            os.path.join(scenario, "inputs", "database", "archetypes", "CONSTRUCTION", "CONSTRUCTION_TYPES.csv"))
+    # Was hardcoded here with a lowercase "archetypes" segment -- `path_to_db_file_4` writes
+    # (and reads) this file under "ARCHETYPES". The two paths are the same file on a
+    # case-insensitive filesystem (macOS, Windows), so this silently worked there, but are two
+    # different, non-existent-vs-real paths on a case-sensitive one (Linux): `os.path.isfile`
+    # here always returned False, and `Hs_ag`/`Hs_bg` were never renamed to `Hs`/`occupied_bg`
+    # -- a divergence CI only ever caught on the `ubuntu-latest` job.
+    path_csv = path_to_db_file_4(scenario, 'CONSTRUCTION_TYPES')
+    if os.path.isfile(path_csv):
+        construction = pd.read_csv(path_csv)
         if 'Hs_bg' in construction.columns:
             return True
     return False
@@ -577,13 +582,12 @@ def add_occupied_bg(scenario, envelope):
 
 
 def add_occupied_bg_db(scenario):
-    if os.path.isfile(
-            os.path.join(scenario, "inputs", "database", "archetypes", "CONSTRUCTION", "CONSTRUCTION_TYPES.csv")):
-        construction_db = pd.read_csv(os.path.join(
-            scenario, "inputs", "database", "archetypes", "CONSTRUCTION", "CONSTRUCTION_TYPES.csv"), index_col=0)
+    # See the comment in `hs_bg_in_db` -- same lowercase-"archetypes" path bug.
+    path_csv = path_to_db_file_4(scenario, 'CONSTRUCTION_TYPES')
+    if os.path.isfile(path_csv):
+        construction_db = pd.read_csv(path_csv, index_col=0)
         construction_db = calc_occupied_bg(construction_db)
-        construction_db.to_csv(
-            os.path.join(scenario, "inputs", "database", "archetypes", "CONSTRUCTION", "CONSTRUCTION_TYPES.csv"))
+        construction_db.to_csv(path_csv)
 
 
 def calc_occupied_bg(construction_db):

@@ -65,10 +65,28 @@ The report includes:
 - Suggested fixes
 - Line numbers for errors
 
+### What Migration Renames
+
+Migration is not only CEA-3 → CEA-4. It also brings older CEA-4 scenarios up to current naming,
+so these run silently when you migrate:
+
+| old | new | why it matters |
+|---|---|---|
+| `air_conditioning_systems.csv` | `hvac.csv` | without it the HVAC tab and the demand script report the file as missing |
+| `supply_systems.csv` | `supply.csv` | same |
+| `Hs_ag`, `Hs_bg` | `Hs`, `occupied_bg` | the heated-area share and the below-ground occupancy flag were split apart |
+
 ### Common Issues Detected
 
 **Missing Required Columns**:
 - Solution: Add missing columns with default values
+
+**A materials file using the old column names**:
+- `MATERIALS.csv` columns ending `_recycling` were renamed to `_disposal` (for example
+  `GHG_emission_recycling` → `GHG_emission_disposal`)
+- Verification points at the specific column rather than rewriting your file, because the two
+  are not always the same quantity — rename it yourself once you have checked the values mean
+  disposal (EN 15978 modules C2–C4)
 
 **Invalid Data Types**:
 - Solution: Check that numbers are not text, dates are formatted correctly

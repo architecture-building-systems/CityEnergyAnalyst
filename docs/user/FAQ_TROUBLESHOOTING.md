@@ -186,7 +186,7 @@ Invalid type for year_end/year_start (e.g., 1960.0)
 **Solution**:
 1. In CEA Dashboard, click "Input Editor" (bottom corner)
 2. Select all buildings (click "Select All" at top)
-3. Click "Edit Selection"
+3. Click the pen icon (**Edit Selection**) at the top right of the table
 4. Set:
    - `use_type2` → "NONE"
    - `use_type2r` → 0
