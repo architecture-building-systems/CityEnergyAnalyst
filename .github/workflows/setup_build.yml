@@ -119,10 +119,17 @@ jobs:
 
       - name: Make setup
         shell: pwsh
+        env:
+          POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
         run: |
           $env:PATH += ";C:\Program Files (x86)\NSIS\Bin"
           New-Item -ItemType Directory -Force -Path "$env:GITHUB_WORKSPACE\setup\Output"
-          makensis -DWHEEL_FILE="$env:WHEEL_FILE" "$env:GITHUB_WORKSPACE\setup\cityenergyanalyst.nsi"
+          $nsisArgs = @("-DWHEEL_FILE=$env:WHEEL_FILE")
+          if ($env:POSTHOG_API_KEY) {
+            $nsisArgs += "-DPOSTHOG_API_KEY=$env:POSTHOG_API_KEY"
+          }
+          $nsisArgs += "$env:GITHUB_WORKSPACE\setup\cityenergyanalyst.nsi"
+          & makensis @nsisArgs
 
       - name: Upload setup
         uses: actions/upload-artifact@v4

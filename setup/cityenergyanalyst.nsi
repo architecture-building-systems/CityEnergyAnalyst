@@ -6,6 +6,12 @@ Unicode true
 !define CEA_GUI_INSTALL_FOLDER "app"
 !define VC_REDIST_URL "https://aka.ms/vs/17/release/vc_redist.x64.exe"
 
+# Anonymous installer telemetry (PostHog EU Cloud). POSTHOG_API_KEY is passed via
+# -DPOSTHOG_API_KEY on the makensis command line (a GitHub Actions secret, never
+# committed). When it is undefined, the SendTelemetry macro below compiles to a
+# no-op and no telemetry code or key is present in the installer at all.
+!define POSTHOG_HOST "https://eu.i.posthog.com/capture/"
+
 # Request the highest possible execution level for the current user
 !define MULTIUSER_EXECUTIONLEVEL Highest
 !define MULTIUSER_INSTALLMODE_COMMANDLINE
@@ -23,6 +29,7 @@ Unicode true
 !include "MUI2.nsh"
 
 Var LauncherExtension
+Var InstallStep  ; tracks install progress for telemetry (see SendTelemetry)
 
 ; Macro to run a command and abort on failure
 !macro RunCommand CommandStr DescriptionStr ErrorMsg
@@ -56,6 +63,25 @@ Var LauncherExtension
     ${EndIf}
 !macroend
 
+; Fire-and-forget anonymous installer telemetry: counts installs and reports which
+; step a failed install died on, so we don't have to rely on users reporting bugs.
+; No-op when POSTHOG_API_KEY was not supplied at build time (local/fork builds).
+; Must never fail or delay the install:
+;  - nsExec::Exec (not ExecToLog) discards the exit code, unlike RunCommand above.
+;  - The actual network call happens inside telemetry.ps1, wrapped in try/catch
+;    with a short timeout, so a dead network or blocked outbound traffic is silent.
+; Anonymity: distinct_id is a fresh GUID generated per install in telemetry.ps1 and
+; never written to disk; only OS/arch/version/step/error-code are sent - no paths,
+; no username, no hostname.
+!macro SendTelemetry EventName Step ErrorCode
+    !ifdef POSTHOG_API_KEY
+        ${If} ${FileExists} "$PLUGINSDIR\telemetry.ps1"
+            nsExec::Exec '"$WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File "$PLUGINSDIR\telemetry.ps1" -ApiKey "${POSTHOG_API_KEY}" -PostHogHost "${POSTHOG_HOST}" -EventName "${EventName}" -CeaVersion "${VER}" -InstallerStep "${Step}" -ErrorCode "${ErrorCode}"'
+            Pop $9
+        ${EndIf}
+    !endif
+!macroend
+
 Name "${CEA_TITLE} ${VER}"
 OutFile "Output\Setup_CityEnergyAnalyst_${VER}.exe"
 SetCompressor /FINAL lzma
@@ -79,6 +105,10 @@ CRCCheck On
 !insertmacro MUI_PAGE_LICENSE "..\LICENSE"
 # !insertmacro MULTIUSER_PAGE_INSTALLMODE
 !insertmacro MUI_PAGE_DIRECTORY
+
+!ifdef POSTHOG_API_KEY
+!define MUI_COMPONENTSPAGE_TEXT_TOP "This installer sends anonymous installation statistics (OS, CPU architecture, CEA version, and whether the install succeeded) to help us fix problems. No personal data, file paths, or usage data is collected. See docs/privacy for details."
+!endif
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_INSTFILES
 
@@ -112,6 +142,8 @@ FunctionEnd
 ;Installer Sections
 
 Function .onInstFailed
+    !insertmacro SendTelemetry "installer_failed" "$InstallStep" "$0"
+
     # Ensure temporary files are cleaned up
     DetailPrint "Installation failed, cleaning up temporary files..."
 
@@ -133,6 +165,11 @@ FunctionEnd
 
 Function BaseInstallationSection
     SetOutPath "$INSTDIR"
+    StrCpy $InstallStep "start"
+
+    !ifdef POSTHOG_API_KEY
+        File "/oname=$PLUGINSDIR\telemetry.ps1" "telemetry.ps1"
+    !endif
 
     # Check if PowerShell exists
     ${If} ${FileExists} "$WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe"
@@ -142,6 +179,7 @@ Function BaseInstallationSection
     ${EndIf}
 
     # check if micromamba works first before proceeding
+    StrCpy $InstallStep "requirements"
     DetailPrint "Checking requirements"
     CreateDirectory "$INSTDIR\dependencies"
     SetOutPath "$INSTDIR\dependencies"
@@ -152,6 +190,7 @@ Function BaseInstallationSection
 
     # Install GUI first so that rollback would not be as painful in case of failure
     # install the CEA Desktop to $CEA_GUI_INSTALL_FOLDER
+    StrCpy $InstallStep "gui"
     File "gui_setup.exe"
 
     # Run GUI Setup
@@ -168,6 +207,7 @@ Function BaseInstallationSection
 
     File "${WHEEL_FILE}"
     # Note: overwrites micromamba.exe extracted earlier for requirements check
+    StrCpy $InstallStep "dependencies"
     File /r "dependencies"
 
     SetOutPath "$INSTDIR\dependencies"
@@ -176,14 +216,16 @@ Function BaseInstallationSection
     SetOutPath "$INSTDIR"
 
     # fix pip due to change in python path
+    StrCpy $InstallStep "pip"
     !insertmacro RunCommand '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea python -m pip install --upgrade pip --force-reinstall' "Checking pip" "Could not setup pip - see Details"
 
     # install CEA from wheel
     DetailPrint "pip installing CityEnergyAnalyst==${VER}"
     !insertmacro RunCommand '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea pip install "$INSTDIR\${WHEEL_FILE}"' "Installing CityEnergyAnalyst" "Could not install CityEnergyAnalyst ${VER} - see Details"
     Delete "$INSTDIR\${WHEEL_FILE}"
-    
+
     # Run cea --version to check if installation was successful
+    StrCpy $InstallStep "verify"
     nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea cea --version'
     Pop $0
     DetailPrint '"cea --version" returned $0'
@@ -212,6 +254,9 @@ Function BaseInstallationSection
     # create a shortcut in the $INSTDIR for launching the CEA Desktop
     CreateShortcut "$INSTDIR\CEA Desktop.lnk" "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}\${CEA_GUI_NAME}.exe" "" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch CEA Desktop"
+
+    StrCpy $InstallStep "done"
+    !insertmacro SendTelemetry "installer_completed" "" ""
 FunctionEnd
 
 Function CreateStartMenuShortcutsSection
