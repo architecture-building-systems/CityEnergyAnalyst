@@ -37,4 +37,13 @@ catch {
     # Intentionally ignored - see comment above.
 }
 
+# Best-effort tidy-up of the $TEMP copy the installer left behind. Not required
+# for correctness (the installer overwrites it on the next run) and must never
+# affect the exit code, so failures here are swallowed too.
+try {
+    Remove-Item -Path $PSCommandPath -Force -ErrorAction SilentlyContinue
+}
+catch {
+}
+
 exit 0

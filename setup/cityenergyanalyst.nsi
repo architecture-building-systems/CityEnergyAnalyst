@@ -67,7 +67,14 @@ Var InstallStep  ; tracks install progress for telemetry (see SendTelemetry)
 ; step a failed install died on, so we don't have to rely on users reporting bugs.
 ; No-op when POSTHOG_API_KEY was not supplied at build time (local/fork builds).
 ; Must never fail or delay the install:
-;  - nsExec::Exec (not ExecToLog) discards the exit code, unlike RunCommand above.
+;  - Launched with plain (non-blocking) Exec, not nsExec::Exec/ExecWait. A stalled
+;    connection (e.g. a firewall that silently drops packets instead of refusing
+;    the connection) is not reliably bounded by -TimeoutSec in telemetry.ps1, so
+;    the installer must not wait on it at all - it fires the process and moves on.
+;  - The script is copied to $TEMP, not $PLUGINSDIR: NSIS deletes $PLUGINSDIR as
+;    soon as the installer exits, which would race a detached async process that
+;    is still opening the file. $TEMP is not cleaned up by NSIS, so the detached
+;    powershell.exe can safely outlive the installer.
 ;  - The actual network call happens inside telemetry.ps1, wrapped in try/catch
 ;    with a short timeout, so a dead network or blocked outbound traffic is silent.
 ; Anonymity: distinct_id is a fresh GUID generated per install in telemetry.ps1 and
@@ -75,9 +82,8 @@ Var InstallStep  ; tracks install progress for telemetry (see SendTelemetry)
 ; no username, no hostname.
 !macro SendTelemetry EventName Step ErrorCode
     !ifdef POSTHOG_API_KEY
-        ${If} ${FileExists} "$PLUGINSDIR\telemetry.ps1"
-            nsExec::Exec '"$WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File "$PLUGINSDIR\telemetry.ps1" -ApiKey "${POSTHOG_API_KEY}" -PostHogHost "${POSTHOG_HOST}" -EventName "${EventName}" -CeaVersion "${VER}" -InstallerStep "${Step}" -ErrorCode "${ErrorCode}"'
-            Pop $9
+        ${If} ${FileExists} "$TEMP\cea-installer-telemetry.ps1"
+            Exec '"$WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File "$TEMP\cea-installer-telemetry.ps1" -ApiKey "${POSTHOG_API_KEY}" -PostHogHost "${POSTHOG_HOST}" -EventName "${EventName}" -CeaVersion "${VER}" -InstallerStep "${Step}" -ErrorCode "${ErrorCode}"'
         ${EndIf}
     !endif
 !macroend
@@ -168,7 +174,7 @@ Function BaseInstallationSection
     StrCpy $InstallStep "start"
 
     !ifdef POSTHOG_API_KEY
-        File "/oname=$PLUGINSDIR\telemetry.ps1" "telemetry.ps1"
+        File "/oname=$TEMP\cea-installer-telemetry.ps1" "telemetry.ps1"
     !endif
 
     # Check if PowerShell exists
@@ -256,7 +262,7 @@ Function BaseInstallationSection
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch CEA Desktop"
 
     StrCpy $InstallStep "done"
-    !insertmacro SendTelemetry "installer_completed" "" ""
+    !insertmacro SendTelemetry "installer_completed" "$InstallStep" ""
 FunctionEnd
 
 Function CreateStartMenuShortcutsSection
