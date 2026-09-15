@@ -27,7 +27,7 @@ from cea.datamanagement.archetype_lock import (
     read_lock,
     write_lock,
 )
-from cea.datamanagement.archetype_lock import _read_computed_values, _read_use_types
+from cea.datamanagement.archetype_lock import _read_computed_values
 
 
 @pytest.fixture(scope="module")
