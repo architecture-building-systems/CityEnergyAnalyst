@@ -128,7 +128,7 @@ def archetypes_mapper(locator: cea.inputlocator.InputLocator,
                               zone_buildings=zone_buildings)
 
     if update_schedule_operation_cea:
-        calc_mixed_schedule(locator, building_typology_df)
+        calc_mixed_schedule(locator, building_typology_df, zone_buildings=zone_buildings)
 
     if update_supply_systems_dbf:
         supply_mapper(locator, building_typology_df, zone_buildings=zone_buildings)

@@ -41,7 +41,7 @@ def fresh_locator():
     return InputLocator(scenario)
 
 
-def map_buildings(locator, buildings):
+def map_buildings(locator, buildings, *, update_schedule_operation_cea=False):
     archetypes_mapper(
         locator=locator,
         update_architecture_dbf=True,
@@ -49,7 +49,10 @@ def map_buildings(locator, buildings):
         update_indoor_comfort_dbf=True,
         update_internal_loads_dbf=True,
         update_supply_systems_dbf=True,
-        update_schedule_operation_cea=False,  # per-building files; they never truncated
+        # Per-building schedule files never truncated (one file per building); the district
+        # MONTHLY_MULTIPLIERS.csv did, before `calc_mixed_schedule` learned to merge -- see
+        # `test_mapping_a_subset_keeps_every_other_buildings_monthly_multipliers` below.
+        update_schedule_operation_cea=update_schedule_operation_cea,
         list_buildings=list(buildings),
     )
 
@@ -147,6 +150,29 @@ def test_a_full_run_drops_a_building_removed_from_the_zone():
     for path in derived_paths(isolated).values():
         assert "B1000" not in set(pd.read_csv(path)["name"]), (
             f"{path} kept a row for a building no longer in the zone")
+
+
+def test_mapping_a_subset_keeps_every_other_buildings_monthly_multipliers():
+    """The district MONTHLY_MULTIPLIERS.csv must not be replaced with just the mapped subset.
+
+    `calc_mixed_schedule` builds `lists_monthly_multiplier` from the (already-filtered)
+    `building_typology_df` and used to write it straight out via `save_cea_monthly_multipliers`,
+    silently deleting every other building's row -- the same failure mode `write_building_properties`
+    was introduced to fix for the other five derived tables, but this file went through a
+    different write path that never got the same treatment.
+    """
+    isolated = fresh_locator()
+    zone_buildings = set(gpd.read_file(isolated.get_zone_geometry())["name"])
+    path = isolated.get_building_weekly_schedules_monthly_multiplier_csv()
+    # Restrict to buildings actually in the zone: like `write_building_properties`, the merge
+    # also drops any pre-existing row for a building no longer in `zone.shp`, so a fixture with
+    # such a row is not a case this assertion is about.
+    before = [b for b in pd.read_csv(path)["name"] if b in zone_buildings]
+    assert len(before) > 1, "need several buildings to detect this"
+
+    map_buildings(isolated, ["B1000"], update_schedule_operation_cea=True)
+
+    assert list(pd.read_csv(path)["name"]) == before
 
 
 def test_a_subset_run_refuses_to_merge_into_a_differently_shaped_file():

@@ -25,7 +25,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_mixed_schedule(locator, building_typology_df, list_var_names=None, list_var_values=None):
+def calc_mixed_schedule(locator, building_typology_df, list_var_names=None, list_var_values=None, *, zone_buildings=None):
     """
     Builds the ``cea.inputlocator.InputLocator#get_building_weekly_schedules`` for each building in the zone,
     combining the occupancy types as indicated in the inputs.
@@ -37,6 +37,10 @@ def calc_mixed_schedule(locator, building_typology_df, list_var_names=None, list
     :type list_var_names: list[str]
     :param list_var_values: List of column names in building_typology_df that contain values of use-type ratio in respect to list_var_names
     :type list_var_values: list[str]
+    :param zone_buildings: every building currently in the zone -- pass this when
+        `building_typology_df` is a subset of the zone (a targeted remap), so the district
+        monthly-multiplier CSV keeps the other buildings' rows instead of being replaced with
+        just this subset. See `save_cea_monthly_multipliers`.
     :return:
     """
 
@@ -68,7 +72,7 @@ def calc_mixed_schedule(locator, building_typology_df, list_var_names=None, list
         lists_monthly_multiplier.append(list_monthly_multiplier)
     path_to_monthly_multiplier = locator.get_building_weekly_schedules_monthly_multiplier_csv()
     locator.ensure_parent_folder_exists(path_to_monthly_multiplier)
-    save_cea_monthly_multipliers(lists_monthly_multiplier, path_to_monthly_multiplier)
+    save_cea_monthly_multipliers(lists_monthly_multiplier, path_to_monthly_multiplier, zone_buildings=zone_buildings)
 
 
 def calc_single_mixed_schedule(list_uses, occupant_densities, building_typology_df, internal_loads_df, building, schedule_data_all_uses, list_var_names, list_var_values, metadata='mixed-schedule'):

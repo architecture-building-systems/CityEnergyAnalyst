@@ -67,12 +67,29 @@ def save_cea_schedules(schedule_data, path_to_building_schedule):
     df_schedules.to_csv(path_to_building_schedule, index=False, float_format='%.2f')
 
 
-def save_cea_monthly_multipliers(lists_monthly_multiplier, path_to_monthly_multiplier):
+def save_cea_monthly_multipliers(lists_monthly_multiplier, path_to_monthly_multiplier, *, zone_buildings=None):
+    """Write the district monthly-multiplier CSV.
 
-    # monthly multiplier
+    :param zone_buildings: every building currently in the zone, regardless of whether this
+        call mapped it. When given and the file already exists with the current schema, rows
+        for buildings not in `lists_monthly_multiplier` are kept (and any no longer in
+        `zone_buildings` are dropped) instead of the file being replaced outright -- a targeted
+        remap of a handful of buildings must not delete every other building's row. `None`
+        (the default) always overwrites, for callers that already computed every zone building.
+    """
     header = ['name'] + months
-    df_monthly_multiplier = pd.DataFrame(data=lists_monthly_multiplier, columns=header)
-    df_monthly_multiplier.to_csv(path_to_monthly_multiplier, index=False, float_format='%.2f')
+    df_monthly_multiplier = pd.DataFrame(data=lists_monthly_multiplier, columns=header).set_index('name')
+
+    if zone_buildings is not None and os.path.isfile(path_to_monthly_multiplier):
+        existing = pd.read_csv(path_to_monthly_multiplier)
+        if 'name' in existing.columns and set(existing.columns) == set(header):
+            existing = existing.set_index('name')
+            existing = existing.loc[existing.index.isin(zone_buildings)]
+            kept = existing.drop(index=df_monthly_multiplier.index, errors='ignore')
+            order = list(existing.index) + [n for n in df_monthly_multiplier.index if n not in existing.index]
+            df_monthly_multiplier = pd.concat([kept, df_monthly_multiplier]).reindex(order)
+
+    df_monthly_multiplier.reset_index().to_csv(path_to_monthly_multiplier, index=False, float_format='%.2f')
 
 
 

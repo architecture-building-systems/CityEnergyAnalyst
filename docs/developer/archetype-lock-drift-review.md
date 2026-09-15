@@ -154,8 +154,10 @@ these, `write_lock` self-computes and stores, in `.archetype_lock.json`:
 
 Both are computed once, at a genuine mapper event (locking, an auto-remap during save, a
 database-triggered remap, scenario creation — anywhere `write_lock(locked=True)` is already
-called), from two bounded file reads (`indoor_comfort.csv`, `internal_loads.csv` — not the other
-three tabs, not one file per building). Never recomputed on a mere check. `is_drifted()` itself
+called), from three bounded file reads when the caller omits the baselines (the common case):
+one `zone.shp` read for `mapped_use_types`, plus `indoor_comfort.csv` and `internal_loads.csv`
+for `mapped_computed_values` — not the other three tabs, not one file per building. Never
+recomputed on a mere check. `is_drifted()` itself
 stays a cheap, coarse, `use_type`-only server-side fallback for a caller with nothing else
 loaded; the full per-building, per-tab check lives client-side in the input editor, which
 already has the zone table and all five derived tables loaded to render the editor regardless.
@@ -197,4 +199,5 @@ columns to compare.
 Cost: the lock sidecar and the `GET /archetype-lock` response now carry full baseline rows (7 +
 13 columns per building) instead of one hash string per tab per building — a larger payload,
 but the same category of data `mapped_use_types` already ships this way, not a new I/O pattern,
-and still only two bounded file reads at write time, same as before.
+and still the same bounded file reads at write time as before (`zone.shp`, `indoor_comfort.csv`,
+`internal_loads.csv`).

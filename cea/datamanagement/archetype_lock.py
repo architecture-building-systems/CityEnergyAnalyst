@@ -288,6 +288,9 @@ def is_drifted(locator: InputLocator, state: LockState | None = None) -> bool:
     except (OSError, ValueError, KeyError, RuntimeError):
         return True  # can't verify now either -- fail conservative, not "fine"
 
+    if current.keys() != state.mapped_use_types.keys():
+        return True
+
     for building, baseline_row in state.mapped_use_types.items():
         current_row = current.get(building)
         if current_row is None or current_row != baseline_row:
@@ -298,11 +301,12 @@ def is_drifted(locator: InputLocator, state: LockState | None = None) -> bool:
 def _comparable(value: Any) -> str:
     """Normalise a cell for comparison across the JSON round trip.
 
-    The payload arrives as JSON (so `2000` may be `2000` or `"2000"`, and a shapefile reads
-    back as numpy types), and a spurious difference here would re-run the mapper on every
-    save. Numbers compare as numbers, everything else as a stripped string.
+    The payload arrives as JSON (so `2000` may be `2000` or `"2000"`, and a shapefile/CSV reads
+    back as numpy types with a blank cell as `NaN` rather than `None`), and a spurious
+    difference here would re-run the mapper on every save. `None` and `NaN` compare equal (both
+    mean "missing"), numbers compare as numbers, everything else as a stripped string.
     """
-    if value is None:
+    if pd.isna(value):
         return ""
     try:
         return repr(float(value))
