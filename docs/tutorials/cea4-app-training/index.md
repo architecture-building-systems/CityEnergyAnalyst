@@ -181,5 +181,5 @@ If you encounter issues:
 
 ---
 
-**Last Updated**: May 2026
-**CEA Version**: 4.0.0-beta.7
+**Last Updated**: September 2026
+**CEA Version**: 4.0.0-beta.8
