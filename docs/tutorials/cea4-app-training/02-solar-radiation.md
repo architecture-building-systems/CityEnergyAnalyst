@@ -33,7 +33,7 @@ Uses the DAYSIM engine to perform detailed solar radiation analysis on all build
 | **Walls grid** | Grid resolution for wall surfaces (m) | 2 (default, recommended) |
 
 - **Advanced Parameters** (generally leave as default)
-- **Level of Details' roof-grid** and **walls-grid**: Control the resolution of solar radiation calculations. Smaller values = more detail but much longer computation. Default value of 2 m provides good balance. Not recommended to change unless you have specific requirements.
+- **Level of Details** (`roof-grid` and `walls-grid`): Control the resolution of solar radiation calculations. Smaller values = more detail but much longer computation. Default value of 2 m provides good balance. Not recommended to change unless you have specific requirements.
 
 ### How to Use
 
