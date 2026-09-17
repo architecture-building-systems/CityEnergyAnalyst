@@ -224,7 +224,7 @@ Performs detailed thermal hydraulic simulation of the network created in Part 1.
 | **Network name** | Select which network layout to simulate | Choose from dropdown (created in Part 1) |
 | **Network type** | DH or DC | Must match the network created in Part 1 |
 | **DH temperature mode** | Temperature strategy when the DH supply temperature is variable (`-1`) | `low-temperature` / `high-temperature` |
-| **Network temperature DH** | Fixed DH supply temperature (°C). `-1` = variable, follows building requirements | `-1`, or e.g. 45 / 70 |
+| **Network temperature DH** | Fixed DH supply temperature (°C). `-1` = variable, set by DH temperature mode | `-1`, or e.g. 45 / 70 |
 | **Network temperature DC** | Fixed DC supply temperature (°C). `-1` = variable, follows building requirements | `-1` |
 | **Equivalent length factor** | Share of pressure losses from fittings and accessories (0.0-0.6) | 0.2 |
 | **Min head substation** | Minimum head loss at each substation (kPa) | 20 |
@@ -551,7 +551,7 @@ Same structure as district heating, but:
 
 ### Layout Design
 - **Follow streets**: Easier permitting and construction
-- **Minimize length**: Reduce capital cost and heat losses
+- **Minimise length**: Reduce capital cost and heat losses
 - **Strategic branching**: Balance tree simplicity with reliability
 - **Future-proof**: Consider expansion areas
 

@@ -20,7 +20,7 @@ For each **district plant** (DH/DC):
 - **Energy Demand Part 2** completed
 - **Solar Radiation** completed (if PV/PVT/SC are configured)
 - **Thermal Network Part 1 + Part 2** completed (if district network scenarios are used)
-- Building supply settings configured (Input Editor > Supply tab)
+- Building supply settings configured (Input Editor > supply tab)
 
 ## Key Parameters
 
@@ -28,7 +28,7 @@ For each **district plant** (DH/DC):
 |-----------|-------------|
 | **What-if name** | Name for this supply configuration scenario |
 | **Network name** | Which thermal network layout to use (if applicable) |
-| **Overwrite supply settings** | True to use the what-if assemblies below instead of Input Editor > Supply |
+| **Overwrite supply settings** | True to use the what-if assemblies below instead of Input Editor > supply |
 | **Supply type (space heating/space cooling/DHW), building and district** | Assembly codes applied at building scale and district scale when overwriting |
 | **Booster type (space heating/DHW), building** | Building-scale booster assemblies |
 | **Buildings** | Buildings to include. Leave blank for all |
@@ -36,7 +36,7 @@ For each **district plant** (DH/DC):
 
 ## How to Use
 
-1. **Configure supply systems** in Input Editor > Supply tab:
+1. **Configure supply systems** in Input Editor > supply tab:
    - Set scale (BUILDING or DISTRICT) per service per building
    - Assign conversion technologies and carriers
 

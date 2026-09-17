@@ -414,7 +414,7 @@ def validate_network_covers_district_buildings(
     strict_extra_buildings: bool = True
 ) -> Tuple[gpd.GeoDataFrame, List[str]]:
     """
-    Validate that all buildings designated as 'district' in Building Properties/Supply settings have exactly one node
+    Validate that all buildings designated as 'district' in Input Editor > supply settings have exactly one node
     in the network (matched by exact name, not geometric footprint location).
 
     Validation checks:
@@ -486,7 +486,7 @@ def validate_network_covers_district_buildings(
             # supply.csv is authoritative - extra buildings likely indicate mistake
             raise UserNetworkLoaderError(
                 f"User-defined network includes buildings NOT designated for district {network_type_label}:\n\n"
-                f"  - Buildings designated for district (from Building Properties/Supply): {len(district_building_set)}\n"
+                f"  - Buildings designated for district (from Input Editor > supply): {len(district_building_set)}\n"
                 f"  - Buildings found in network nodes: {len(network_building_names)}\n"
                 f"  - Extra buildings: {len(extra_buildings)}\n\n"
                 "  - Extra building(s) in network:\n  " + "\n  ".join(extra_list[:20]) +
@@ -494,7 +494,7 @@ def validate_network_covers_district_buildings(
                 "\n\n"
                 "Resolution options:\n"
                 "  1. Remove these building nodes from your network layout\n"
-                "  2. Update Building Properties/Supply to set these buildings to district-scale systems\n"
+                "  2. Update Input Editor > supply to set these buildings to district-scale systems\n"
                 "  3. Set 'overwrite-supply-settings' to True if you want to intentionally include extra buildings\n"
                 "  4. Leave network layout parameters blank to let CEA generate the network automatically"
             )
@@ -523,9 +523,9 @@ def validate_network_covers_district_buildings(
             # This shouldn't happen if Supply.csv is consistent with zone geometry
             # But let's be defensive
             raise UserNetworkLoaderError(
-                f"Building '{building_name}' listed in Building Properties/Supply as district-connected "
+                f"Building '{building_name}' listed in Input Editor > supply as district-connected "
                 "but not found in zone geometry (zone.shp).\n"
-                "Please ensure Building Properties/Supply and zone geometry are consistent."
+                "Please ensure Input Editor > supply and zone geometry are consistent."
             )
 
         # Get the node for this building

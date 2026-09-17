@@ -578,7 +578,7 @@ Fetches topography data (.tif elevation raster) from third-party sources. Terrai
 
 **Terrain raster**: `terrain.tif`
 - GeoTIFF format
-- Elevation values in meters
+- Elevation values in metres
 - Covers zone + surroundings extent
 - Typical resolution: 30m × 30m (SRTM) or better
 
@@ -653,7 +653,7 @@ Queries streets geometry from OpenStreetMap for use in thermal network layout ge
 ### Output File
 
 **Streets shapefile**: `streets.shp`
-- Polylines representing street centerlines
+- Polylines representing street centrelines
 - Street names and types
 - Network topology (connections)
 
@@ -754,7 +754,7 @@ Required attributes:
 ### Tips
 - **Worth the effort for tree-heavy sites**: Skip if minimal tree coverage
 - **Estimate if needed**: Use aerial imagery and typical dimensions
-- **Seasonal variation**: Deciduous trees modeled with seasonal LAI
+- **Seasonal variation**: Deciduous trees modelled with seasonal LAI
 
 ### Troubleshooting
 

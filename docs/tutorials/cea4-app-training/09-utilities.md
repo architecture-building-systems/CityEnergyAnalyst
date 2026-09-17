@@ -163,14 +163,12 @@ Generates parameter samples for sensitivity analysis using the Sobol method. Sen
    - Select **Generate Samples for Sensitivity Analysis (SA)**
    - Enable up to five variables and set their lower/upper bounds
    - Set **N** (total samples = N × (2D + 2) for D variables)
-   - Enable **Create scenario directory** to write one scenario folder per sample
+   - Optionally enable **Create scenario directory** to create one empty scenario folder per sample
    - Click **Run**
 
-2. **Output**: Scenario folders with parameter variations
-   - `scenario_SA_001/` - First sample
-   - `scenario_SA_002/` - Second sample
-   - ...
-   - `scenario_SA_N/` - Nth sample
+2. **Output**:
+   - `{project}/sampled_variables.csv` - One row of variable values per sample
+   - If **Create scenario directory** is enabled: `{project}/SA_1/`, `SA_2/`, ... with empty `inputs` folders to fill in per sample
 
 ### Next Steps After Sample Generation
 
@@ -362,7 +360,7 @@ Facilitates renaming a building across all scenario files. When you rename a bui
 ### When to Use
 - Standardizing building naming conventions
 - Fixing building ID errors
-- Reorganizing building identifiers
+- Reorganising building identifiers
 - After importing external data with different IDs
 
 ### How It Works

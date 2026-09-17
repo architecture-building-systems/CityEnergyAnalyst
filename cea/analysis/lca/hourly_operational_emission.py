@@ -231,7 +231,7 @@ class OperationalHourlyTimeline:
         if not os.path.exists(pv_results_path):
             error_msg = (
                 f"PV electricity results missing for building {self.bpr.name}, panel type: {pv_code}. "
-                f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results. "
+                f"Please run 'Photovoltaic (PV) Panels' (cea photovoltaic) first to generate PV potential results. "
                 f"Expected file: {pv_results_path}"
             )
             print(f"ERROR: {error_msg}")

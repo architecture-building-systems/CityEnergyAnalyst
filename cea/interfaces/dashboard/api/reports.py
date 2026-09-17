@@ -62,7 +62,7 @@ def _demand_summary(locator):
     if not os.path.isfile(path):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Demand results not found. Run the demand simulation first.",
+            detail="Demand results not found. Run 'Energy Demand Part 2: Load Modelling' first.",
         )
 
     df = pd.read_csv(path)
@@ -430,7 +430,7 @@ async def get_custom_plot(
             e,
         )
         # Frontend supplies the human-readable feature label from
-        # its `PLOT_GROUPS` (e.g. "Energy by Carrier"). Falls back
+        # its `PLOT_GROUPS` (e.g. "LCA Part 1: Energy by Carrier"). Falls back
         # to the script name if the client didn't send one.
         tool = feature_label or script_name or 'the upstream tool'
         scenario_name = os.path.basename(scenario_path)

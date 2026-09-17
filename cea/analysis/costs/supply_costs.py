@@ -1525,7 +1525,7 @@ def calculate_district_network_costs(locator, config, network_type, network_name
                 f"Installed primary components:\n    {installed_info}\n"
                 f"{activation_issue}"
                 "This error occurs because SUPPLY assemblies specify component codes\n"
-                "that aren't in the optimization framework's activation priority list.\n"
+                "that aren't in the optimisation framework's activation priority list.\n"
                 "The components are installed but never activated.\n\n"
                 "RECOMMENDED SOLUTION:\n"
                 "  Use 'fallback mode' which uses component CATEGORIES instead of codes:\n"
@@ -1559,7 +1559,7 @@ def calculate_district_network_costs(locator, config, network_type, network_name
     if not os.path.exists(edges_file):
         print("      Warning: Piping costs not calculated - missing file:")
         print(f"               {edges_file}")
-        print("               Run 'thermal-network' (part 1 & 2) to generate network files")
+        print("               Run 'Thermal Network Part 1: layout' (cea network-layout) and 'Thermal Network Part 2a: flow & sizing, single-phase' (cea thermal-network) to generate network files")
     else:
         try:
             pipes_df = pd.read_csv(edges_file)
@@ -1740,13 +1740,13 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
     if not os.path.exists(layout_folder):
         print(f"  ⚠ Network layout folder not found for {network_type} network '{network_name}' - skipping")
         print(f"    Expected: {layout_folder}")
-        print("    Please run 'thermal-network' (part 1 and 2) first")
+        print("    Please run 'Thermal Network Part 1: layout' (cea network-layout) and 'Thermal Network Part 2a: flow & sizing, single-phase' (cea thermal-network) first")
         return {}
 
     if not os.path.exists(nodes_file):
         print(f"  ⚠ Network nodes file not found for {network_type} network '{network_name}' - skipping")
         print(f"    Expected: {nodes_file}")
-        print("    Please run 'thermal-network' (part 1 and 2) first")
+        print("    Please run 'Thermal Network Part 1: layout' (cea network-layout) and 'Thermal Network Part 2a: flow & sizing, single-phase' (cea thermal-network) first")
         return {}
 
     # Try to read network layout

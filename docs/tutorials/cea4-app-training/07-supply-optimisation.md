@@ -30,9 +30,9 @@ Optimises decentralised energy supply systems for individual buildings. The feat
 - Thermal storage size (optional)
 
 **Objectives**:
-1. **Minimize total annualised cost** (CAPEX + OPEX)
-2. **Minimize GHG emissions** (operational)
-3. **Minimize primary energy consumption**
+1. **Minimise total annualised cost** (CAPEX + OPEX)
+2. **Minimise GHG emissions** (operational)
+3. **Minimise primary energy consumption**
 
 ### Prerequisites
 - **Energy Demand Part 2** - Building energy loads required
@@ -167,9 +167,11 @@ Optimises centralised energy supply systems for entire districts. This feature f
 - Energy import/export strategies
 
 **Objectives**:
-1. **Minimize total system cost** (CAPEX + OPEX + network)
-2. **Minimize total GHG emissions**
-3. **Minimize primary energy consumption**
+Any combination selected under **Objective functions**:
+1. **Minimise cost** (`cost`)
+2. **Minimise GHG emissions** (`GHG_emissions`)
+3. **Minimise system energy demand** (`system_energy_demand`)
+4. **Minimise anthropogenic heat** (`anthropogenic_heat`)
 
 ### Additional Complexity vs Building-Scale
 
@@ -195,7 +197,7 @@ District optimisation must account for:
 
 | Parameter | Description | Typical Value |
 |-----------|-------------|---------------|
-| **Network name** | Existing network layout for the base case, or (none) to auto-generate one from Input Editor > Supply | From Thermal Network Part 1 |
+| **Network name** | Existing network layout for the base case, or (none) to auto-generate one from Input Editor > supply | From Thermal Network Part 1 |
 | **Network type** | District heating or district cooling | DH / DC |
 | **Buildings** | Buildings to include. Leave blank for all | All |
 | **Cooling / heating / heat rejection components** | Technology categories to consider, in priority order (e.g. BOILERS, COGENERATION_PLANTS, HEAT_PUMPS) | Defaults |

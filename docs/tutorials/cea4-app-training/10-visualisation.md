@@ -66,9 +66,9 @@ Creates bar charts of building energy demand results, showing heating, cooling, 
 
 **Annual Demand Bar Chart**:
 - Height = total energy (MWh/year)
-- Colors = energy services (heating, cooling, electricity, DHW)
+- Colours = energy services (heating, cooling, electricity, DHW)
 - Taller bars = higher energy consumers
-- Color distribution shows energy mix
+- Colour distribution shows energy mix
 
 **Energy Intensity**:
 - Normalises by floor area (kWh/m²/year)
@@ -86,7 +86,7 @@ Creates bar charts of building energy demand results, showing heating, cooling, 
 
 ### Customisation Options
 
-- **Colors**: Customise color scheme for energy services
+- **Colours**: Customise colour scheme for energy services
 - **Sorting**: Sort buildings by total demand, name, or type
 - **Labels**: Show/hide data labels on bars
 - **Legend**: Position and format
@@ -359,7 +359,7 @@ None besides the scenario. The axes follow the objective functions of the optimi
 
 ### Customisation
 
-- **Color by technology**: Show which technologies appear in solutions
+- **Colour by technology**: Show which technologies appear in solutions
 - **Size by objective**: Third objective as marker size
 - **Annotate**: Label key solutions
 
@@ -451,7 +451,7 @@ After completing CEA analyses:
 
 **For Reports**:
 - Export as PNG or PDF (300 dpi)
-- Use consistent color schemes
+- Use consistent colour schemes
 - Include data tables with charts
 
 **For Presentations**:
@@ -472,7 +472,7 @@ After completing CEA analyses:
 - **Clear titles**: Describe what is shown
 - **Axis labels**: Include units
 - **Legend**: Essential for multi-series charts
-- **Colors**: Use colorblind-friendly palettes
+- **Colours**: Use colour-blind-friendly palettes
 - **Annotations**: Highlight key findings
 
 ### Data Presentation
@@ -494,7 +494,7 @@ After completing CEA analyses:
 
 ### Configuration Files
 Advanced users can customise plot appearance via configuration files:
-- Color schemes
+- Colour schemes
 - Chart dimensions
 - Font sizes
 - Export formats
@@ -505,7 +505,7 @@ See CEA documentation for details on plot configuration.
 For publication-quality figures:
 1. Export as SVG
 2. Edit in Inkscape or Adobe Illustrator
-3. Adjust fonts, colors, labels as needed
+3. Adjust fonts, colours, labels as needed
 4. Export to required format
 
 ---

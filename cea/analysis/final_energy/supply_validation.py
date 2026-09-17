@@ -146,7 +146,7 @@ def validate_whatif_params(locator, config):
             "What-if mode requires all assembly parameters to be explicitly set.\n"
             "The following parameters are missing:\n"
             + "\n".join(missing)
-            + "\n\nPlease set these parameters in the Energy by Carrier settings."
+            + "\n\nPlease set these parameters in the LCA Part 1: Energy by Carrier settings."
         )
 
 
@@ -209,12 +209,12 @@ def validate_standalone_mode(locator):
     if mismatches:
         raise ValueError(
             "No network is selected, but the following buildings have DISTRICT-scale "
-            "assemblies in Building Properties/Supply:\n"
+            "assemblies in Input Editor > supply:\n"
             + "\n".join(mismatches)
             + "\n\nPlease either:\n"
-            "  (a) Select a network in the final-energy settings, or\n"
-            "  (b) Change these buildings to BUILDING-scale assemblies in Building Properties/Supply"
-            "  (c) Set 'overwrite-supply-settings = True' in final-energy settings"
+            "  (a) Select a network in the LCA Part 1: Energy by Carrier settings, or\n"
+            "  (b) Change these buildings to BUILDING-scale assemblies in Input Editor > supply"
+            "  (c) Set 'overwrite-supply-settings = True' in the LCA Part 1: Energy by Carrier settings"
         )
 
 
@@ -288,8 +288,8 @@ def validate_dh_consistency(dh_network, supply_df, scale_mapping, locator, confi
         if building_row.empty:
             raise ValueError(
                 f"Building '{building}' is listed in the DH network (connectivity.json) "
-                f"but is not found in Building Properties/Supply.\n\n"
-                f"Please re-run 'network-layout' after updating Building Properties/Supply."
+                f"but is not found in Input Editor > supply.\n\n"
+                f"Please re-run 'Thermal Network Part 1: layout' (cea network-layout) after updating Input Editor > supply."
             )
 
         row = building_row.iloc[0]
@@ -299,7 +299,7 @@ def validate_dh_consistency(dh_network, supply_df, scale_mapping, locator, confi
             if pd.isna(code) or str(code).strip() in ['', '-', 'NONE']:
                 raise ValueError(
                     f"Building '{building}' is connected to the DH network for space heating, "
-                    f"but 'supply_type_hs' is empty in Building Properties/Supply.\n\n"
+                    f"but 'supply_type_hs' is empty in Input Editor > supply.\n\n"
                     f"Please assign a DISTRICT-scale SUPPLY_HEATING assembly to this building."
                 )
 
@@ -318,7 +318,7 @@ def validate_dh_consistency(dh_network, supply_df, scale_mapping, locator, confi
             if pd.isna(code) or str(code).strip() in ['', '-', 'NONE']:
                 raise ValueError(
                     f"Building '{building}' is connected to the DH network for domestic hot water, "
-                    f"but 'supply_type_dhw' is empty in Building Properties/Supply.\n\n"
+                    f"but 'supply_type_dhw' is empty in Input Editor > supply.\n\n"
                     f"Please assign a DISTRICT-scale SUPPLY_HEATING assembly to this building."
                 )
 
@@ -339,7 +339,7 @@ def validate_dh_consistency(dh_network, supply_df, scale_mapping, locator, confi
             f"All buildings connected to the DH network for space heating must use the "
             f"same SUPPLY_HEATING assembly (they share one district plant).\n\n"
             f"Currently using different assemblies:\n{listing}\n\n"
-            f"Please update Building Properties/Supply so all DH buildings use the same assembly."
+            f"Please update Input Editor > supply so all DH buildings use the same assembly."
         )
 
     # All dhw assemblies must be the same
@@ -349,7 +349,7 @@ def validate_dh_consistency(dh_network, supply_df, scale_mapping, locator, confi
             f"All buildings connected to the DH network for domestic hot water must use the "
             f"same SUPPLY_HEATING assembly (they share one district plant).\n\n"
             f"Currently using different assemblies:\n{listing}\n\n"
-            f"Please update Building Properties/Supply so all DH buildings use the same assembly."
+            f"Please update Input Editor > supply so all DH buildings use the same assembly."
         )
 
     # Validate component-level consistency
@@ -381,8 +381,8 @@ def validate_dc_consistency(dc_network, supply_df, scale_mapping):
         if building_row.empty:
             raise ValueError(
                 f"Building '{building}' is listed in the DC network (connectivity.json) "
-                f"but is not found in Building Properties/Supply.\n\n"
-                f"Please re-run 'network-layout' after updating Building Properties/Supply."
+                f"but is not found in Input Editor > supply.\n\n"
+                f"Please re-run 'Thermal Network Part 1: layout' (cea network-layout) after updating Input Editor > supply."
             )
 
         row = building_row.iloc[0]
@@ -391,7 +391,7 @@ def validate_dc_consistency(dc_network, supply_df, scale_mapping):
         if pd.isna(code) or str(code).strip() in ['', '-', 'NONE']:
             raise ValueError(
                 f"Building '{building}' is connected to the DC network for space cooling, "
-                f"but 'supply_type_cs' is empty in Building Properties/Supply.\n\n"
+                f"but 'supply_type_cs' is empty in Input Editor > supply.\n\n"
                 f"Please assign a DISTRICT-scale SUPPLY_COOLING assembly to this building."
             )
 
@@ -412,7 +412,7 @@ def validate_dc_consistency(dc_network, supply_df, scale_mapping):
             f"All buildings connected to the DC network must use the same SUPPLY_COOLING "
             f"assembly (they share one district plant).\n\n"
             f"Currently using different assemblies:\n{listing}\n\n"
-            f"Please update Building Properties/Supply so all DC buildings use the same assembly."
+            f"Please update Input Editor > supply so all DC buildings use the same assembly."
         )
 
 
@@ -509,14 +509,14 @@ def validate_no_orphaned_district_buildings(connectivity, supply_df, scale_mappi
                 f"but not in {network_type} network '{network_name}': {names}"
             )
         raise ValueError(
-            "The following buildings have DISTRICT-scale assemblies in Building Properties/Supply "
+            "The following buildings have DISTRICT-scale assemblies in Input Editor > supply "
             "but are not connected to the selected network. "
-            "This may mean Building Properties/Supply was updated after running network-layout.\n\n"
+            "This may mean Input Editor > supply was updated after running network-layout.\n\n"
             + "\n".join(lines)
             + "\n\nPlease either:\n"
-            "  (a) Re-run 'network-layout' to regenerate connectivity.json (Set consider-only-buildings-with-demand = false), or\n"
-            "  (b) Change these buildings to BUILDING-scale assemblies in Building Properties/Supply\n"
-            "  (c) Set 'overwrite-supply-settings = True' in final-energy settings"
+            "  (a) Re-run 'Thermal Network Part 1: layout' (cea network-layout) to regenerate connectivity.json (Set consider-only-buildings-with-demand = false), or\n"
+            "  (b) Change these buildings to BUILDING-scale assemblies in Input Editor > supply\n"
+            "  (c) Set 'overwrite-supply-settings = True' in the LCA Part 1: Energy by Carrier settings"
         )
 
 
@@ -575,7 +575,7 @@ def validate_booster_configuration(dh_network, network_name, locator, config):
             f"low-temperature district heating network, but no booster assembly is configured:\n"
             f"{listing}\n\n"
             f"Please select a booster assembly in 'hs-booster-type-building' "
-            f"(Energy by Carrier settings)."
+            f"(LCA Part 1: Energy by Carrier settings)."
         )
 
     if dhw_needs_booster:
@@ -585,7 +585,7 @@ def validate_booster_configuration(dh_network, network_name, locator, config):
             f"low-temperature district heating network, but no booster assembly is configured:\n"
             f"{listing}\n\n"
             f"Please select a booster assembly in 'dhw-booster-type-building' "
-            f"(Energy by Carrier settings)."
+            f"(LCA Part 1: Energy by Carrier settings)."
         )
 
     if messages:
@@ -656,8 +656,8 @@ def validate_booster_temperature_compatibility(dh_network, network_name, locator
                     f"Substation file for building '{building}' is missing columns: "
                     f"{', '.join(missing_cols)}.\n\n"
                     f"This is likely because the thermal network was simulated with an older version of CEA.\n\n"
-                    f"Please re-run Thermal Network Part 2 to regenerate the substation files.\n"
-                    f"If the error persists, re-run Thermal Network Part 1 as well."
+                    f"Please re-run Thermal Network Part 2a (or 2b) to regenerate the substation files.\n"
+                    f"If the error persists, re-run Thermal Network Part 1: layout as well."
                 )
 
         # Check HS booster temperature
@@ -832,7 +832,7 @@ def validate_component_levels_match(hs_code, dhw_code, locator):
                 f"Both assemblies must reference the same {label} equipment component, "
                 f"since the district plant is a single physical installation that needs "
                 f"one consistent efficiency and sizing curve.\n\n"
-                f"Please update Building Properties/Supply so both services use assemblies "
+                f"Please update Input Editor > supply so both services use assemblies "
                 f"with matching {label} components."
             )
 
@@ -984,9 +984,9 @@ def validate_plant_temperature_vs_network_results(locator, network_name, config)
                                 f"Options:\n"
                                 f"  1. Select a different assembly with a supply temperature "
                                 f"higher than {t_network_C:.0f} degrees C\n"
-                                f"  2. Re-run Thermal Network Part 2 with "
+                                f"  2. Re-run Thermal Network Part 2a (or 2b) with "
                                 f"dh-temperature-mode = low-temperature\n"
-                                f"  3. Re-run Thermal Network Part 2 with "
+                                f"  3. Re-run Thermal Network Part 2a (or 2b) with "
                                 f"network-temperature-dh = {t_component:.0f} "
                                 f"(or slightly below) to match the plant component"
                             )
@@ -1030,7 +1030,7 @@ def validate_plant_temperature_vs_network_results(locator, network_name, config)
                                 f"Options:\n"
                                 f"  1. Select a different assembly with a supply temperature "
                                 f"lower than {t_network_C:.0f} degrees C\n"
-                                f"  2. Re-run Thermal Network Part 2 with "
+                                f"  2. Re-run Thermal Network Part 2a (or 2b) with "
                                 f"network-temperature-dc = {t_component:.0f} "
                                 f"(or slightly above) to match the plant component"
                             )
@@ -1054,7 +1054,7 @@ def load_network_connectivity(locator, network_name):
         raise ValueError(
             f"Network connectivity file not found for network '{network_name}'.\n\n"
             f"Expected at: {expected}\n\n"
-            f"Please run 'network-layout' first to generate this file."
+            f"Please run 'Thermal Network Part 1: layout' (cea network-layout) first to generate this file."
         )
 
     return data

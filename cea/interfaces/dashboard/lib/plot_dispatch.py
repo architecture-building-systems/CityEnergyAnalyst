@@ -106,7 +106,7 @@ def render_plot_html(
     ``config.scenario_name`` afterwards if the surrounding scope
     needs to.
 
-    ``feature_label`` (e.g. ``'Energy by Carrier'``) is propagated
+    ``feature_label`` (e.g. ``'LCA Part 1: Energy by Carrier'``) is propagated
     onto ``config._feature_label`` for the duration of the call so
     each plot script can read its family label from the config
     instead of hardcoding it locally. Frontend supplies the value

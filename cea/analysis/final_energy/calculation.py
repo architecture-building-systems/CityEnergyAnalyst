@@ -82,7 +82,7 @@ def calculate_building_final_energy(
     if not os.path.exists(demand_file):
         raise FileNotFoundError(
             f"Demand file not found for building {building_name}: {demand_file}\n"
-            f"Please run 'cea demand' first."
+            f"Please run 'Energy Demand Part 2: Load Modelling' (cea demand) first."
         )
 
     demand_df = pd.read_csv(demand_file)
@@ -815,7 +815,7 @@ def load_district_heating_data(
     if not os.path.exists(substation_file):
         raise FileNotFoundError(
             f"District heating substation file not found for building {building_name}: {substation_file}\n"
-            f"Please run 'cea thermal-network-layout' (part 1) and 'cea thermal-network' (part 2) first."
+            f"Please run 'Thermal Network Part 1: layout' (cea network-layout) and 'Thermal Network Part 2a: flow & sizing, single-phase' (cea thermal-network) first."
         )
 
     substation_df = pd.read_csv(substation_file)
@@ -850,7 +850,7 @@ def load_district_cooling_data(
     if not os.path.exists(substation_file):
         raise FileNotFoundError(
             f"District cooling substation file not found for building {building_name}: {substation_file}\n"
-            f"Please run 'cea thermal-network-layout' (part 1) and 'cea thermal-network' (part 2) first."
+            f"Please run 'Thermal Network Part 1: layout' (cea network-layout) and 'Thermal Network Part 2a: flow & sizing, single-phase' (cea thermal-network) first."
         )
 
     substation_df = pd.read_csv(substation_file)
@@ -888,7 +888,7 @@ def load_booster_data(
     if not os.path.exists(substation_file):
         raise FileNotFoundError(
             f"District heating substation file not found for building {building_name}: {substation_file}\n"
-            f"Please run 'cea thermal-network-layout' (part 1) and 'cea thermal-network' (part 2) first."
+            f"Please run 'Thermal Network Part 1: layout' (cea network-layout) and 'Thermal Network Part 2a: flow & sizing, single-phase' (cea thermal-network) first."
         )
 
     substation_df = pd.read_csv(substation_file)
@@ -1040,7 +1040,7 @@ def calculate_plant_final_energy(
     if not os.path.exists(plant_load_file):
         raise FileNotFoundError(
             f"Plant thermal load file not found: {plant_load_file}\n"
-            f"Please run 'cea thermal-network-layout' (part 1) and 'cea thermal-network' (part 2) first."
+            f"Please run 'Thermal Network Part 1: layout' (cea network-layout) and 'Thermal Network Part 2a: flow & sizing, single-phase' (cea thermal-network) first."
         )
 
     plant_load_df = pd.read_csv(plant_load_file)
