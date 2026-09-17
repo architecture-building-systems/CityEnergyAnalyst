@@ -517,7 +517,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                 print(f"  Warning: Plant node type '{plant_type}' contains a legacy service suffix.")
                 print("    This suffix is no longer used to control network temperature.")
                 print("    Temperature strategy is now set via thermal-network:dh-temperature-mode.")
-                print("    Re-run 'Thermal Network Part 1: layout' (cea network-layout) to update plant node types to plain PLANT.")
+                print("    Re-run 'Thermal Network Part 1: Layout' (cea network-layout) to update plant node types to plain PLANT.")
 
         # Always use dh-temperature-mode config to determine service order
         dh_temperature_mode = config.thermal_network.dh_temperature_mode

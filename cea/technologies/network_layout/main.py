@@ -2028,7 +2028,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                 f"No networks were generated - all requested network types were skipped:\n"
                 f"  {', '.join(skipped_info)}\n"
                 f"Please check that your buildings have the required demand, or adjust the "
-                f"'consider-only-buildings-with-demand' setting in Thermal Network Part 1: layout."
+                f"'consider-only-buildings-with-demand' setting in Thermal Network Part 1: Layout."
             )
 
 

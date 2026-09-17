@@ -289,7 +289,7 @@ def validate_dh_consistency(dh_network, supply_df, scale_mapping, locator, confi
             raise ValueError(
                 f"Building '{building}' is listed in the DH network (connectivity.json) "
                 f"but is not found in Input Editor > supply.\n\n"
-                f"Please re-run 'Thermal Network Part 1: layout' (cea network-layout) after updating Input Editor > supply."
+                f"Please re-run 'Thermal Network Part 1: Layout' (cea network-layout) after updating Input Editor > supply."
             )
 
         row = building_row.iloc[0]
@@ -382,7 +382,7 @@ def validate_dc_consistency(dc_network, supply_df, scale_mapping):
             raise ValueError(
                 f"Building '{building}' is listed in the DC network (connectivity.json) "
                 f"but is not found in Input Editor > supply.\n\n"
-                f"Please re-run 'Thermal Network Part 1: layout' (cea network-layout) after updating Input Editor > supply."
+                f"Please re-run 'Thermal Network Part 1: Layout' (cea network-layout) after updating Input Editor > supply."
             )
 
         row = building_row.iloc[0]
@@ -514,7 +514,7 @@ def validate_no_orphaned_district_buildings(connectivity, supply_df, scale_mappi
             "This may mean Input Editor > supply was updated after running network-layout.\n\n"
             + "\n".join(lines)
             + "\n\nPlease either:\n"
-            "  (a) Re-run 'Thermal Network Part 1: layout' (cea network-layout) to regenerate connectivity.json (Set consider-only-buildings-with-demand = false), or\n"
+            "  (a) Re-run 'Thermal Network Part 1: Layout' (cea network-layout) to regenerate connectivity.json (Set consider-only-buildings-with-demand = false), or\n"
             "  (b) Change these buildings to BUILDING-scale assemblies in Input Editor > supply\n"
             "  (c) Set 'overwrite-supply-settings = True' in the LCA Part 1: Energy by Carrier settings"
         )
@@ -657,7 +657,7 @@ def validate_booster_temperature_compatibility(dh_network, network_name, locator
                     f"{', '.join(missing_cols)}.\n\n"
                     f"This is likely because the thermal network was simulated with an older version of CEA.\n\n"
                     f"Please re-run Thermal Network Part 2a (or 2b) to regenerate the substation files.\n"
-                    f"If the error persists, re-run Thermal Network Part 1: layout as well."
+                    f"If the error persists, re-run Thermal Network Part 1: Layout as well."
                 )
 
         # Check HS booster temperature
@@ -1054,7 +1054,7 @@ def load_network_connectivity(locator, network_name):
         raise ValueError(
             f"Network connectivity file not found for network '{network_name}'.\n\n"
             f"Expected at: {expected}\n\n"
-            f"Please run 'Thermal Network Part 1: layout' (cea network-layout) first to generate this file."
+            f"Please run 'Thermal Network Part 1: Layout' (cea network-layout) first to generate this file."
         )
 
     return data

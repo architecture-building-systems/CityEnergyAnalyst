@@ -238,7 +238,7 @@ Energy Demand Forecasting:
 Thermal Network Design:
 
   - name: network-layout
-    label: "Thermal Network Part 1: layout"
+    label: "Thermal Network Part 1: Layout"
     short_description: Create or validate thermal network piping layout
     description: |
       This Feature creates a thermal network's piping layout using the minimum spanning tree algorithm following streets geometry, or validates and processes user-provided network layouts (shapefiles or GeoJSON). Auto-generated layouts all have a one-component layout with a single plant, while user-provided layouts can have a multi-component network with one plant for each component.
@@ -252,7 +252,7 @@ Thermal Network Design:
       - [get_zone_geometry]
 
   - name: thermal-network
-    label: "Thermal Network Part 2a: flow & sizing, single-phase"
+    label: "Thermal Network Part 2a: Flow & Sizing, Single-Phase"
     short_description: Solve thermal hydraulic network flow and sizing using an EPANET-based model without considering phasing
     description: |
       This Feature solves the thermal hydraulic network based on the thermal network's piping layout (single-phase) created by Feature Thermal Network Part I (layout), using [WNTR](https://usepa.github.io/WNTR) (Water Network Tool for Resilience), an [EPANET](https://www.epa.gov/water-research/epanet) compatible hydraulic simulator.
@@ -268,7 +268,7 @@ Thermal Network Design:
       - [get_weather_file]
 
   - name: thermal-network-multiple-phase
-    label: "Thermal Network Part 2b: flow & sizing, multiple-phase"
+    label: "Thermal Network Part 2b: Flow & Sizing, Multiple-Phase"
     short_description: Solve thermal hydraulic network flow and sizing using an EPANET-based model with considering phasing
     description: |
       This Feature solves the thermal hydraulic network based on the thermal network's piping layout (multiple-phase) created by Feature Thermal Network Part I (layout), using [WNTR](https://usepa.github.io/WNTR) (Water Network Tool for Resilience), an [EPANET](https://www.epa.gov/water-research/epanet) compatible hydraulic simulator.
@@ -284,7 +284,7 @@ Thermal Network Design:
       - [get_weather_file]
 
   - name: thermal-network-detailed
-    label: "Thermal Network Part 2: flow & sizing, detailed model"
+    label: "Thermal Network Part 2: Flow & Sizing, Detailed Model"
     short_description: Solve thermal hydraulic network flow and sizing using detailed model
     description: This Feature solves the thermal hydraulic network based on the thermal network's piping layout created by Feature Thermal Network Part I (layout).
     interfaces: [cli]
@@ -632,7 +632,7 @@ Energy Supply System Optimisation:
                  thermal-network-optimization]
 
   - name: decentralized
-    label: "Supply System Optimisation: building-scale"
+    label: "Supply System Optimisation: Building-Scale"
     short_description: Optimise decentralised energy supply systems
     description: This Feature optimises energy supply systems for decentralised operation.
     interfaces: [cli]
@@ -811,7 +811,7 @@ Utilities:
       - [get_zone_geometry]
 
   - name: create-mixed-use-type
-    label: Create mixed-use type
+    label: Create Mixed-Use Type
     short_description: Create new use-type by aggregating existing use-types
     description: This Feature facilitates creating a new use-type by aggregating values from a list of different use-types
     interfaces: [cli]
@@ -829,7 +829,7 @@ Utilities:
     parameters: [test]
 
   - name: run-unit-tests
-    label: Unit tests
+    label: Unit Tests
     short_description: Run all unit tests in the cea/tests folder
     description: Run all the unit tests in the cea/tests folder
     interfaces: [test, cli]
@@ -837,7 +837,7 @@ Utilities:
     parameters: []
 
   - name: run-all-plots
-    label: Run all plots
+    label: Run All Plots
     short_description: Run all plots for testing purposes
     description: Run all the plots for test purposes
     interfaces: [test, cli]
@@ -848,7 +848,7 @@ Utilities:
 default:
 
   - name: multi-criteria-analysis
-    label: Multicriteria analysis
+    label: Multicriteria Analysis
     short_description: Perform multicriteria analysis
     description: Multicriteria analysis
     interfaces: [cli]
@@ -856,7 +856,7 @@ default:
     parameters: ['general:scenario', multi-criteria]
 
   - name: zone-helper
-    label: Zone helper
+    label: Zone Helper
     short_description: Query zone geometry from OpenStreetMap
     description: Query zone geometry from Open Street Maps
     interfaces: [cli]

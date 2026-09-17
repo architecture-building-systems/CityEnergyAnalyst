@@ -54,9 +54,9 @@ Forecast hourly and annual energy demand for heating, cooling, electricity, and 
 
 ### 5. [Thermal Network Design](05-thermal-network.md)
 Design and analyse district heating and cooling networks.
-- Thermal Network Part 1: layout
-- Thermal Network Part 2a: flow & sizing, single-phase
-- Thermal Network Part 2b: flow & sizing, multiple-phase — phased rollout over time
+- Thermal Network Part 1: Layout
+- Thermal Network Part 2a: Flow & Sizing, Single-Phase
+- Thermal Network Part 2b: Flow & Sizing, Multiple-Phase — phased rollout over time
 
 ### 6. [Life Cycle Analysis (LCA)](06-0-life-cycle-analysis.md)
 Assess environmental impacts and costs of building energy systems using what-if supply scenarios. All four features run on a shared what-if scenario; **Final Energy must run first** and produces the `configuration.json` consumed by the other three.
@@ -67,7 +67,7 @@ Assess environmental impacts and costs of building energy systems using what-if 
 
 ### 7. [Energy Supply System Optimisation](07-supply-optimisation.md)
 Optimise energy supply systems for buildings and districts.
-- Supply System Optimisation: building-scale *(CLI only)*
+- Supply System Optimisation: Building-Scale *(CLI only)*
 - District Supply System Optimisation
 
 ### 8. [Data Management](08-data-management.md)

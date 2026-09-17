@@ -10,7 +10,7 @@ CEA 4 supports **multiple network layouts** per scenario, lets you **chain a new
 
 ---
 
-## Thermal Network Part 1: layout
+## Thermal Network Part 1: Layout
 
 ### Overview
 Generates a thermal network **pipe trench** (a single geometry that can carry both DH and DC pipes) and the service-specific node sets for district heating (DH) and/or district cooling (DC). There are three ways to produce a layout:
@@ -99,7 +99,7 @@ When loading an existing network or a user-provided layout, the engine reconcile
    - **Chain off an existing network**: set `existing-network` to the previous network's name.
 
 3. **Run layout generation**:
-   - Navigate to **Thermal Network Design → Thermal Network Part 1: layout**
+   - Navigate to **Thermal Network Design → Thermal Network Part 1: Layout**
    - Give the new layout a **unique `network-name`**
    - Select `network-type` (`DH`, `DC`, or both)
    - If chaining or uploading, pick a `network-layout-mode`
@@ -174,7 +174,7 @@ Typical network characteristics:
 
 ---
 
-## Thermal Network Part 2a: flow & sizing, single-phase
+## Thermal Network Part 2a: Flow & Sizing, Single-Phase
 
 ### Overview
 Performs detailed thermal hydraulic simulation of the network created in Part 1. This feature calculates mass flow rates, pipe sizes, temperatures, pressure drops, and pump requirements for district heating or cooling systems.
@@ -241,7 +241,7 @@ Performs detailed thermal hydraulic simulation of the network created in Part 1.
 
 2. **Configure parameters**:
    - Navigate to **Thermal Network Design**
-   - Select **Thermal Network Part 2a: flow & sizing, single-phase**
+   - Select **Thermal Network Part 2a: Flow & Sizing, Single-Phase**
    - **Select network name** from dropdown (must be created in Part 1)
    - Select network type (must match the type used in Part 1)
    - Set the network temperatures:
@@ -358,7 +358,7 @@ If the required diameter produced by the simulation exceeds the largest DN in th
 
 ---
 
-## Thermal Network Part 2b: flow & sizing, multiple-phase
+## Thermal Network Part 2b: Flow & Sizing, Multiple-Phase
 
 > **"Multiple-phase" means construction phases, not two-phase flow.** This feature is about
 > building a network out in stages over time. It has nothing to do with steam or two-phase
@@ -436,7 +436,7 @@ Every edge × phase pair is labelled with one of:
 2. **Run Part 2 for each phase** individually (`thermal-network` tool) to generate per-phase simulation results. This populates the `edge_list.csv` metadata that Part 2b reads to get per-pipe flow requirements.
 
 3. **Run Part 2b**:
-   - Navigate to **Thermal Network Design → Thermal Network Part 2b: flow & sizing, multiple-phase**
+   - Navigate to **Thermal Network Design → Thermal Network Part 2b: Flow & Sizing, Multiple-Phase**
    - Set `phasing-plan-name` (e.g. `plan8`)
    - Set `network-name` to your ordered phase list: `['sub1', 'sub2', 'sub3']`
    - Set `phase-completion-year` to matching years: `['2025', '2050', '2075']`

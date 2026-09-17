@@ -155,7 +155,7 @@ class Domain(object):
                     "The 'network-name' parameter is required for district-scale optimisation.\n"
                     "A pre-generated network layout must exist before running optimisation.\n\n"
                     "Resolution:\n"
-                    "  1. Run 'Thermal Network Part 1: layout' (cea network-layout) first to generate a network layout\n"
+                    "  1. Run 'Thermal Network Part 1: Layout' (cea network-layout) first to generate a network layout\n"
                     "  2. Set 'network-name' in [optimization-new] config to the generated network name"
                 )
 
@@ -202,20 +202,20 @@ class Domain(object):
                     error_msg = (
                         f"Network '{network_name}' exists for {other_type} but not for {network_type}.\n\n"
                         "Possible causes:\n"
-                        f"  - {network_type} was not selected when running 'Thermal Network Part 1: layout'\n"
+                        f"  - {network_type} was not selected when running 'Thermal Network Part 1: Layout'\n"
                         f"  - Buildings have no {('cooling' if network_type == 'DC' else 'heating')} demand, so {network_type} was skipped\n\n"
                         "Resolution:\n"
-                        f"  1. Re-run 'Thermal Network Part 1: layout' (cea network-layout) ensuring {network_type} is selected in the include-services parameter\n"
+                        f"  1. Re-run 'Thermal Network Part 1: Layout' (cea network-layout) ensuring {network_type} is selected in the include-services parameter\n"
                         f"  2. Check if buildings have {('cooling' if network_type == 'DC' else 'heating')} demand in scenario/outputs/data/demand/\n"
                     )
                 else:
                     error_msg = (
                         f"No {network_type} networks found in this scenario.\n\n"
                         "Possible causes:\n"
-                        "  - 'Thermal Network Part 1: layout' was not run yet\n"
-                        f"  - 'Thermal Network Part 1: layout' skipped {network_type} generation due to zero demand\n\n"
+                        "  - 'Thermal Network Part 1: Layout' was not run yet\n"
+                        f"  - 'Thermal Network Part 1: Layout' skipped {network_type} generation due to zero demand\n\n"
                         "Resolution:\n"
-                        f"  1. Run 'Thermal Network Part 1: layout' (cea network-layout) to generate the network (ensure buildings have demand for {network_type})\n"
+                        f"  1. Run 'Thermal Network Part 1: Layout' (cea network-layout) to generate the network (ensure buildings have demand for {network_type})\n"
                         f"  2. Check if buildings have {('cooling' if network_type == 'DC' else 'heating')} demand in scenario/outputs/data/demand/\n"
                     )
 

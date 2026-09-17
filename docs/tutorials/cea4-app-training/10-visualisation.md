@@ -58,9 +58,8 @@ Creates bar charts of building energy demand results, showing heating, cooling, 
    - Click **Run**
 
 3. **View results**:
-   - Charts saved to `{scenario}/outputs/plots/demand/`
-   - Interactive HTML plots (open in browser)
-   - Static PNG/PDF (for presentations)
+   - The interactive chart is shown in the app (not saved to the scenario folder)
+   - Hover for values; zoom, pan, or download a PNG from the chart toolbar
 
 ### Chart Interpretation
 
@@ -198,7 +197,7 @@ Creates bar charts of solar energy technology potential (PV, PVT, solar collecto
    - Choose the X-axis grouping
    - Click **Run**
 
-3. **Outputs**: `{scenario}/outputs/plots/solar/`
+3. **Output**: The interactive chart is shown in the app (not saved to the scenario folder). See [Saving and Sharing Plots](#saving-and-sharing-plots).
 
 ### Chart Interpretation
 
@@ -263,7 +262,7 @@ Plots comfort and discomfort hours for buildings based on thermal comfort analys
    - Select buildings
    - Click **Run**
 
-3. **Outputs**: `{scenario}/outputs/plots/comfort/`
+3. **Output**: The interactive chart is shown in the app (not saved to the scenario folder). See [Saving and Sharing Plots](#saving-and-sharing-plots).
 
 ### Chart Types
 
@@ -337,7 +336,7 @@ None besides the scenario. The axes follow the objective functions of the optimi
    - Select **Plot - Pareto Front**
    - Click **Run**
 
-3. **Outputs**: `{scenario}/outputs/plots/optimisation/pareto_front/`
+3. **Output**: The interactive chart is shown in the app (not saved to the scenario folder). See [Saving and Sharing Plots](#saving-and-sharing-plots).
 
 ### Chart Interpretation
 
@@ -447,22 +446,14 @@ After completing CEA analyses:
 5. **Optimisation Plots** (if optimisation done):
    - Plot - Pareto Front (show trade-offs and optimal solutions)
 
-### Creating Presentation Packages
+### Saving and Sharing Plots
 
-**For Reports**:
-- Export as PNG or PDF (300 dpi)
-- Use consistent colour schemes
-- Include data tables with charts
+Plots are generated on demand and shown in the app; CEA does not write plot files to the scenario folder.
 
-**For Presentations**:
-- Export as SVG for scaling
-- Use interactive HTML for workshops
-- Highlight key findings with annotations
-
-**For Publications**:
-- Export vector formats (SVG, PDF)
-- Follow journal style guidelines
-- Provide source data
+- **Image**: Hover over a chart and use the camera icon in the chart toolbar to download a PNG
+- **Side-by-side views**: Arrange plots and maps in the [Canvas Builder](12-canvas-builder.md)
+- **Underlying data**: Use [Export Results to .csv (Summary & Analytics)](01-import-export.md#export-results-to-csv-summary--analytics) to get the numbers behind a chart
+- **Publication figures**: CEA has no SVG or PDF export; rebuild the chart from the exported .csv in your own plotting tool
 
 ---
 
@@ -492,21 +483,14 @@ After completing CEA analyses:
 
 ## Customising Plots
 
-### Configuration Files
-Advanced users can customise plot appearance via configuration files:
-- Colour schemes
-- Chart dimensions
-- Font sizes
-- Export formats
-
-See CEA documentation for details on plot configuration.
+### Plot Parameters
+Most bar-chart plot tools expose their appearance settings as parameters: plot title, axis labels, Y-axis range and step, plot type (stacked, grouped, or stacked percentage), X-axis grouping and sorting, and faceting.
 
 ### Post-Processing
 For publication-quality figures:
-1. Export as SVG
-2. Edit in Inkscape or Adobe Illustrator
-3. Adjust fonts, colours, labels as needed
-4. Export to required format
+1. Export the data with Export Results to .csv (Summary & Analytics)
+2. Recreate the chart in your own plotting tool
+3. Adjust fonts, colours, and labels as needed
 
 ---
 

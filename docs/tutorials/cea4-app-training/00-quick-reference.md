@@ -49,9 +49,9 @@ This page provides a complete overview of all 48 features available in the CEA-4
 
 | Feature | Description | Key Use |
 |---------|-------------|---------|
-| **Thermal Network Part 1: layout** | Create thermal network piping layout using minimum spanning tree | Generate district heating/cooling network layout |
-| **Thermal Network Part 2a: flow & sizing, single-phase** | Solve thermal hydraulic network flow and sizing | Size pipes and calculate pressure drops for networks |
-| **Thermal Network Part 2b: flow & sizing, multiple-phase** | Size pipes across a sequence of phased networks | Plan phased rollout or decommissioning of a network |
+| **Thermal Network Part 1: Layout** | Create thermal network piping layout using minimum spanning tree | Generate district heating/cooling network layout |
+| **Thermal Network Part 2a: Flow & Sizing, Single-Phase** | Solve thermal hydraulic network flow and sizing | Size pipes and calculate pressure drops for networks |
+| **Thermal Network Part 2b: Flow & Sizing, Multiple-Phase** | Size pipes across a sequence of phased networks | Plan phased rollout or decommissioning of a network |
 
 ---
 
@@ -72,7 +72,7 @@ All four LCA features use a shared **what-if scenario** (a named supply configur
 
 | Feature | Description | Key Use |
 |---------|-------------|---------|
-| **Supply System Optimisation: building-scale** | Optimise decentralised energy supply systems *(CLI only)* | Find optimal building-level energy system configurations |
+| **Supply System Optimisation: Building-Scale** | Optimise decentralised energy supply systems *(CLI only)* | Find optimal building-level energy system configurations |
 | **District Supply System Optimisation** | Optimise centralised energy supply systems | Find optimal district-level energy system configurations |
 
 ---

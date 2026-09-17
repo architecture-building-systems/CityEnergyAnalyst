@@ -4,7 +4,7 @@ Supply system optimisation features use multi-objective optimisation algorithms 
 
 ---
 
-## Supply System Optimisation: building-scale
+## Supply System Optimisation: Building-Scale
 
 ⚠️ **Note**: This feature is only available via **Command Line Interface (CLI)**. It is not accessible through the CEA-4 App dashboard.
 
