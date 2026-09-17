@@ -828,14 +828,6 @@ Utilities:
     module: cea.tests
     parameters: [test]
 
-  - name: run-unit-tests
-    label: Unit tests
-    short_description: Run all unit tests in the cea/tests folder
-    description: Run all the unit tests in the cea/tests folder
-    interfaces: [test, cli]
-    module: cea.tests.run_unit_tests
-    parameters: []
-
   - name: run-all-plots
     label: Run all plots
     short_description: Run all plots for testing purposes
@@ -926,7 +918,7 @@ default:
     short_description: Trace all InputLocator calls for a script
     description: trace all calls to the InputLocator for a script
     interfaces: [cli]
-    module: cea.tests.trace_inputlocator
+    module: cea.utilities.trace_inputlocator.trace_inputlocator
     parameters: ['general:scenario', trace-inputlocator]
 
   - name: workflow
