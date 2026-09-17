@@ -9,7 +9,6 @@ from functools import wraps
 
 from typing import NamedTuple, List, Optional, Dict, Any
 
-import cea.scripts
 from cea import MissingInputDataException
 from cea.config import Configuration, DEFAULT_CONFIG
 from cea.inputlocator import InputLocator
@@ -283,20 +282,7 @@ class MapLayer(abc.ABC):
             logger.debug(f"Optional input files not found (this is expected): {set(missing_optional_files)}")
         
         if missing_required_files:
-            missing = set(missing_required_files)
-            missing_methods = []
-            for file_requirement in self.file_requirements():
-                class_name, method_name = file_requirement.file_locator.rsplit(":", 1)
-                if class_name != "locator" or file_requirement.optional:
-                    continue
-                files = file_requirement.get_required_files(self, parameters)
-                files = files if isinstance(files, list) else [files]
-                if missing.intersection(files):
-                    missing_methods.append(method_name)
-            exc = MissingInputDataException(f"Following input files are missing: {missing}")
-            # Read by the map-layers API so the app can name the tool to run.
-            exc.upstream_tools = cea.scripts.upstream_tool_labels(missing_methods)
-            raise exc
+            raise MissingInputDataException(f"Following input files are missing: {set(missing_required_files)}")
 
     def generate_output(self, parameters) -> dict:
         """Generates the output for this layer"""

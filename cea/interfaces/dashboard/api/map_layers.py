@@ -11,14 +11,6 @@ from pydantic import BaseModel
 router = APIRouter()
 
 
-def _missing_input_detail(e: MissingInputDataException) -> dict:
-    tools = getattr(e, "upstream_tools", [])
-    message = "Missing input files."
-    if tools:
-        message += " Run " + " and ".join(f"'{tool}'" for tool in tools) + " first."
-    return {"message": message, "upstream_tools": tools}
-
-
 class LayerParams(BaseModel):
     model_config = {"extra": "forbid"}
 
@@ -141,7 +133,7 @@ async def generate_map_layer(
         output = layer.generate_output(params.parameters)
     except MissingInputDataException as e:
         print(e)
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=_missing_input_detail(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing input files")
     except ValueError as e:
         print(e)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
@@ -162,4 +154,4 @@ async def check_map_layer(
         layer.check_for_missing_input_files(params.parameters)
     except MissingInputDataException as e:
         print(e)
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=_missing_input_detail(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing input files")
