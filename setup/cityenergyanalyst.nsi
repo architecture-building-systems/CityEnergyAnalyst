@@ -94,16 +94,15 @@ Function ReportGuiLog
         FileSeek $R0 0 SET
     ${EndIf}
 
-    StrCpy $R2 0
+    ; read through to EOF - bounded already by the 8KB seek above, so this
+    ; can't run away, but it must not stop early: stopping partway through a
+    ; large window would leave $GuiLogTail on an earlier line instead of the
+    ; log's actual last line.
     DetailPrint "---- CEA Desktop installer log (tail) ----"
     ${Do}
         ClearErrors
         FileRead $R0 $R3
         ${If} ${Errors}
-            ${Break}
-        ${EndIf}
-        IntOp $R2 $R2 + 1
-        ${If} $R2 > 40
             ${Break}
         ${EndIf}
         DetailPrint "$R3"
@@ -143,7 +142,7 @@ FunctionEnd
 !macro SendTelemetry EventName Step ErrorCode ErrorDetail
     !ifdef POSTHOG_API_KEY
         ${If} ${FileExists} "$TEMP\cea-installer-telemetry.ps1"
-            Exec '"$WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File "$TEMP\cea-installer-telemetry.ps1" -ApiKey "${POSTHOG_API_KEY}" -PostHogHost "${POSTHOG_HOST}" -EventName "${EventName}" -CeaVersion "${VER}" -InstallerStep "${Step}" -ErrorCode "${ErrorCode}" -ErrorDetail "${ErrorDetail}"'
+            Exec '"$WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "$TEMP\cea-installer-telemetry.ps1" -ApiKey "${POSTHOG_API_KEY}" -PostHogHost "${POSTHOG_HOST}" -EventName "${EventName}" -CeaVersion "${VER}" -InstallerStep "${Step}" -ErrorCode "${ErrorCode}" -ErrorDetail "${ErrorDetail}"'
         ${EndIf}
     !endif
 !macroend
