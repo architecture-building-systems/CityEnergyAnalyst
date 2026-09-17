@@ -23,12 +23,11 @@ Creates bar charts of building energy demand results, showing heating, cooling, 
 - Electricity (E) - appliances, lighting, auxiliaries
 - Domestic hot water (Qww)
 
-**Chart Types Available**:
-1. **Annual demand** - Total MWh/year per building (stacked bar)
-2. **Energy intensity** - kWh/m²/year per building (normalised)
-3. **Peak loads** - Maximum kW per building
-4. **Time series** - Hourly demand profiles (line charts)
-5. **Monthly aggregation** - Seasonal patterns
+**Views Available** (via X to plot, Y normalised by and Plot type):
+1. **Per building** - Totals per building, stacked or grouped by service
+2. **Energy intensity** - Normalised by gross or conditioned floor area
+3. **Faceted** - By months, seasons, construction type, or main use type
+4. **District time series** - Hourly, daily, monthly, seasonal, or annual totals
 
 ### Prerequisites
 - **Energy Demand Part 2** completed
@@ -38,10 +37,12 @@ Creates bar charts of building energy demand results, showing heating, cooling, 
 
 | Parameter | Description | Options |
 |-----------|-------------|---------|
-| **Chart type** | Type of visualisation | Annual / Intensity / Peaks / Time series / Monthly |
-| **Building filter** | Which buildings to include | All / Selected / By type |
-| **Energy services** | Which services to show | All / Heating / Cooling / Electricity |
-| **Stacked vs grouped** | Bar chart style | Stacked (default) / Grouped |
+| **Y metric to plot** | End-use services to show | electricity / space_heating / space_cooling / domestic_hot_water |
+| **Y metric unit** | Unit | MWh / kWh (default) / Wh |
+| **Y normalised by** | Normalisation | no_normalisation / gross_floor_area (default) / conditioned_floor_area |
+| **X to plot** | X-axis grouping | building (default), faceted by months, seasons, construction type, etc. |
+| **Plot type** | Bar chart style | bar_plot_stack (default) / bar_plot_group / bar_plot_stack_percentage |
+| **Buildings** and building filters | Which buildings to include | All, or filter by year, construction type, use type |
 
 ### How to Use
 
@@ -50,9 +51,10 @@ Creates bar charts of building energy demand results, showing heating, cooling, 
 2. **Run plot generation**:
    - Navigate to **Visualisation**
    - Select **Plot - Building Energy Demand**
-   - Choose chart type (start with "Annual demand")
-   - Select buildings (or use "All")
-   - Choose whether to stack or group energy services
+   - Choose services (Y metric to plot), unit and normalisation
+   - Choose the X-axis grouping (start with `building`)
+   - Select buildings (or leave blank for all)
+   - Choose plot type (stacked, grouped, or stacked percentage)
    - Click **Run**
 
 3. **View results**:
@@ -174,11 +176,10 @@ Creates bar charts of solar energy technology potential (PV, PVT, solar collecto
 - PVT: Electricity + heat generation
 - Solar collectors: Heat generation (MWh/year)
 
-**Chart Types**:
-1. **Annual generation** - Total MWh/year by technology
-2. **Installed capacity** - kWp (PV/PVT) or m² (SC)
-3. **Technology comparison** - PV vs PVT vs SC side-by-side
-4. **Specific yield** - kWh/kWp/year or kWh/m²/year
+**Views**:
+1. **By surface** - Roofs and north/east/south/west walls (Y metric to plot)
+2. **Normalised** - Per gross floor area or per installed panel area of each surface
+3. **Per building or district time series** - Via X to plot
 
 ### Prerequisites
 - At least one solar technology assessment completed:
@@ -193,8 +194,8 @@ Creates bar charts of solar energy technology potential (PV, PVT, solar collecto
 2. **Generate plots**:
    - Navigate to **Visualisation**
    - Select **Plot - Solar Technology**
-   - Choose technologies to include
-   - Select chart type
+   - Choose surfaces (Y metric to plot), unit and normalisation
+   - Choose the X-axis grouping
    - Click **Run**
 
 3. **Outputs**: `{scenario}/outputs/plots/solar/`
@@ -311,10 +312,9 @@ Plots Pareto frontiers from optimisation results, visualising trade-offs between
 ### What It Plots
 
 **Optimisation Objectives**:
-- Typically 2D or 3D scatter plots
-- X-axis: Total annualised cost (CHF/year or $/year)
-- Y-axis: Total GHG emissions (kgCO₂e/year)
-- Optionally Z-axis: Primary energy (MWh/year)
+- The objective functions selected when the optimisation was run (`cost`, `GHG_emissions`, `system_energy_demand`, `anthropogenic_heat`)
+- One 2D scatter plot per pair of objectives
+- An additional 3D plot when three objectives were optimised
 
 **Points on Chart**:
 - **Pareto optimal solutions**: Non-dominated solutions (on frontier)
@@ -322,25 +322,19 @@ Plots Pareto frontiers from optimisation results, visualising trade-offs between
 - **Reference solutions**: Baseline, current state
 
 ### Prerequisites
-- Building-scale or District-scale optimisation completed
+- District Supply System Optimisation completed
 
 ### Key Parameters
 
-| Parameter | Description | Options |
-|-----------|-------------|---------|
-| **Objectives to plot** | Which objectives on axes | Cost vs Emissions (default) / Cost vs Energy / 3D |
-| **Highlight solutions** | Mark specific solutions | Min cost / Min emissions / Compromise |
-| **Reference point** | Show baseline | Current system / No optimisation |
+None besides the scenario. The axes follow the objective functions of the optimisation run.
 
 ### How to Use
 
-1. **Complete optimisation** (building or district scale)
+1. **Complete District Supply System Optimisation**
 
 2. **Generate Pareto plot**:
    - Navigate to **Visualisation**
    - Select **Plot - Pareto Front**
-   - Choose objectives for axes
-   - Optionally highlight key solutions
    - Click **Run**
 
 3. **Outputs**: `{scenario}/outputs/plots/optimisation/pareto_front/`
@@ -392,7 +386,7 @@ Requires a pathway with simulated states — see
 Cost breakdown for energy supply systems. Supports both **baseline costs** and **what-if
 scenario costs**, so it can be used before or after a what-if has been defined.
 
-See [System Costs](06-3-system-costs.md) for the underlying results.
+See [LCA Part 2b: Costs](06-3-system-costs.md) for the underlying results.
 
 ---
 
@@ -402,7 +396,7 @@ Annual energy flows for a what-if scenario as a Sankey diagram, running from ene
 through conversion to end use. Use it to see where carriers enter the district and what they
 ultimately serve.
 
-See [Final Energy](06-1-final-energy.md) for the underlying results.
+See [LCA Part 1: Energy by Carrier](06-1-final-energy.md) for the underlying results.
 
 ---
 
@@ -414,7 +408,7 @@ short curve indicates peaking duty, a long flat one indicates base load.
 
 Useful for sanity-checking sizing before reading cost results.
 
-See [Final Energy](06-1-final-energy.md) for the underlying results.
+See [LCA Part 1: Energy by Carrier](06-1-final-energy.md) for the underlying results.
 
 ---
 
@@ -521,7 +515,7 @@ For publication-quality figures:
 - **[Life Cycle Analysis](06-0-life-cycle-analysis.md)** - Provides emissions data
 - **[Renewable Energy](03-renewable-energy.md)** - Provides solar generation data
 - **[Supply System Optimisation](07-supply-optimisation.md)** - Provides Pareto frontier data
-- **[Export Results to CSV](01-import-export.md#export-results-to-csv-summary-and-analytics)** - Export data for custom plots
+- **[Export Results to .csv (Summary & Analytics)](01-import-export.md#export-results-to-csv-summary--analytics)** - Export data for custom plots
 
 ---
 

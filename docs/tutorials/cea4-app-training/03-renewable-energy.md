@@ -160,7 +160,7 @@ Similar to PV, plus:
 |-----------|-------------|---------------|
 | **Type of PV panel** | PV component technology | PV1 |
 | **Type of SC panel** | Solar thermal component | SC1 (flat plate) |
-| **Inlet temperature (PVT)** | Fluid inlet temp for heat extraction | 35-60°C |
+| **Inlet temperature (PVT)** | Fluid inlet temperature for heat extraction. Leave blank for the default | Blank (35°C) |
 
 ### How to Use
 
@@ -224,7 +224,7 @@ Solar radiation analysis must be completed
 | Parameter | Description | Typical Value |
 |-----------|-------------|---------------|
 | **Type of SC panel** | Collector technology | SC1 (flat plate) or SC2 (evacuated tube) |
-| **Inlet temperature (SC)** | Fluid inlet temperature | 40-70°C |
+| **Inlet temperature (SC)** | Fluid inlet temperature. Leave blank for the default | Blank (60°C flat plate, 75°C evacuated tube) |
 | **Panel on roof** | Install on roofs | Yes |
 | **Panel on wall** | Install on facades | Rarely |
 | **Radiation threshold** | Minimum radiation | 800 kWh/m²/yr |
@@ -354,9 +354,9 @@ The feature estimates:
 
 | Parameter | Description | Typical Value |
 |-----------|-------------|---------------|
-| **Borehole depth** | Maximum depth of probes | 50 m (shallow) |
-| **Borehole spacing** | Minimum distance between probes | 5-6 m |
-| **Soil thermal conductivity** | Ground thermal properties | Auto (from terrain) or manual |
+| **Buildings available** | Buildings whose footprint can be used for probes | Blank (all buildings) |
+| **Extra area available** | Additional area outside building footprints where probes can be installed (m²) | 0 |
+| **Average probe depth** | Average depth of the geothermal probes (m) | 10 |
 
 ### How to Use
 
@@ -425,20 +425,17 @@ Estimates sustainable heat extraction based on:
 
 | Parameter | Description | Typical Value |
 |-----------|-------------|---------------|
-| **Water body type** | Lake, river, or reservoir | User-defined |
-| **Distance to site** | Piping distance | Site-specific |
-| **Minimum water temp** | Environmental constraint | 4°C (to prevent freezing) |
+| **Max water volume withdrawal** | Maximum water volume that can be withdrawn (m³/h) | 1000 |
+| **Max delta temperature withdrawal** | Maximum temperature change allowed in the withdrawn water (°C) | 8 |
+| **Temperature max** | Maximum water temperature over the year at the extraction point (°C) | 6 |
+| **Temperature min** | Average water temperature over the year at the extraction point (°C) | 4 |
 
 ### How to Use
 
-1. **Define water body**:
-   - Provide water body polygon or coordinates
-   - Specify water body properties
-
-2. **Run analysis**:
+1. **Run analysis**:
    - Navigate to **Renewable Energy Potential Assessment**
    - Select **Water Body Potential**
-   - Configure parameters
+   - Set the withdrawal limits and water temperatures for your water body
    - Click **Run**
 
 ### Output Files
@@ -485,8 +482,8 @@ Calculates heat recovery potential from wastewater (sewage) using heat exchanger
 Estimates heat recovery based on:
 - Building water demand (from demand calculations)
 - Wastewater temperatures
-- Heat exchanger efficiency
-- Flow rates and timing
+- Heat exchanger length available in the sewer
+- Flow rates and timing, including wastewater from neighbouring districts
 
 ### Prerequisites
 - **Energy demand analysis** must be completed (to determine water usage)
@@ -496,9 +493,9 @@ Estimates heat recovery based on:
 
 | Parameter | Description | Typical Value |
 |-----------|-------------|---------------|
-| **Heat exchanger efficiency** | Recovery efficiency | 40-60% |
-| **Minimum sewage temp** | After heat extraction | 10°C |
-| **Building water demand** | From demand calculation | Auto |
+| **Heat exchanger length** | Length of sewer pipeline available for the heat exchanger (m, at least 100) | 120 |
+| **Sewage water ratio** | Ratio of sewage flow to water consumption, accounting for solids and intakes | 0.95 |
+| **Sewage water district** | Wastewater from neighbouring districts passing through the heat exchanger (litres) | 50 |
 
 ### How to Use
 
@@ -575,7 +572,7 @@ Annual recoverable heat (rule of thumb):
    - Geothermal (if ground access)
    - Water body (if nearby)
    - Sewage (if high water use)
-3. **Compare results** using [Export Results to CSV](01-import-export.md#export-results-to-csv-summary-and-analytics)
+3. **Compare results** using [Export Results to .csv (Summary & Analytics)](01-import-export.md#export-results-to-csv-summary--analytics)
 4. **Visualise** using [Plot - Solar Technology](10-visualisation.md#plot---solar-technology)
 5. **Integrate into supply system optimisation**
 

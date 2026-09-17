@@ -4,7 +4,7 @@ Supply system optimisation features use multi-objective optimisation algorithms 
 
 ---
 
-## Supply System Optimisation: Building-Scale
+## Supply System Optimisation: building-scale
 
 ⚠️ **Note**: This feature is only available via **Command Line Interface (CLI)**. It is not accessible through the CEA-4 App dashboard.
 
@@ -51,14 +51,10 @@ Optimises decentralised energy supply systems for individual buildings. The feat
 
 | Parameter | Description | Typical Value |
 |-----------|-------------|---------------|
-| **Optimisation algorithm** | NSGA-II or other | NSGA-II |
-| **Population size** | Number of solutions per generation | 100-200 |
-| **Number of generations** | Iterations | 50-100 |
-| **Allow heat pumps** | Include HP in technology options | Yes |
-| **Allow boilers** | Include boilers | Yes |
-| **Allow solar** | Include solar technologies | Yes |
-| **Allow storage** | Include thermal/battery storage | Optional |
 | **Multiprocessing** | Parallel evaluation | Enabled |
+| **Number of CPUs to keep free** | CPUs left free for other work | 1 |
+
+No other parameters: technology options come from the scenario's databases.
 
 ### How to Use
 
@@ -70,18 +66,15 @@ Optimises decentralised energy supply systems for individual buildings. The feat
 
 2. **Run via CLI**:
    ```bash
-   cea decentralized-building-main --scenario /path/to/scenario
+   cea decentralized --scenario /path/to/scenario
    ```
 
 3. **Configure parameters** (optional):
-   - Edit `cea.config` file in your scenario folder
-   - Or pass parameters via command line flags
-   - Key parameters: population size, generations, technology options
+   - Only `--multiprocessing` and `--number-of-cpus-to-keep-free`; technology options come from the scenario's databases
    - Enable multiprocessing (strongly recommended)
 
 4. **Processing time**: 30 minutes to 4 hours depending on:
    - Number of buildings
-   - Population size × generations
    - Technology options enabled
    - CPU cores available
 
@@ -150,7 +143,7 @@ Typical findings:
 
 ---
 
-## Supply System Optimisation: District-Scale
+## District Supply System Optimisation
 
 ### Overview
 Optimises centralised energy supply systems for entire districts. This feature finds optimal configurations for central plants, distribution networks, and building substations, considering both individual building requirements and district-level synergies.
@@ -202,15 +195,18 @@ District optimisation must account for:
 
 | Parameter | Description | Typical Value |
 |-----------|-------------|---------------|
-| **Optimisation algorithm** | Evolutionary algorithm | NSGA-II or similar |
-| **Population size** | Solutions per generation | 100-300 |
-| **Number of generations** | Optimisation iterations | 50-150 |
-| **Allow district heating** | Include DH network option | Optional |
-| **Allow district cooling** | Include DC network option | Optional |
-| **Allow CHP** | Include combined heat & power | Optional |
-| **Allow thermal storage** | Include storage at plant | Yes |
-| **Network layout** | Use existing or optimise | From Part 1 or optimise |
-| **Multiprocessing** | Parallel evaluation | Enabled |
+| **Network name** | Existing network layout for the base case, or (none) to auto-generate one from Input Editor > Supply | From Thermal Network Part 1 |
+| **Network type** | District heating or district cooling | DH / DC |
+| **Buildings** | Buildings to include. Leave blank for all | All |
+| **Cooling / heating / heat rejection components** | Technology categories to consider, in priority order (e.g. BOILERS, COGENERATION_PLANTS, HEAT_PUMPS) | Defaults |
+| **Maximum number of networks** | Maximum thermal networks generated across the district | 2 |
+| **Objective functions** | `cost`, `GHG_emissions`, `system_energy_demand`, `anthropogenic_heat` | Two or three objectives |
+| **Available energy sources / potentials** | Unlimited carriers (grid, fossil, bio fuels) and local potentials (PV, PVT, SC, geothermal, water bodies, sewage) | Defaults |
+| **Systems / networks algorithm** | Genetic algorithm used for supply systems and networks | NSGAIII |
+| **GA population size** | Individuals per generation. Leave blank for the NSGA-III suggestion (92) | Blank |
+| **GA number of generations** | Optimisation iterations | 3 (test) / more for real studies |
+| **Generate detailed outputs** | Write hourly supply-system profiles | false |
+| **Retain run results** | Keep this run instead of overwriting it next time | false |
 
 ### How to Use
 
@@ -222,9 +218,10 @@ District optimisation must account for:
 2. **Configure optimisation**:
    - Navigate to **Energy Supply System Optimisation**
    - Select **District Supply System Optimisation**
-   - Enable desired system options (DH, DC, CHP, storage, etc.)
-   - Set population and generation parameters
-   - Configure multiprocessing
+   - Select the network layout and network type (DH or DC)
+   - Choose the heating, cooling and heat rejection components, energy sources and potentials
+   - Choose the objective functions
+   - Set GA population size and number of generations
 
 3. **Run optimisation**:
    - Click **Run**

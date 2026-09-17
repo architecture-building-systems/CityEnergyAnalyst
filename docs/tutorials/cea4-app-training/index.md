@@ -31,7 +31,7 @@ The CEA-4 App organises its features into the following categories:
 Tools for exchanging data with external applications and generating summary reports.
 - Export to Rhino/Grasshopper
 - Import from Rhino/Grasshopper
-- Export Results to CSV
+- Export Results to .csv (Summary & Analytics)
 
 ### 2. [Solar Radiation Analysis](02-solar-radiation.md)
 Calculate solar radiation on building surfaces for renewable energy assessments.
@@ -54,20 +54,20 @@ Forecast hourly and annual energy demand for heating, cooling, electricity, and 
 
 ### 5. [Thermal Network Design](05-thermal-network.md)
 Design and analyse district heating and cooling networks.
-- Thermal Network Part 1: Layout
-- Thermal Network Part 2a: Flow & Sizing (Single-Phase)
-- Thermal Network Part 2b: Flow & Sizing (Multiple-Phase) — phased rollout over time
+- Thermal Network Part 1: layout
+- Thermal Network Part 2a: flow & sizing, single-phase
+- Thermal Network Part 2b: flow & sizing, multiple-phase — phased rollout over time
 
 ### 6. [Life Cycle Analysis (LCA)](06-0-life-cycle-analysis.md)
 Assess environmental impacts and costs of building energy systems using what-if supply scenarios. All four features run on a shared what-if scenario; **Final Energy must run first** and produces the `configuration.json` consumed by the other three.
-- [Final Energy / Energy by Carrier](06-1-final-energy.md) (BETA) - Carrier consumption by buildings and plants; includes hourly SC/PVT-primary DHW tank dispatch
-- [Emissions / GHG Emissions](06-2-emissions.md) (BETA) - Lifecycle and operational GHG emissions, with optional grid-decarbonisation trajectory
-- [System Costs / Costs](06-3-system-costs.md) (BETA) - CAPEX, OPEX, and total annualised cost (TAC) at building, component, and plant level
-- [Heat Rejection](06-4-heat-rejection.md) (BETA) - Anthropogenic waste heat to the environment, with map-layer visualisation
+- [LCA Part 1: Energy by Carrier](06-1-final-energy.md) - Carrier consumption by buildings and plants; includes hourly SC/PVT-primary DHW tank dispatch
+- [LCA Part 2a: GHG Emissions](06-2-emissions.md) - Lifecycle and operational GHG emissions, with optional grid-decarbonisation trajectory
+- [LCA Part 2b: Costs](06-3-system-costs.md) - CAPEX, OPEX, and total annualised cost (TAC) at building, component, and plant level
+- [LCA Part 2c: Heat Rejection](06-4-heat-rejection.md) - Anthropogenic waste heat to the environment, with map-layer visualisation
 
 ### 7. [Energy Supply System Optimisation](07-supply-optimisation.md)
 Optimise energy supply systems for buildings and districts.
-- Building-Scale Supply System Optimisation *(CLI only)*
+- Supply System Optimisation: building-scale *(CLI only)*
 - District Supply System Optimisation
 
 ### 8. [Data Management](08-data-management.md)
@@ -156,9 +156,9 @@ A standard CEA-4 analysis typically follows this sequence:
 6. **Optimisation** (Optional)
    - Optimise building-scale or district-scale supply systems
 
-7. **Impact Assessment** (Life Cycle Analysis - 4 BETA features)
+7. **Impact Assessment** (Life Cycle Analysis - LCA Parts 1, 2a, 2b, 2c)
    - Run **Final Energy** first (carrier consumption per what-if scenario)
-   - Then **Emissions**, **System Costs**, and **Heat Rejection** for the same what-if
+   - Then **LCA Part 2a: GHG Emissions**, **LCA Part 2b: Costs**, and **LCA Part 2c: Heat Rejection** for the same what-if
 
 8. **Results & Reporting** (Visualisation & Export)
    - Generate plots and charts

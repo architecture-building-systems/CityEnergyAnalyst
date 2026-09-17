@@ -151,23 +151,22 @@ Generates parameter samples for sensitivity analysis using the Sobol method. Sen
 
 | Parameter | Description | Typical Value |
 |-----------|-------------|---------------|
-| **Number of samples** | Sample size | 512, 1024, or 2048 |
-| **Parameters to vary** | Which inputs to sample | User-defined |
-| **Sampling method** | Sobol or other | Sobol (recommended) |
+| **Create scenario directory** | Create a parallel scenario input folder for each sample | false |
+| **N** | Saltelli base sample size; generates N × (2D + 2) samples for D variables | 32 |
+| **Having variable 1-5** | Enable each variable to sample | Variable 1 on |
+| **Variable 1-5 lower / upper bound** | Sampling range of each enabled variable | User-defined |
 
 ### How to Use
 
-1. **Define parameters to vary**:
-   - Create parameter configuration file
-   - Specify ranges or distributions for each parameter
-
-2. **Run sample generation**:
+1. **Run sample generation**:
    - Navigate to **Utilities**
-   - Select **Generate Samples for Sensitivity Analysis**
-   - Set number of samples (recommend 512 or 1024)
+   - Select **Generate Samples for Sensitivity Analysis (SA)**
+   - Enable up to five variables and set their lower/upper bounds
+   - Set **N** (total samples = N × (2D + 2) for D variables)
+   - Enable **Create scenario directory** to write one scenario folder per sample
    - Click **Run**
 
-3. **Output**: Scenario folders with parameter variations
+2. **Output**: Scenario folders with parameter variations
    - `scenario_SA_001/` - First sample
    - `scenario_SA_002/` - Second sample
    - ...
@@ -210,7 +209,7 @@ Generates parameter samples for sensitivity analysis using the Sobol method. Sen
 
 ---
 
-## DBF to CSV to DBF
+## .dbf to .csv to .dbf
 
 ### Overview
 Converts files between .dbf (dBase format) and .csv/.xlsx formats for editing. DBF files are used by shapefiles to store attribute data; this tool allows editing in Excel or other spreadsheet programs.
@@ -241,7 +240,7 @@ Converts files between .dbf (dBase format) and .csv/.xlsx formats for editing. D
 #### Converting DBF to CSV
 
 1. Navigate to **Utilities**
-2. Select **DBF to CSV to DBF**
+2. Select **.dbf to .csv to .dbf**
 3. Choose mode: **DBF to CSV**
 4. Select input .dbf file
 5. Specify output .csv file path
@@ -284,7 +283,7 @@ When converting CSV → DBF:
 
 ---
 
-## SHP to CSV to SHP
+## .shp to .csv to .shp
 
 ### Overview
 Converts shapefiles (geometry + attributes) to CSV/XLSX and back. Similar to DBF conversion but handles geometry information, allowing viewing and editing of spatial data in spreadsheet format.
@@ -313,7 +312,7 @@ Converts shapefiles (geometry + attributes) to CSV/XLSX and back. Similar to DBF
 #### Converting SHP to CSV
 
 1. Navigate to **Utilities**
-2. Select **SHP to CSV to SHP**
+2. Select **.shp to .csv to .shp**
 3. Choose mode: **SHP to CSV**
 4. Select input .shp file
 5. Specify output .csv file path

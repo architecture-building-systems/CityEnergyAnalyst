@@ -10,7 +10,7 @@ This page provides a complete overview of all 48 features available in the CEA-4
 |---------|-------------|---------|
 | **Export to Rhino/Grasshopper** | Export CEA files to Rhino/Grasshopper-ready format | Share geometry and results with Rhino/GH workflows |
 | **Import from Rhino/Grasshopper** | Import Rhino/Grasshopper-generated files into CEA | Bring externally designed geometry into CEA |
-| **Export Results to CSV** | Generate CSV files with CEA results summary and analytics | Create custom reports and perform external analysis |
+| **Export Results to .csv (Summary & Analytics)** | Generate CSV files with CEA results summary and analytics | Create custom reports and perform external analysis |
 
 ---
 
@@ -49,21 +49,22 @@ This page provides a complete overview of all 48 features available in the CEA-4
 
 | Feature | Description | Key Use |
 |---------|-------------|---------|
-| **Thermal Network Part 1: Layout** | Create thermal network piping layout using minimum spanning tree | Generate district heating/cooling network layout |
-| **Thermal Network Part 2a: Flow & Sizing (Single-Phase)** | Solve thermal hydraulic network flow and sizing | Size pipes and calculate pressure drops for networks |
+| **Thermal Network Part 1: layout** | Create thermal network piping layout using minimum spanning tree | Generate district heating/cooling network layout |
+| **Thermal Network Part 2a: flow & sizing, single-phase** | Solve thermal hydraulic network flow and sizing | Size pipes and calculate pressure drops for networks |
+| **Thermal Network Part 2b: flow & sizing, multiple-phase** | Size pipes across a sequence of phased networks | Plan phased rollout or decommissioning of a network |
 
 ---
 
 ## Life Cycle Analysis (LCA)
 
-All four LCA features use a shared **what-if scenario** (a named supply configuration). **Run "Energy by Carrier" (Final Energy) first** — its `configuration.json` is the prerequisite for the other three.
+All four LCA features use a shared **what-if scenario** (a named supply configuration). **Run "LCA Part 1: Energy by Carrier" first** — its `configuration.json` is the prerequisite for the other three.
 
 | Feature | Description | Key Use |
 |---------|-------------|---------|
-| **Energy by Carrier** (Final Energy) [BETA] | Calculate hourly and annual final energy by carrier for buildings and district plants under a what-if supply configuration | Quantify GRID, NG, DH, DC, OIL, COAL, WOOD, SOLAR, PV consumption; includes SC/PVT-primary DHW tank dispatch |
-| **GHG Emissions** (Emissions) [BETA] | Calculate embodied + operational + biogenic + demolition emissions, with optional grid-decarbonisation trajectory | Assess lifecycle carbon footprint, year-by-year emission timeline, solar offsets |
-| **Costs** (System Costs) [BETA] | Calculate CAPEX, OPEX, and total annualised cost (TAC) per building, plant, and component | Estimate capital and operational costs at building, component, and plant level |
-| **Heat Rejection** [BETA] | Calculate anthropogenic waste heat rejected to the environment by buildings and district plants | Urban heat island assessment, heat-recovery scoping, map-layer visualisation |
+| **LCA Part 1: Energy by Carrier** | Calculate hourly and annual final energy by carrier for buildings and district plants under a what-if supply configuration | Quantify GRID, NG, DH, DC, OIL, COAL, WOOD, SOLAR, PV consumption; includes SC/PVT-primary DHW tank dispatch |
+| **LCA Part 2a: GHG Emissions** | Calculate embodied + operational + biogenic + demolition emissions, with optional grid-decarbonisation trajectory | Assess lifecycle carbon footprint, year-by-year emission timeline, solar offsets |
+| **LCA Part 2b: Costs** | Calculate CAPEX, OPEX, and total annualised cost (TAC) per building, plant, and component | Estimate capital and operational costs at building, component, and plant level |
+| **LCA Part 2c: Heat Rejection** | Calculate anthropogenic waste heat rejected to the environment by buildings and district plants | Urban heat island assessment, heat-recovery scoping, map-layer visualisation |
 
 ---
 
@@ -71,7 +72,7 @@ All four LCA features use a shared **what-if scenario** (a named supply configur
 
 | Feature | Description | Key Use |
 |---------|-------------|---------|
-| **Supply System Optimisation: Building-Scale** | Optimise decentralised energy supply systems *(CLI only)* | Find optimal building-level energy system configurations |
+| **Supply System Optimisation: building-scale** | Optimise decentralised energy supply systems *(CLI only)* | Find optimal building-level energy system configurations |
 | **District Supply System Optimisation** | Optimise centralised energy supply systems | Find optimal district-level energy system configurations |
 
 ---
@@ -95,10 +96,10 @@ All four LCA features use a shared **what-if scenario** (a named supply configur
 | Feature | Description | Key Use |
 |---------|-------------|---------|
 | **CEA-4 Format Helper** | Verify and migrate inputs to CEA-4 format | Check data format compatibility and migrate from CEA-3 |
-| **Generate Samples for Sensitivity Analysis** | Generate samples for sensitivity analysis using Sobol method | Create parameter samples for uncertainty analysis |
+| **Generate Samples for Sensitivity Analysis (SA)** | Generate samples for sensitivity analysis using Sobol method | Create parameter samples for uncertainty analysis |
 | **Batch Process Workflow** | *(Temporarily suspended from dashboard; available via CLI)* | — |
-| **DBF to CSV to DBF** | Convert files between DBF and CSV formats | Edit .dbf files in Excel/CSV format |
-| **SHP to CSV to SHP** | Convert files between shapefile and CSV formats | Edit shapefile attributes in Excel/CSV format |
+| **.dbf to .csv to .dbf** | Convert files between DBF and CSV formats | Edit .dbf files in Excel/CSV format |
+| **.shp to .csv to .shp** | Convert files between shapefile and CSV formats | Edit shapefile attributes in Excel/CSV format |
 | **Rename Building** | Facilitate renaming buildings in scenario | Change building IDs across all scenario files |
 
 ---
@@ -183,17 +184,17 @@ Side-by-side comparison workspace. See [Canvas Builder](12-canvas-builder.md).
 3. **Thermal Network Part 1** → Generate network layout
 4. **Thermal Network Part 2** → Size network pipes
 5. **District Supply System Optimisation** → Optimise system
-6. **Energy by Carrier** (Final Energy) → Carrier consumption per what-if scenario *(prerequisite for steps 7-9)*
-7. **GHG Emissions** → Calculate lifecycle emissions
-8. **Costs** (System Costs) → Calculate system costs
-9. **Heat Rejection** → Calculate anthropogenic waste heat
+6. **LCA Part 1: Energy by Carrier** → Carrier consumption per what-if scenario *(prerequisite for steps 7-9)*
+7. **LCA Part 2a: GHG Emissions** → Calculate lifecycle emissions
+8. **LCA Part 2b: Costs** → Calculate system costs
+9. **LCA Part 2c: Heat Rejection** → Calculate anthropogenic waste heat
 10. **Plot - Pareto Front** → Visualise optimisation results
 
 ### Climate Impact Assessment
 1. Complete Basic Building Energy Analysis (use Create New Scenario Wizard, then run steps 7-10)
-2. **Energy by Carrier** (Final Energy) → Define what-if supply scenario and compute carrier consumption *(prerequisite)*
-3. **GHG Emissions** → Calculate lifecycle emissions (optionally with grid-decarbonisation trajectory)
-4. **Heat Rejection** → Quantify anthropogenic waste heat for the same what-if
+2. **LCA Part 1: Energy by Carrier** → Define what-if supply scenario and compute carrier consumption *(prerequisite)*
+3. **LCA Part 2a: GHG Emissions** → Calculate lifecycle emissions (optionally with grid-decarbonisation trajectory)
+4. **LCA Part 2c: Heat Rejection** → Quantify anthropogenic waste heat for the same what-if
 5. **Plot - Lifecycle Emissions** → Visualise total emissions
 6. **Plot - Operational Emissions** → Visualise operational emissions
 7. **Plot - Emission Timeline** → Track emissions over time
@@ -218,9 +219,9 @@ Most CEA-4 features have dependencies on other features. Here are the key depend
    - Energy Demand Part 2 (Load Modelling)
    - Streets Helper (for network layout)
 
-5. **LCA features** (Emissions, Costs, Heat Rejection) require:
-   - **Energy by Carrier** (Final Energy) — produces `configuration.json` and per-entity carrier flows
-   - Energy by Carrier itself requires Energy Demand Part 2 (Load Modelling)
+5. **LCA features** (Parts 2a, 2b, 2c) require:
+   - **LCA Part 1: Energy by Carrier** — produces `configuration.json` and per-entity carrier flows
+   - LCA Part 1 itself requires Energy Demand Part 2 (Load Modelling)
 
 ---
 

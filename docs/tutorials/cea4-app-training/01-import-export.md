@@ -151,7 +151,7 @@ After importing:
 
 ---
 
-## Export Results to CSV (Summary and Analytics)
+## Export Results to .csv (Summary & Analytics)
 
 ### Overview
 Generates CSV files containing aggregated CEA results for custom analysis, reporting, and data exchange. This feature provides flexible data export by building, time period, and metric.
@@ -176,7 +176,7 @@ Generates CSV files containing aggregated CEA results for custom analysis, repor
 
 1. Complete at least one CEA analysis (e.g., Energy Demand, Emissions, PV assessment)
 2. Navigate to **Import & Export**
-3. Select **Export Results to CSV (Summary & Analytics)**
+3. Select **Export Results to .csv (Summary & Analytics)**
 4. Configure export options:
    - Select buildings to include (or use "All buildings")
    - Choose time aggregation level (hourly/daily/monthly/yearly)
@@ -253,7 +253,7 @@ Example output columns:
 
 ### Workflow 3: Results Export for Custom Analysis
 1. Complete CEA analyses
-2. **Export Results to CSV** with desired metrics
+2. **Export Results to .csv (Summary & Analytics)** with desired metrics
 3. Perform custom analysis in Excel, Python, or R
 4. Create custom reports and visualisations
 

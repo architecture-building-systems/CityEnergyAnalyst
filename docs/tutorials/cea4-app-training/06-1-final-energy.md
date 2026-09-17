@@ -1,4 +1,4 @@
-# Final Energy
+# LCA Part 1: Energy by Carrier
 
 ## Overview
 
@@ -20,7 +20,7 @@ For each **district plant** (DH/DC):
 - **Energy Demand Part 2** completed
 - **Solar Radiation** completed (if PV/PVT/SC are configured)
 - **Thermal Network Part 1 + Part 2** completed (if district network scenarios are used)
-- Building supply settings configured (Building Properties > Supply tab)
+- Building supply settings configured (Input Editor > Supply tab)
 
 ## Key Parameters
 
@@ -28,19 +28,21 @@ For each **district plant** (DH/DC):
 |-----------|-------------|
 | **What-if name** | Name for this supply configuration scenario |
 | **Network name** | Which thermal network layout to use (if applicable) |
-| **Supply type (heating/cooling/DHW)** | Assembly codes for building and/or district scale |
-| **Overwrite supply settings** | True to use what-if mode instead of production mode |
-| **Connected buildings** | Override which buildings connect to the network |
+| **Overwrite supply settings** | True to use the what-if assemblies below instead of Input Editor > Supply |
+| **Supply type (space heating/space cooling/DHW), building and district** | Assembly codes applied at building scale and district scale when overwriting |
+| **Booster type (space heating/DHW), building** | Building-scale booster assemblies |
+| **Buildings** | Buildings to include. Leave blank for all |
+| **Panels on roof / wall (north, south, east, west)** | Solar panel types to include on each surface. Leave blank to exclude |
 
 ## How to Use
 
-1. **Configure supply systems** in Building Properties > Supply tab:
+1. **Configure supply systems** in Input Editor > Supply tab:
    - Set scale (BUILDING or DISTRICT) per service per building
    - Assign conversion technologies and carriers
 
-2. **Run Final Energy**:
-   - Navigate to **Life Cycle Analysis**
-   - Select **Final Energy**
+2. **Run LCA Part 1: Energy by Carrier**:
+   - Navigate to **Life Cycle Analysis (LCA)**
+   - Select **LCA Part 1: Energy by Carrier**
    - Enter a what-if scenario name
    - Select network layout (if buildings use district services)
    - Click **Run**
@@ -68,7 +70,7 @@ All outputs are stored under `{scenario}/outputs/data/analysis/{what-if-name}/fi
 ## Solar-thermal DHW dispatch (SC primary)
 
 When a hot-water assembly uses a **flat-plate (`SC1`) or evacuated-tube
-(`SC2`) solar collector as the primary component**, the Final Energy
+(`SC2`) solar collector as the primary component**, the LCA Part 1: Energy by Carrier
 feature runs an hourly tank-dispatch model instead of the usual "fuel =
 demand / efficiency" shortcut.
 
@@ -179,10 +181,10 @@ Load duration curve showing the same component (BO1) across district plant, stan
 ---
 
 ## Related Features
-- **[Emissions](06-2-emissions.md)** - Uses final energy to calculate operational emissions
-- **[System Costs](06-3-system-costs.md)** - Uses final energy to calculate operational costs
-- **[Heat Rejection](06-4-heat-rejection.md)** - Uses final energy to calculate waste heat
+- **[LCA Part 2a: GHG Emissions](06-2-emissions.md)** - Uses final energy to calculate operational emissions
+- **[LCA Part 2b: Costs](06-3-system-costs.md)** - Uses final energy to calculate operational costs
+- **[LCA Part 2c: Heat Rejection](06-4-heat-rejection.md)** - Uses final energy to calculate waste heat
 
 ---
 
-[<- Back: Life Cycle Analysis](06-0-life-cycle-analysis.md) | [Back to Index](index.md) | [Next: Emissions ->](06-2-emissions.md)
+[<- Back: Life Cycle Analysis](06-0-life-cycle-analysis.md) | [Back to Index](index.md) | [Next: LCA Part 2a: GHG Emissions ->](06-2-emissions.md)
