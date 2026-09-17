@@ -99,10 +99,17 @@ jobs:
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GUI_GH_TOKEN }}
+          POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
         run: |
           cd $GITHUB_WORKSPACE/gui
           yarn install
           yarn version $CEA_VERSION
+          # build/telemetry-key.nsh is .gitignored; build/installer.nsh includes it
+          # /NONFATAL and guards all telemetry with !ifdef POSTHOG_API_KEY, so a
+          # local/fork build (no secret) compiles to a no-op with no key present.
+          if [ -n "$POSTHOG_API_KEY" ]; then
+            printf '!define POSTHOG_API_KEY "%s"\n' "$POSTHOG_API_KEY" > build/telemetry-key.nsh
+          fi
           yarn electron:release
           mv "out/CEA-4 Desktop Setup ${CEA_VERSION}.exe" $GITHUB_WORKSPACE/setup/gui_setup.exe
 

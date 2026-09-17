@@ -28,8 +28,14 @@ Unicode true
 ; include the modern UI stuff
 !include "MUI2.nsh"
 
+; for scrubbing paths out of the CEA Desktop installer log before it is sent
+; as telemetry (see ReportGuiLog / SendTelemetry)
+!include "StrFunc.nsh"
+${Using:StrFunc} StrRep
+
 Var LauncherExtension
 Var InstallStep  ; tracks install progress for telemetry (see SendTelemetry)
+Var GuiLogTail   ; last line of the CEA Desktop installer's own log, see ReportGuiLog
 
 ; Macro to run a command and abort on failure
 !macro RunCommand CommandStr DescriptionStr ErrorMsg
@@ -63,6 +69,58 @@ Var InstallStep  ; tracks install progress for telemetry (see SendTelemetry)
     ${EndIf}
 !macroend
 
+; Reads the tail of the CEA Desktop installer's own breadcrumb log (written by
+; CityEnergyAnalyst-GUI's build/installer.nsh as it progresses, so it survives
+; even when that installer exits via Quit rather than a catchable failure) into
+; the Details pane, and leaves a sanitized, length-capped token describing the
+; last stage reached in $GuiLogTail for SendTelemetry. Must not touch $0 (holds
+; the real exit code) or $InstallStep - uses $R0-$R3 only.
+Function ReportGuiLog
+    StrCpy $GuiLogTail ""
+    ClearErrors
+    FileOpen $R0 "$APPDATA\${CEA_GUI_NAME}\logs\installer.log" r
+    ${If} ${Errors}
+        DetailPrint "No CEA Desktop installer log found at $APPDATA\${CEA_GUI_NAME}\logs\installer.log"
+        Return
+    ${EndIf}
+
+    ; only read the last ~8KB so a long log can't stall or flood the Details pane
+    FileSeek $R0 0 END $R1
+    ${If} $R1 > 8192
+        IntOp $R2 $R1 - 8192
+        FileSeek $R0 $R2 SET
+        FileRead $R0 $R3  # discard the partial line this seek landed inside
+    ${Else}
+        FileSeek $R0 0 SET
+    ${EndIf}
+
+    StrCpy $R2 0
+    DetailPrint "---- CEA Desktop installer log (tail) ----"
+    ${Do}
+        ClearErrors
+        FileRead $R0 $R3
+        ${If} ${Errors}
+            ${Break}
+        ${EndIf}
+        IntOp $R2 $R2 + 1
+        ${If} $R2 > 40
+            ${Break}
+        ${EndIf}
+        DetailPrint "$R3"
+        StrCpy $GuiLogTail "$R3"
+    ${Loop}
+    FileClose $R0
+    DetailPrint "---- end of log: $APPDATA\${CEA_GUI_NAME}\logs\installer.log ----"
+
+    ; defence-in-depth: the log is ours and only ever contains short stage
+    ; tokens, but strip anything path-like before this ever reaches telemetry
+    ${StrRep} $GuiLogTail "$GuiLogTail" "$INSTDIR" ""
+    ${StrRep} $GuiLogTail "$GuiLogTail" "$PROFILE" ""
+    ${StrRep} $GuiLogTail "$GuiLogTail" "$APPDATA" ""
+    ${StrRep} $GuiLogTail "$GuiLogTail" "$TEMP" ""
+    StrCpy $GuiLogTail "$GuiLogTail" 64
+FunctionEnd
+
 ; Fire-and-forget anonymous installer telemetry: counts installs and reports which
 ; step a failed install died on, so we don't have to rely on users reporting bugs.
 ; No-op when POSTHOG_API_KEY was not supplied at build time (local/fork builds).
@@ -78,12 +136,14 @@ Var InstallStep  ; tracks install progress for telemetry (see SendTelemetry)
 ;  - The actual network call happens inside telemetry.ps1, wrapped in try/catch
 ;    with a short timeout, so a dead network or blocked outbound traffic is silent.
 ; Anonymity: distinct_id is a fresh GUID generated per install in telemetry.ps1 and
-; never written to disk; only OS/arch/version/step/error-code are sent - no paths,
-; no username, no hostname.
-!macro SendTelemetry EventName Step ErrorCode
+; never written to disk; only OS/arch/version/step/error-code/error-detail are sent -
+; no paths, no username, no hostname. ErrorDetail is a short, sanitized token (see
+; ReportGuiLog) describing which stage the bundled CEA Desktop installer reached,
+; not free text - pass "" when there is none.
+!macro SendTelemetry EventName Step ErrorCode ErrorDetail
     !ifdef POSTHOG_API_KEY
         ${If} ${FileExists} "$TEMP\cea-installer-telemetry.ps1"
-            Exec '"$WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File "$TEMP\cea-installer-telemetry.ps1" -ApiKey "${POSTHOG_API_KEY}" -PostHogHost "${POSTHOG_HOST}" -EventName "${EventName}" -CeaVersion "${VER}" -InstallerStep "${Step}" -ErrorCode "${ErrorCode}"'
+            Exec '"$WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File "$TEMP\cea-installer-telemetry.ps1" -ApiKey "${POSTHOG_API_KEY}" -PostHogHost "${POSTHOG_HOST}" -EventName "${EventName}" -CeaVersion "${VER}" -InstallerStep "${Step}" -ErrorCode "${ErrorCode}" -ErrorDetail "${ErrorDetail}"'
         ${EndIf}
     !endif
 !macroend
@@ -113,7 +173,7 @@ CRCCheck On
 !insertmacro MUI_PAGE_DIRECTORY
 
 !ifdef POSTHOG_API_KEY
-!define MUI_COMPONENTSPAGE_TEXT_TOP "This installer sends anonymous installation statistics (OS, CPU architecture, CEA version, and whether the install succeeded) to help us fix problems. No personal data, file paths, or usage data is collected. See docs/privacy for details."
+!define MUI_COMPONENTSPAGE_TEXT_TOP "This installer sends anonymous statistics used only to improve the installer itself. No personal data (name, files, etc.) are collected. See docs/privacy for details."
 !endif
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_INSTFILES
@@ -148,7 +208,7 @@ FunctionEnd
 ;Installer Sections
 
 Function .onInstFailed
-    !insertmacro SendTelemetry "installer_failed" "$InstallStep" "$0"
+    !insertmacro SendTelemetry "installer_failed" "$InstallStep" "$0" "$GuiLogTail"
 
     # Ensure temporary files are cleaned up
     DetailPrint "Installation failed, cleaning up temporary files..."
@@ -199,20 +259,24 @@ Function BaseInstallationSection
     StrCpy $InstallStep "gui"
     File "gui_setup.exe"
 
-    # Run GUI Setup
+    # Run GUI Setup. /CEABUNDLE tells the GUI installer it was launched from here
+    # (see CityEnergyAnalyst-GUI's build/installer.nsh), so its own telemetry can
+    # tell a bundled install apart from a standalone install or auto-update.
     DetailPrint "Installing CEA Desktop"
-    ExecWait '"$INSTDIR\gui_setup.exe" /S /D="$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"' $0
+    ExecWait '"$INSTDIR\gui_setup.exe" /CEABUNDLE /S /D="$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"' $0
     DetailPrint "CEA Desktop installer returned: $0"
     ${If} "$0" != "0"
-        Abort "Installation failed - see Details"
+        Call ReportGuiLog
+        Abort "Installation failed - see Details. CEA Desktop installer log: $APPDATA\${CEA_GUI_NAME}\logs\installer.log"
     ${EndIf}
     ${IfNot} ${FileExists} "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"
+        Call ReportGuiLog
         ; $0 still holds "0" from the ExecWait above (a real success code, not a
         ; failure), so overwrite it before SendTelemetry (via .onInstFailed)
         ; reports it as error_code - otherwise this failure would look like a
         ; successful install.
         StrCpy $0 "gui_dir_missing"
-        Abort "Installation failed: Something went wrong with CEA Desktop setup. Install directory not found."
+        Abort "Installation failed: Something went wrong with CEA Desktop setup. Install directory not found. CEA Desktop installer log: $APPDATA\${CEA_GUI_NAME}\logs\installer.log"
     ${EndIf}
     Delete "$INSTDIR\gui_setup.exe"
 
@@ -267,7 +331,7 @@ Function BaseInstallationSection
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch CEA Desktop"
 
     StrCpy $InstallStep "done"
-    !insertmacro SendTelemetry "installer_completed" "$InstallStep" ""
+    !insertmacro SendTelemetry "installer_completed" "$InstallStep" "" ""
 FunctionEnd
 
 Function CreateStartMenuShortcutsSection

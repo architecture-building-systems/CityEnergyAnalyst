@@ -4,7 +4,8 @@ param(
     [string]$EventName,
     [string]$CeaVersion,
     [string]$InstallerStep,
-    [string]$ErrorCode
+    [string]$ErrorCode,
+    [string]$ErrorDetail
 )
 
 # Fire-and-forget anonymous installer telemetry. This must never affect the
@@ -18,11 +19,11 @@ try {
         os                         = "windows"
         arch                       = $env:PROCESSOR_ARCHITECTURE
         '$process_person_profile' = $false
-        '$geoip_disable'           = $true
     }
 
     if ($InstallerStep) { $properties.installer_step = $InstallerStep }
     if ($ErrorCode)      { $properties.error_code     = $ErrorCode }
+    if ($ErrorDetail)    { $properties.error_detail    = $ErrorDetail.Substring(0, [Math]::Min(64, $ErrorDetail.Length)) }
 
     $body = @{
         api_key     = $ApiKey
