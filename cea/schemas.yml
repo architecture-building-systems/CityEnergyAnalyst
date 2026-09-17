@@ -12638,7 +12638,7 @@ get_lca_operation:
   used_by: []
 get_lca_operational_hourly_building:
   created_by:
-  - emission_time_dependent
+  - emissions
   file_path: outputs/data/emissions/timeline/{building}_operational_hourly.csv
   file_type: csv
   schema:
@@ -13380,7 +13380,7 @@ get_optimization_decentralized_folder_building_result_cooling_activation:
   - optimization
 get_optimization_decentralized_folder_building_result_cooling:
   created_by:
-  - decentrlized
+  - decentralized
   file_path: outputs/data/optimization/decentralized/{building}_{configuration}_cooling.csv
   file_type: csv
   schema:
@@ -16778,7 +16778,7 @@ get_surroundings_geometry:
   - radiation
 get_tree_geometry:
   created_by:
-  - tree_helper
+  - trees_helper
   file_path: inputs/tree-geometry/trees.shp
   file_type: shp
   schema:

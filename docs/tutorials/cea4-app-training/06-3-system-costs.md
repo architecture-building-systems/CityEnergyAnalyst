@@ -1,4 +1,4 @@
-# System Costs
+# LCA Part 2b: Costs
 
 ## Overview
 
@@ -21,7 +21,7 @@ Costs are calculated for building-scale systems, district plants (including pump
 
 ## Prerequisites
 
-- **Final Energy** completed for the what-if scenario
+- **LCA Part 1: Energy by Carrier** completed for the what-if scenario
 - Cost database with component parameters
 
 ## Key Parameters
@@ -32,11 +32,11 @@ Costs are calculated for building-scale systems, district plants (including pump
 
 ## How to Use
 
-1. **Run Final Energy** first
+1. **Run LCA Part 1: Energy by Carrier** first
 
-2. **Run System Costs**:
-   - Navigate to **Life Cycle Analysis**
-   - Select **System Costs**
+2. **Run LCA Part 2b: Costs**:
+   - Navigate to **Life Cycle Analysis (LCA)**
+   - Select **LCA Part 2b: Costs**
    - Select the what-if scenario
    - Click **Run**
 
@@ -115,10 +115,10 @@ Cost breakdown comparing building-scale and district-scale costs per m2:
 ---
 
 ## Related Features
-- **[Final Energy](06-1-final-energy.md)** - Prerequisite (provides supply configuration and peak loads)
-- **[Emissions](06-2-emissions.md)** - Environmental analysis of the same scenario
-- **[Heat Rejection](06-4-heat-rejection.md)** - Environmental heat impact
+- **[LCA Part 1: Energy by Carrier](06-1-final-energy.md)** - Prerequisite (provides supply configuration and peak loads)
+- **[LCA Part 2a: GHG Emissions](06-2-emissions.md)** - Environmental analysis of the same scenario
+- **[LCA Part 2c: Heat Rejection](06-4-heat-rejection.md)** - Environmental heat impact
 
 ---
 
-[<- Back: Emissions](06-2-emissions.md) | [Back to Index](index.md) | [Next: Heat Rejection ->](06-4-heat-rejection.md)
+[<- Back: LCA Part 2a: GHG Emissions](06-2-emissions.md) | [Back to Index](index.md) | [Next: LCA Part 2c: Heat Rejection ->](06-4-heat-rejection.md)

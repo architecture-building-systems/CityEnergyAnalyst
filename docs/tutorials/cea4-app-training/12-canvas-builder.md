@@ -161,7 +161,7 @@ deliberate: an absent result is reported, never substituted with zero.
 is using its own scale. Turn it on.
 
 **"What-if columns are missing."** What-ifs come from the parent scenario. Run
-[Final Energy](06-1-final-energy.md) first — it creates the what-if that the other LCA
+[LCA Part 1: Energy by Carrier](06-1-final-energy.md) first — it creates the what-if that the other LCA
 features and their KPIs read.
 
 ## Related Features

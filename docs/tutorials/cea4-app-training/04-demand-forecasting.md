@@ -238,7 +238,7 @@ The feature calculates hourly demand for:
 - **E_MWhyr**: Annual electricity demand (appliances + lighting + aux)
 - **Qww_MWhyr**: Annual domestic hot water demand
 
-**Energy Intensity** (normalize by floor area):
+**Energy Intensity** (normalise by floor area):
 - **Qhs**: 30-150 kWh/m²/yr (climate-dependent)
 - **Qcs**: 10-80 kWh/m²/yr (climate and cooling system-dependent)
 - **E**: 20-100 kWh/m²/yr (building type-dependent)

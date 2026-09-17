@@ -144,8 +144,8 @@ The feature maps buildings to archetypes based on:
 
 | Parameter | Description | Typical Value |
 |-----------|-------------|---------------|
-| **Archetype system** | Regional standard (ASHRAE, SIA, etc.) | Region-specific |
-| **Overwrite existing** | Replace existing properties | Yes (first time) / No (to preserve manual edits) |
+| **Input databases** | Which building properties to map from the Database (comfort, architecture, air-conditioning, internal-loads, supply, schedules) | All |
+| **Buildings** | Buildings to map. Leave blank for all | All |
 
 ### How to Use
 
@@ -160,8 +160,8 @@ The feature maps buildings to archetypes based on:
 2. **Run Archetypes Mapper**:
    - Navigate to **Data Management**
    - Select **Archetypes Mapper**
-   - Choose archetype system (default: automatic based on location)
-   - Configure overwrite option
+   - Choose which input databases to map (default: all)
+   - Optionally restrict to selected buildings
    - Click **Run**
 
 3. **Processing time**: < 1 minute for typical projects
@@ -384,7 +384,7 @@ Fetches EPW (EnergyPlus Weather) files from third-party sources or morphs existi
 - Uses `pyepwmorph` library
 - Access global climate models (GCMs)
 - Generate future climate scenarios (2030, 2050, 2080, etc.)
-- Multiple RCP/SSP scenarios (climate forcing scenarios)
+- Four SSP-based climate pathways (Best Case, Moderate, Upper Middle, Worst Case)
 
 ### Prerequisites
 - Zone geometry (for location detection)
@@ -394,10 +394,11 @@ Fetches EPW (EnergyPlus Weather) files from third-party sources or morphs existi
 
 | Parameter | Description | Typical Value |
 |-----------|-------------|---------------|
-| **Mode** | Fetch or Morph | Fetch |
-| **Target year** (morph) | Future year | 2050 |
-| **Climate scenario** (morph) | RCP/SSP | RCP 4.5 or RCP 8.5 |
-| **GCM model** (morph) | Climate model | Ensemble mean |
+| **Weather** | Fetch an EPW from climate.onebuilding.org, morph the existing EPW, or import one from a path | climate.onebuilding.org |
+| **Year** (morph) | Year to morph the weather file to | 2060 |
+| **Climate pathway** (morph) | Best Case (SSP126), Moderate (SSP245), Upper Middle (SSP370), Worst Case (SSP585) | Moderate |
+| **Percentile** (morph) | Percentile applied to temperature and radiation | 50 |
+| **Variables** (morph) | Weather variables to morph (Temperature, Clouds and Radiation, Humidity, Wind, Pressure, Dew Point) | Temperature |
 
 ### How to Use
 
@@ -417,14 +418,16 @@ Fetches EPW (EnergyPlus Weather) files from third-party sources or morphs existi
 
 1. **Ensure current EPW file exists** in scenario
 2. Navigate to **Weather Helper**
-3. Choose mode: **Morph to future climate**
-4. Set target year (e.g., 2050)
-5. Select climate scenario:
-   - **RCP 2.6**: Strong mitigation (low warming)
-   - **RCP 4.5**: Moderate mitigation (medium warming)
-   - **RCP 8.5**: High emissions (high warming)
-6. Click **Run**
-7. Morphed EPW file saved as `{scenario}/inputs/weather/weather_morphed_YEAR_SCENARIO.epw`
+3. Set **Weather** to `pyepwmorph`
+4. Set **Year** (e.g., 2050)
+5. Select **Climate pathway**:
+   - **Best Case**: +1.8°C (SSP126)
+   - **Moderate**: +2.7°C (SSP245)
+   - **Upper Middle**: +3.6°C (SSP370)
+   - **Worst Case**: +4.4°C (SSP585)
+6. Optionally set **Percentile** and **Variables** to morph
+7. Click **Run**
+8. The morphed file replaces `{scenario}/inputs/weather/weather.epw`; the original is kept once as `before_morph_weather.epw` in the same folder
 
 ### Understanding Weather Files
 
@@ -463,7 +466,7 @@ Reference: [McCarty & Shareef (2023)](https://doi.org/10.1088/1742-6596/2600/8/0
 - **Solution**: Check internet connection (pyepwmorph may need to download climate data)
 
 **Issue**: Unrealistic future temperatures
-- **Solution**: Verify climate scenario and target year are correctly selected
+- **Solution**: Verify climate pathway, year, and percentile are correctly selected
 - **Solution**: Check base EPW file is reasonable
 
 ---
@@ -492,14 +495,13 @@ Automatically queries and downloads surrounding building geometries from OpenStr
 
 | Parameter | Description | Typical Value |
 |-----------|-------------|-------------|
-| **Search radius** | Distance to fetch buildings (m) | 50-100 m |
-| **Height estimation** | Method for missing heights | OSM data or # of floors × 3m |
+| **Buffer** | Distance around the zone to fetch surrounding buildings (m) | 50 |
 
 ### How to Use
 
 1. Navigate to **Data Management**
 2. Select **Surroundings Helper**
-3. Set search radius:
+3. Set buffer:
    - **Urban core**: 50-100 m (many nearby tall buildings)
    - **Suburban**: 30-50 m (fewer, lower buildings)
    - **Rural**: 20-30 m (sparse buildings)
@@ -538,7 +540,7 @@ Automatically queries and downloads surrounding building geometries from OpenStr
 - **Solution**: Manually edit surroundings.shp to add heights
 
 **Issue**: Too many surrounding buildings (slow radiation calculation)
-- **Solution**: Reduce search radius
+- **Solution**: Reduce the buffer
 - **Solution**: Manually filter distant or irrelevant buildings
 
 ---
@@ -576,7 +578,7 @@ Fetches topography data (.tif elevation raster) from third-party sources. Terrai
 
 **Terrain raster**: `terrain.tif`
 - GeoTIFF format
-- Elevation values in meters
+- Elevation values in metres
 - Covers zone + surroundings extent
 - Typical resolution: 30m × 30m (SRTM) or better
 
@@ -638,21 +640,20 @@ Queries streets geometry from OpenStreetMap for use in thermal network layout ge
 
 | Parameter | Description | Typical Value |
 |-----------|-------------|---------------|
-| **Road types** | Which roads to include | Primary, secondary, residential |
-| **Search radius** | Distance to fetch streets | Match zone extent + buffer |
+| **Include private streets** | Include streets OpenStreetMap tags as private (tagging is not always accurate) | true |
 
 ### How to Use
 
 1. Navigate to **Data Management**
 2. Select **Streets Helper**
-3. Configure road types (default: all paved roads)
+3. Choose whether to include private streets (default: included)
 4. Click **Run**
 5. Streets saved to `{scenario}/inputs/networks/streets.shp`
 
 ### Output File
 
 **Streets shapefile**: `streets.shp`
-- Polylines representing street centerlines
+- Polylines representing street centrelines
 - Street names and types
 - Network topology (connections)
 
@@ -753,7 +754,7 @@ Required attributes:
 ### Tips
 - **Worth the effort for tree-heavy sites**: Skip if minimal tree coverage
 - **Estimate if needed**: Use aerial imagery and typical dimensions
-- **Seasonal variation**: Deciduous trees modeled with seasonal LAI
+- **Seasonal variation**: Deciduous trees modelled with seasonal LAI
 
 ### Troubleshooting
 
@@ -938,7 +939,7 @@ them by hand would be silently overwritten:
 | Disposal carbon (C2-C4) | `GHG_demolition_floor_kgCO2m2` |
 
 Splitting embodied carbon into **production** and **demolition** is what lets the
-[Emissions](06-2-emissions.md) feature report those EN 15978 modules separately.
+[LCA Part 2a: GHG Emissions](06-2-emissions.md) feature report those EN 15978 modules separately.
 
 ### What you must still provide
 

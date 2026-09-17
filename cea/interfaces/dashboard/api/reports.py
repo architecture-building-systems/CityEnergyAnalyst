@@ -62,7 +62,7 @@ def _demand_summary(locator):
     if not os.path.isfile(path):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Demand results not found. Run the demand simulation first.",
+            detail="Demand results not found. Run 'Energy Demand Part 2: Load Modelling' first.",
         )
 
     df = pd.read_csv(path)
@@ -411,9 +411,17 @@ async def get_custom_plot(
             detail=f"Not a plot script: {e}",
         )
     except FileNotFoundError as e:
+        script = cea.scripts.by_name(script_name, plugins=config.plugins)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Missing data for plot: {e}",
+            detail={
+                "message": f"Missing data for plot: {e}",
+                # Only output files count (see upstream_tool_labels), so plots whose
+                # input-files are all scenario inputs get an empty list and a generic hint.
+                "upstream_tools": cea.scripts.upstream_tool_labels(
+                    [spec[0] for spec in script.input_files], plugins=config.plugins
+                ),
+            },
         )
     except ValueError as e:
         # A required parameter (typically `what-if-name`) was missing
@@ -430,7 +438,7 @@ async def get_custom_plot(
             e,
         )
         # Frontend supplies the human-readable feature label from
-        # its `PLOT_GROUPS` (e.g. "Energy by Carrier"). Falls back
+        # its `PLOT_GROUPS` (e.g. "LCA Part 1: Energy by Carrier"). Falls back
         # to the script name if the client didn't send one.
         tool = feature_label or script_name or 'the upstream tool'
         scenario_name = os.path.basename(scenario_path)

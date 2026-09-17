@@ -139,7 +139,7 @@ def no_data_html(*, label: str, tool: str) -> str:
     """Generic "tool hasn't been run for this scenario" message.
 
     ``label`` is the human-facing data domain (e.g. ``'Final energy'``).
-    ``tool`` is the human-readable feature label (e.g. ``'Energy by Carrier'``).
+    ``tool`` is the human-readable feature label (e.g. ``'LCA Part 1: Energy by Carrier'``).
     """
     return (
         f'<div style="{_wrap_style()}">'

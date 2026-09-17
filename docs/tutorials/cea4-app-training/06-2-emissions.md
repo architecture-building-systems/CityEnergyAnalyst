@@ -1,4 +1,4 @@
-# Emissions
+# LCA Part 2a: GHG Emissions
 
 ## Overview
 
@@ -79,7 +79,7 @@ Set either fraction to `0` to exclude that module entirely.
 
 ## Prerequisites
 
-- **Final Energy** completed for the what-if scenario
+- **LCA Part 1: Energy by Carrier** completed for the what-if scenario
 - Solar radiation data (for PV-related embodied emissions)
 - Zone geometry and building properties
 
@@ -99,11 +99,11 @@ Set either fraction to `0` to exclude that module entirely.
 
 ## How to Use
 
-1. **Run Final Energy** first for the what-if scenario
+1. **Run LCA Part 1: Energy by Carrier** first for the what-if scenario
 
-2. **Run Emissions**:
-   - Navigate to **Life Cycle Analysis**
-   - Select **Emissions**
+2. **Run LCA Part 2a: GHG Emissions**:
+   - Navigate to **Life Cycle Analysis (LCA)**
+   - Select **LCA Part 2a: GHG Emissions**
    - Select the what-if scenario
    - Optionally configure grid decarbonisation trajectory
    - Click **Run**
@@ -232,11 +232,11 @@ Operational emissions by energy carrier (percentage breakdown per building):
 ---
 
 ## Related Features
-- **[Final Energy](06-1-final-energy.md)** - Prerequisite (must run first)
-- **[System Costs](06-3-system-costs.md)** - Economic analysis of the same what-if scenario
-- **[Heat Rejection](06-4-heat-rejection.md)** - Environmental heat impact
+- **[LCA Part 1: Energy by Carrier](06-1-final-energy.md)** - Prerequisite (must run first)
+- **[LCA Part 2b: Costs](06-3-system-costs.md)** - Economic analysis of the same what-if scenario
+- **[LCA Part 2c: Heat Rejection](06-4-heat-rejection.md)** - Environmental heat impact
 - **[Visualisation](10-visualisation.md)** - Additional plotting tools
 
 ---
 
-[<- Back: Final Energy](06-1-final-energy.md) | [Back to Index](index.md) | [Next: System Costs ->](06-3-system-costs.md)
+[<- Back: LCA Part 1: Energy by Carrier](06-1-final-energy.md) | [Back to Index](index.md) | [Next: LCA Part 2b: Costs ->](06-3-system-costs.md)

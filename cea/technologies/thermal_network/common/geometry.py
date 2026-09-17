@@ -35,7 +35,7 @@ def load_network_shapefiles(
     if not os.path.exists(edges_path):
         raise FileNotFoundError(
             f"{network_type} network layout is missing: {edges_path}\n"
-            f"Please run 'Network Layout' (Part 1) first to create the network layout."
+            f"Please run 'Thermal Network Part 1: Layout' (cea network-layout) first to create the network layout."
         )
 
     if not os.path.exists(nodes_path):
@@ -43,10 +43,10 @@ def load_network_shapefiles(
         raise FileNotFoundError(
             f"{network_type} network nodes file is missing: {nodes_path}\n"
             f"This can happen if:\n"
-            f"  1. 'Network Layout' (Part 1) was not run yet, OR\n"
+            f"  1. 'Thermal Network Part 1: Layout' was not run yet, OR\n"
             f"  2. The {network_type} network was skipped because no buildings have {demand_type} demand.\n"
-            f"     (Check the 'consider-only-buildings-with-demand' setting in Network Layout)\n"
-            f"Please verify your buildings have {demand_type} demand and re-run 'Network Layout' (Part 1)."
+            f"     (Check the 'consider-only-buildings-with-demand' setting in Thermal Network Part 1: Layout)\n"
+            f"Please verify your buildings have {demand_type} demand and re-run 'Thermal Network Part 1: Layout' (cea network-layout)."
         )
 
     nodes_gdf = gpd.read_file(nodes_path)

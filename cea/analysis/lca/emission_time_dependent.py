@@ -128,7 +128,7 @@ def operational_hourly(config: Configuration) -> None:
             missing_list = ', '.join(missing_panels)
             error_msg = (
                 f"PV electricity results missing for panel type(s): {missing_list}. "
-                f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results for these panel types."
+                f"Please run 'Photovoltaic (PV) Panels' (cea photovoltaic) first to generate PV potential results for these panel types."
             )
             print(f"ERROR: {error_msg}")
             raise FileNotFoundError(error_msg)
@@ -220,7 +220,7 @@ def total_yearly(config: Configuration) -> None:
                 missing_list = ', '.join(missing_panels)
                 error_msg = (
                     f"PV electricity results missing for panel type(s): {missing_list}. "
-                    f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results for these panel types."
+                    f"Please run 'Photovoltaic (PV) Panels' (cea photovoltaic) first to generate PV potential results for these panel types."
                 )
                 print(f"ERROR: {error_msg}")
                 raise FileNotFoundError(error_msg)
@@ -666,7 +666,7 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
         expected = locator.get_analysis_configuration_file(whatif_name)
         raise FileNotFoundError(
             f"configuration file not found for what-if '{whatif_name}': {expected}\n"
-            "Please run 'final-energy' first."
+            "Please run 'LCA Part 1: Energy by Carrier' (cea final-energy) first."
         )
     building_configs = config_data.get('buildings', {})
     network_name = config_data.get('metadata', {}).get('network_name')
@@ -691,7 +691,7 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
     if not os.path.exists(summary_path):
         raise FileNotFoundError(
             f"final_energy_buildings.csv not found for what-if '{whatif_name}': {summary_path}\n"
-            "Please run 'final-energy' first."
+            "Please run 'LCA Part 1: Energy by Carrier' (cea final-energy) first."
         )
     summary_df = pd.read_csv(summary_path)
 

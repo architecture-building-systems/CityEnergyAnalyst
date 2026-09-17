@@ -786,7 +786,7 @@ def apply_service_priority_order(services):
 
 def validate_itemised_dh_services_against_building_properties(itemised_dh_services: list[str], per_building_services):
     """
-    Validate itemised-dh-services against Building Properties/Supply settings.
+    Validate itemised-dh-services against Input Editor > supply settings.
 
     Enforces STRICT validation: itemised-dh-services must match exactly the services
     that buildings are configured to receive from the district network.
@@ -796,7 +796,7 @@ def validate_itemised_dh_services_against_building_properties(itemised_dh_servic
     Args:
         itemised_dh_services: List of services network will provide (from config)
         per_building_services: Dict mapping building → set of DISTRICT services
-                              (from Building Properties/Supply)
+                              (from Input Editor > supply)
 
     Returns:
         Tuple of (validation_level, message, buildings_by_service)
@@ -860,14 +860,14 @@ def validate_itemised_dh_services_against_building_properties(itemised_dh_servic
 
         error_msg = (
             f"Network configuration error: itemised-dh-services excludes {', '.join(missing_names)} "
-            f"but {len(buildings_affected)} building(s) in Building Properties/Supply "
+            f"but {len(buildings_affected)} building(s) in Input Editor > supply "
             "are configured to receive these services from the district network.\n\n"
             f"Buildings affected: {', '.join(sorted(buildings_affected[:10]))}"
             f"{'...' if len(buildings_affected) > 10 else ''}\n\n"
             "Please either:\n"
             f"  1. Add {', '.join(missing_names)} to itemised-dh-services, OR\n"
-            "  2. Update Building Properties/Supply to use BUILDING-scale for these services, OR\n"
-            "  3. Set overwrite-supply-settings=true to ignore Building Properties/Supply"
+            "  2. Update Input Editor > supply to use BUILDING-scale for these services, OR\n"
+            "  3. Set overwrite-supply-settings=true to ignore Input Editor > supply"
         )
 
         return ('error', error_msg, buildings_by_service)
@@ -885,15 +885,15 @@ def validate_itemised_dh_services_against_building_properties(itemised_dh_servic
 
         error_msg = (
             f"Network configuration error: itemised-dh-services includes {', '.join(unused_names)} "
-            "but no buildings in Building Properties/Supply use these services from the district network.\n\n"
+            "but no buildings in Input Editor > supply use these services from the district network.\n\n"
             "Building service breakdown:\n"
             f"  - Space heating only: {hs_only} building(s)\n"
             f"  - Domestic hot water only: {ww_only} building(s)\n"
             f"  - Both services: {both} building(s)\n\n"
             f"Please either:\n"
             f"  1. Remove {', '.join(unused_names)} from itemised-dh-services, OR\n"
-            "  2. Update Building Properties/Supply to add DISTRICT-scale for these services, OR\n"
-            "  3. Set overwrite-supply-settings=true to ignore Building Properties/Supply"
+            "  2. Update Input Editor > supply to add DISTRICT-scale for these services, OR\n"
+            "  3. Set overwrite-supply-settings=true to ignore Input Editor > supply"
         )
 
         return ('error', error_msg, buildings_by_service)
@@ -983,7 +983,7 @@ def get_buildings_with_demand(locator, network_type, itemised_dh_services=None):
     except FileNotFoundError:
         raise FileNotFoundError(
             f"Total demand file not found: {demand_path}\n"
-            "Please run the 'demand' tool first to generate building demand data."
+            "Please run 'Energy Demand Part 2: Load Modelling' (cea demand) first to generate building demand data."
         )
 
     # Determine demand field(s) based on network type.
@@ -1019,7 +1019,7 @@ def get_buildings_with_demand(locator, network_type, itemised_dh_services=None):
         raise ValueError(
             f"Required column(s) '{missing_str}' ({demand_type} demand) not found in total demand file: {demand_path}\n"
             f"Available columns: {list(total_demand.columns)}\n"
-            "Please ensure the 'demand' tool was run successfully."
+            "Please ensure 'Energy Demand Part 2: Load Modelling' (cea demand) ran successfully."
         )
 
     # Filter buildings with demand
@@ -1483,7 +1483,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
     # Determine which buildings should be in the network
     if overwrite_supply:
         # Use heating/cooling-connected-buildings parameters (what-if scenarios)
-        print("  - Mode: Overwrite district thermal connections defined in Building Properties/Supply")
+        print("  - Mode: Overwrite district thermal connections defined in Input Editor > supply")
 
         list_heating_buildings, list_cooling_buildings, list_district_scale_buildings = initialize_building_lists(
             heating_connected_buildings_config=heating_connected_buildings_config,
@@ -1569,21 +1569,21 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
 
         # Validate at least one building found
         if not list_district_scale_buildings:
-            raise ValueError(f"No district thermal network connections found in Building Properties/Supply for service(s): {', '.join(list_include_services)}.")
+            raise ValueError(f"No district thermal network connections found in Input Editor > supply for service(s): {', '.join(list_include_services)}.")
 
-        print("  - Mode: Use Building Properties/Supply settings")
+        print("  - Mode: Use Input Editor > supply settings")
         if buildings_to_validate_dc and buildings_to_validate_dh:
             print(f"  - District buildings (DC): {len(buildings_to_validate_dc)}")
             print(f"  - District buildings (DH): {len(buildings_to_validate_dh)}")
         elif buildings_to_validate_dc:
             print(f"  - District buildings (DC): {len(list_district_scale_buildings)}")
             if 'DH' in list_include_services:
-                print("  - District buildings (DH): 0 (no buildings found in Building Properties/Supply)")
+                print("  - District buildings (DH): 0 (no buildings found in Input Editor > supply)")
                 print("  DH service will be skipped")
         elif buildings_to_validate_dh:
             print(f"  - District buildings (DH): {len(list_district_scale_buildings)}")
             if 'DC' in list_include_services:
-                print("  - District buildings (DC): 0 (no buildings found in Building Properties/Supply)")
+                print("  - District buildings (DC): 0 (no buildings found in Input Editor > supply)")
                 print("  DC service will be skipped")
 
     # Track which buildings belong to DC and DH networks separately
@@ -1719,8 +1719,8 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                           if svcs == {PlantServices.SPACE_HEATING, PlantServices.DOMESTIC_HOT_WATER})
 
                 print("  ℹ Network configuration:")
-                print("    - Building selection: From Building Properties/Supply")
-                print("    - Service configuration: Derived from Building Properties/Supply")
+                print("    - Building selection: From Input Editor > supply")
+                print("    - Service configuration: Derived from Input Editor > supply")
                 print("  ℹ Building service breakdown:")
                 print(f"    - Space heating only: {hs_only} building(s)")
                 print(f"    - Domestic hot water only: {ww_only} building(s)")
@@ -2028,7 +2028,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                 f"No networks were generated - all requested network types were skipped:\n"
                 f"  {', '.join(skipped_info)}\n"
                 f"Please check that your buildings have the required demand, or adjust the "
-                f"'consider-only-buildings-with-demand' setting in Network Layout configuration."
+                f"'consider-only-buildings-with-demand' setting in Thermal Network Part 1: Layout."
             )
 
 
@@ -2145,7 +2145,7 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     # Determine which buildings should be in the network
     if overwrite_supply:
         # Use heating/cooling-connected-buildings parameters (what-if scenarios)
-        print("  - Mode: Overwrite district thermal connections defined in Building Properties/Supply")
+        print("  - Mode: Overwrite district thermal connections defined in Input Editor > supply")
 
         list_heating_buildings, list_cooling_buildings, buildings_to_validate = initialize_building_lists(
             heating_connected_buildings_config=heating_connected_buildings_config,
@@ -2226,12 +2226,12 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
 
         # Validate at least one building found
         if not buildings_to_validate:
-            raise ValueError(f"No district thermal network connections found in Building Properties/Supply for service(s): {', '.join(list_include_services)}.")
+            raise ValueError(f"No district thermal network connections found in Input Editor > supply for service(s): {', '.join(list_include_services)}.")
 
         # Drop services with no buildings found in supply.csv. Work on a local
         # copy so we don't mutate the config-owned list for subsequent runs.
         list_include_services = list(list_include_services)
-        print("  - Mode: Use Building Properties/Supply settings")
+        print("  - Mode: Use Input Editor > supply settings")
         if buildings_to_validate_dc and buildings_to_validate_dh:
             print(f"  - District buildings (DC): {len(buildings_to_validate_dc)}")
             print(f"  - District buildings (DH): {len(buildings_to_validate_dh)}")

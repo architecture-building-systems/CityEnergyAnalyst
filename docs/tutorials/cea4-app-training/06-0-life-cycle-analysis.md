@@ -20,14 +20,14 @@ You can create multiple what-if scenarios to compare alternatives (e.g. "all gas
 Energy Demand (Part 2)
   |
   v
-Final Energy  (per what-if scenario)
+LCA Part 1: Energy by Carrier  (per what-if scenario)
   |
-  +--> LCA Emissions  (lifecycle + operational)
-  +--> System Costs    (CAPEX + OPEX)
-  +--> Heat Rejection  (waste heat to environment)
+  +--> LCA Part 2a: GHG Emissions (lifecycle + operational)
+  +--> LCA Part 2b: Costs         (CAPEX + OPEX)
+  +--> LCA Part 2c: Heat Rejection (waste heat to environment)
 ```
 
-**Final Energy** must run first for each what-if scenario. It produces `configuration.json` which stores the supply configuration, and per-building/plant hourly energy files. The other three features read from these outputs.
+**LCA Part 1: Energy by Carrier** must run first for each what-if scenario. It produces `configuration.json` which stores the supply configuration, and per-building/plant hourly energy files. The other three features read from these outputs.
 
 ### Output Location
 
@@ -46,10 +46,10 @@ All what-if results are stored under:
 
 | Feature | Page | Description |
 |---------|------|-------------|
-| Final Energy | [06-1-final-energy.md](06-1-final-energy.md) | Energy carriers and quantities consumed by buildings and plants |
-| Emissions | [06-2-emissions.md](06-2-emissions.md) | Lifecycle and operational greenhouse gas emissions |
-| System Costs | [06-3-system-costs.md](06-3-system-costs.md) | CAPEX, OPEX, and total annualised costs |
-| Heat Rejection | [06-4-heat-rejection.md](06-4-heat-rejection.md) | Waste heat rejected to the environment |
+| LCA Part 1: Energy by Carrier | [06-1-final-energy.md](06-1-final-energy.md) | Energy carriers and quantities consumed by buildings and plants |
+| LCA Part 2a: GHG Emissions | [06-2-emissions.md](06-2-emissions.md) | Lifecycle and operational greenhouse gas emissions |
+| LCA Part 2b: Costs | [06-3-system-costs.md](06-3-system-costs.md) | CAPEX, OPEX, and total annualised costs |
+| LCA Part 2c: Heat Rejection | [06-4-heat-rejection.md](06-4-heat-rejection.md) | Waste heat rejected to the environment |
 
 ---
 
@@ -80,8 +80,8 @@ Plant entities are never filtered by the building name list.
 - **[Thermal Network](05-thermal-network.md)** - Required for district-connected scenarios
 - **[Renewable Energy Assessment](03-renewable-energy.md)** - Solar potential affects embodied emissions
 - **[Visualisation](10-visualisation.md)** - Additional plotting tools
-- **[Export Results to CSV](01-import-export.md#export-results-to-csv-summary-and-analytics)** - Batch export of what-if results
+- **[Export Results to .csv (Summary & Analytics)](01-import-export.md#export-results-to-csv-summary--analytics)** - Batch export of what-if results
 
 ---
 
-[← Back: Thermal Network](05-thermal-network.md) | [Back to Index](index.md) | [Next: Final Energy →](06-1-final-energy.md)
+[← Back: Thermal Network](05-thermal-network.md) | [Back to Index](index.md) | [Next: LCA Part 1: Energy by Carrier →](06-1-final-energy.md)

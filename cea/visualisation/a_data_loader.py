@@ -134,27 +134,26 @@ def raise_missing_pv_error(pv_codes, context='file'):
         if len(pv_codes) == 1:
             error_msg = (
                 f"PV data missing for panel type: {pv_codes[0]} in emission results. "
-                f"Please run the 'emissions' script with include_pv=True and pv_codes=['{pv_codes[0]}'] "
-                f"to include PV offsetting in emission calculations."
+                f"Please re-run 'LCA Part 1: Energy by Carrier' (cea final-energy) with this panel type selected under panels-on-roof/wall, "
+                f"then 'LCA Part 2a: GHG Emissions' (cea emissions)."
             )
         else:
-            pv_list = ', '.join([f"'{code}'" for code in sorted(pv_codes)])
             error_msg = (
                 f"PV data missing for panel type(s): {', '.join(sorted(pv_codes))} in emission results. "
-                f"Please run the 'emissions' script with include_pv=True and pv_codes=[{pv_list}] "
-                f"to include PV offsetting in emission calculations."
+                f"Please re-run 'LCA Part 1: Energy by Carrier' (cea final-energy) with these panel types selected under panels-on-roof/wall, "
+                f"then 'LCA Part 2a: GHG Emissions' (cea emissions)."
             )
     else:
         # Error when PV result files don't exist
         if len(pv_codes) == 1:
             error_msg = (
                 f"PV electricity results missing for panel type: {pv_codes[0]}. "
-                f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results for this panel type."
+                f"Please run 'Photovoltaic (PV) Panels' (cea photovoltaic) first to generate PV potential results for this panel type."
             )
         else:
             error_msg = (
                 f"PV electricity results missing for panel type(s): {', '.join(sorted(pv_codes))}. "
-                f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results for these panel types."
+                f"Please run 'Photovoltaic (PV) Panels' (cea photovoltaic) first to generate PV potential results for these panel types."
             )
 
     print(f"ERROR: {error_msg}")

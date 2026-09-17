@@ -63,7 +63,7 @@ The same tool handles all three paths; which one runs depends on which parameter
 | Parameter | Description | Typical Value |
 |-----------|-------------|---------------|
 | **network-name** | Unique name for the layout being created | e.g. `sub1`, `baseline`, `optimised` |
-| **network-type** | Services to generate: DH, DC, or both | `['DH']`, `['DC']`, `['DH', 'DC']` |
+| **include-services** | Services to generate: DH, DC, or both. Leave blank for both | `DH`, `DC`, `DC, DH` |
 | **existing-network** | Name of a prior network to chain off. Leave blank for a fresh auto-generation. | blank, or `sub1` |
 | **network-layout-mode** | How to reconcile connected buildings when loading an existing network or a user-provided one. See below. | `validate` / `augment` / `filter` |
 | **auto-modify-network** | Whether `augment` / `filter` modes may actually modify the network. If `false`, they error instead of modifying. | `true` |
@@ -99,7 +99,7 @@ When loading an existing network or a user-provided layout, the engine reconcile
    - **Chain off an existing network**: set `existing-network` to the previous network's name.
 
 3. **Run layout generation**:
-   - Navigate to **Thermal Network Design → Part 1: Layout**
+   - Navigate to **Thermal Network Design → Thermal Network Part 1: Layout**
    - Give the new layout a **unique `network-name`**
    - Select `network-type` (`DH`, `DC`, or both)
    - If chaining or uploading, pick a `network-layout-mode`
@@ -174,7 +174,7 @@ Typical network characteristics:
 
 ---
 
-## Thermal Network Part 2a: Flow & Sizing (Single-Phase)
+## Thermal Network Part 2a: Flow & Sizing, Single-Phase
 
 ### Overview
 Performs detailed thermal hydraulic simulation of the network created in Part 1. This feature calculates mass flow rates, pipe sizes, temperatures, pressure drops, and pump requirements for district heating or cooling systems.
@@ -223,13 +223,17 @@ Performs detailed thermal hydraulic simulation of the network created in Part 1.
 |-----------|-------------|---------------|
 | **Network name** | Select which network layout to simulate | Choose from dropdown (created in Part 1) |
 | **Network type** | DH or DC | Must match the network created in Part 1 |
-| **Supply temperature** | Network supply temp | 80°C (DH) / 6°C (DC) |
-| **Return temperature** | Network return temp | 50°C (DH) / 12°C (DC) |
-| **Pipe insulation** | Insulation standard | Standard / High performance |
-| **Ground temperature** | For heat loss calculation | From weather file |
-| **Multiprocessing** | Parallel processing | Enabled |
+| **DH temperature mode** | Temperature strategy when the DH supply temperature is variable (`-1`) | `low-temperature` / `high-temperature` |
+| **Network temperature DH** | Fixed DH supply temperature (°C). `-1` = variable, set by DH temperature mode | `-1`, or e.g. 45 / 70 |
+| **Network temperature DC** | Fixed DC supply temperature (°C). `-1` = variable, follows building requirements | `-1` |
+| **Equivalent length factor** | Share of pressure losses from fittings and accessories (0.0-0.6) | 0.2 |
+| **Min head substation** | Minimum head loss at each substation (kPa) | 20 |
+| **HW friction coefficient** | Hazen-Williams friction coefficient of the pipes | 100 |
+| **Peak load velocity** | Maximum velocity in pipes (m/s); higher values give smaller pipes | 2 |
+| **Peak load percentage** | Share of peak demand used for pipe sizing (%) | 100 |
+| **Set diameter** | Size pipes from the maximum velocity (true) or keep diameters fixed (false) | true |
 
-**Note on temperature**: The network temperature regime is fully determined in Part 2 by the supply/return temperature parameters. The order of heating/cooling services configured in Part 1 does not affect the temperature regime.
+**Note on temperature**: The network temperature regime is fully determined in Part 2 by the DH/DC temperature parameters. The order of heating/cooling services configured in Part 1 does not affect the temperature regime.
 
 ### How to Use
 
@@ -237,15 +241,13 @@ Performs detailed thermal hydraulic simulation of the network created in Part 1.
 
 2. **Configure parameters**:
    - Navigate to **Thermal Network Design**
-   - Select **Thermal Network Part 2a: Flow & Sizing (Single-Phase)**
+   - Select **Thermal Network Part 2a: Flow & Sizing, Single-Phase**
    - **Select network name** from dropdown (must be created in Part 1)
    - Select network type (must match the type used in Part 1)
-   - Set supply/return temperatures:
-     - **District heating**: 70-90°C supply, 40-50°C return
-     - **Low-temperature district heating**: 50-70°C supply, 30-40°C return
-     - **District cooling**: 5-8°C supply, 12-15°C return
-   - Choose pipe insulation standard
-   - Enable multiprocessing
+   - Set the network temperatures:
+     - Leave **Network temperature DH/DC** at `-1` for variable temperature (follows building requirements); with DH at `-1`, pick **DH temperature mode** (`low-temperature` or `high-temperature`)
+     - Or enter a fixed supply temperature, e.g. 70°C for conventional DH or 45°C for low-temperature DH
+   - Review the pipe sizing parameters (peak load velocity, peak load percentage); defaults are usually suitable
 
 3. **Run analysis**:
    - Click **Run**
@@ -325,12 +327,6 @@ If the required diameter produced by the simulation exceeds the largest DN in th
 - Requires heat pumps at buildings
 - Can also provide cooling
 
-#### Pipe Insulation Standards
-
-- **Standard**: Typical for urban DH (λ ≈ 0.023 W/mK)
-- **High performance**: Better insulation for lower losses (λ ≈ 0.018 W/mK)
-- **Twin pipes**: Pre-insulated pipe pairs (supply + return)
-
 ### Tips
 
 1. **Temperature optimisation**: Lower supply temperatures reduce heat losses
@@ -349,10 +345,10 @@ If the required diameter produced by the simulation exceeds the largest DN in th
 **Issue**: Unrealistic pressure drops (very high or negative)
 - **Solution**: Check network connectivity and flow directions
 - **Solution**: Verify pipe properties in database
-- **Solution**: Review supply/return temperature settings
+- **Solution**: Review the network temperature settings
 
 **Issue**: Very high heat losses (>30%)
-- **Solution**: Check pipe insulation settings
+- **Solution**: Check pipe properties in the database
 - **Solution**: Verify ground temperature is reasonable
 - **Solution**: Consider lower supply temperatures
 
@@ -362,7 +358,7 @@ If the required diameter produced by the simulation exceeds the largest DN in th
 
 ---
 
-## Thermal Network Part 2b: Flow & Sizing (Multiple-Phase)
+## Thermal Network Part 2b: Flow & Sizing, Multiple-Phase
 
 > **"Multiple-phase" means construction phases, not two-phase flow.** This feature is about
 > building a network out in stages over time. It has nothing to do with steam or two-phase
@@ -440,7 +436,7 @@ Every edge × phase pair is labelled with one of:
 2. **Run Part 2 for each phase** individually (`thermal-network` tool) to generate per-phase simulation results. This populates the `edge_list.csv` metadata that Part 2b reads to get per-pipe flow requirements.
 
 3. **Run Part 2b**:
-   - Navigate to **Thermal Network Design → Part 2b: Multi-Phase**
+   - Navigate to **Thermal Network Design → Thermal Network Part 2b: Flow & Sizing, Multiple-Phase**
    - Set `phasing-plan-name` (e.g. `plan8`)
    - Set `network-name` to your ordered phase list: `['sub1', 'sub2', 'sub3']`
    - Set `phase-completion-year` to matching years: `['2025', '2050', '2075']`
@@ -509,7 +505,7 @@ All Part 2b outputs go under `outputs/data/thermal-network/phasing-plans/{phasin
 
 3. **Network Sizing (Part 2)**:
    - Select the network name created in Part 1
-   - Set supply/return temperatures appropriate for the service
+   - Set network temperatures appropriate for the service (`-1` for variable)
    - Review pipe sizes, heat losses, pumping energy
 
 4. **Optimisation (optional)**:
@@ -517,7 +513,7 @@ All Part 2b outputs go under `outputs/data/thermal-network/phasing-plans/{phasin
    - Iterate on network configuration if needed
 
 5. **Analysis** (via what-if scenarios):
-   - Run [Final Energy](06-1-final-energy.md), [Emissions](06-2-emissions.md), [System Costs](06-3-system-costs.md), [Heat Rejection](06-4-heat-rejection.md)
+   - Run [LCA Part 1: Energy by Carrier](06-1-final-energy.md), [LCA Part 2a: GHG Emissions](06-2-emissions.md), [LCA Part 2b: Costs](06-3-system-costs.md), [LCA Part 2c: Heat Rejection](06-4-heat-rejection.md)
    - Use [Visualisation tools](10-visualisation.md) to present results
 
 ### Phased / Multi-Phase Workflow
@@ -555,7 +551,7 @@ Same structure as district heating, but:
 
 ### Layout Design
 - **Follow streets**: Easier permitting and construction
-- **Minimize length**: Reduce capital cost and heat losses
+- **Minimise length**: Reduce capital cost and heat losses
 - **Strategic branching**: Balance tree simplicity with reliability
 - **Future-proof**: Consider expansion areas
 
