@@ -7,3 +7,4 @@ Legal
 
    license
    disclaimer
+   privacy
