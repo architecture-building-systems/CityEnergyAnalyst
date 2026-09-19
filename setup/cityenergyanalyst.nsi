@@ -36,6 +36,9 @@ ${Using:StrFunc} StrRep
 Var LauncherExtension
 Var InstallStep  ; tracks install progress for telemetry (see SendTelemetry)
 Var GuiLogTail   ; last line of the CEA Desktop installer's own log, see ReportGuiLog
+Var InstallAttemptCount  ; this run's attempt number since the last success, see ReadInstallAttempts
+Var PrevInstallStep      ; step a previous failed attempt died on, if any, see ReadInstallAttempts
+Var RepeatFailure        ; "1" if this run failed at the same step as the previous attempt
 
 ; Macro to run a command and abort on failure
 !macro RunCommand CommandStr DescriptionStr ErrorMsg
@@ -135,14 +138,32 @@ FunctionEnd
 ;  - The actual network call happens inside telemetry.ps1, wrapped in try/catch
 ;    with a short timeout, so a dead network or blocked outbound traffic is silent.
 ; Anonymity: distinct_id is a fresh GUID generated per install in telemetry.ps1 and
-; never written to disk; only OS/arch/version/step/error-code/error-detail are sent -
-; no paths, no username, no hostname. ErrorDetail is a short, sanitized token (see
-; ReportGuiLog) describing which stage the bundled CEA Desktop installer reached,
-; not free text - pass "" when there is none.
-!macro SendTelemetry EventName Step ErrorCode ErrorDetail
+; never written to disk; only OS/arch/version/step/error-code/error-detail/retry
+; info are sent - no paths, no username, no hostname, and nothing that could
+; link two events to the same person or machine (RetryCount/RepeatFailure come
+; from a local marker that is never itself transmitted or persisted anywhere
+; but this machine - see ReadInstallAttempts). ErrorDetail is a short, sanitized
+; token (see ReportGuiLog) describing which stage the bundled CEA Desktop
+; installer reached, not free text - pass "" when there is none.
+!macro SendTelemetry EventName Step ErrorCode ErrorDetail RetryCount RepeatFailure
     !ifdef POSTHOG_API_KEY
         ${If} ${FileExists} "$TEMP\cea-installer-telemetry.ps1"
-            Exec '"$WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "$TEMP\cea-installer-telemetry.ps1" -ApiKey "${POSTHOG_API_KEY}" -PostHogHost "${POSTHOG_HOST}" -EventName "${EventName}" -CeaVersion "${VER}" -InstallerStep "${Step}" -ErrorCode "${ErrorCode}" -ErrorDetail "${ErrorDetail}"'
+            Exec '"$WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "$TEMP\cea-installer-telemetry.ps1" -ApiKey "${POSTHOG_API_KEY}" -PostHogHost "${POSTHOG_HOST}" -EventName "${EventName}" -CeaVersion "${VER}" -InstallerStep "${Step}" -ErrorCode "${ErrorCode}" -ErrorDetail "${ErrorDetail}" -RetryCount "${RetryCount}" -RepeatFailure "${RepeatFailure}"'
+        ${EndIf}
+    !endif
+!macroend
+
+; Separate from SendTelemetry above because an uninstall has nothing
+; meaningful to put in Step/ErrorCode/ErrorDetail/RetryCount - it reports
+; DaysBucket (a coarse "same_day"/"within_week"/"within_month"/"over_month"/
+; "unknown" bucket, see WriteInstallRecord/un.ReportUninstall) and whether this
+; was ever a completed install, instead. Needs its own copy of the telemetry
+; script extracted into the uninstaller (see un.UninstallSection) - the
+; original $TEMP copy from install time may be long gone by uninstall time.
+!macro SendUninstallTelemetry EventName DaysBucket WasCompletedInstall
+    !ifdef POSTHOG_API_KEY
+        ${If} ${FileExists} "$TEMP\cea-uninstaller-telemetry.ps1"
+            Exec '"$WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "$TEMP\cea-uninstaller-telemetry.ps1" -ApiKey "${POSTHOG_API_KEY}" -PostHogHost "${POSTHOG_HOST}" -EventName "${EventName}" -CeaVersion "${VER}" -DaysSinceInstall "${DaysBucket}" -WasCompletedInstall "${WasCompletedInstall}"'
         ${EndIf}
     !endif
 !macroend
@@ -206,8 +227,89 @@ FunctionEnd
 ;--------------------------------
 ;Installer Sections
 
+; Local, never-transmitted bookkeeping so telemetry can tell "one person stuck
+; retrying the same step" apart from "many different one-off failures" -
+; without ever sending or storing anything that identifies a person or
+; machine. Only the derived attempt count and same-step flag are sent; the
+; marker file itself never leaves this machine and is deleted on success.
+
+; Reads %APPDATA%\CityEnergyAnalyst\installer-attempts.txt (two lines: attempt
+; count, then the step it last failed at) to compute this run's attempt
+; number and whether it's retrying after the same failure. A missing or
+; unreadable file just means "first try" - must never affect the real install.
+Function ReadInstallAttempts
+    StrCpy $InstallAttemptCount 1
+    StrCpy $PrevInstallStep ""
+    ClearErrors
+    FileOpen $R0 "$APPDATA\CityEnergyAnalyst\installer-attempts.txt" r
+    ${If} ${Errors}
+        Return
+    ${EndIf}
+    FileRead $R0 $R1
+    FileRead $R0 $PrevInstallStep
+    FileClose $R0
+    ClearErrors
+    StrCpy $R1 $R1 -2               ; drop the trailing \r\n we wrote
+    StrCpy $PrevInstallStep $PrevInstallStep -2
+    IntOp $InstallAttemptCount $R1 + 1
+FunctionEnd
+
+; Records this run's outcome for a subsequent retry to read via
+; ReadInstallAttempts above. Called on every failure with the step reached.
+Function WriteInstallAttempt
+    ClearErrors
+    CreateDirectory "$APPDATA\CityEnergyAnalyst"
+    FileOpen $R0 "$APPDATA\CityEnergyAnalyst\installer-attempts.txt" w
+    IfErrors writeAttempt_done
+    FileWrite $R0 "$InstallAttemptCount$\r$\n"
+    FileWrite $R0 "$InstallStep$\r$\n"
+    FileClose $R0
+    writeAttempt_done:
+    ClearErrors
+FunctionEnd
+
+; Clears the retry marker on a successful install, so a later reinstall or
+; upgrade starts counting attempts fresh rather than inheriting an old streak.
+Function ClearInstallAttempts
+    ClearErrors
+    Delete "$APPDATA\CityEnergyAnalyst\installer-attempts.txt"
+    ClearErrors
+FunctionEnd
+
+; Written once on a fully successful install; read (and removed) by
+; un.ReportUninstall so the uninstaller can report roughly how long ago this
+; was installed and whether it ever completed - never a precise date and
+; never anything that identifies a person or machine, just local bookkeeping
+; the uninstaller reports as a coarse bucket. Day arithmetic here is a
+; deliberately approximate serial (year*372 + month*31 + day), not real
+; calendar math - fine for coarse buckets, off by a few days across short
+; months near a month boundary.
+Function WriteInstallRecord
+    ${GetTime} "" "L" $R1 $R2 $R3 $R4 $R5 $R6 $R7
+    ; $R1=Day $R2=Month $R3=Year (see ceaLogWrite in the GUI installer's
+    ; build/installer.nsh for why GetTime's outputs land in this order)
+    IntOp $R4 $R3 * 372
+    IntOp $R5 $R2 * 31
+    IntOp $R4 $R4 + $R5
+    IntOp $R4 $R4 + $R1
+    ClearErrors
+    CreateDirectory "$APPDATA\CityEnergyAnalyst"
+    FileOpen $R0 "$APPDATA\CityEnergyAnalyst\installer-record.txt" w
+    IfErrors writeRecord_done
+    FileWrite $R0 "$R4$\r$\n"
+    FileClose $R0
+    writeRecord_done:
+    ClearErrors
+FunctionEnd
+
 Function .onInstFailed
-    !insertmacro SendTelemetry "installer_failed" "$InstallStep" "$0" "$GuiLogTail"
+    StrCpy $RepeatFailure "0"
+    ${If} $PrevInstallStep != ""
+    ${AndIf} $PrevInstallStep == $InstallStep
+        StrCpy $RepeatFailure "1"
+    ${EndIf}
+    Call WriteInstallAttempt
+    !insertmacro SendTelemetry "installer_failed" "$InstallStep" "$0" "$GuiLogTail" "$InstallAttemptCount" "$RepeatFailure"
 
     # Ensure temporary files are cleaned up
     DetailPrint "Installation failed, cleaning up temporary files..."
@@ -231,6 +333,7 @@ FunctionEnd
 Function BaseInstallationSection
     SetOutPath "$INSTDIR"
     StrCpy $InstallStep "start"
+    Call ReadInstallAttempts
 
     !ifdef POSTHOG_API_KEY
         File "/oname=$TEMP\cea-installer-telemetry.ps1" "telemetry.ps1"
@@ -330,7 +433,9 @@ Function BaseInstallationSection
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch CEA Desktop"
 
     StrCpy $InstallStep "done"
-    !insertmacro SendTelemetry "installer_completed" "$InstallStep" "" ""
+    Call ClearInstallAttempts
+    Call WriteInstallRecord
+    !insertmacro SendTelemetry "installer_completed" "$InstallStep" "" "" "$InstallAttemptCount" "0"
 FunctionEnd
 
 Function CreateStartMenuShortcutsSection
@@ -366,7 +471,56 @@ Function CreateDesktopShortcutsSection
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch CEA Desktop"
 FunctionEnd
 
+; Reads the marker WriteInstallRecord left behind (if any) to report roughly
+; how long ago this was installed and whether it was ever a fully completed
+; install, bucketed coarsely - never a precise date, never anything that
+; identifies a person or machine. A missing file just means this uninstaller
+; is running against an install that never completed (e.g. a leftover
+; uninstaller from a partial install a user ran manually).
+Function un.ReportUninstall
+    StrCpy $R5 "unknown"
+    StrCpy $R6 "0"
+    ClearErrors
+    FileOpen $R0 "$APPDATA\CityEnergyAnalyst\installer-record.txt" r
+    ${If} ${Errors}
+        Goto un_reportUninstall_send
+    ${EndIf}
+    FileRead $R0 $R1
+    FileClose $R0
+    ClearErrors
+    StrCpy $R1 $R1 -2
+    StrCpy $R6 "1"
+
+    ${GetTime} "" "L" $R2 $R3 $R4 $R7 $R8 $R9 $R8
+    ; $R2=Day $R3=Month $R4=Year (today) - see WriteInstallRecord
+    IntOp $R7 $R4 * 372
+    IntOp $R8 $R3 * 31
+    IntOp $R7 $R7 + $R8
+    IntOp $R7 $R7 + $R2
+    IntOp $R7 $R7 - $R1   ; approx days since install
+
+    ${If} $R7 <= 0
+        StrCpy $R5 "same_day"
+    ${ElseIf} $R7 <= 7
+        StrCpy $R5 "within_week"
+    ${ElseIf} $R7 <= 31
+        StrCpy $R5 "within_month"
+    ${Else}
+        StrCpy $R5 "over_month"
+    ${EndIf}
+
+    un_reportUninstall_send:
+    Delete "$APPDATA\CityEnergyAnalyst\installer-record.txt"
+    Delete "$APPDATA\CityEnergyAnalyst\installer-attempts.txt"
+    !insertmacro SendUninstallTelemetry "uninstaller_run" "$R5" "$R6"
+FunctionEnd
+
 Function un.UninstallSection
+    !ifdef POSTHOG_API_KEY
+        File "/oname=$TEMP\cea-uninstaller-telemetry.ps1" "telemetry.ps1"
+    !endif
+    Call un.ReportUninstall
+
     ; Delete the shortcuts
     Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk"
     Delete /REBOOTOK "$SMPROGRAMS\${CEA_TITLE}\CEA Desktop.lnk"
