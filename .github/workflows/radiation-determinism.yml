@@ -7,6 +7,12 @@ name: Radiation determinism experiment
 
 on:
   workflow_dispatch:
+  # this branch has no open PR, so run on pushes to it
+  push:
+    branches: [ci-radiation-determinism-experiment]
+    paths:
+      - '.github/workflows/radiation-determinism.yml'
+      - '.github/scripts/radiation_determinism/**'
   # workflow_dispatch only works once this file is on the default branch, so also run when the experiment itself changes
   pull_request:
     paths:
@@ -109,8 +115,84 @@ jobs:
           retention-days: 3
           if-no-files-found: warn
 
+  windows-variants:
+    # Build the pinned DAYSIM fork with MSVC through the production external/ CMake in a few variants and replay
+    # DAYSIM on the shared inputs, to find what makes Windows results differ from Linux.
+    needs: prepare
+    runs-on: windows-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: w0-default
+            patch: false
+            cflags: ""
+          - name: w1-portable-rng
+            patch: true
+            cflags: ""
+          - name: w2-portable-rng-fpstrict
+            patch: true
+            cflags: "/fp:strict"
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup pixi
+        uses: prefix-dev/setup-pixi@v0.10.0
+        with:
+          cache: true
+          pixi-version: v0.72.0
+
+      - name: Install CEA
+        run: pixi run pip install .
+
+      - name: Fetch the pinned DAYSIM fork
+        shell: bash
+        run: |
+          git config --global core.autocrlf false
+          mkdir external/daysim
+          git -C external/daysim init -q
+          git -C external/daysim remote add origin https://github.com/reyery/Daysim.git
+          git -C external/daysim fetch -q --depth 1 origin b4fc6ba3a41e32c8b0d6a41d413aa10f067b6709
+          git -C external/daysim checkout -q FETCH_HEAD
+
+      - name: Apply portable random number generator patch
+        if: ${{ matrix.patch }}
+        shell: bash
+        run: git -C external/daysim apply --whitespace=nowarn "${{ github.workspace }}/.github/scripts/radiation_determinism/portable-random.patch"
+
+      - name: Build DAYSIM
+        shell: bash
+        env:
+          # stop Git Bash rewriting compiler flags such as /fp:strict into Windows paths
+          MSYS_NO_PATHCONV: 1
+        run: |
+          cmake -S external -B build -DBUILD_CRAX=OFF -DINSTALL_BIN_DIR=bin "-DCMAKE_C_FLAGS=${{ matrix.cflags }}"
+          cmake --build build --config Release --target cea_all --parallel 4
+          cmake --install build --config Release --component cea_targets --prefix out
+          ls out/bin
+
+      - name: Download DAYSIM inputs
+        uses: actions/download-artifact@v8
+        with:
+          name: daysim-inputs
+          path: ${{ runner.temp }}/shared-inputs
+
+      - name: Replay DAYSIM with these binaries
+        shell: bash
+        run: pixi run python "$SCRIPT" daysim "${{ runner.temp }}/shared-inputs" "${{ runner.temp }}/replay/daysim.json" --bin-dir "${{ github.workspace }}/out/bin"
+
+      - name: Upload DAYSIM replay results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: daysim-windows-${{ matrix.name }}
+          path: ${{ runner.temp }}/replay/daysim.json
+          retention-days: 3
+          if-no-files-found: warn
+
   compare:
-    needs: experiment
+    needs: [experiment, windows-variants]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     steps:
