@@ -828,14 +828,6 @@ Utilities:
     module: cea.tests
     parameters: [test]
 
-  - name: run-unit-tests
-    label: Unit Tests
-    short_description: Run all unit tests in the cea/tests folder
-    description: Run all the unit tests in the cea/tests folder
-    interfaces: [test, cli]
-    module: cea.tests.run_unit_tests
-    parameters: []
-
   - name: run-all-plots
     label: Run All Plots
     short_description: Run all plots for testing purposes
