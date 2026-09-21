@@ -24,6 +24,7 @@ from cea.visualisation.special._error_html import (
     whatif_mismatch_html,
 )
 from cea.visualisation.format.plot_colours import COLOURS_TO_RGB
+from cea.scripts import by_name
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
@@ -585,7 +586,7 @@ def main(config):
             html = fig.to_html(full_html=True, include_plotlyjs='cdn', config={'responsive': True})
             return html.replace('<head>', '<head><style>html,body{height:100%;margin:0}</style>', 1)
         except FileNotFoundError:
-            return no_data_html(label='Costs', tool='LCA Part 2b: Costs')
+            return no_data_html(label='Costs', tool=by_name('system-costs').label)
         except Exception:
             # The card stays generic on purpose (see _error_html.generic_error_html), but the
             # cause has to reach the job log -- otherwise the failure leaves no trace anywhere.

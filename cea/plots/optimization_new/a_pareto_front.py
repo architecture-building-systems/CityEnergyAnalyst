@@ -22,6 +22,7 @@ import plotly.graph_objects as go
 
 import cea.config
 from cea.inputlocator import InputLocator
+from cea.scripts import tool_ref
 
 
 def read_objective_values(file_path):
@@ -477,7 +478,7 @@ def main(config=cea.config.Configuration()):
     if run_ids:
         print(f"Found optimization run_ids: {run_ids}")
     else:
-        raise ValueError("No optimisation results found! Please run 'District Supply System Optimisation' (cea optimization-new) before plotting.")
+        raise ValueError(f"No optimisation results found! Please run {tool_ref('optimization-new')} before plotting.")
 
     objectives = []
     for run_id in run_ids:

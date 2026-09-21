@@ -11,6 +11,7 @@ from cea.constants import HOURS_IN_YEAR
 from cea.datamanagement.database.components import Feedstocks
 from cea.demand.building_properties import BuildingProperties
 from cea.utilities import epwreader
+from cea.scripts import tool_ref
 
 __author__      = "Yiqiao Wang, Zhongming Shi"
 __copyright__   = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
@@ -231,7 +232,7 @@ class OperationalHourlyTimeline:
         if not os.path.exists(pv_results_path):
             error_msg = (
                 f"PV electricity results missing for building {self.bpr.name}, panel type: {pv_code}. "
-                f"Please run 'Photovoltaic (PV) Panels' (cea photovoltaic) first to generate PV potential results. "
+                f"Please run {tool_ref('photovoltaic')} first to generate PV potential results. "
                 f"Expected file: {pv_results_path}"
             )
             print(f"ERROR: {error_msg}")

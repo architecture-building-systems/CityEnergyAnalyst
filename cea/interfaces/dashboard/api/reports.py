@@ -62,7 +62,7 @@ def _demand_summary(locator):
     if not os.path.isfile(path):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Demand results not found. Run 'Energy Demand Part 2: Load Modelling' first.",
+            detail=f"Demand results not found. Run '{cea.scripts.by_name('demand').label}' first.",
         )
 
     df = pd.read_csv(path)

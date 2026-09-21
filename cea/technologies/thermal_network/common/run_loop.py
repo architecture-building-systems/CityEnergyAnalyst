@@ -4,6 +4,7 @@ Shared orchestration logic for simplified and detailed thermal network entry poi
 
 import os
 import traceback
+from cea.scripts import tool_ref
 
 
 def validate_and_resolve_mode(config, locator, *, multi_phase, section=None):
@@ -44,7 +45,7 @@ def validate_and_resolve_mode(config, locator, *, multi_phase, section=None):
             else:
                 raise ValueError(
                     "Network name is required, but no network layouts found.\n"
-                    "Please create or import a network layout using 'Thermal Network Part 1: Layout' (cea network-layout)."
+                    f"Please create or import a network layout using {tool_ref('network-layout')}."
                 )
         except FileNotFoundError:
             raise ValueError("Network name is required. Please select a network layout.")
@@ -91,7 +92,7 @@ def validate_network_name(locator, network_name):
             else:
                 raise ValueError(
                     "Network name is required, but no network layouts found.\n"
-                    "Please create or import a network layout using 'Thermal Network Part 1: Layout' (cea network-layout)."
+                    f"Please create or import a network layout using {tool_ref('network-layout')}."
                 )
         except Exception:
             raise ValueError("Network name is required. Please select a network layout.")
