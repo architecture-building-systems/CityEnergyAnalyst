@@ -166,6 +166,28 @@ def list_scripts(plugins):
                 yield CeaScript(script_dict, category)
 
 
+def upstream_tool_labels(locator_methods, plugins=None) -> List[str]:
+    """Labels of the tools whose outputs the given locator methods point at, per the ``created_by``
+    entries in schemas.yml. Scenario inputs (``inputs/...``) are skipped: they are edited or imported,
+    not produced by running a tool, so naming e.g. the Archetypes Mapper for them would mislead.
+    Unknown or legacy script names are skipped too. Order follows ``locator_methods``, without duplicates.
+    """
+    schema_data = schemas(plugins)
+    labels = []
+    for method_name in locator_methods:
+        entry = schema_data.get(method_name) or {}
+        if str(entry.get('file_path', '')).startswith('inputs'):
+            continue
+        for script_name in entry.get('created_by') or []:
+            try:
+                label = by_name(script_name, plugins=plugins).label
+            except cea.ScriptNotFoundException:
+                continue
+            if label not in labels:
+                labels.append(label)
+    return labels
+
+
 def by_name(script_name, plugins=None):
     """
     Returns a CeaScript object by name.

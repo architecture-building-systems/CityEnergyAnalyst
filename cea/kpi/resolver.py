@@ -29,10 +29,11 @@ from typing import Any, Dict, List, Mapping, Optional
 
 import pandas as pd
 
+import cea.scripts
 from cea.inputlocator import InputLocator
 from cea.kpi.calculators import evaluate
 from cea.kpi.exceptions import KPIDefinitionError, KPINotAvailable
-from cea.kpi.registry import load_registry, _load_schemas
+from cea.kpi.registry import load_registry
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2026, UUEN PTE. LTD."
@@ -159,10 +160,8 @@ def merge_locator_args(
 
 
 def _upstream_tool_for(locator_key: str) -> Optional[str]:
-    """Best-effort: pull the first ``created_by`` entry from the
-    schemas.yml record so :class:`KPINotAvailable` can tell the
+    """Best-effort: the label (as shown in the app) of the first tool
+    that creates this file, so :class:`KPINotAvailable` can tell the
     frontend which CEA tool to run."""
-    schemas = _load_schemas()
-    entry = schemas.get(locator_key) or {}
-    created_by = entry.get("created_by") or []
-    return created_by[0] if created_by else None
+    labels = cea.scripts.upstream_tool_labels([locator_key])
+    return labels[0] if labels else None

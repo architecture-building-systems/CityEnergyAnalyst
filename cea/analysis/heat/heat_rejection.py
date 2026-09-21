@@ -281,7 +281,7 @@ def calculate_heat_rejection_for_whatif(whatif_name, locator):
         expected = locator.get_analysis_configuration_file(whatif_name)
         raise FileNotFoundError(
             f"configuration file not found for what-if '{whatif_name}': {expected}\n"
-            "Please run 'final-energy' first."
+            "Please run 'LCA Part 1: Energy by Carrier' (cea final-energy) first."
         )
     building_configs = config_data.get('buildings', {})
     plant_configs = config_data.get('plants', {})
@@ -291,7 +291,7 @@ def calculate_heat_rejection_for_whatif(whatif_name, locator):
     if not os.path.exists(summary_file):
         raise FileNotFoundError(
             f"final_energy_buildings.csv not found for what-if '{whatif_name}': {summary_file}\n"
-            "Please run 'final-energy' first."
+            "Please run 'LCA Part 1: Energy by Carrier' (cea final-energy) first."
         )
     summary_df = pd.read_csv(summary_file)
 

@@ -1,4 +1,4 @@
-# Heat Rejection
+# LCA Part 2c: Heat Rejection
 
 ## Overview
 
@@ -18,7 +18,7 @@ Calculates the waste heat rejected to the environment by building energy systems
 
 ## Prerequisites
 
-- **Final Energy** completed for the what-if scenario
+- **LCA Part 1: Energy by Carrier** completed for the what-if scenario
 
 ## Key Parameters
 
@@ -28,11 +28,11 @@ Calculates the waste heat rejected to the environment by building energy systems
 
 ## How to Use
 
-1. **Run Final Energy** first
+1. **Run LCA Part 1: Energy by Carrier** first
 
-2. **Run Heat Rejection**:
-   - Navigate to **Life Cycle Analysis**
-   - Select **Heat Rejection**
+2. **Run LCA Part 2c: Heat Rejection**:
+   - Navigate to **Life Cycle Analysis (LCA)**
+   - Select **LCA Part 2c: Heat Rejection**
    - Select the what-if scenario
    - Click **Run**
 
@@ -113,10 +113,10 @@ App map view showing anthropogenic heat rejection intensity per building and dis
 ---
 
 ## Related Features
-- **[Final Energy](06-1-final-energy.md)** - Prerequisite (provides system configuration)
-- **[Emissions](06-2-emissions.md)** - Environmental emissions from the same scenario
-- **[System Costs](06-3-system-costs.md)** - Economic analysis of the same scenario
+- **[LCA Part 1: Energy by Carrier](06-1-final-energy.md)** - Prerequisite (provides system configuration)
+- **[LCA Part 2a: GHG Emissions](06-2-emissions.md)** - Environmental emissions from the same scenario
+- **[LCA Part 2b: Costs](06-3-system-costs.md)** - Economic analysis of the same scenario
 
 ---
 
-[<- Back: System Costs](06-3-system-costs.md) | [Back to Index](index.md) | [Next: Supply System Optimisation ->](07-supply-optimisation.md)
+[<- Back: LCA Part 2b: Costs](06-3-system-costs.md) | [Back to Index](index.md) | [Next: Supply System Optimisation ->](07-supply-optimisation.md)

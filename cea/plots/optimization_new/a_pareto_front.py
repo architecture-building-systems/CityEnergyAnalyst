@@ -79,7 +79,7 @@ def read_objective_values_from_file(file_paths):
             objectives = new_objectives
         else:
             assert objectives == new_objectives, 'There is a mismatch in the objective functions used for the '\
-                                                 'optimization. Please check the optimization results.'
+                                                 'optimisation. Please check the optimisation results.'
 
         # Get the DES-solution code from the file path and use it as a key to store the objective function values
         objective_function_values_df = \
@@ -221,7 +221,7 @@ def _create_space_visualization_traces(other_solutions, objectives, i, j, color,
         ))
         
     except Exception as e:
-        print(f"Warning: Solution space visualization failed for run {run_name} with objectives {objectives[i]} and {objectives[j]}: {e}")
+        print(f"Warning: Solution space visualisation failed for run {run_name} with objectives {objectives[i]} and {objectives[j]}: {e}")
     
     return traces
 
@@ -477,7 +477,7 @@ def main(config=cea.config.Configuration()):
     if run_ids:
         print(f"Found optimization run_ids: {run_ids}")
     else:
-        raise ValueError("No optimization results found! Please run the centralised optimisation script before plotting.")
+        raise ValueError("No optimisation results found! Please run 'District Supply System Optimisation' (cea optimization-new) before plotting.")
 
     objectives = []
     for run_id in run_ids:

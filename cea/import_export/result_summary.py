@@ -2842,9 +2842,9 @@ def copy_costs_to_summary(locator, summary_folder, list_buildings, network_name=
 
         # Check if cost files exist
         if not os.path.exists(costs_buildings_src):
-            return False, "costs_buildings.csv not found. Please run 'system-costs' first."
+            return False, "costs_buildings.csv not found. Please run 'LCA Part 2b: Costs' (cea system-costs) first."
         if not os.path.exists(costs_components_src):
-            return False, "costs_components.csv not found. Please run 'system-costs' first."
+            return False, "costs_components.csv not found. Please run 'LCA Part 2b: Costs' (cea system-costs) first."
 
         # Read cost files
         df_costs_buildings = pd.read_csv(costs_buildings_src)

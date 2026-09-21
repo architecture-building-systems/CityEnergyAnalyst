@@ -585,7 +585,7 @@ def main(config):
             html = fig.to_html(full_html=True, include_plotlyjs='cdn', config={'responsive': True})
             return html.replace('<head>', '<head><style>html,body{height:100%;margin:0}</style>', 1)
         except FileNotFoundError:
-            return no_data_html(label='Baseline costs', tool='baseline-costs')
+            return no_data_html(label='Costs', tool='LCA Part 2b: Costs')
         except Exception:
             # The card stays generic on purpose (see _error_html.generic_error_html), but the
             # cause has to reach the job log -- otherwise the failure leaves no trace anywhere.

@@ -517,7 +517,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                 print(f"  Warning: Plant node type '{plant_type}' contains a legacy service suffix.")
                 print("    This suffix is no longer used to control network temperature.")
                 print("    Temperature strategy is now set via thermal-network:dh-temperature-mode.")
-                print("    Re-run 'network-layout' to update plant node types to plain PLANT.")
+                print("    Re-run 'Thermal Network Part 1: Layout' (cea network-layout) to update plant node types to plain PLANT.")
 
         # Always use dh-temperature-mode config to determine service order
         dh_temperature_mode = config.thermal_network.dh_temperature_mode
@@ -797,7 +797,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                     f"Recommended maximum temperature for {service_names}:\n"
                     f"  - Maximum: {max_temp_allowed}°C (allows DC to provide cooling)\n"
                     f"  - Typical VT range: 4-7°C for space cooling\n"
-                    f"  - Typical VT range: 5-10°C for data center cooling\n"
+                    f"  - Typical VT range: 5-10°C for data centre cooling\n"
                     f"\n"
                     f"Resolution:\n"
                     f"  1. Decrease network-temperature to <={max_temp_allowed}°C\n"
@@ -1025,7 +1025,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
             )
 
         # 3rd ITERATION GET FINAL UTILIZATION OF THE GRID (SUPPLY SIDE)
-        print("Starting 3rd iteration to calculate final utilization of the grid...")
+        print("Starting 3rd iteration to calculate final utilisation of the grid...")
         # get accumulated head loss per hour
         unitary_head_ftperkft = headloss_df.abs()
         unitary_head_mperm = unitary_head_ftperkft * FT_TO_M / (FT_TO_M * scaling_factor)
@@ -1049,7 +1049,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
         except Exception as e:
             error_msg = str(e)
             raise ValueError(
-                f"WNTR simulation failed during 3rd iteration (final utilization):\n{error_msg}\n\n"
+                f"WNTR simulation failed during 3rd iteration (final utilisation):\n{error_msg}\n\n"
                 f"This error occurred during final network simulation with dynamic head pattern.\n"
                 f"Base head: {base_head:.2f} m\n"
                 f"Pattern range: {min(pattern_head_m):.3f} - {max(pattern_head_m):.3f}\n\n"
