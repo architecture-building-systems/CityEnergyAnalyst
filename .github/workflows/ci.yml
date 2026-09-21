@@ -112,7 +112,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install comparison dependencies
-        run: pip install pandas numpy
+        run: pip install pandas numpy scipy
 
       - name: Download radiation outputs
         uses: actions/download-artifact@v8
