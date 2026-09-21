@@ -8,8 +8,9 @@ Subcommands (all run with the CEA environment, e.g. ``pixi run python``):
     prepare <scenario> <inputs_dir>
         Run radiation once and keep the DAYSIM inputs (radiance material/geometry, sensor points, weather,
         radiance parameters), so the DAYSIM step can be replayed on other OSes without OCC in the loop.
-    daysim <inputs_dir> <out.json>
-        Replay DAYSIM (epw2wea, radfiles2daysim, gen_dc, ds_illum) twice on the given inputs.
+    daysim <inputs_dir> <out.json> [--bin-dir DIR]
+        Replay DAYSIM (epw2wea, radfiles2daysim, gen_dc, ds_illum) twice on the given inputs, optionally with
+        DAYSIM binaries other than the ones shipped in cea-external-tools.
     compare <artifacts_dir>
         Summarise ``pipeline-<os>/pipeline.json`` and ``daysim-<os>/daysim.json`` into $GITHUB_STEP_SUMMARY.
 
@@ -151,12 +152,12 @@ def prepare(scenario: Path, inputs_dir: Path):
     (inputs_dir / "inputs.json").write_text(json.dumps({"radiance_parameters": parameters}))
 
 
-def daysim(inputs_dir: Path, out_json: Path, repeats: int = 2):
+def daysim(inputs_dir: Path, out_json: Path, repeats: int = 2, bin_dir: Path | None = None):
     from cea.resources.radiation import daysim as cea_daysim_module
     from cea.resources.radiation.radiance import CEADaySim
 
     parameters = json.loads((inputs_dir / "inputs.json").read_text())["radiance_parameters"]
-    bin_path = cea_daysim_module.check_daysim_bin_directory()
+    bin_path = str(bin_dir) if bin_dir else cea_daysim_module.check_daysim_bin_directory()
     results = []
     for i in range(repeats):
         # fixed location so that any paths DAYSIM embeds in its files are the same between repeats
@@ -277,6 +278,8 @@ def main():
         p.add_argument("source", type=Path)
         if name != "compare":
             p.add_argument("target", type=Path)
+        if name == "daysim":
+            p.add_argument("--bin-dir", type=Path, help="use these DAYSIM binaries instead of cea-external-tools")
     args = parser.parse_args()
 
     if args.command == "pipeline-twice":
@@ -286,7 +289,7 @@ def main():
         prepare(args.source, args.target)
     elif args.command == "daysim":
         args.target.parent.mkdir(parents=True, exist_ok=True)
-        daysim(args.source, args.target)
+        daysim(args.source, args.target, bin_dir=args.bin_dir)
     else:
         report = compare(args.source)
         summary = os.environ.get("GITHUB_STEP_SUMMARY")
