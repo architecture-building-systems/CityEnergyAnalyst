@@ -18,6 +18,7 @@ Results are compared bit for bit (SHA-256 of each sensor's hourly float32 row) a
 import argparse
 import csv
 import hashlib
+import itertools
 import json
 import os
 import platform
@@ -33,8 +34,22 @@ RADIANCE_PARAMETERS = ["rad_ab", "rad_ad", "rad_as", "rad_ar", "rad_aa", "rad_lr
                        "rad_dj", "rad_ds", "rad_dr", "rad_dp"]
 
 
-def _sha256(path) -> str:
-    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+def _normalise(data: bytes, *roots) -> bytes:
+    """Make file content comparable across OSes: LF line endings, and the staging path DAYSIM embeds in its files
+    replaced by a placeholder (with all path separators as ``/``)."""
+    data = data.replace(b"\r\n", b"\n")
+    for root in roots:
+        for variant in {str(root), Path(root).as_posix(), str(root).replace("/", "\\")}:
+            data = data.replace(variant.encode(), b"<STAGE>")
+    return data.replace(b"\\", b"/")
+
+
+def _sha256(path, *roots) -> str:
+    return hashlib.sha256(_normalise(Path(path).read_bytes(), *roots)).hexdigest()
+
+
+def _text(path, *roots) -> str:
+    return _normalise(Path(path).read_bytes(), *roots).decode(errors="replace")
 
 
 def _read_ill(path) -> np.ndarray:
@@ -76,7 +91,7 @@ def _pipeline_products(stage: Path, scenario: Path) -> dict:
         ill[chunk.name] = _summarise_ill(_read_ill(chunk / f"{chunk.name}.ill"))
     for path in sorted((scenario / "outputs" / "data" / "solar-radiation").glob("*_geometry.csv")):
         files[f"sensor grid csv/{path.name}"] = _sha256(path)
-    return {"files": files, "ill": ill}
+    return {"files": files, "ill": ill, "material_text": _text(staging / "common_inputs" / "radiance_material.rad")}
 
 
 def _ill_stats(a: dict, b: dict) -> str:
@@ -96,6 +111,12 @@ def _ill_stats(a: dict, b: dict) -> str:
     if not len(pct):
         return f"{identical}/{total} bit-identical"
     return f"{identical}/{total} bit-identical; annual Δ mean {pct.mean():.3f}%, max {pct.max():.3f}%"
+
+
+def _first_diffs(a: str, b: str, limit: int = 5) -> list:
+    """Line pairs that differ between two texts (compared line by line)."""
+    pairs = itertools.zip_longest(a.splitlines(), b.splitlines(), fillvalue="")
+    return [(x, y) for x, y in pairs if x != y][:limit]
 
 
 def _equal_files(a: dict, b: dict) -> str:
@@ -150,23 +171,24 @@ def daysim(inputs_dir: Path, out_json: Path, repeats: int = 2):
             shutil.copy2(inputs_dir / "daysim_shading.rad", cea_daysim.daysim_shading_path)
         cea_daysim.execute_epw2wea(str(inputs_dir / "weather.epw"))
         cea_daysim.execute_radfiles2daysim()
-        run = {"stage_files": {Path(p).name: _sha256(p) for p in (cea_daysim.daysim_material_path,
-                                                                 cea_daysim.daysim_geometry_path,
-                                                                 cea_daysim.wea_weather_path)},
+        run = {"stage_files": {Path(p).name: _sha256(p, stage) for p in (cea_daysim.daysim_material_path,
+                                                                        cea_daysim.daysim_geometry_path,
+                                                                        cea_daysim.wea_weather_path)},
+               "material_text": _text(cea_daysim.daysim_material_path, stage),
                "chunks": {}}
         for pts in sorted(inputs_dir.glob("sensors_chunk_*.pts")):
             name = pts.stem.removeprefix("sensors_")
             rows = [[float(v) for v in line.split()] for line in pts.read_text().splitlines() if line.strip()]
             project = cea_daysim.initialize_daysim_project(name)
             project.create_sensor_input_file([r[:3] for r in rows], [r[3:] for r in rows])
-            if _sha256(project.sensor_path) != _sha256(pts):
+            if _sha256(project.sensor_path) != _sha256(pts):  # ignores CRLF/LF differences between OSes
                 raise RuntimeError(f"Rewritten sensor file differs from the prepared one for {name}")
             project.write_radiance_parameters(**parameters)
             project.execute_gen_dc()
             project.execute_ds_illum()
             chunk = _summarise_ill(project.eval_ill())
             # best effort: daylight coefficient files may embed paths, so treat a mismatch with care
-            chunk["dc_files"] = {str(p.relative_to(project.project_path)): _sha256(p)
+            chunk["dc_files"] = {Path(p).relative_to(project.project_path).as_posix(): _sha256(p, stage)
                                  for p in sorted(Path(project.project_path).rglob("*.dc"))}
             run["chunks"][name] = chunk
         results.append(run)
@@ -212,6 +234,35 @@ def compare(artifacts_dir: Path) -> str:
         dc_run = {f"{c}/{k}": v for c, d in run["chunks"].items() for k, v in d["dc_files"].items()}
         lines.append(f"| {os_name} | {_equal_files(ref_run['stage_files'], run['stage_files'])} | "
                      f"{_equal_files(dc_ref, dc_run)} | {_ill_stats(ref_run['chunks'], run['chunks'])} |")
+
+    lines += ["", "### D. What differs in the small material files (vs `ubuntu-latest`)", ""]
+    for label, source in (("OCC-side `radiance_material.rad`", pipeline),
+                          ("DAYSIM-converted `daysim_material.rad`", replay)):
+        reference_data = source.get(REFERENCE_OS)
+        for os_name, data in source.items():
+            if os_name == REFERENCE_OS or reference_data is None:
+                continue
+            diffs = _first_diffs(reference_data["runs"][0]["material_text"], data["runs"][0]["material_text"])
+            detail = "identical" if not diffs else "differs, e.g. " + "; ".join(f"`{a}` vs `{b}`" for a, b in diffs[:3])
+            lines.append(f"- {label}, {os_name}: {detail}")
+
+    lines += ["", f"### E. Annual radiation difference by sensor radiation level (DAYSIM on identical inputs, vs `{REFERENCE_OS}`)",
+              "", "| OS | Annual radiation | Sensors | Mean abs Δ | 95th pct | Max |", "|---|---|---|---|---|---|"]
+    for os_name, data in replay.items():
+        if os_name == REFERENCE_OS or reference is None:
+            continue
+        ref_annual = np.concatenate([np.array(c["annual_Whm2"]) for c in reference["runs"][0]["chunks"].values()])
+        annual = np.concatenate([np.array(c["annual_Whm2"]) for c in data["runs"][0]["chunks"].values()])
+        if len(ref_annual) != len(annual):
+            continue
+        with np.errstate(divide="ignore", invalid="ignore"):
+            pct = np.abs(annual - ref_annual) / ref_annual * 100
+        for low, high in ((0, 100), (100, 400), (400, 800), (800, np.inf)):
+            mask = (ref_annual >= low * 1000) & (ref_annual < high * 1000) & np.isfinite(pct)
+            label = f"{low}-{high} kWh/m²" if np.isfinite(high) else f"≥ {low} kWh/m² (PV-relevant)"
+            if mask.any():
+                lines.append(f"| {os_name} | {label} | {int(mask.sum())} | {pct[mask].mean():.3f}% | "
+                             f"{np.percentile(pct[mask], 95):.3f}% | {pct[mask].max():.3f}% |")
 
     lines += ["", ("`.dc` hashes are best effort (the files may embed absolute paths, which differ between OSes). "
                    "Bit-identical means the SHA-256 of a sensor's hourly float32 row matches.")]
