@@ -9,6 +9,12 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         -Wno-sign-compare
         -Wno-deprecated-declarations
     )
+
+    # Do not fuse a*b+c into a single fused multiply-add. Clang on arm64 (Apple Silicon) fuses by default and
+    # GCC on aarch64 does too, while x86-64 baseline builds cannot, so the same radiation input gave slightly
+    # different results per platform. Turning it off makes arm64 macOS match x86-64 Linux bit for bit
+    # (see #4080). Applies to every target added below (DAYSIM, CRAX).
+    add_compile_options(-ffp-contract=off)
 endif()
 
 # Force single architecture builds on macOS (no universal binaries)
