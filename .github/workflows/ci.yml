@@ -62,10 +62,6 @@ jobs:
         if: github.event.pull_request.draft == false
         run: pixi run integration
 
-      - name: Record pythonocc version
-        if: ${{ !cancelled() && github.event.pull_request.draft == false }}
-        run: pixi list pythonocc-core
-
       - name: Collect radiation outputs for cross-OS comparison
         if: ${{ !cancelled() && github.event.pull_request.draft == false }}
         run: pixi run python .github/scripts/compare_radiation.py collect radiation-artifacts

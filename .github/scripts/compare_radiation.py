@@ -2,7 +2,7 @@
 
 Usage:
     python compare_radiation.py collect <out_dir>        # per-OS job: copy small radiation/PV outputs
-    python compare_radiation.py compare <artifacts_dir>  # compare job: artifacts_dir/<os>/<scenario>/...
+    python compare_radiation.py compare <artifacts_dir>  # compare job: artifacts_dir/radiation-<os>/<scenario>/...
 
 Advisory only: writes a markdown report to $GITHUB_STEP_SUMMARY (or stdout) and never fails the build.
 """
@@ -118,12 +118,12 @@ def _selected(pv: pd.DataFrame) -> pd.DataFrame:
 
 
 def compare(artifacts_dir: Path) -> str:
-    lines = ["## Cross-OS radiation comparison", "",
-             f"Reference: `{REFERENCE_OS}`. Geometry: each sensor is matched to the nearest sensor on the other OS by "
+    intro = (f"Reference: `{REFERENCE_OS}`. Geometry: each sensor is matched to the nearest sensor on the other OS by "
              f"XYZ, not row order; it is *moved* if none sits within {COORD_TOLERANCE_M} m with the same area "
              f"(1e-6 m²). PV selection: sensors are paired if within half a grid cell (0.5 x sqrt(area)), so shifted "
              f"grids still pair up; *radiation Δ* is the annual `total_rad_Whm2` difference of sensors selected on both "
-             f"OSes (mean / max, in %). Area Δ is (other - ref) / ref. Advisory only.", ""]
+             f"OSes (mean / max, in %). Area Δ is (other - ref) / ref. Advisory only.")
+    lines = ["## Cross-OS radiation comparison", "", intro, ""]
     oses = sorted(p.name.removeprefix("radiation-") for p in artifacts_dir.iterdir() if p.is_dir())
     ref_root = artifacts_dir / f"radiation-{REFERENCE_OS}"
     if not ref_root.is_dir():
@@ -132,9 +132,9 @@ def compare(artifacts_dir: Path) -> str:
     for other_os in [o for o in oses if o != REFERENCE_OS]:
         other_root = artifacts_dir / f"radiation-{other_os}"
         lines += [f"### {other_os} vs {REFERENCE_OS}", "",
-                  "| Scenario | Building | Sensors | Identical | Moved | Max displacement m | "
-                  "PV selected (ref/other) | PV only ref/other | PV area m² (ref/other) | PV area Δ | "
-                  "Radiation Δ mean/max |",
+                  ("| Scenario | Building | Sensors | Identical | Moved | Max displacement m | "
+                   "PV selected (ref/other) | PV only ref/other | PV area m² (ref/other) | PV area Δ | "
+                   "Radiation Δ mean/max |"),
                   "|---|---|---|---|---|---|---|---|---|---|---|"]
         totals = {}
         pair = {"same_pct": [], "shifted_pct": [], "only_rad_Whm2": []}
@@ -152,8 +152,8 @@ def compare(artifacts_dir: Path) -> str:
             if ref_pv is not None and other_pv is not None:
                 ref_pv, other_pv = _selected(ref_pv), _selected(other_pv)
                 pv = _compare_pv(ref_pv, other_pv)
-                for key in pair:
-                    pair[key].append(pv[key])
+                for key, values in pair.items():
+                    values.append(pv[key])
                 area_ref, area_other = (df["area_installed_module_m2"].sum() for df in (ref_pv, other_pv))
                 rad = "n/a" if pv["rad_pct_mean"] is None else f"{pv['rad_pct_mean']:.1f}% / {pv['rad_pct_max']:.1f}%"
                 pv_cells = [f"{len(ref_pv)}/{len(other_pv)}", f"{pv['only_ref']}/{pv['only_other']}",
@@ -168,8 +168,9 @@ def compare(artifacts_dir: Path) -> str:
             lines.append(f"| **{scenario}** | **Total** | {n} | {n - moved} | {moved} ({moved / n * 100:.0f}%) | | | "
                          f"{only_ref}/{only_other} | {area_ref:.1f}/{area_other:.1f} | **{_pct(area_ref, area_other)}** | |")
         same, shifted, only = (np.concatenate(pair[k]) if pair[k] else np.array([]) for k in pair)
-        lines += ["", f"- **Radiation Δ, sensors selected on both OSes at an identical position** "
-                      f"(isolates DAYSIM from mesh): {_stats(same)}",
+        lines += ["",
+                  ("- **Radiation Δ, sensors selected on both OSes at an identical position** "
+                   f"(isolates DAYSIM from mesh): {_stats(same)}"),
                   f"- **Radiation Δ, selected on both OSes but shifted (< half cell)**: {_stats(shifted)}"]
         if len(only):
             kwh = only / 1000
