@@ -50,7 +50,7 @@ def write_results(param_values, names_vars, output_path):
 def create_inputs_directory(config, sample_n, n_variable):
 
     # total number of scenarios
-    n_scenario = sample_n * (2 * n_variable + 2)
+    n_scenario = sample_n * (n_variable + 2)
 
     # create directory for the minimum CEA inputs
     for n in range(1, n_scenario+1):
@@ -115,8 +115,8 @@ def main(config: cea.config.Configuration):
     # Generate samples
     print("sampling {n} variables for sobol' method SA".format(n=n_variable))
     param_values = sobol.sample(problem, sample_n, calc_second_order=False)
-    # The Saltelli sampler generates samples n*(2D+2), where N is the argument we supplied
-    # and D is the number of model inputs.
+    # With calc_second_order=False the Saltelli sampler generates N*(D+2) samples, where N is the argument
+    # we supplied and D is the number of model inputs.
 
     # Write the results to disk
     csv_path = os.path.join(output_path, 'sampled_variables.csv')

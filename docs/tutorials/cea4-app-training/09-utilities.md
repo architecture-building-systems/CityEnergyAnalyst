@@ -152,7 +152,7 @@ Generates parameter samples for sensitivity analysis using the Sobol method. Sen
 | Parameter | Description | Typical Value |
 |-----------|-------------|---------------|
 | **Create scenario directory** | Create a parallel scenario input folder for each sample | false |
-| **N** | Saltelli base sample size; generates N × (2D + 2) samples for D variables | 32 |
+| **N** | Saltelli base sample size; generates N × (D + 2) samples for D variables | 32 |
 | **Having variable 1-5** | Enable each variable to sample | Variable 1 on |
 | **Variable 1-5 lower / upper bound** | Sampling range of each enabled variable | User-defined |
 
@@ -162,7 +162,7 @@ Generates parameter samples for sensitivity analysis using the Sobol method. Sen
    - Navigate to **Utilities**
    - Select **Generate Samples for Sensitivity Analysis (SA)**
    - Enable up to five variables and set their lower/upper bounds
-   - Set **N** (total samples = N × (2D + 2) for D variables)
+   - Set **N** (total samples = N × (D + 2) for D variables)
    - Optionally enable **Create scenario directory** to create one empty scenario folder per sample
    - Click **Run**
 
@@ -185,18 +185,18 @@ Generates parameter samples for sensitivity analysis using the Sobol method. Sen
 
 ### Tips
 - **Start small**: Test with 64-128 samples before full run
-- **Computational cost**: N samples × analysis time
+- **Computational cost**: N × (D + 2) scenarios × analysis time per scenario
 - **Use batch processing**: Automate via CLI if needed
 - **High-performance computing**: Consider cluster for large SA
 
 ### Troubleshooting
 
 **Issue**: Too many scenario folders (disk space)
-- **Solution**: Reduce number of samples
+- **Solution**: Reduce N or disable a variable (the number of scenarios is N × (D + 2))
 - **Solution**: Use symbolic links for common files (advanced)
 
 **Issue**: Long computation time
-- **Solution**: Reduce sample size
+- **Solution**: Reduce N or the number of enabled variables
 - **Solution**: Use multiprocessing and batch workflow
 
 ---
