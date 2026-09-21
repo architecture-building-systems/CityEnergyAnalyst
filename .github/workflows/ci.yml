@@ -12,6 +12,8 @@ on:
       - 'cea/**'
       - 'pyproject.toml'
       - 'pixi.lock'
+      - '.github/workflows/ci.yml'
+      - '.github/scripts/**'
       - '!cea/interfaces/**'
       - '!**/*.md'
 
@@ -42,7 +44,7 @@ jobs:
         # wntr does not support linux ARM (no EPANET ARM binaries)
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup pixi
         uses: prefix-dev/setup-pixi@v0.10.0
@@ -60,6 +62,19 @@ jobs:
         if: github.event.pull_request.draft == false
         run: pixi run integration
 
+      - name: Collect radiation outputs for cross-OS comparison
+        if: ${{ !cancelled() && github.event.pull_request.draft == false }}
+        run: pixi run python .github/scripts/compare_radiation.py collect radiation-artifacts
+
+      - name: Upload radiation outputs
+        if: ${{ !cancelled() && github.event.pull_request.draft == false }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: radiation-${{ matrix.os }}
+          path: radiation-artifacts/
+          retention-days: 3
+          if-no-files-found: warn
+
       - name: List test scenario locations (on failure)
         if: failure()
         shell: bash
@@ -70,7 +85,7 @@ jobs:
 
       - name: Upload test scenario artifacts on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-scenarios-${{ matrix.os }}
           path: |
@@ -78,3 +93,28 @@ jobs:
               ${{ env.HOME }}/sg_cooling/
           retention-days: 3
           if-no-files-found: warn
+
+  compare-radiation:
+    # Advisory: report sensor mesh / PV selection differences between OSes in the job summary
+    needs: tests
+    if: ${{ !cancelled() && github.event.pull_request.draft == false }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install comparison dependencies
+        run: pip install pandas numpy scipy
+
+      - name: Download radiation outputs
+        uses: actions/download-artifact@v8
+        with:
+          pattern: radiation-*
+          path: radiation-artifacts
+
+      - name: Compare radiation outputs across OSes
+        run: python .github/scripts/compare_radiation.py compare radiation-artifacts
