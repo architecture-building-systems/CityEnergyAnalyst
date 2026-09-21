@@ -16,6 +16,7 @@ from cea.analysis.lca.emission_timeline import _MAPPING_DICT
 from cea.utilities import validate_path_within_root
 
 from cea.demand.building_properties.useful_areas import calc_useful_areas
+from cea.scripts import tool_ref
 
 
 __author__ = "Zhongming Shi, Reynold Mok, Justin McCarty"
@@ -2842,9 +2843,9 @@ def copy_costs_to_summary(locator, summary_folder, list_buildings, network_name=
 
         # Check if cost files exist
         if not os.path.exists(costs_buildings_src):
-            return False, "costs_buildings.csv not found. Please run 'LCA Part 2b: Costs' (cea system-costs) first."
+            return False, f"costs_buildings.csv not found. Please run {tool_ref('system-costs')} first."
         if not os.path.exists(costs_components_src):
-            return False, "costs_components.csv not found. Please run 'LCA Part 2b: Costs' (cea system-costs) first."
+            return False, f"costs_components.csv not found. Please run {tool_ref('system-costs')} first."
 
         # Read cost files
         df_costs_buildings = pd.read_csv(costs_buildings_src)

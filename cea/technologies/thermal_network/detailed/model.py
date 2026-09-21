@@ -38,6 +38,7 @@ from cea.technologies.constants import NETWORK_DEPTH, REDUCED_TIME_STEPS, MAX_IN
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
 from cea.technologies.heat_exchangers import get_heat_exchanger_by_description
 from cea.technologies.network_layout.plant_node_operations import PlantServices
+from cea.scripts import tool_ref
 
 __author__ = "Martin Mosteiro Romero, Shanshan Hsieh, Lennart Rogenhofer"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -448,7 +449,7 @@ class ThermalNetwork(object):
                     print(f"  Warning: Plant node type '{plant_type}' contains a legacy service suffix.")
                     print("    This suffix is no longer used to control network temperature.")
                     print("    Temperature strategy is now set via thermal-network:dh-temperature-mode.")
-                    print("    Re-run 'Thermal Network Part 1: Layout' (cea network-layout) to update plant node types to plain PLANT.")
+                    print(f"    Re-run {tool_ref('network-layout')} to update plant node types to plain PLANT.")
 
             # Always use dh-temperature-mode config to determine service order
             if self.dh_temperature_mode == 'high-temperature':

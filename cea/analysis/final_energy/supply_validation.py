@@ -12,6 +12,7 @@ Two scenarios:
 import os
 
 import pandas as pd
+from cea.scripts import by_name, tool_ref
 
 
 # Maps a component's CONVERSION table name → the column that holds its
@@ -146,7 +147,7 @@ def validate_whatif_params(locator, config):
             "What-if mode requires all assembly parameters to be explicitly set.\n"
             "The following parameters are missing:\n"
             + "\n".join(missing)
-            + "\n\nPlease set these parameters in the LCA Part 1: Energy by Carrier settings."
+            + f"\n\nPlease set these parameters in the {by_name('final-energy').label} settings."
         )
 
 
@@ -212,9 +213,9 @@ def validate_standalone_mode(locator):
             "assemblies in building properties > supply:\n"
             + "\n".join(mismatches)
             + "\n\nPlease either:\n"
-            "  (a) Select a network in the LCA Part 1: Energy by Carrier settings, or\n"
+            f"  (a) Select a network in the {by_name('final-energy').label} settings, or\n"
             "  (b) Change these buildings to BUILDING-scale assemblies in building properties > supply"
-            "  (c) Set 'overwrite-supply-settings = True' in the LCA Part 1: Energy by Carrier settings"
+            f"  (c) Set 'overwrite-supply-settings = True' in the {by_name('final-energy').label} settings"
         )
 
 
@@ -289,7 +290,7 @@ def validate_dh_consistency(dh_network, supply_df, scale_mapping, locator, confi
             raise ValueError(
                 f"Building '{building}' is listed in the DH network (connectivity.json) "
                 f"but is not found in building properties > supply.\n\n"
-                f"Please re-run 'Thermal Network Part 1: Layout' (cea network-layout) after updating building properties > supply."
+                f"Please re-run {tool_ref('network-layout')} after updating building properties > supply."
             )
 
         row = building_row.iloc[0]
@@ -382,7 +383,7 @@ def validate_dc_consistency(dc_network, supply_df, scale_mapping):
             raise ValueError(
                 f"Building '{building}' is listed in the DC network (connectivity.json) "
                 f"but is not found in building properties > supply.\n\n"
-                f"Please re-run 'Thermal Network Part 1: Layout' (cea network-layout) after updating building properties > supply."
+                f"Please re-run {tool_ref('network-layout')} after updating building properties > supply."
             )
 
         row = building_row.iloc[0]
@@ -514,9 +515,9 @@ def validate_no_orphaned_district_buildings(connectivity, supply_df, scale_mappi
             "This may mean building properties > supply was updated after running network-layout.\n\n"
             + "\n".join(lines)
             + "\n\nPlease either:\n"
-            "  (a) Re-run 'Thermal Network Part 1: Layout' (cea network-layout) to regenerate connectivity.json (Set consider-only-buildings-with-demand = false), or\n"
+            f"  (a) Re-run {tool_ref('network-layout')} to regenerate connectivity.json (Set consider-only-buildings-with-demand = false), or\n"
             "  (b) Change these buildings to BUILDING-scale assemblies in building properties > supply\n"
-            "  (c) Set 'overwrite-supply-settings = True' in the LCA Part 1: Energy by Carrier settings"
+            f"  (c) Set 'overwrite-supply-settings = True' in the {by_name('final-energy').label} settings"
         )
 
 
@@ -575,7 +576,7 @@ def validate_booster_configuration(dh_network, network_name, locator, config):
             f"low-temperature district heating network, but no booster assembly is configured:\n"
             f"{listing}\n\n"
             f"Please select a booster assembly in 'hs-booster-type-building' "
-            f"(LCA Part 1: Energy by Carrier settings)."
+            f"({by_name('final-energy').label} settings)."
         )
 
     if dhw_needs_booster:
@@ -585,7 +586,7 @@ def validate_booster_configuration(dh_network, network_name, locator, config):
             f"low-temperature district heating network, but no booster assembly is configured:\n"
             f"{listing}\n\n"
             f"Please select a booster assembly in 'dhw-booster-type-building' "
-            f"(LCA Part 1: Energy by Carrier settings)."
+            f"({by_name('final-energy').label} settings)."
         )
 
     if messages:
@@ -657,7 +658,7 @@ def validate_booster_temperature_compatibility(dh_network, network_name, locator
                     f"{', '.join(missing_cols)}.\n\n"
                     f"This is likely because the thermal network was simulated with an older version of CEA.\n\n"
                     f"Please re-run Thermal Network Part 2a (or 2b) to regenerate the substation files.\n"
-                    f"If the error persists, re-run Thermal Network Part 1: Layout as well."
+                    f"If the error persists, re-run {by_name('network-layout').label} as well."
                 )
 
         # Check HS booster temperature
@@ -1054,7 +1055,7 @@ def load_network_connectivity(locator, network_name):
         raise ValueError(
             f"Network connectivity file not found for network '{network_name}'.\n\n"
             f"Expected at: {expected}\n\n"
-            f"Please run 'Thermal Network Part 1: Layout' (cea network-layout) first to generate this file."
+            f"Please run {tool_ref('network-layout')} first to generate this file."
         )
 
     return data
