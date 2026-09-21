@@ -265,8 +265,8 @@ Common solar collector categories in the database:
    - Navigate to **Renewable Energy Potential Assessment**
    - Select **Solar Collectors (SC)**
    - Choose collector type (SC1 or SC2)
-   - Set inlet temperature based on application:
-     - DHW systems: 40-50°C
+   - Optionally set **Inlet temperature (SC)**. Leaving it blank uses the collector default (60°C for flat plate, 75°C for evacuated tube). Enter a value only to override that default for a lower- or higher-temperature design:
+     - Low-temperature DHW systems: 40-50°C
      - Space heating: 30-40°C
      - High-temp applications: 60-80°C
    - Set coverage (recommend 30-50% to leave room for PV)
@@ -348,7 +348,7 @@ The feature estimates:
 
 ### Prerequisites
 - Zone geometry
-- Scenario-level configuration (no building-specific inputs needed)
+- Building selection is optional; leave **Buildings available** blank to use all buildings
 
 ### Key Parameters
 
@@ -428,7 +428,7 @@ Estimates sustainable heat extraction based on:
 | **Max water volume withdrawal** | Maximum water volume that can be withdrawn (m³/h) | 1000 |
 | **Max delta temperature withdrawal** | Maximum temperature change allowed in the withdrawn water (°C) | 8 |
 | **Temperature max** | Maximum water temperature over the year at the extraction point (°C) | 6 |
-| **Temperature min** | Average water temperature over the year at the extraction point (°C) | 4 |
+| **Temperature min** | Minimum water temperature over the year at the extraction point (°C) | 4 |
 
 ### How to Use
 

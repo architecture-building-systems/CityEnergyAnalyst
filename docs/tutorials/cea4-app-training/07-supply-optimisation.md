@@ -118,28 +118,22 @@ Typical findings:
 - Solar thermal for DHW
 
 ### Tips
-- **Start with smaller population/generations** for testing (e.g., 50×25)
-- **Increase for final results** (e.g., 200×100 for publication)
 - **Enable multiprocessing**: Reduces time from days to hours
-- **Constrain technologies** if some are not feasible at your site
-- **Review multiple Pareto solutions**: Understand trade-off space
+- **Keep a few CPUs free** so your machine stays responsive during long runs
+- **Adjust the technology databases** if some technologies are not feasible at your site
 
 ### Troubleshooting
 
 **Issue**: Optimisation runs very slowly
-- **Solution**: Reduce population size or generations for testing
 - **Solution**: Enable multiprocessing
-- **Solution**: Reduce number of technology options
+- **Solution**: Test on a scenario with fewer buildings first
 
 **Issue**: No feasible solutions found
-- **Solution**: Relax constraints (e.g., allow more technology types)
 - **Solution**: Check demand data is valid
-- **Solution**: Verify cost/performance databases
+- **Solution**: Verify cost/performance databases include suitable technologies
 
 **Issue**: All solutions look similar
-- **Solution**: Increase population diversity (larger population)
-- **Solution**: Run for more generations
-- **Solution**: Expand technology options
+- **Solution**: Check the technology databases offer distinct options
 
 ---
 

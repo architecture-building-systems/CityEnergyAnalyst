@@ -101,7 +101,7 @@ When loading an existing network or a user-provided layout, the engine reconcile
 3. **Run layout generation**:
    - Navigate to **Thermal Network Design → Thermal Network Part 1: Layout**
    - Give the new layout a **unique `network-name`**
-   - Select `network-type` (`DH`, `DC`, or both)
+   - Select `include-services` (`DH`, `DC`, or both)
    - If chaining or uploading, pick a `network-layout-mode`
    - Set `heating-connected-buildings` / `cooling-connected-buildings` if you want to override supply.csv
    - Click **Run**

@@ -202,7 +202,8 @@ Common adjustments:
 ### Tips
 - **Run before first demand calculation**: Mandatory step
 - **Check mapped properties**: Review a few buildings to ensure reasonable values
-- **Use overwrite carefully**: Preserves manual edits if set to "No"
+- **Choose input databases deliberately**: Map only the databases you need (comfort, architecture, air-conditioning, internal-loads, supply, schedules) so other inputs are left untouched
+- **Restrict buildings if needed**: Use **Buildings** to map a subset instead of all buildings
 - **Mixed-use buildings**: Use 1ST_USE, 2ND_USE, 3RD_USE fields with percentages
 
 ### Troubleshooting
@@ -483,7 +484,7 @@ Automatically queries and downloads surrounding building geometries from OpenStr
 
 ### How It Works
 1. Detects location from zone geometry
-2. Queries OpenStreetMap for buildings within radius
+2. Queries OpenStreetMap for buildings within the **Buffer** distance around the zone
 3. Estimates building heights (from OSM data or rules of thumb)
 4. Creates `surroundings.shp` shapefile
 
@@ -524,7 +525,7 @@ Automatically queries and downloads surrounding building geometries from OpenStr
 - Influences cooling loads (solar gains through windows)
 
 ### Tips
-- **Larger radius for tall buildings**: Tall buildings cast longer shadows
+- **Larger buffer for tall buildings**: Tall buildings cast longer shadows
 - **Check heights**: OSM height data is often incomplete; verify for key buildings
 - **Manual editing**: You can manually edit `surroundings.shp` to correct heights
 - **Exclude distant buildings**: Buildings >1 km usually negligible for shading

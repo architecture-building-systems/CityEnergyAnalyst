@@ -59,7 +59,7 @@ Design and analyse district heating and cooling networks.
 - Thermal Network Part 2b: Flow & Sizing, Multiple-Phase — phased rollout over time
 
 ### 6. [Life Cycle Analysis (LCA)](06-0-life-cycle-analysis.md)
-Assess environmental impacts and costs of building energy systems using what-if supply scenarios. All four features run on a shared what-if scenario; **Final Energy must run first** and produces the `configuration.json` consumed by the other three.
+Assess environmental impacts and costs of building energy systems using what-if supply scenarios. All four features run on a shared what-if scenario; **LCA Part 1: Energy by Carrier must run first** and produces the `configuration.json` consumed by the other three.
 - [LCA Part 1: Energy by Carrier](06-1-final-energy.md) - Carrier consumption by buildings and plants; includes hourly SC/PVT-primary DHW tank dispatch
 - [LCA Part 2a: GHG Emissions](06-2-emissions.md) - Lifecycle and operational GHG emissions, with optional grid-decarbonisation trajectory
 - [LCA Part 2b: Costs](06-3-system-costs.md) - CAPEX, OPEX, and total annualised cost (TAC) at building, component, and plant level
@@ -157,7 +157,7 @@ A standard CEA-4 analysis typically follows this sequence:
    - Optimise building-scale or district-scale supply systems
 
 7. **Impact Assessment** (Life Cycle Analysis - LCA Parts 1, 2a, 2b, 2c)
-   - Run **Final Energy** first (carrier consumption per what-if scenario)
+   - Run **LCA Part 1: Energy by Carrier** first (carrier consumption per what-if scenario)
    - Then **LCA Part 2a: GHG Emissions**, **LCA Part 2b: Costs**, and **LCA Part 2c: Heat Rejection** for the same what-if
 
 8. **Results & Reporting** (Visualisation & Export)
