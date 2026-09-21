@@ -1,6 +1,6 @@
 # Energy Supply System Optimisation
 
-Supply system optimisation features use multi-objective optimisation algorithms to find optimal energy system configurations that balance cost, emissions, and energy consumption. The optimisation can be performed at building scale (decentralised) or district scale (centralised).
+Supply system features evaluate energy system configurations against cost, emissions, and energy consumption. Building scale (decentralised) compares a fixed set of configurations per building; district scale (centralised) uses a multi-objective genetic algorithm.
 
 ---
 
@@ -9,43 +9,34 @@ Supply system optimisation features use multi-objective optimisation algorithms 
 ⚠️ **Note**: This feature is only available via **Command Line Interface (CLI)**. It is not accessible through the CEA-4 App dashboard.
 
 ### Overview
-Optimises decentralised energy supply systems for individual buildings. The feature explores combinations of conversion technologies (boilers, heat pumps, chillers, etc.) and renewable energy sources (PV, solar thermal, geothermal) to find cost-effective and low-carbon solutions for each building independently.
+Evaluates decentralised energy supply systems for individual buildings. There is no search algorithm: for each building, CEA simulates a fixed set of heating and cooling supply configurations, compares them one-to-one, and flags the best one. Each building is treated independently, as if it were disconnected from any district network.
 
 ### When to Use
 - Designing building-level energy systems
 - Comparing retrofit options for existing buildings
-- Finding optimal technology combinations
 - Supporting building-level investment decisions
 - When district systems are not feasible
 
-### What It Optimises
+### What It Evaluates
 
-**Decision Variables**:
-- Heating system type and capacity (boiler, heat pump, etc.)
-- Cooling system type and capacity (chiller, heat pump, etc.)
-- DHW system configuration
-- PV system size and placement
-- Solar thermal system size
-- Battery storage size (optional)
-- Thermal storage size (optional)
+**Heating** (13 configurations per building):
+- Natural gas boiler
+- Biogas boiler
+- Fuel cell
+- Ground-source heat pump with natural gas backup boiler, at ten heat pump / boiler capacity splits. Configurations whose heat pump exceeds what the building's footprint area allows for boreholes are disqualified
 
-**Objectives**:
-1. **Minimise total annualised cost** (CAPEX + OPEX)
-2. **Minimise GHG emissions** (operational)
-3. **Minimise primary energy consumption**
+**Cooling** (6 configurations per building):
+- Direct expansion / mini-split (not fully built yet)
+- Vapour compression chiller with cooling tower
+- Flat-plate or evacuated-tube solar collectors with a single-effect absorption chiller, boiler and cooling tower
+- Combinations that supply the sensible cooling load separately from the air-handling / recirculation load
+
+**How the best configuration is chosen**: configurations are ranked separately by total annualised cost (TAC) and by GHG emissions. The configuration with the best combined rank is flagged as `Best configuration`. If the rank is tied, the configuration with the lowest compounded relative cost and emissions is chosen (a random pick only if those are identical too).
 
 ### Prerequisites
-- **Energy Demand Part 2** - Building energy loads required
-- **Renewable energy assessments** (optional but recommended):
-  - PV potential
-  - Solar thermal potential
-  - Geothermal potential
-
-### Required Input Files
-- Total demand summary (building loads)
-- Cost and emission databases
-- Technology databases
-- Renewable energy potential files (if available)
+- **Energy Demand Part 2** - `Total_demand.csv` and building loads
+- **Solar collector potential (SC1 flat plate and SC2 evacuated tube)** for every building with a cooling load - the cooling calculation reads both
+- Building supply properties, zone geometry and a weather file (used for the ground-source heat pump)
 
 ### Key Parameters
 
@@ -54,7 +45,7 @@ Optimises decentralised energy supply systems for individual buildings. The feat
 | **Multiprocessing** | Parallel evaluation | Enabled |
 | **Number of CPUs to keep free** | CPUs left free for other work | 1 |
 
-No other parameters: technology options come from the scenario's databases.
+No other parameters: technology data come from the scenario's supply-system databases.
 
 ### How to Use
 
@@ -62,7 +53,7 @@ No other parameters: technology options come from the scenario's databases.
 
 1. **Complete prerequisites**:
    - ✅ Energy Demand Part 2
-   - ✅ (Optional) Renewable energy assessments
+   - ✅ Solar collector potential (SC1 and SC2)
 
 2. **Run via CLI**:
    ```bash
@@ -70,70 +61,46 @@ No other parameters: technology options come from the scenario's databases.
    ```
 
 3. **Configure parameters** (optional):
-   - Only `--multiprocessing` and `--number-of-cpus-to-keep-free`; technology options come from the scenario's databases
+   - Only `--multiprocessing` and `--number-of-cpus-to-keep-free`
    - Enable multiprocessing (strongly recommended)
 
-4. **Processing time**: 30 minutes to 4 hours depending on:
-   - Number of buildings
-   - Technology options enabled
-   - CPU cores available
+4. **Processing time**: Depends mainly on the number of buildings and available CPU cores. Each building is simulated independently, so multiprocessing helps directly.
 
 ### Output Files
 
-> **Note the folder spelling.** Results are written to `outputs/data/optimization/` with a
+> **Note the folder spelling.** Results are written to `outputs/data/optimization/decentralized/` with a
 > **z**, even though the feature is named with an "s" elsewhere in the app.
 
-**Per-building results**: `{scenario}/outputs/data/optimization/decentralized/BXXX_{configuration}_result_cooling.csv`
-- One file per building and HVAC configuration (e.g. `AHU_ARU_SCU`)
-- Optimal system configuration for that building
-- Equipment sizing, annual costs and emissions
+All files are in `{scenario}/outputs/data/optimization/decentralized/`, one set per building:
 
-Heating results follow the same pattern in the same folder.
+| File | Content |
+|------|---------|
+| `BXXX_AHU_ARU_SCU_result_cooling.csv` | One row per cooling configuration: capacities, CAPEX, OPEX, GHG emissions, TAC, and a `Best configuration` flag |
+| `BXXX_AHU_ARU_SCU_cooling_activation.csv` | Hourly activation of the best cooling configuration |
+| `DiscOp_BXXX_result_heating.csv` | One row per heating configuration: capacities, CAPEX, OPEX, GHG emissions, TAC, and a `Best configuration` flag |
+| `DiscOp_BXXX_result_heating_activation.csv` | Hourly activation of the best heating configuration |
 
 ### Understanding Results
 
-#### Pareto Frontier
-The Pareto frontier shows trade-offs between objectives:
-- **Lower-left**: Best solutions (low cost, low emissions)
-- **Extreme points**: Single-objective optima (pure cost or pure emissions focus)
-- **Middle**: Balanced compromise solutions
-
-Typical findings:
-- **Min cost**: Often gas boiler + some PV
-- **Min emissions**: Heat pump + large PV + storage
-- **Compromise**: Heat pump + moderate PV
-
-#### Technology Selection Patterns
-
-**Cost-optimal systems** typically include:
-- Gas/oil boilers (if gas is cheap)
-- Air-source heat pumps (moderate climates)
-- Minimal renewable energy
-- Small or no storage
-
-**Emissions-optimal systems** typically include:
-- Heat pumps (all-electric)
-- Maximum feasible PV
-- Thermal and/or battery storage
-- Solar thermal for DHW
+- Compare configurations within one building using the `TAC_USD` and `GHG_tonCO2` columns; the flagged best configuration is a compromise between the two rankings, not a Pareto front.
+- Building-scale results are not Pareto optimisation results, so they are not used by **Plot - Pareto Front**.
 
 ### Tips
-- **Enable multiprocessing**: Reduces time from days to hours
+- **Enable multiprocessing**: Buildings are simulated independently, so runs scale with available CPU cores
 - **Keep a few CPUs free** so your machine stays responsive during long runs
-- **Adjust the technology databases** if some technologies are not feasible at your site
+- **Compare all rows**, not just the flagged best, if you care about a specific trade-off between cost and emissions
 
 ### Troubleshooting
+
+**Issue**: Run fails with a missing file (e.g. solar collector results)
+- **Solution**: Run the solar collector potential for both SC1 and SC2 first, and Energy Demand Part 2
 
 **Issue**: Optimisation runs very slowly
 - **Solution**: Enable multiprocessing
 - **Solution**: Test on a scenario with fewer buildings first
 
-**Issue**: No feasible solutions found
-- **Solution**: Check demand data is valid
-- **Solution**: Verify cost/performance databases include suitable technologies
-
-**Issue**: All solutions look similar
-- **Solution**: Check the technology databases offer distinct options
+**Issue**: A heat pump configuration is missing or marked as not best
+- **Solution**: Heat pump sizes are limited by the building's footprint area (borehole space); larger heat pump shares are disqualified for small footprints
 
 ---
 
@@ -352,7 +319,7 @@ Best practice workflow:
 
 ## Optimisation Best Practices
 
-### Parameter Selection
+### Parameter Selection (district-scale)
 - **Testing**: 50 population × 25 generations (~1,000 evaluations)
 - **Production**: 200 population × 100 generations (~20,000 evaluations)
 - **Publication**: 300 population × 150 generations (~45,000 evaluations)
