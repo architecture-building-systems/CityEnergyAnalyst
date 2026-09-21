@@ -926,7 +926,7 @@ default:
     short_description: Trace all InputLocator calls for a script
     description: trace all calls to the InputLocator for a script
     interfaces: [cli]
-    module: cea.tests.trace_inputlocator
+    module: cea.utilities.trace_inputlocator.trace_inputlocator
     parameters: ['general:scenario', trace-inputlocator]
 
   - name: workflow

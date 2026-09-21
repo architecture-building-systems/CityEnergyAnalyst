@@ -71,7 +71,7 @@ dependencies = [
 [dependency-groups]
 lint = ["ruff"]
 test = ["pytest", "pytest-cov"]
-docs = ["setuptools", "sphinx"]
+docs = ["setuptools", "sphinx", "sphinx_rtd_theme", "pytest"]
 dev = [{include-group = "test"}, {include-group = "lint"}, {include-group = "docs"}]
 
 [project.urls]

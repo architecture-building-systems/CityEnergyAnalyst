@@ -33,14 +33,6 @@ cea.tests.run\_all\_plots module
    :undoc-members:
    :show-inheritance:
 
-cea.tests.run\_unit\_tests module
----------------------------------
-
-.. automodule:: cea.tests.run_unit_tests
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 cea.tests.test\_calc\_thermal\_loads module
 -------------------------------------------
 
@@ -129,10 +121,3 @@ cea.tests.test\_technologies module
    :undoc-members:
    :show-inheritance:
 
-cea.tests.trace\_inputlocator module
-------------------------------------
-
-.. automodule:: cea.tests.trace_inputlocator
-   :members:
-   :undoc-members:
-   :show-inheritance:
