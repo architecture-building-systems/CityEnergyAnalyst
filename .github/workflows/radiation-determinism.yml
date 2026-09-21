@@ -159,7 +159,11 @@ jobs:
       - name: Apply portable random number generator patch
         if: ${{ matrix.patch }}
         shell: bash
-        run: git -C external/daysim apply --whitespace=nowarn "${{ github.workspace }}/.github/scripts/radiation_determinism/portable-random.patch"
+        # actions/checkout converts the patch file to CRLF on Windows, the fork's files are LF
+        run: |
+          tr -d '\r' < "${{ github.workspace }}/.github/scripts/radiation_determinism/portable-random.patch" > "$RUNNER_TEMP/portable-random.patch"
+          git -C external/daysim apply --whitespace=nowarn "$RUNNER_TEMP/portable-random.patch"
+          git -C external/daysim diff --stat
 
       - name: Build DAYSIM
         shell: bash
