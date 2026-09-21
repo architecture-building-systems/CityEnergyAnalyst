@@ -43,6 +43,19 @@ Calculates electricity generation potential from photovoltaic solar panels insta
 | **Panel tilt angle** | Fixed tilt angle if custom enabled | Optional                 |
 | **Buildings** | Select specific buildings or all | All                      |
 
+**Note on the radiation threshold**: this is a hard cut-off. A sensor point just below it contributes no
+panel area at all, so results are sensitive to small differences in the radiation results for surfaces near
+the threshold - typically facades. Two machines can therefore report different PV yields for the same
+scenario: expect agreement within about 0.5% for the district, but several percent for an individual
+building, and more for a single facade covered by only a few sensor points. Roofs are rarely affected
+because they sit far above the threshold. The threshold is stored per machine (see the note below), not
+in the scenario.
+
+**Note on comparing results between machines**: the threshold, like all tool settings, lives in each
+machine's own `cea.config`. Setting it in the app on one computer does not carry to another. When
+comparing runs, check the value on both. For identical results, also share the solar radiation outputs
+(see [Solar Radiation Analysis](02-solar-radiation.md)).
+
 ### How to Use
 
 1. **Complete solar radiation analysis** (prerequisite)

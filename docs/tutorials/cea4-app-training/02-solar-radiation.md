@@ -86,6 +86,7 @@ After running solar radiation:
 - **Include all surroundings**: Missing context buildings lead to overestimated radiation
 - **Check terrain data**: Accurate elevations improve radiation calculations in hilly areas
 - **Leave grid resolution at default (2 m)**: Roof and walls grid parameters should generally not be changed. Smaller values drastically increase computation time with minimal accuracy improvement
+- **Share results instead of re-running them when comparing**: DAYSIM samples rays stochastically, and the sensor grid itself can differ slightly between computers, so two machines do not produce identical radiation for the same scenario. Differences are small per sensor point but can change which surfaces pass the threshold in [Photovoltaic (PV) Panels](03-renewable-energy.md#photovoltaic-pv-panels). To compare like with like, copy `outputs/data/solar-radiation/` from one machine to the other and run the downstream features from those results
 
 ### Troubleshooting
 
