@@ -10,9 +10,9 @@ jobs:
   ruff:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Run Ruff Linter
-        uses: astral-sh/ruff-action@v2
+        uses: astral-sh/ruff-action@v4
         with:
           src: ./cea
           # Pinned to match the pixi-locked local version (see pyproject.toml's
