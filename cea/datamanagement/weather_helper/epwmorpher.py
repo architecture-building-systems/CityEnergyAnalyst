@@ -93,7 +93,7 @@ def morphing_workflow(locator, config):
         print(f"Error details: {e}")
         baseline_range = (1985, 2014)  # default if the EPW file does not have the years in it
     
-    # 1.5 year can be any future year but defaults to 2050
+    # 1.5 year can be any future year but defaults to 2060
     user_future_year = config.weather_helper.year
     user_future_range = pyepwmorph_utilities.calc_period(user_future_year, baseline_range)
     

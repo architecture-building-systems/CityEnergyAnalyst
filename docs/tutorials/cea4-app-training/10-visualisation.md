@@ -89,7 +89,7 @@ Creates bar charts of building energy demand results, showing heating, cooling, 
 - **Sorting**: Sort buildings by total demand, name, or type
 - **Labels**: Show/hide data labels on bars
 - **Legend**: Position and format
-- **Export format**: HTML (interactive), PNG, PDF, SVG
+- **Export**: Plots are interactive HTML in the app; download a PNG from the chart toolbar. HTML files are only written when you export a canvas archive
 
 ### Tips
 - **Start with annual demand**: Best overview of results
@@ -303,7 +303,7 @@ Plots comfort and discomfort hours for buildings based on thermal comfort analys
 Plots Pareto frontiers from optimisation results, visualising trade-offs between competing objectives (cost, emissions, energy).
 
 ### When to Use
-- After running [Supply System Optimisation](07-supply-optimisation.md)
+- After running [District Supply System Optimisation](07-supply-optimisation.md#district-supply-system-optimisation)
 - Presenting optimisation results
 - Supporting multi-objective decision-making
 - Showing cost-carbon trade-offs
@@ -365,7 +365,7 @@ None besides the scenario. The axes follow the objective functions of the optimi
 ### Tips
 - **Show current state**: Add reference point for context
 - **Calculate trade-off rate**: Cost increase per ton CO₂ reduction
-- **Interactive plots**: HTML allows hovering to see solution details
+- **Interactive plots**: Hover over the plot to see solution details
 - **Multiple scenarios**: Overlay Pareto fronts to compare
 
 ---
@@ -448,7 +448,7 @@ After completing CEA analyses:
 
 ### Saving and Sharing Plots
 
-Plots are generated on demand and shown in the app; CEA does not write plot files to the scenario folder.
+Plots are generated on demand and shown in the app; CEA does not write plot files to the scenario folder. HTML plot files are only produced inside exported canvas archives (`data/<cardId>/plot_<i>.html`).
 
 - **Image**: Hover over a chart and use the camera icon in the chart toolbar to download a PNG
 - **Side-by-side views**: Arrange plots and maps in the [Canvas Builder](12-canvas-builder.md)
