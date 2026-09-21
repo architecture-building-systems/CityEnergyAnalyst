@@ -44,7 +44,7 @@ jobs:
         # wntr does not support linux ARM (no EPANET ARM binaries)
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup pixi
         uses: prefix-dev/setup-pixi@v0.10.0
@@ -72,7 +72,7 @@ jobs:
 
       - name: Upload radiation outputs
         if: ${{ !cancelled() && github.event.pull_request.draft == false }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: radiation-${{ matrix.os }}
           path: radiation-artifacts/
@@ -89,7 +89,7 @@ jobs:
 
       - name: Upload test scenario artifacts on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-scenarios-${{ matrix.os }}
           path: |
@@ -105,9 +105,9 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
@@ -115,7 +115,7 @@ jobs:
         run: pip install pandas numpy
 
       - name: Download radiation outputs
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: radiation-*
           path: radiation-artifacts
