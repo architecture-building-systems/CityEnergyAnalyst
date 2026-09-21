@@ -81,15 +81,31 @@ def _pv_match(a: pd.DataFrame, b: pd.DataFrame):
 
 
 def _compare_pv(ref_pv: pd.DataFrame, other_pv: pd.DataFrame):
-    """Selection differences and annual radiation change of sensors selected on both OSes."""
+    """Selection differences and annual radiation change (%) of sensors selected on both OSes.
+
+    Sensors at an identical position (geometry tolerance) isolate DAYSIM differences from mesh differences.
+    """
     matched, idx = _pv_match(ref_pv, other_pv)
     matched_other, _ = _pv_match(other_pv, ref_pv)
-    rad_ref = ref_pv["total_rad_Whm2"].to_numpy()[matched]
-    rad_other = other_pv["total_rad_Whm2"].to_numpy()[idx[matched]]
-    rad_pct = np.abs(rad_other - rad_ref) / rad_ref * 100 if matched.any() else np.array([])
+    dist = _nearest(ref_pv, other_pv)[0]
+    same_position = matched & (dist <= COORD_TOLERANCE_M) & np.isclose(
+        ref_pv["AREA_m2"].to_numpy(), other_pv["AREA_m2"].to_numpy()[idx], atol=1e-6)
+    rad_ref = ref_pv["total_rad_Whm2"].to_numpy()
+    with np.errstate(divide="ignore", invalid="ignore"):
+        rad_pct = np.abs(other_pv["total_rad_Whm2"].to_numpy()[idx] - rad_ref) / rad_ref * 100
+    valid = matched & np.isfinite(rad_pct)
     return {"only_ref": int((~matched).sum()), "only_other": int((~matched_other).sum()),
-            "rad_pct_mean": float(rad_pct.mean()) if len(rad_pct) else None,
-            "rad_pct_max": float(rad_pct.max()) if len(rad_pct) else None}
+            "rad_pct_mean": float(rad_pct[valid].mean()) if valid.any() else None,
+            "rad_pct_max": float(rad_pct[valid].max()) if valid.any() else None,
+            "same_pct": rad_pct[valid & same_position], "shifted_pct": rad_pct[valid & ~same_position],
+            "only_rad_Whm2": np.concatenate([rad_ref[~matched],
+                                             other_pv["total_rad_Whm2"].to_numpy()[~matched_other]])}
+
+
+def _stats(pct: np.ndarray) -> str:
+    if not len(pct):
+        return "n=0"
+    return f"n={len(pct)}, exactly equal {int((pct == 0).sum())}, mean {pct.mean():.2f}%, max {pct.max():.2f}%"
 
 
 def _read(path: Path):
@@ -121,6 +137,7 @@ def compare(artifacts_dir: Path) -> str:
                   "Radiation Δ mean/max |",
                   "|---|---|---|---|---|---|---|---|---|---|---|"]
         totals = {}
+        pair = {"same_pct": [], "shifted_pct": [], "only_rad_Whm2": []}
         for ref_geom in sorted(ref_root.glob("*/outputs/data/solar-radiation/*_geometry.csv")):
             rel = ref_geom.relative_to(ref_root)
             scenario, building = rel.parts[0], ref_geom.name.removesuffix("_geometry.csv")
@@ -135,6 +152,8 @@ def compare(artifacts_dir: Path) -> str:
             if ref_pv is not None and other_pv is not None:
                 ref_pv, other_pv = _selected(ref_pv), _selected(other_pv)
                 pv = _compare_pv(ref_pv, other_pv)
+                for key in pair:
+                    pair[key].append(pv[key])
                 area_ref, area_other = (df["area_installed_module_m2"].sum() for df in (ref_pv, other_pv))
                 rad = "n/a" if pv["rad_pct_mean"] is None else f"{pv['rad_pct_mean']:.1f}% / {pv['rad_pct_max']:.1f}%"
                 pv_cells = [f"{len(ref_pv)}/{len(other_pv)}", f"{pv['only_ref']}/{pv['only_other']}",
@@ -148,6 +167,15 @@ def compare(artifacts_dir: Path) -> str:
         for scenario, (n, moved, only_ref, only_other, area_ref, area_other) in totals.items():
             lines.append(f"| **{scenario}** | **Total** | {n} | {n - moved} | {moved} ({moved / n * 100:.0f}%) | | | "
                          f"{only_ref}/{only_other} | {area_ref:.1f}/{area_other:.1f} | **{_pct(area_ref, area_other)}** | |")
+        same, shifted, only = (np.concatenate(pair[k]) if pair[k] else np.array([]) for k in pair)
+        lines += ["", f"- **Radiation Δ, sensors selected on both OSes at an identical position** "
+                      f"(isolates DAYSIM from mesh): {_stats(same)}",
+                  f"- **Radiation Δ, selected on both OSes but shifted (< half cell)**: {_stats(shifted)}"]
+        if len(only):
+            kwh = only / 1000
+            lines.append(f"- **Sensors selected on one OS only**: n={len(only)}, annual radiation on the selecting OS "
+                         f"min {kwh.min():.0f} / median {np.median(kwh):.0f} / max {kwh.max():.0f} kWh/m² "
+                         f"(compare with `annual-radiation-threshold`)")
         lines.append("")
     return "\n".join(lines)
 
