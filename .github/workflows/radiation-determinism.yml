@@ -1,0 +1,133 @@
+name: Radiation determinism experiment
+# Manual experiment for #4074, not part of regular CI. Answers:
+#   A. Is the full radiation script (OCC geometry + DAYSIM) repeatable on one OS?
+#   B. Is DAYSIM repeatable on one OS when given identical input files?
+#   C. Do different OSes agree when DAYSIM is given identical input files?
+# See .github/scripts/radiation_determinism/radiation_determinism.py
+
+on:
+  workflow_dispatch:
+  # workflow_dispatch only works once this file is on the default branch, so also run when the experiment itself changes
+  pull_request:
+    paths:
+      - '.github/workflows/radiation-determinism.yml'
+      - '.github/scripts/radiation_determinism/**'
+
+permissions:
+  contents: read
+
+env:
+  SCRIPT: .github/scripts/radiation_determinism/radiation_determinism.py
+  SETUP_WORKFLOW: .github/scripts/radiation_determinism/setup_scenario.yml
+
+jobs:
+  prepare:
+    # Generates the DAYSIM input files once (on ubuntu) so every OS can replay DAYSIM on the same inputs
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup pixi
+        uses: prefix-dev/setup-pixi@v0.10.0
+        with:
+          cache: true
+          pixi-version: v0.72.0
+
+      - name: Install CEA
+        run: pixi run pip install .
+
+      - name: Build scenario
+        shell: bash
+        # the project folder is derived from the --scenario path: <runner temp>/zug_heating/reference-case-open
+        run: pixi run cea workflow --workflow "$SETUP_WORKFLOW" --scenario "${{ runner.temp }}/exp/none"
+
+      - name: Generate DAYSIM inputs
+        shell: bash
+        run: pixi run python "$SCRIPT" prepare "${{ runner.temp }}/zug_heating/reference-case-open/baseline" "${{ runner.temp }}/exp/inputs"
+
+      - name: Upload DAYSIM inputs
+        uses: actions/upload-artifact@v7
+        with:
+          name: daysim-inputs
+          path: ${{ runner.temp }}/exp/inputs/
+          retention-days: 3
+
+  experiment:
+    needs: prepare
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup pixi
+        uses: prefix-dev/setup-pixi@v0.10.0
+        with:
+          cache: true
+          pixi-version: v0.72.0
+
+      - name: Install CEA
+        run: pixi run pip install .
+
+      - name: Build scenario
+        shell: bash
+        run: pixi run cea workflow --workflow "$SETUP_WORKFLOW" --scenario "${{ runner.temp }}/exp/none"
+
+      - name: "A. Run the full radiation script twice"
+        shell: bash
+        run: pixi run python "$SCRIPT" pipeline-twice "${{ runner.temp }}/zug_heating/reference-case-open/baseline" "${{ runner.temp }}/pipeline/pipeline.json"
+
+      - name: Download DAYSIM inputs
+        uses: actions/download-artifact@v8
+        with:
+          name: daysim-inputs
+          path: ${{ runner.temp }}/shared-inputs
+
+      - name: "B/C. Replay DAYSIM twice on the shared inputs"
+        shell: bash
+        run: pixi run python "$SCRIPT" daysim "${{ runner.temp }}/shared-inputs" "${{ runner.temp }}/replay/daysim.json"
+
+      - name: Upload full-pipeline results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: pipeline-${{ matrix.os }}
+          path: ${{ runner.temp }}/pipeline/pipeline.json
+          retention-days: 3
+          if-no-files-found: warn
+
+      - name: Upload DAYSIM replay results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: daysim-${{ matrix.os }}
+          path: ${{ runner.temp }}/replay/daysim.json
+          retention-days: 3
+          if-no-files-found: warn
+
+  compare:
+    needs: experiment
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install comparison dependencies
+        run: pip install numpy
+
+      - name: Download results
+        uses: actions/download-artifact@v8
+        with:
+          pattern: "{pipeline,daysim}-*"
+          path: results
+
+      - name: Summarise
+        run: python "$SCRIPT" compare results

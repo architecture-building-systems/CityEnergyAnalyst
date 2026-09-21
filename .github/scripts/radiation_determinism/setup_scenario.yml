@@ -1,0 +1,29 @@
+# Builds the zug_heating baseline scenario up to (but not including) radiation.
+# Mirrors the first steps of cea/tests/workflows/zug_heating.yml; kept out of that folder so the
+# integration tests do not pick it up.
+- config: default
+  "general:multiprocessing": False
+  "general:project": "${CEA_general_project}/../zug_heating/reference-case-open"
+- script: extract-reference-case
+  parameters:
+    destination: "{general:project}/.."
+    case: open
+- config: .
+  "general:scenario-name": baseline
+- script: cea4-format-helper
+  parameters:
+    scenarios-to-verify-and-migrate: [baseline]
+
+- script: database-helper
+  parameters:
+    databases-path: CH
+    databases: [archetypes, assemblies, components]
+- script: archetypes-mapper
+  parameters:
+    input-databases: [comfort, architecture, air-conditioning, internal-loads, supply, schedules]
+- script: surroundings-helper
+- script: streets-helper
+- script: terrain-helper
+- script: weather-helper
+  parameters:
+    weather: Zug-inducity_1990_2010_TMY
