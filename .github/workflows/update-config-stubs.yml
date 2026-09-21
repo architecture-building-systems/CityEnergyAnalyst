@@ -23,6 +23,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          persist-credentials: ${{ github.event_name == 'push' }}
 
       - name: Setup pixi
         uses: prefix-dev/setup-pixi@v0.10.0
