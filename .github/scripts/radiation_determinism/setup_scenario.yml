@@ -1,6 +1,9 @@
 # Builds the zug_heating baseline scenario up to (but not including) radiation.
 # Mirrors the first steps of cea/tests/workflows/zug_heating.yml; kept out of that folder so the
 # integration tests do not pick it up.
+# surroundings-helper, streets-helper and terrain-helper are left out on purpose: they download from
+# OpenStreetMap / AWS (flaky on runners) and the reference case already ships those files, which also
+# guarantees every OS starts from identical inputs.
 - config: default
   "general:multiprocessing": False
   "general:project": "${CEA_general_project}/../zug_heating/reference-case-open"
@@ -21,9 +24,6 @@
 - script: archetypes-mapper
   parameters:
     input-databases: [comfort, architecture, air-conditioning, internal-loads, supply, schedules]
-- script: surroundings-helper
-- script: streets-helper
-- script: terrain-helper
 - script: weather-helper
   parameters:
     weather: Zug-inducity_1990_2010_TMY
