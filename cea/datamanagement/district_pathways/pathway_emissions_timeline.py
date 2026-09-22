@@ -1668,6 +1668,10 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
     ) -> None:
         """Log a full replacement of the given component (demolish old + rebuild same).
 
+        Layered envelope components and windows only. Technical systems are replaced as 4
+        independent quarters in `_apply_due_replacements_at_year`, each charging
+        `EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS / 4`, so they never reach this method.
+
         Biogenic carbon is treated as stored in materials (negative at production) and no end-of-life release
         is assumed (no positive biogenic term at demolition/removal), consistent with existing CEA net-emissions
         plotting assumptions.
@@ -1679,8 +1683,8 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
             if area <= 0:
                 continue
             if comp_src == "technical_systems":
-                prod = float(EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS)
-                self.add_phase_component(year=year, phase="production", component=comp, value_kgco2e=prod * area)
+                # Handled separately as 4 quarters; see the docstring. Charging the undivided
+                # EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS here would be 4x the per-quarter rate.
                 continue
 
             if comp_src == "win":
