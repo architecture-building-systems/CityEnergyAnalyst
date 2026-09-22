@@ -902,6 +902,15 @@ class ElevationMap(object):
         triangles contains it -- the same piecewise-linear terrain surface `generate_tin` + the OCC ray-cast
         compute today, without leaving the diagonal choice to a triangulator's floating-point tie-break.
 
+        Neither this nor `generate_tin` picks a cell's diagonal based on the terrain's actual shape --
+        `Delaunay(np.array([u, v]).T)` triangulates (x, y) alone, never seeing z -- so on steep terrain either
+        diagonal is already just an approximation of the true surface within that cell, and a fixed choice is no
+        more or less accurate than an arbitrary one was. What changes is that the old arbitrary choice was exactly
+        where the platform-dependent drift came from, and how much it could have cost scales with local relief:
+        measured on synthetic grids at increasing slope, the two diagonals of one cell can disagree by roughly
+        0.1-2m at gentle (~2%, Zug-like) slopes, but tens of metres at steep (>30%) ones. A finer terrain raster
+        narrows that gap for either approach; this fix only removes the part of it that varied by platform.
+
         :return: the elevation at (x, y), or ``None`` if (x, y) falls outside the grid or its cell touches
             nodata -- the caller should fall back to `generate_tin` + `calc_intersection` in that case.
         """
