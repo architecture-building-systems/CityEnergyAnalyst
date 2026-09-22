@@ -630,17 +630,24 @@ def burn_buildings(geometry: shapely.Polygon,
     # get the midpt of the face
     face_midpt = calculate.face_midpt(face)
 
-    terrain_tin = elevation_map.generate_tin(tolerance)
-    # make shell out of tin_occface_list and create OCC object
-    terrain_shell = construct.make_shell(terrain_tin)
+    grid_z = elevation_map.elevation_at_point(face_midpt[0], face_midpt[1])
+    if grid_z is not None:
+        elevation = grid_z
+    else:
+        # fall back to the OCC boolean/mesh path: the footprint centroid falls outside the elevation map's grid,
+        # or its cell touches nodata, so there is no clean regular-grid cell to interpolate within.
+        terrain_tin = elevation_map.generate_tin(tolerance)
+        # make shell out of tin_occface_list and create OCC object
+        terrain_shell = construct.make_shell(terrain_tin)
 
-    # project the face_midpt to the terrain and get the elevation
-    inter_pt, inter_face = calc_intersection(terrain_shell, face_midpt, (0, 0, 1), tolerance)
+        # project the face_midpt to the terrain and get the elevation
+        inter_pt, inter_face = calc_intersection(terrain_shell, face_midpt, (0, 0, 1), tolerance)
+        elevation = inter_pt.Z()
 
     # reconstruct the footprint with the elevation
-    loc_pt = (inter_pt.X(), inter_pt.Y(), inter_pt.Z())
+    loc_pt = (face_midpt[0], face_midpt[1], elevation)
     face = fetch.topo2topotype(modify.move(face_midpt, loc_pt, face))
-    return face, inter_pt.Z()
+    return face, elevation
 
 
 def calc_solid(face_footprint: TopoDS_Face,
@@ -876,6 +883,46 @@ class ElevationMap(object):
         tin_occface_list = construct.delaunay3d(raster_points, tolerance=tolerance)
 
         return tin_occface_list
+
+    def elevation_at_point(self, x: float, y: float) -> float | None:
+        """The terrain elevation at (x, y), found directly by indexing the regular raster grid.
+
+        `generate_tin` (above) hands the same points to `scipy.spatial.Delaunay`, triangulated on (x, y) alone.
+        For a *regular* grid -- which a raster always is -- every 2x2 cell of points is exactly cocircular in
+        (x, y), a textbook Delaunay degeneracy: both diagonals are equally valid, so which one Qhull picks comes
+        down to floating-point tie-breaking that differs across builds/platforms. `burn_buildings` then ray-casts
+        a single point (the building's footprint centroid) against that triangulation, so whenever the centroid
+        falls in a cell whose diagonal choice differs, the *whole* building's elevation -- and everything built
+        on top of it -- shifts by however much the terrain's two possible diagonals disagree there (see #4080's
+        follow-up: this is what a fixed wall mesh surfaced as the next-largest source of cross-OS drift).
+
+        This sidesteps the ambiguity instead of resolving it: a regular grid's triangulation is a solved problem
+        that needs no library at all. Each cell is split along a *fixed* diagonal (from its (x, y) corner to the
+        diagonally opposite one), and (x, y) is linearly interpolated within whichever of the two resulting
+        triangles contains it -- the same piecewise-linear terrain surface `generate_tin` + the OCC ray-cast
+        compute today, without leaving the diagonal choice to a triangulator's floating-point tie-break.
+
+        :return: the elevation at (x, y), or ``None`` if (x, y) falls outside the grid or its cell touches
+            nodata -- the caller should fall back to `generate_tin` + `calc_intersection` in that case.
+        """
+        fx = (x - self.x_coords[0]) / self.x_size
+        fy = (y - self.y_coords[0]) / self.y_size
+        col, row = math.floor(fx), math.floor(fy)
+        if not (0 <= col < len(self.x_coords) - 1 and 0 <= row < len(self.y_coords) - 1):
+            return None
+        corners = {(0, 0): self.elevation_map[row, col], (1, 0): self.elevation_map[row, col + 1],
+                  (0, 1): self.elevation_map[row + 1, col], (1, 1): self.elevation_map[row + 1, col + 1]}
+        if any(z == self.nodata for z in corners.values()):
+            return None
+        tx, ty = fx - col, fy - row
+        # the fixed diagonal runs from (0, 0) to (1, 1)
+        triangle = ((0, 0), (1, 0), (0, 1)) if tx + ty <= 1 else ((1, 0), (1, 1), (0, 1))
+        (u0, v0), (u1, v1), (u2, v2) = triangle
+        z0, z1, z2 = (corners[p] for p in triangle)
+        denom = (v1 - v2) * (u0 - u2) + (u2 - u1) * (v0 - v2)
+        w0 = ((v1 - v2) * (tx - u2) + (u2 - u1) * (ty - v2)) / denom
+        w1 = ((v2 - v0) * (tx - u2) + (u0 - u2) * (ty - v2)) / denom
+        return float(w0 * z0 + w1 * z1 + (1 - w0 - w1) * z2)
 
 
 def standardize_coordinate_systems(zone_df, surroundings_df, trees_df, terrain_raster):
