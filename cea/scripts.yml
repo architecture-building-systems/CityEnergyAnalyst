@@ -755,7 +755,7 @@ Utilities:
       This Feature converts one or multiple geometries from zone to surrounding or from surrounding to zone.
 
     interfaces: [cli, dashboard]
-    module: cea.datamanagement.zone_surrounding_geometry
+    module: cea.datamanagement.zone_surrounding_converter
     parameters: ['general:scenario', zone-surrounding-converter]
 
   - name: cea4-migrate
