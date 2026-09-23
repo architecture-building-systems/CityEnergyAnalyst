@@ -748,15 +748,15 @@ Utilities:
     module: cea.datamanagement.format_helper.format_helper
     parameters: ['general:scenario',format-helper]
 
-  - name: zone-surrounding-converter
-    label: Zone-Surrounding Converter
-    short_description: Convert zone geometries to surrounding, or convert surrounding geometries to zone
+  - name: zone-surrounding-exchanger
+    label: Zone-Surrounding Exchanger
+    short_description: Exchange between zone and surrounding geometries
     description: |
-      This Feature converts one or multiple geometries from zone to surrounding or from surrounding to zone.
+      This Feature exchanges one or multiple geometries between zone and surroundings.
 
     interfaces: [cli, dashboard]
-    module: cea.datamanagement.zone_surrounding_converter
-    parameters: ['general:scenario', zone-surrounding-converter]
+    module: cea.datamanagement.zone_surrounding_exchanger
+    parameters: ['general:scenario', zone-surrounding-exchanger]
 
   - name: cea4-migrate
     label: CEA-4 Format Helper - Migrate

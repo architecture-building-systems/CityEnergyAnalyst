@@ -1,5 +1,5 @@
 """
-This script converts zone geometries to surrounding geometries, and/or converts surrounding geometries to zone geometries.
+This script exchanges one or multiple geometries between zone and surroundings.
 """
 
 import math
