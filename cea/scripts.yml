@@ -772,7 +772,7 @@ Utilities:
     label: Generate Samples for Sensitivity Analysis (SA)
     short_description: Generate samples for sensitivity analysis using Sobol method
     description: This Feature generates samples for sensitivity analysis using Sobol Method.
-    interfaces: [ cli, dashboard ]
+    interfaces: [ cli ]
     module: cea.utilities.sensitivity_analysis_sampler
     parameters: [ 'general:scenario', sensitivity-analysis-tools]
 
