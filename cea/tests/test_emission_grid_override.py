@@ -14,7 +14,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from cea.analysis.lca.emission_time_dependent import _load_grid_emission_intensity_override
+from cea.analysis.lca.emission_time_dependent import (
+    _load_grid_emission_intensity_override,
+)
 
 HOURS_IN_YEAR = 8760
 LEAP_YEAR_HOURS = 8784
