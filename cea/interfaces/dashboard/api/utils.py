@@ -378,6 +378,12 @@ def deconstruct_parameters(
     if isinstance(p, cea.config.WhatIfNameChoicesMixin):
         params["mode"] = p.mode
 
+    # CsvColumnNameParameter (SourceParameterMixin): names the sibling InputFileParameter
+    # whose selected CSV this field is a column name from, so the GUI can watch that field
+    # and offer the file's actual header columns instead of a blind text input.
+    if isinstance(p, cea.config.SourceParameterMixin):
+        params["source_parameter"] = p.source_parameter
+
     return params
 
 
