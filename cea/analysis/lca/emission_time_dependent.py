@@ -1,4 +1,6 @@
+import difflib
 import os
+import unicodedata
 import warnings
 
 import numpy as np
@@ -26,6 +28,58 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
+def _normalize_column_name(name: str) -> str:
+    """Normalize a column name for lenient matching: strip whitespace and fold
+    Unicode look-alikes (e.g. subscript '₂' -> '2') via NFKC, so a name typed
+    without special characters can still match a header that has them."""
+    return unicodedata.normalize("NFKC", name).strip()
+
+
+def _resolve_grid_intensity_column(csv_path: str, requested_name: str) -> str:
+    """Resolve the user-provided column name against the CSV's actual header row.
+
+    Tries an exact match first, then a lenient match (Unicode-normalised,
+    whitespace-stripped) if that resolves to exactly one column -- this
+    tolerates a column name typed without special characters (e.g. 'gCO2eq'
+    for a header using the subscript '₂') or with trailing whitespace copied
+    along with it.
+
+    Raises ValueError listing the file's available columns (and close-match
+    suggestions) when nothing resolves. Errors report the file's basename
+    only: the on-disk path is a server-side temp file the user never sees.
+    """
+    basename = os.path.basename(csv_path)
+    try:
+        header = pd.read_csv(csv_path, nrows=0)
+    except FileNotFoundError as e:
+        raise FileNotFoundError(f"Could not find the provided CSV file '{basename}'.") from e
+    except PermissionError as e:
+        raise PermissionError(
+            f"Permission denied reading '{basename}'. It may be open in another program."
+        ) from e
+    except (EmptyDataError, ParserError, OSError) as e:
+        raise ValueError(f"Could not parse '{basename}': {e}") from e
+
+    columns = list(header.columns)
+    if requested_name in columns:
+        return requested_name
+
+    normalized_requested = _normalize_column_name(requested_name)
+    normalized_matches = [c for c in columns if _normalize_column_name(c) == normalized_requested]
+    if len(normalized_matches) == 1:
+        return normalized_matches[0]
+
+    available = ', '.join(f"'{c}'" for c in columns)
+    message = (
+        f"Column '{requested_name}' was not found in '{basename}'. "
+        f"Available columns: {available}."
+    )
+    suggestions = difflib.get_close_matches(requested_name, columns, n=3)
+    if suggestions:
+        message += f" Did you mean: {', '.join(repr(s) for s in suggestions)}?"
+    raise ValueError(message)
+
+
 def _load_grid_emission_intensity_override(config: Configuration):
     """Load and validate an optional external CSV for grid carbon intensity.
 
@@ -50,23 +104,26 @@ def _load_grid_emission_intensity_override(config: Configuration):
             "If grid_carbon_intensity_dataset_csv is provided, csv_carbon_intensity_column_name must also be provided."
         )
 
+    basename = os.path.basename(intensity_csv_path)
+    resolved_column_name = _resolve_grid_intensity_column(intensity_csv_path, intensity_column_name)
+
     try:
         series: pd.Series = pd.read_csv(
             intensity_csv_path,
-            usecols=[intensity_column_name],
-            dtype={intensity_column_name: "float64"},
-        )[intensity_column_name]
-    except FileNotFoundError as e:
-        raise FileNotFoundError(
-            f"Could not find the provided CSV file '{intensity_csv_path}'."
-        ) from e
-    except PermissionError as e:
-        raise PermissionError(
-            f"Permission denied reading '{intensity_csv_path}'. It may be open in another program."
-        ) from e
-    except (EmptyDataError, ParserError, OSError, ValueError) as e:
+            usecols=[resolved_column_name],
+        )[resolved_column_name]
+    except (EmptyDataError, ParserError, OSError) as e:
         raise ValueError(
-            f"Could not parse '{intensity_csv_path}' with column '{intensity_column_name}': {e}"
+            f"Could not parse '{basename}' with column '{resolved_column_name}': {e}"
+        ) from e
+
+    # Values must be numeric; a non-numeric column (e.g. an id or label column)
+    # fails a clean float conversion rather than silently coercing to NaN.
+    try:
+        series = series.astype("float64")
+    except (TypeError, ValueError) as e:
+        raise ValueError(
+            f"Column '{resolved_column_name}' in '{basename}' contains non-numeric values: {e}"
         ) from e
 
     n = len(series)
@@ -86,8 +143,10 @@ def _load_grid_emission_intensity_override(config: Configuration):
 
     if series.isna().any():
         na_count = int(series.isna().sum())
+        first_rows = series.index[series.isna()][:5].tolist()
         raise ValueError(
-            f"Emission intensity contains {na_count} NaN values; please clean or impute the data."
+            f"Column '{resolved_column_name}' in '{basename}' has {na_count} empty values "
+            f"out of {len(series)} rows (first at row(s) {first_rows}); please clean or impute the data."
         )
 
     return True, series.to_numpy(dtype=float)
