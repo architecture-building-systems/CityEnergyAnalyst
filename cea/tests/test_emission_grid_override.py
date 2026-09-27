@@ -69,6 +69,51 @@ def test_leap_year_rows_drops_feb_29(tmp_path):
     np.testing.assert_array_equal(result, expected)
 
 
+def test_leap_year_nan_on_feb29_is_dropped_not_reported(tmp_path):
+    """A NaN inside the discarded Feb 29 range must not block loading -- that row is
+    thrown away regardless of its content to produce the target 8760-hour year."""
+    values = np.arange(LEAP_YEAR_HOURS, dtype=float)
+    values[1420] = np.nan  # inside the dropped range (1416..1439)
+    csv_path = _write_csv(tmp_path, "grid.csv", {"Carbon intensity": values})
+    config = _make_config(csv_path, "Carbon intensity")
+
+    with pytest.warns(RuntimeWarning, match="8784 rows"):
+        override, result = _load_grid_emission_intensity_override(config)
+
+    assert override is True
+    assert len(result) == HOURS_IN_YEAR
+    assert not np.isnan(result).any()
+
+
+def test_leap_year_non_numeric_on_feb29_is_dropped_not_reported(tmp_path):
+    """Same as above for a non-numeric value: garbage on the discarded Feb 29 day must not
+    fail the whole file."""
+    values = [str(float(i)) for i in range(LEAP_YEAR_HOURS)]
+    values[1420] = "not-a-number"  # inside the dropped range (1416..1439)
+    csv_path = _write_csv(tmp_path, "grid.csv", {"Carbon intensity": values})
+    config = _make_config(csv_path, "Carbon intensity")
+
+    with pytest.warns(RuntimeWarning, match="8784 rows"):
+        override, result = _load_grid_emission_intensity_override(config)
+
+    assert override is True
+    assert len(result) == HOURS_IN_YEAR
+
+
+def test_leap_year_nan_outside_feb29_is_still_reported(tmp_path):
+    """A NaN elsewhere in an 8784-row file must still be rejected, reported against the
+    post-drop 8760-row total (the number of hours actually used downstream)."""
+    values = np.arange(LEAP_YEAR_HOURS, dtype=float)
+    values[10] = np.nan  # well outside the dropped range
+    csv_path = _write_csv(tmp_path, "grid.csv", {"Carbon intensity": values})
+    config = _make_config(csv_path, "Carbon intensity")
+
+    with pytest.warns(RuntimeWarning, match="8784 rows"), pytest.raises(ValueError) as exc_info:
+        _load_grid_emission_intensity_override(config)
+
+    assert "out of 8760 rows" in str(exc_info.value)
+
+
 def test_unicode_and_whitespace_tolerant_match(tmp_path):
     # Real-world header uses a Unicode subscript '₂'; user types plain ASCII with trailing space.
     values = np.arange(HOURS_IN_YEAR, dtype=float)

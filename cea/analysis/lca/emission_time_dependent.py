@@ -117,15 +117,9 @@ def _load_grid_emission_intensity_override(config: Configuration):
             f"Could not parse '{basename}' with column '{resolved_column_name}': {e}"
         ) from e
 
-    # Values must be numeric; a non-numeric column (e.g. an id or label column)
-    # fails a clean float conversion rather than silently coercing to NaN.
-    try:
-        series = series.astype("float64")
-    except (TypeError, ValueError) as e:
-        raise ValueError(
-            f"Column '{resolved_column_name}' in '{basename}' contains non-numeric values: {e}"
-        ) from e
-
+    # Row-count check and the Feb 29 drop happen BEFORE numeric/NaN validation below: Feb 29
+    # is discarded either way to produce the target 8760-hour year, so garbage or missing
+    # values there must not block loading a file that is otherwise perfectly usable.
     n = len(series)
     if n == 8760:
         pass
@@ -140,6 +134,15 @@ def _load_grid_emission_intensity_override(config: Configuration):
         raise ValueError(
             f"Emission intensity dataset CSV file must have 8760 or 8784 rows, but has {n} rows."
         )
+
+    # Values must be numeric; a non-numeric column (e.g. an id or label column)
+    # fails a clean float conversion rather than silently coercing to NaN.
+    try:
+        series = series.astype("float64")
+    except (TypeError, ValueError) as e:
+        raise ValueError(
+            f"Column '{resolved_column_name}' in '{basename}' contains non-numeric values: {e}"
+        ) from e
 
     if series.isna().any():
         na_count = int(series.isna().sum())
