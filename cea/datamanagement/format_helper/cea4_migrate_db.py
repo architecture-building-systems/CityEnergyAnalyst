@@ -557,7 +557,8 @@ def hs_bg_in_db(scenario):
 def add_occupied_bg(scenario, envelope):
     geometry = dbf_to_dataframe(os.path.join(scenario, "inputs", "building-geometry", "zone.dbf")).set_index('name')
     envelope.set_index('name', inplace=True)
-    envelope = envelope.loc[list(set(envelope.index).intersection(geometry.index))]
+    # keep the rows in their original order (going through a set would reshuffle them on every run)
+    envelope = envelope.loc[envelope.index.isin(geometry.index)]
 
     # if floors_bg are occupied, calculate Hs based on Hs_ag and Hs_bg; otherwise, keep Hs_ag
     occupied_bg_bdgs = envelope.loc[envelope.occupied_bg > 0.0].index
