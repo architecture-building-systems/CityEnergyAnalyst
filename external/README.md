@@ -93,6 +93,13 @@ Both tools support local source directories or automatic fetching from GitHub:
 - `DAYSIM_GIT_REPOSITORY` - Git repository URL (default: `https://github.com/reyery/Daysim.git`)
 - `DAYSIM_GIT_TAG` - Git tag/branch to use
 
+**Cross-platform determinism** (#4080): the pinned DAYSIM commit gives different radiation
+results on Windows than on Linux/macOS for identical inputs, because Windows uses the C
+runtime's `rand()` where the others use `drand48()`. `daysim-portable-random.patch` (this
+directory) fixes this -- verified bit-identical across all three OSes in CI -- but is not yet
+applied to the fork: it needs to be committed to `reyery/Daysim` and `DAYSIM_GIT_TAG` above
+bumped to that commit before a new `cea-external-tools` release picks it up.
+
 ### CRAX
 - `CRAX_SOURCE_DIR` - Path to local CRAX source (default: `./crax`)
 - `CRAX_GIT_REPOSITORY` - Git repository URL (default: `https://github.com/wanglittlerain/CityRadiation-Accelerator-CRAX-V1.0.git`)
