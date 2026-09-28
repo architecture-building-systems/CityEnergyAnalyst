@@ -17,6 +17,7 @@ from cea.import_export.result_summary import (
 )
 from cea.inputlocator import InputLocator
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
+from cea.scripts import tool_ref
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
@@ -134,26 +135,26 @@ def raise_missing_pv_error(pv_codes, context='file'):
         if len(pv_codes) == 1:
             error_msg = (
                 f"PV data missing for panel type: {pv_codes[0]} in emission results. "
-                f"Please re-run 'LCA Part 1: Energy by Carrier' (cea final-energy) with this panel type selected under panels-on-roof/wall, "
-                f"then 'LCA Part 2a: GHG Emissions' (cea emissions)."
+                f"Please re-run {tool_ref('final-energy')} with this panel type selected under panels-on-roof/wall, "
+                f"then {tool_ref('emissions')}."
             )
         else:
             error_msg = (
                 f"PV data missing for panel type(s): {', '.join(sorted(pv_codes))} in emission results. "
-                f"Please re-run 'LCA Part 1: Energy by Carrier' (cea final-energy) with these panel types selected under panels-on-roof/wall, "
-                f"then 'LCA Part 2a: GHG Emissions' (cea emissions)."
+                f"Please re-run {tool_ref('final-energy')} with these panel types selected under panels-on-roof/wall, "
+                f"then {tool_ref('emissions')}."
             )
     else:
         # Error when PV result files don't exist
         if len(pv_codes) == 1:
             error_msg = (
                 f"PV electricity results missing for panel type: {pv_codes[0]}. "
-                f"Please run 'Photovoltaic (PV) Panels' (cea photovoltaic) first to generate PV potential results for this panel type."
+                f"Please run {tool_ref('photovoltaic')} first to generate PV potential results for this panel type."
             )
         else:
             error_msg = (
                 f"PV electricity results missing for panel type(s): {', '.join(sorted(pv_codes))}. "
-                f"Please run 'Photovoltaic (PV) Panels' (cea photovoltaic) first to generate PV potential results for these panel types."
+                f"Please run {tool_ref('photovoltaic')} first to generate PV potential results for these panel types."
             )
 
     print(f"ERROR: {error_msg}")

@@ -12,6 +12,7 @@ import geopandas as gpd
 from typing import TYPE_CHECKING, List, Dict, Optional, Tuple
 
 from cea.technologies.thermal_network.common.geometry import load_network_shapefiles
+from cea.scripts import by_name
 
 
 # Precision for canonical edge identity. mm (3 decimals) is fine enough to
@@ -326,7 +327,7 @@ def _validate_phase_graph(phase: Dict) -> None:
             f"Phase {phase['index']} ({phase['network_name']}) has consumer nodes that are not "
             f"connected to any plant:\n  {', '.join(preview)}{more}\n"
             "This usually happens when a phase drops a trunk-middle building and the "
-            "downstream branch is left orphaned. Re-run 'Thermal Network Part 1: Layout' for this phase "
+            f"downstream branch is left orphaned. Re-run '{by_name('network-layout').label}' for this phase "
             "so the remaining consumers stay connected to a plant, or add the trunk "
             "building back to the phase."
         )

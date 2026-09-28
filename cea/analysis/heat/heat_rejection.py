@@ -17,6 +17,7 @@ import pandas as pd
 
 from cea.technologies.cooling_tower import calc_CT_const
 from cea.technologies.energy_carriers import electricity_carrier
+from cea.scripts import tool_ref
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2026, Architecture and Building Systems - ETH Zurich"
@@ -281,7 +282,7 @@ def calculate_heat_rejection_for_whatif(whatif_name, locator):
         expected = locator.get_analysis_configuration_file(whatif_name)
         raise FileNotFoundError(
             f"configuration file not found for what-if '{whatif_name}': {expected}\n"
-            "Please run 'LCA Part 1: Energy by Carrier' (cea final-energy) first."
+            f"Please run {tool_ref('final-energy')} first."
         )
     building_configs = config_data.get('buildings', {})
     plant_configs = config_data.get('plants', {})
@@ -291,7 +292,7 @@ def calculate_heat_rejection_for_whatif(whatif_name, locator):
     if not os.path.exists(summary_file):
         raise FileNotFoundError(
             f"final_energy_buildings.csv not found for what-if '{whatif_name}': {summary_file}\n"
-            "Please run 'LCA Part 1: Energy by Carrier' (cea final-energy) first."
+            f"Please run {tool_ref('final-energy')} first."
         )
     summary_df = pd.read_csv(summary_file)
 

@@ -20,6 +20,7 @@ from cea.technologies.network_layout.plant_node_operations import (
 from cea.technologies.network_layout.substations_location import calc_building_centroids
 from cea.technologies.network_layout.graph_utils import normalize_gdf_geometries, normalize_geometry
 from cea.optimization_new.user_network_loader import load_user_defined_network
+from cea.scripts import by_name, tool_ref
 
 # Single source of truth mapping a DH sub-service to the column in
 # ``Total_demand.csv`` that expresses its demand. Both
@@ -983,7 +984,7 @@ def get_buildings_with_demand(locator, network_type, itemised_dh_services=None):
     except FileNotFoundError:
         raise FileNotFoundError(
             f"Total demand file not found: {demand_path}\n"
-            "Please run 'Energy Demand Part 2: Load Modelling' (cea demand) first to generate building demand data."
+            f"Please run {tool_ref('demand')} first to generate building demand data."
         )
 
     # Determine demand field(s) based on network type.
@@ -1019,7 +1020,7 @@ def get_buildings_with_demand(locator, network_type, itemised_dh_services=None):
         raise ValueError(
             f"Required column(s) '{missing_str}' ({demand_type} demand) not found in total demand file: {demand_path}\n"
             f"Available columns: {list(total_demand.columns)}\n"
-            "Please ensure 'Energy Demand Part 2: Load Modelling' (cea demand) ran successfully."
+            f"Please ensure {tool_ref('demand')} ran successfully."
         )
 
     # Filter buildings with demand
@@ -2028,7 +2029,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                 f"No networks were generated - all requested network types were skipped:\n"
                 f"  {', '.join(skipped_info)}\n"
                 f"Please check that your buildings have the required demand, or adjust the "
-                f"'consider-only-buildings-with-demand' setting in Thermal Network Part 1: Layout."
+                f"'consider-only-buildings-with-demand' setting in {by_name('network-layout').label}."
             )
 
 

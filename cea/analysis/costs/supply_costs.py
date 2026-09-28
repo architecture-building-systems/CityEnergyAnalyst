@@ -12,6 +12,7 @@ from cea.optimization_new.domain import Domain
 from cea.optimization_new.building import Building
 import cea.config
 from cea.analysis.costs.equations import calc_capex_annualized
+from cea.scripts import tool_ref
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
@@ -1559,7 +1560,7 @@ def calculate_district_network_costs(locator, config, network_type, network_name
     if not os.path.exists(edges_file):
         print("      Warning: Piping costs not calculated - missing file:")
         print(f"               {edges_file}")
-        print("               Run 'Thermal Network Part 1: Layout' (cea network-layout) and 'Thermal Network Part 2a: Flow & Sizing, Single-Phase' (cea thermal-network) to generate network files")
+        print(f"               Run {tool_ref('network-layout')} and {tool_ref('thermal-network')} to generate network files")
     else:
         try:
             pipes_df = pd.read_csv(edges_file)
@@ -1740,13 +1741,13 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
     if not os.path.exists(layout_folder):
         print(f"  ⚠ Network layout folder not found for {network_type} network '{network_name}' - skipping")
         print(f"    Expected: {layout_folder}")
-        print("    Please run 'Thermal Network Part 1: Layout' (cea network-layout) and 'Thermal Network Part 2a: Flow & Sizing, Single-Phase' (cea thermal-network) first")
+        print(f"    Please run {tool_ref('network-layout')} and {tool_ref('thermal-network')} first")
         return {}
 
     if not os.path.exists(nodes_file):
         print(f"  ⚠ Network nodes file not found for {network_type} network '{network_name}' - skipping")
         print(f"    Expected: {nodes_file}")
-        print("    Please run 'Thermal Network Part 1: Layout' (cea network-layout) and 'Thermal Network Part 2a: Flow & Sizing, Single-Phase' (cea thermal-network) first")
+        print(f"    Please run {tool_ref('network-layout')} and {tool_ref('thermal-network')} first")
         return {}
 
     # Try to read network layout

@@ -277,6 +277,24 @@ hourly.operational_emission_timeline_extended                 # pd.DataFrame wit
 - Reads external CSV with 8760 (or 8784 → drops Feb 29) hourly grid carbon intensity values (g CO2/kWh)
 - Configured via `config.emissions.grid_carbon_intensity_dataset_csv` + `csv_carbon_intensity_column_name`
 - Overrides the GRID column in feedstock emission intensity
+- The column name has no way to be validated until the CSV is actually read here (the file may
+  still be an unsubmitted browser upload when the user is typing it), so
+  `_resolve_grid_intensity_column` resolves it leniently against the file's real header
+  (exact match, then Unicode/whitespace-tolerant match) and raises a `ValueError` naming the
+  available columns -- plus close-match suggestions -- rather than a raw pandas `usecols` error.
+  Errors report the file's basename only; the on-disk path is a server-side temp file.
+- `csv-carbon-intensity-column-name`'s config type is `CsvColumnNameParameter`
+  (`SourceParameterMixin`, `cea/config.py`), whose `.source-parameter` metadata names the
+  sibling `grid-carbon-intensity-dataset-csv` field. This is pure GUI metadata: it doesn't
+  affect `decode()`/`encode()`, and the backend resolution above is still the actual
+  validation -- it exists so a GUI can read `source_parameter` off the metadata payload and
+  know which upload field this column name belongs to.
+  A companion change in the separate `CityEnergyAnalyst-GUI` repo (`CsvColumnSelect` in
+  `src/components/Parameter.jsx`) consumes this: it watches the paired file field's selected
+  `File` and reads its header row client-side (`utils/csv.js`) to offer a dropdown of the real
+  column names instead of free text -- no server round-trip, since the file isn't uploaded
+  until job submission. Whether that dropdown is live depends on that repo's own release, not
+  on this one.
 
 ## Feedstock Decarbonisation Policies
 

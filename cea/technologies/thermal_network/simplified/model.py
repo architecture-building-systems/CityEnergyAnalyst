@@ -18,6 +18,7 @@ from cea.technologies.thermal_network.common.geometry import extract_network_fro
 from cea.technologies.thermal_network.common.utils import add_date_to_dataframe, calculate_ground_temperature
 from cea.technologies.thermal_network.physics import calc_temperature_out_per_pipe
 from cea.technologies.network_layout.plant_node_operations import PlantServices
+from cea.scripts import tool_ref
 
 
 __author__ = "Jimeno A. Fonseca"
@@ -517,7 +518,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                 print(f"  Warning: Plant node type '{plant_type}' contains a legacy service suffix.")
                 print("    This suffix is no longer used to control network temperature.")
                 print("    Temperature strategy is now set via thermal-network:dh-temperature-mode.")
-                print("    Re-run 'Thermal Network Part 1: Layout' (cea network-layout) to update plant node types to plain PLANT.")
+                print(f"    Re-run {tool_ref('network-layout')} to update plant node types to plain PLANT.")
 
         # Always use dh-temperature-mode config to determine service order
         dh_temperature_mode = config.thermal_network.dh_temperature_mode

@@ -205,6 +205,14 @@ def by_name(script_name, plugins=None):
     raise cea.ScriptNotFoundException('Invalid script name: %s' % script_name)
 
 
+def tool_ref(script_name, plugins=None) -> str:
+    """Reference to a tool for user-facing messages, e.g. ``'<label>' (cea <script-name>)``.
+
+    The label comes from scripts.yml, so messages stay correct when a label changes.
+    """
+    return f"'{by_name(script_name, plugins=plugins).label}' (cea {script_name})"
+
+
 def for_interface(interface, plugins):
     """Return the list of CeaScript instances that are listed for the interface
 
