@@ -10,9 +10,13 @@ jobs:
   ruff:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Run Ruff Linter
-        uses: astral-sh/ruff-action@v2
+        # Pinned to an exact release, not the rolling `v4` tag: astral-sh has not kept a
+        # moving v4 tag pointed at their latest v4.x release, so `@v4` fails to resolve
+        # ("Unable to resolve action... unable to find version `v4`") and every PR's Ruff
+        # check fails at the checkout step, before Ruff itself ever runs.
+        uses: astral-sh/ruff-action@v4.1.0
         with:
           src: ./cea
           # Pinned to match the pixi-locked local version (see pyproject.toml's

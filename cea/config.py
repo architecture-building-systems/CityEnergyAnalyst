@@ -781,6 +781,37 @@ class StringParameter(Parameter):
     """Default Parameter type"""""
 
 
+class SourceParameterMixin:
+    """Shared `source-parameter` lookup for GUI-only column-preview fields.
+
+    `source-parameter` names a sibling InputFileParameter whose uploaded/selected CSV this
+    field's value is meant to be a column name from. It has no backend meaning: decode()/
+    encode() stay identical to StringParameter, and the real column is only validated where
+    the CSV is actually read (e.g. cea/analysis/lca/emission_time_dependent.py::
+    _load_grid_emission_intensity_override -- that file's on-disk path is only known once a
+    job actually runs, so nothing here can resolve real choices server-side).
+
+    It exists purely so `deconstruct_parameters` (interfaces/dashboard/api/utils.py) can pass
+    the sibling parameter's name to the GUI, which watches that field's selected file and
+    renders a dropdown of the file's own header columns instead of a blind text input -- see
+    cea/analysis/lca/CLAUDE.md's "Grid Emission Intensity Override" section.
+    """
+
+    config: Configuration
+    section: Section
+    name: str
+
+    @property
+    def source_parameter(self) -> str | None:
+        return self.config.default_config.get(
+            self.section.name, f"{self.name}.source-parameter", fallback=None
+        )
+
+
+class CsvColumnNameParameter(SourceParameterMixin, StringParameter):
+    """A column-name string paired with a sibling CSV upload (see SourceParameterMixin)."""
+
+
 # Shared by every name-like StringParameter subclass below whose value is later joined into
 # a filesystem path (what-if/network/phasing-plan/export-folder names): reject path
 # separators and other filesystem-reserved characters so a name can never escape its
