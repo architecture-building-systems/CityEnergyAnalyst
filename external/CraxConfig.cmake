@@ -70,21 +70,37 @@ endfunction()
 
 function(install_crax)
     message(STATUS "=== Setting CRAX targets ===")
-    
+
+    # install(TARGETS ...) resolves each target's built location via $<TARGET_FILE:tgt>, which on
+    # Windows comes out wrong: CRAX's own CMakeLists.txt sets CMAKE_CONFIGURATION_TYPES whenever
+    # MSVC is the compiler (crax/CMakeLists.txt, under `if(MSVC)`), regardless of whether the
+    # generator is actually multi-config -- our pixi build uses NMake Makefiles, single-config, so
+    # CMAKE_CONFIGURATION_TYPES should never have been set at all. With it set, CMake's
+    # install-rule generation treats the project as multi-config, while the actual NMake build
+    # (which does respect the RUNTIME_OUTPUT_DIRECTORY_RELEASE these targets set, to CRAX's own
+    # `${Bin}` = source_dir/bin) is single-config -- so the generated cmake_install.cmake looks in
+    # the untouched default per-target build directory instead of where the linker actually put
+    # the executable, and fails with "file INSTALL cannot find ... No error." This doesn't happen
+    # on ubuntu/macOS (also single-config generators, just not MSVC, so that branch never sets
+    # CMAKE_CONFIGURATION_TYPES there). Installing directly from CRAX's own known, generator- and
+    # platform-independent output location (its `${Bin}` = source_dir/bin) sidesteps the
+    # mismatch entirely, without depending on an upstream CRAX fix landing first.
+    set(_crax_bin_dir "${CRAX_FINAL_SOURCE_DIR}/bin")
+
     # Install CRAX executables
     if(TARGET radiation)
         message(STATUS "✓ Found radiation target")
-        install(TARGETS radiation
-                RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
+        install(PROGRAMS "${_crax_bin_dir}/radiation${CMAKE_EXECUTABLE_SUFFIX}"
+                DESTINATION "${INSTALL_BIN_DIR}"
                 COMPONENT crax_targets)
     else()
         message(FATAL_ERROR "radiation target not found")
     endif()
 
     if(TARGET mesh-generation)
-        message(STATUS "✓ Found mesh-generation target") 
-        install(TARGETS mesh-generation
-                RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
+        message(STATUS "✓ Found mesh-generation target")
+        install(PROGRAMS "${_crax_bin_dir}/mesh-generation${CMAKE_EXECUTABLE_SUFFIX}"
+                DESTINATION "${INSTALL_BIN_DIR}"
                 COMPONENT crax_targets)
     else()
         message(FATAL_ERROR "mesh-generation target not found")
