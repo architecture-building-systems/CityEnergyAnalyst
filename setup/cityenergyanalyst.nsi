@@ -28,14 +28,9 @@ Unicode true
 ; include the modern UI stuff
 !include "MUI2.nsh"
 
-; for scrubbing paths out of the CEA Desktop installer log before it is sent
-; as telemetry (see ReportGuiLog / SendTelemetry)
-!include "StrFunc.nsh"
-${Using:StrFunc} StrRep
-
 Var LauncherExtension
 Var InstallStep  ; tracks install progress for telemetry (see SendTelemetry)
-Var GuiLogTail   ; last line of the CEA Desktop installer's own log, see ReportGuiLog
+Var GuiLogTail   ; last allowlisted stage token from the CEA Desktop installer's log, see ReportGuiLog
 Var InstallAttemptCount  ; this run's attempt number since the last success, see ReadInstallAttempts
 Var PrevInstallStep      ; step a previous failed attempt died on, if any, see ReadInstallAttempts
 Var RepeatFailure        ; "1" if this run failed at the same step as the previous attempt
@@ -75,9 +70,10 @@ Var RepeatFailure        ; "1" if this run failed at the same step as the previo
 ; Reads the tail of the CEA Desktop installer's own breadcrumb log (written by
 ; CityEnergyAnalyst-GUI's build/installer.nsh as it progresses, so it survives
 ; even when that installer exits via Quit rather than a catchable failure) into
-; the Details pane, and leaves a sanitized, length-capped token describing the
-; last stage reached in $GuiLogTail for SendTelemetry. Must not touch $0 (holds
-; the real exit code) or $InstallStep - uses $R0-$R3 only.
+; the Details pane, and leaves the last stage reached in $GuiLogTail for
+; SendTelemetry - only ever an allowlisted stage name (or "unknown"), never log
+; text. Must not touch $0 (holds the real exit code) or $InstallStep - uses
+; $R0-$R7 only.
 Function ReportGuiLog
     StrCpy $GuiLogTail ""
     ClearErrors
@@ -109,18 +105,47 @@ Function ReportGuiLog
             ${Break}
         ${EndIf}
         DetailPrint "$R3"
-        StrCpy $GuiLogTail "$R3"
+
+        ; remember the token after the last "stage=" seen (up to the next space/CR/LF)
+        StrLen $R7 "$R3"
+        StrCpy $R4 0
+        ${While} $R4 < $R7
+            StrCpy $R5 "$R3" 6 $R4
+            ${If} $R5 == "stage="
+                IntOp $R4 $R4 + 6
+                StrCpy $R6 ""
+                ${While} $R4 < $R7
+                    StrCpy $R5 "$R3" 1 $R4
+                    ${If} $R5 == " "
+                    ${OrIf} $R5 == "$\r"
+                    ${OrIf} $R5 == "$\n"
+                        ${Break}
+                    ${EndIf}
+                    StrCpy $R6 "$R6$R5"
+                    IntOp $R4 $R4 + 1
+                ${EndWhile}
+                StrCpy $GuiLogTail "$R6"
+                ${Break}
+            ${EndIf}
+            IntOp $R4 $R4 + 1
+        ${EndWhile}
     ${Loop}
     FileClose $R0
     DetailPrint "---- end of log: $APPDATA\${CEA_GUI_NAME}\logs\installer.log ----"
 
-    ; defence-in-depth: the log is ours and only ever contains short stage
-    ; tokens, but strip anything path-like before this ever reaches telemetry
-    ${StrRep} $GuiLogTail "$GuiLogTail" "$INSTDIR" ""
-    ${StrRep} $GuiLogTail "$GuiLogTail" "$PROFILE" ""
-    ${StrRep} $GuiLogTail "$GuiLogTail" "$APPDATA" ""
-    ${StrRep} $GuiLogTail "$GuiLogTail" "$TEMP" ""
-    StrCpy $GuiLogTail "$GuiLogTail" 64
+    ; Telemetry gets only a known stage name from the log, never log text: the
+    ; log lines carry a local timestamp and version, and the log is a file on
+    ; the user's disk that anything could have written to. Keep this list in
+    ; sync with the stages written by CityEnergyAnalyst-GUI's build/installer.nsh.
+    ${If} $GuiLogTail != ""
+        ${If} $GuiLogTail != "init"
+        ${AndIf} $GuiLogTail != "init_done"
+        ${AndIf} $GuiLogTail != "extracted"
+        ${AndIf} $GuiLogTail != "installed"
+        ${AndIf} $GuiLogTail != "old_uninstall_check"
+            StrCpy $GuiLogTail "unknown"
+        ${EndIf}
+    ${EndIf}
 FunctionEnd
 
 ; Fire-and-forget anonymous installer telemetry: counts installs and reports which
