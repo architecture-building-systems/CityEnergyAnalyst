@@ -29,36 +29,47 @@ COLUMNS_SURROUNDINGS_GEOMETRY = ['name', 'height_ag', 'floors_ag']
 COLUMNS_ZONE_TYPOLOGY = ['name', 'year', 'const_type',
                          'use_type1', 'use_type1r', 'use_type2', 'use_type2r', 'use_type3', 'use_type3r']
 NAME_COLUMN = 'name'
+USE_TYPE_RATIO_COLUMNS = ['use_type1r', 'use_type2r', 'use_type3r']
+# Shares are typed by hand, so 0.33 + 0.33 + 0.34 and 0.333 x 3 both have to pass.
+USE_TYPE_RATIO_SUM_TOLERANCE = 0.01
+# Building names become file and folder names (e.g. `<name>_radiation.csv`), so these cannot be in one.
+FILENAME_UNSAFE_CHARACTERS = '/\\:*?"<>|'
 COLUMNS_ZONE = ['name', 'floors_bg', 'floors_ag', VOID_HEIGHT_COLUMN, 'height_bg', 'height_ag', 'reference', 'geometry',
                 'year', 'const_type', 'use_type1', 'use_type1r', 'use_type2', 'use_type2r', 'use_type3', 'use_type3r',
                 'house_no', 'street', 'postcode', 'house_name', 'resi_type', 'city', 'country']
 
 
 def assert_columns_names(dataframe: pd.DataFrame, columns):
-    try:
-        dataframe[columns]
-    except ValueError:
-        print(
-            "one or more columns in the Zone or Surroundings input files is not compatible with CEA, please ensure the column" +
-            " names comply with:", columns)
+    missing = [column for column in columns if column not in dataframe.columns]
+    if missing:
+        raise ValueError(f'The Zone or Surroundings input file is missing the column(s) {missing}. '
+                         f'Please ensure the column names comply with: {list(columns)}')
+
+
+# Columns whose values are heights or floor counts and so can never be negative. Other numeric columns a
+# shapefile may carry (an elevation, a coordinate) are none of CEA's business.
+NON_NEGATIVE_GEOMETRY_COLUMNS = ['floors_ag', 'floors_bg', 'height_ag', 'height_bg', *OPTIONAL_VOID_DECK_COLUMNS]
+
+
+def assert_no_negative_geometry_values(geometry_df: pd.DataFrame):
+    columns = [column for column in NON_NEGATIVE_GEOMETRY_COLUMNS if column in geometry_df.columns]
+    negative = (geometry_df[columns].apply(pd.to_numeric, errors='coerce') < 0.0).any()
+    if negative.any():
+        raise Exception(f"There are negative values in the column(s) {negative[negative].index.tolist()} of your "
+                        "geometry. This is not possible to simulate in CEA at the moment. "
+                        "Please verify your Zone or Surroundings shapefile file")
 
 
 def assert_input_geometry_acceptable_values_floor_height(zone_df: pd.DataFrame):
     # Rule 0. nothing can be negative
-    numeric_dtypes = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
-    zone_df_data = zone_df.select_dtypes(include=numeric_dtypes)
-    rule0 = (zone_df_data < 0.0).any().any()
-    if rule0:
-        raise Exception("There are negative values in your geometry. This is not possible to simulate in CEA at the "
-                        "moment Please verify your Zone or Surroundings shapefile file")
+    assert_no_negative_geometry_values(zone_df)
 
-    # Rule 1. Floors above ground cannot be less than 1 or negative.
-    rule1_1 = (zone_df['floors_ag'] < 1).any()
-    rule1_2 = (zone_df['height_ag'] < 1.0).any()
-    if rule1_1 or rule1_2:
-        raise Exception("one of more buildings have less than one floor above ground or the height above ground is "
-                        "less than 1 meter. This is not possible to simulate in CEA at the moment. Please verify your "
-                        "Zone or Surroundings shapefile file")
+    # Rule 1. Floors above ground cannot be less than 1.
+    # `height_ag` needs no check of its own: rule 2 requires a minimum height per enclosed floor,
+    # which cannot be met by a zero or negative height.
+    if (zone_df['floors_ag'] < 1).any():
+        raise Exception("one of more buildings have less than one floor above ground. This is not possible to "
+                        "simulate in CEA at the moment. Please verify your Zone shapefile file")
 
     # Rule 2. Storey height of the enclosed part of the building.
     #
@@ -78,36 +89,43 @@ def assert_input_geometry_acceptable_values_floor_height(zone_df: pd.DataFrame):
             f'enclosed floor: {names}. Check floors_ag, height_ag and any void deck '
             f'({VOID_HEIGHT_COLUMN} / {VOID_FLOORS_COLUMN}) in your Zone shapefile.')
 
-    # Rule 3. floors below ground cannot be negative
-    rule3 = (zone_df['floors_bg'] < 0).any()
-    if rule3:
-        raise Exception('one of more buildings have a negative floor below ground. This is not possible'
-                        'to simulate in CEA at the moment. Please verify your Zone or Surroundings file')
+    # Rule 3. Below-ground floors and depth must agree: both zero (no basement) or both positive.
+    #
+    # The two columns feed different parts of the model. `floors_bg` gives the basement floor area
+    # (demand `GFA_bg_m2`, embodied `floor_area_bg`) and `height_bg` gives the basement wall area
+    # (demand `Aop_bg`, embodied `area_walls_ext_bg`). Setting only one gives a basement that has
+    # floors but no walls, or walls but no floors, and both are silently simulated as given.
+    no_depth = (zone_df['floors_bg'] > 0) & (zone_df['height_bg'] <= 0)
+    no_floors = (zone_df['floors_bg'] <= 0) & (zone_df['height_bg'] > 0)
+    inconsistent = no_depth | no_floors
+    if inconsistent.any():
+        names = zone_df.loc[inconsistent, 'name'].tolist() if 'name' in zone_df.columns else []
+        raise Exception(
+            f'One or more buildings have floors_bg and height_bg that disagree: {names}. Either both must be 0 '
+            '(no basement) or both must be greater than 0. Please verify your Zone shapefile file')
 
 
 def assert_input_geometry_acceptable_values_floor_height_surroundings(surroundings_df):
     # Rule 0. nothing can be negative
-    numeric_dtypes = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
-    surroundings_df_data = surroundings_df.select_dtypes(include=numeric_dtypes)
-    rule0 = surroundings_df_data.where(surroundings_df_data < 0.0).any().any()
-    if rule0:
-        raise Exception("There are negative values in your geometry. This is not possible to simulate in CEA at the "
-                        "moment Please verify your Zone or Surroundings shapefile file")
+    assert_no_negative_geometry_values(surroundings_df)
 
-    # Rule 1. Floors above ground cannot be less than 1 or negative.
-    rule1_1 = surroundings_df['floors_ag'].where(surroundings_df['floors_ag'] < 1).any()
-    rule1_2 = surroundings_df['height_ag'].where(surroundings_df['height_ag'] < 1.0).any()
+    # Rule 1. Floors above ground cannot be less than 1 and the height must be greater than 0.
+    rule1_1 = (surroundings_df['floors_ag'] < 1).any()
+    rule1_2 = (surroundings_df['height_ag'] <= 0.0).any()
     if rule1_1 or rule1_2:
-        raise Exception("one of more buildings have less than one floor above ground or the height above ground is "
-                        "less than 1 meter. This is not possible to simulate in CEA at the moment. Please verify your "
-                        "Zone or Surroundings shapefile file")
+        raise Exception("one of more buildings have less than one floor above ground or a height above ground "
+                        "that is not greater than 0 meters. This is not possible to simulate in CEA at the moment. "
+                        "Please verify your Surroundings shapefile file")
 
-    # Rule 2. Where floor height is less than 1m on average above ground.
-    floor_height_check = surroundings_df['height_ag'] / surroundings_df['floors_ag']
-    rule2 = (floor_height_check <= 1.0).any()
-    if rule2:
-        raise Exception('one of more buildings have less report less than 1m height per floor. This is not possible'
-                        'to simulate in CEA at the moment. Please verify your Zone or Surroundings shapefile file')
+
+def assert_input_geometry_valid(buildings_df):
+    """Missing, empty or self-intersecting footprints fail deep inside the 3D geometry build with no building named."""
+    geometry = buildings_df.geometry
+    invalid = geometry.isna() | geometry.is_empty | ~geometry.is_valid
+    if invalid.any():
+        raise Exception('Some buildings have a missing, empty or invalid (e.g. self-intersecting) geometry: '
+                        f'{buildings_df.loc[invalid, NAME_COLUMN].tolist()}. Please verify your Zone or Surroundings '
+                        'shapefile file')
 
 
 def assert_input_geometry_only_polygon(buildings_df):
@@ -123,6 +141,19 @@ def check_duplicated_names(df):
     if duplicated_names.any():
         raise Exception(
             'Duplicated names in the input file: {names}'.format(names=', '.join(df[duplicated_names][NAME_COLUMN].values)))
+
+
+def check_building_names(df):
+    """Names end up in file names, so reject blanks, surrounding whitespace and characters a file name cannot hold."""
+    names = df[NAME_COLUMN].astype(str)
+    blank = names.str.strip() == ''
+    padded = names != names.str.strip()
+    unsafe = names.apply(lambda name: any(char in name for char in FILENAME_UNSAFE_CHARACTERS))
+    invalid = blank | padded | unsafe
+    if invalid.any():
+        raise ValueError(f'Some building names are blank, have leading or trailing spaces, or contain one of '
+                         f'{" ".join(FILENAME_UNSAFE_CHARACTERS)}: {names[invalid].tolist()}. '
+                         'Please rename these buildings.')
 
 
 def check_na_values(df, columns=None):
@@ -205,15 +236,19 @@ def verify_input_geometry_zone(zone_df):
     # Verification 1. verify if all the column names are correct
     assert_columns_names(zone_df, COLUMNS_ZONE_GEOMETRY)
 
-    # Verification 2. verify if the floor_height ratio is correct
-    assert_input_geometry_acceptable_values_floor_height(zone_df)
-
-    # Verification 3. verify geometries only contain Polygon
-    assert_input_geometry_only_polygon(zone_df)
-
+    # Verification 2. verify no required value is empty; NaN slips through every `<` comparison below
     check_na_values(zone_df, columns=COLUMNS_ZONE_GEOMETRY)
 
+    # Verification 3. verify if the floor_height ratio is correct
+    assert_input_geometry_acceptable_values_floor_height(zone_df)
+
+    # Verification 4. verify names are usable and unique
+    check_building_names(zone_df)
     check_duplicated_names(zone_df)
+
+    # Verification 5. verify geometries are valid and only contain Polygon
+    assert_input_geometry_valid(zone_df)
+    assert_input_geometry_only_polygon(zone_df)
 
     check_void_deck_values(zone_df)
 
@@ -227,11 +262,41 @@ def verify_input_geometry_surroundings(surroundings_df):
     # Verification 1. verify if all the column names are correct
     assert_columns_names(surroundings_df, COLUMNS_SURROUNDINGS_GEOMETRY)
 
-    # Verification 2. verify if the floor_height ratio is correct
+    # Verification 2. verify no required value is empty; NaN slips through every `<` comparison below
+    check_na_values(surroundings_df, columns=COLUMNS_SURROUNDINGS_GEOMETRY)
+
+    # Verification 3. verify names are usable and unique; each building's 3D geometry is saved under its name
+    check_building_names(surroundings_df)
+    check_duplicated_names(surroundings_df)
+
+    # Verification 4. verify the floors and height are positive
     assert_input_geometry_acceptable_values_floor_height_surroundings(surroundings_df)
 
-    # Verification 3. verify geometries only contain Polygon
+    # Verification 5. verify geometries are valid and only contain Polygon
+    assert_input_geometry_valid(surroundings_df)
     assert_input_geometry_only_polygon(surroundings_df)
+
+
+def check_use_type_ratios(typology_df):
+    """The use type shares split a building's floor area, so each must be 0-1 and together they must make 1.
+
+    Nothing downstream normalises them: the schedules are weighted by the shares as given, so a sum of 0.8
+    silently drops 20% of the building's demand and 1.2 adds 20%.
+    """
+    ratios = typology_df[USE_TYPE_RATIO_COLUMNS].apply(pd.to_numeric, errors='coerce')
+    if ratios.isna().any().any():
+        raise ValueError(f'The columns {USE_TYPE_RATIO_COLUMNS} should contain numbers. '
+                         'Please check your typology file.')
+
+    out_of_range = ((ratios < 0.0) | (ratios > 1.0)).any(axis=1)
+    if out_of_range.any():
+        raise ValueError(f'Use type shares must be between 0 and 1: {typology_df.loc[out_of_range, NAME_COLUMN].tolist()}. '
+                         'Please check your typology file.')
+
+    wrong_sum = (ratios.sum(axis=1) - 1.0).abs() > USE_TYPE_RATIO_SUM_TOLERANCE
+    if wrong_sum.any():
+        raise ValueError(f'Use type shares {USE_TYPE_RATIO_COLUMNS} must add up to 1 for every building: '
+                         f'{typology_df.loc[wrong_sum, NAME_COLUMN].tolist()}. Please check your typology file.')
 
 
 def verify_input_typology(typology_df):
@@ -240,7 +305,11 @@ def verify_input_typology(typology_df):
 
     check_na_values(typology_df, columns=COLUMNS_ZONE_TYPOLOGY)
 
+    check_building_names(typology_df)
+
     check_duplicated_names(typology_df)
+
+    check_use_type_ratios(typology_df)
 
 
 def verify_input_terrain(terrain_raster):

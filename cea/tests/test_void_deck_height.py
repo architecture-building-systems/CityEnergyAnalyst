@@ -847,3 +847,119 @@ def test_a_blank_cell_and_an_explicit_zero_mean_different_things():
         explicit_zero = pd.DataFrame({**legacy, VOID_HEIGHT_COLUMN: [0.0]})
         assert resolve_void_height(explicit_zero).iloc[0] == 0.0
         assert resolve_enclosed_floors_ag(explicit_zero).iloc[0] == 5.0
+
+
+def test_surroundings_need_positive_floors_and_height():
+    import pytest
+    from cea.datamanagement.databases_verification import (
+        assert_input_geometry_acceptable_values_floor_height_surroundings as check,
+    )
+
+    check(pd.DataFrame({"name": ["S1", "S2"], "height_ag": [0.5, 30.0], "floors_ag": [1, 10]}))
+    for height, floors in ((0.0, 1), (-1.0, 1), (9.0, 0)):
+        with pytest.raises(Exception):
+            check(pd.DataFrame({"name": ["S1"], "height_ag": [height], "floors_ag": [floors]}))
+
+
+def test_empty_values_are_rejected_before_the_range_checks():
+    """`NaN < x` is False, so an empty height or floor count would pass every range check."""
+    import pytest
+    from cea.datamanagement.databases_verification import (
+        verify_input_geometry_surroundings, verify_input_geometry_zone,
+    )
+
+    zone = gpd.GeoDataFrame(
+        {"name": ["B"], "floors_ag": [3], "floors_bg": [0], "height_ag": [float("nan")], "height_bg": [0.0]},
+        geometry=[Polygon([(0, 0), (1, 0), (1, 1)])])
+    with pytest.raises(ValueError, match="NA values"):
+        verify_input_geometry_zone(zone)
+
+    surroundings = gpd.GeoDataFrame(
+        {"name": ["S"], "floors_ag": [float("nan")], "height_ag": [9.0]},
+        geometry=[Polygon([(0, 0), (1, 0), (1, 1)])])
+    with pytest.raises(ValueError, match="NA values"):
+        verify_input_geometry_surroundings(surroundings)
+
+
+def _surroundings(**overrides):
+    square = Polygon([(0, 0), (10, 0), (10, 10), (0, 10)])
+    data = {"name": ["S1"], "floors_ag": [3], "height_ag": [9.0], "geometry": [square]}
+    data.update(overrides)
+    return gpd.GeoDataFrame(data, geometry="geometry")
+
+
+def test_missing_columns_are_named():
+    from cea.datamanagement.databases_verification import verify_input_geometry_surroundings
+
+    with pytest.raises(ValueError, match="height_ag"):
+        verify_input_geometry_surroundings(_surroundings().drop(columns=["height_ag"]))
+
+
+def test_surroundings_reject_duplicate_names_and_bad_footprints():
+    from cea.datamanagement.databases_verification import verify_input_geometry_surroundings
+
+    verify_input_geometry_surroundings(_surroundings())
+
+    square = Polygon([(0, 0), (10, 0), (10, 10), (0, 10)])
+    bowtie = Polygon([(0, 0), (10, 10), (10, 0), (0, 10)])
+    with pytest.raises(Exception, match="Duplicated"):
+        verify_input_geometry_surroundings(_surroundings(
+            name=["S1", "S1"], floors_ag=[3, 3], height_ag=[9.0, 9.0], geometry=[square, square]))
+    with pytest.raises(Exception, match=r"invalid.*S1"):
+        verify_input_geometry_surroundings(_surroundings(geometry=[bowtie]))
+    with pytest.raises(Exception, match="missing, empty or invalid"):
+        verify_input_geometry_surroundings(_surroundings(geometry=[Polygon()]))
+
+
+def test_negative_check_ignores_unrelated_numeric_columns():
+    from cea.datamanagement.databases_verification import assert_no_negative_geometry_values
+
+    assert_no_negative_geometry_values(pd.DataFrame({"height_ag": [9.0], "elevation": [-3.0]}))
+    with pytest.raises(Exception, match="floors_bg"):
+        assert_no_negative_geometry_values(pd.DataFrame({"height_ag": [9.0], "floors_bg": [-1]}))
+
+
+@pytest.mark.parametrize("name", ["", " B1", "B1 ", "B/1", "B:1", 'B"1', "B|1"])
+def test_unusable_building_names_are_rejected(name):
+    from cea.datamanagement.databases_verification import verify_input_geometry_surroundings
+
+    with pytest.raises(ValueError, match="building names"):
+        verify_input_geometry_surroundings(_surroundings(name=[name]))
+
+
+@pytest.mark.parametrize("name", ["B1001", "Building 1", "b_1-2.a"])
+def test_ordinary_building_names_pass(name):
+    from cea.datamanagement.databases_verification import verify_input_geometry_surroundings
+
+    verify_input_geometry_surroundings(_surroundings(name=[name]))
+
+
+def _typology(*ratios):
+    return pd.DataFrame({
+        "name": [f"B{i}" for i in range(len(ratios))], "year": 2000, "const_type": "STANDARD1",
+        "use_type1": "MULTI_RES", "use_type1r": [r[0] for r in ratios],
+        "use_type2": "OFFICE", "use_type2r": [r[1] for r in ratios],
+        "use_type3": "NONE", "use_type3r": [r[2] for r in ratios]})
+
+
+def test_use_type_shares_must_add_up_to_one():
+    from cea.datamanagement.databases_verification import verify_input_typology
+
+    verify_input_typology(_typology((1.0, 0.0, 0.0), (0.5, 0.5, 0.0), (0.33, 0.33, 0.34), (0.333, 0.333, 0.333)))
+    for bad in ((0.5, 0.3, 0.0), (0.6, 0.6, 0.0), (0.0, 0.0, 0.0), (1.5, -0.5, 0.0)):
+        with pytest.raises(ValueError, match="use type shares|Use type shares"):
+            verify_input_typology(_typology(bad))
+
+
+def test_below_ground_floors_and_height_must_agree():
+    from cea.datamanagement.databases_verification import assert_input_geometry_acceptable_values_floor_height
+
+    def zone(floors_bg, height_bg):
+        return pd.DataFrame({"name": ["B"], "floors_ag": [3], "height_ag": [9.0], "floors_bg": [floors_bg],
+                             "height_bg": [height_bg]})
+
+    assert_input_geometry_acceptable_values_floor_height(zone(0, 0.0))
+    assert_input_geometry_acceptable_values_floor_height(zone(2, 6.0))
+    for floors_bg, height_bg in ((2, 0.0), (0, 6.0)):
+        with pytest.raises(Exception, match="floors_bg and height_bg"):
+            assert_input_geometry_acceptable_values_floor_height(zone(floors_bg, height_bg))
