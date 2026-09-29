@@ -37,8 +37,8 @@ __maintainer__ = "Reynold Mok"
 __email__ = "shi@uuen.cloud"
 __status__ = "Production"
 
-# Copied from the template building to buildings moved to the zone. Street-level address fields
-# (house number, street, postcode, house name) are left blank: they describe one building only.
+# Copied from the template building to buildings moved to the zone. Address fields are left
+# blank: they describe one building only.
 TEMPLATE_COLUMNS = ['year', 'const_type', 'use_type1', 'use_type1r', 'use_type2', 'use_type2r',
                     'use_type3', 'use_type3r']
 MOVED_TO_ZONE_REFERENCE = "CEA - moved from surroundings"
@@ -68,7 +68,8 @@ def validate(zone, surroundings, to_surroundings, to_zone, template, delete_outp
         missing = sorted(set(moved) - set(source['name']))
         if missing:
             raise ValueError(f"Not found in the {label}: {', '.join(missing)}.")
-        duplicated = sorted(source.loc[source['name'].isin(moved) & source['name'].duplicated(keep=False), 'name'].unique())
+        is_duplicated = source['name'].isin(moved) & source['name'].duplicated(keep=False)
+        duplicated = sorted(source.loc[is_duplicated, 'name'].unique())
         if duplicated:
             raise ValueError(f"These names appear more than once in the {label}, so the building to "
                              f"move is ambiguous: {', '.join(duplicated)}.")
@@ -132,7 +133,8 @@ def exchange(zone, surroundings, to_surroundings, to_zone, *, template=None, con
     # Every other zone column (address fields) starts blank, to be filled in the Input Editor.
     for column in zone.columns:
         if column not in to_zone_df.columns:
-            to_zone_df[column] = '' if zone[column].dtype == object else None
+            # Checked as "not numeric": pandas 3 stores text as `str`, not `object`.
+            to_zone_df[column] = None if pd.api.types.is_numeric_dtype(zone[column]) else ''
     if len(to_zone_df):
         assert_input_geometry_acceptable_values_floor_height(to_zone_df)
 
@@ -189,6 +191,8 @@ def delete_outputs(locator, removed_buildings):
 
 
 def zone_surrounding_exchanger(locator, to_surroundings, to_zone, template, delete_outputs_confirmed):
+    """Check, delete results, write both shapefiles, then update building properties if
+    Archetype Lock is on. Nothing is deleted or written unless every check passes."""
     zone = gpd.read_file(locator.get_zone_geometry())
     surroundings_path = locator.get_surroundings_geometry()
     surroundings = gpd.read_file(surroundings_path) if os.path.isfile(surroundings_path) \
@@ -197,7 +201,8 @@ def zone_surrounding_exchanger(locator, to_surroundings, to_zone, template, dele
     validate(zone, surroundings, to_surroundings, to_zone, template, delete_outputs_confirmed)
     construction_types = pd.read_csv(locator.get_database_archetypes_construction_type()) if to_zone else None
     new_zone, new_surroundings, renamed = exchange(
-        zone, surroundings, to_surroundings, to_zone, template=template, construction_types=construction_types)
+        zone, surroundings, to_surroundings, to_zone,
+        template=template, construction_types=construction_types)
     moved_in = [renamed.get(name, name) for name in to_zone]
     if moved_in:
         # Checked before anything is deleted: the mapper would otherwise fail only after the

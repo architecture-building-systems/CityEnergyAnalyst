@@ -63,13 +63,13 @@ def test_zone_to_surroundings_keeps_only_what_surroundings_describe():
     assert renamed == {}
 
 
-def test_surroundings_to_zone_copies_the_template_but_not_its_street():
+def test_surroundings_to_zone_copies_the_template_but_not_its_address():
     zone, surroundings, _ = exchange(_zone(), _surroundings(), [], ["S1"], template="B3")
 
     assert list(surroundings["name"]) == ["S2"]
     moved = zone.set_index("name").loc["S1"]
-    assert (moved["year"], moved["use_type1"], moved["city"]) == (2010, "RETAIL", "Zurich")
-    assert moved["street"] == ""
+    assert (moved["year"], moved["use_type1"]) == (2010, "RETAIL")
+    assert (moved["street"], moved["city"], moved["country"]) == ("", "", "")
     assert (moved["height_ag"], moved["floors_ag"]) == (12.0, 4)
     assert (moved["floors_bg"], moved["height_bg"], moved["height_vd"]) == (0, 0.0, 0)
     assert moved["reference"] == MOVED_TO_ZONE_REFERENCE
