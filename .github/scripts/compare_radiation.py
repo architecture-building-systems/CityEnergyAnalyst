@@ -151,12 +151,13 @@ def compare(artifacts_dir: Path) -> str:
             ref_df, other_df = _read(ref_geom), _read(other_root / rel)
             if other_df is None:
                 sensor_diffs.append(f"| {scenario} | {building} | missing on {other_os} | | | |")
+                sensor_totals.setdefault(scenario, [0, 0, 0, 0])[3] += 1
                 continue
             geom = _compare_geometry(ref_df, other_df)
             differs = geom["moved"] > 0 or len(ref_df) != len(other_df)
-            sensor_total = sensor_totals.setdefault(scenario, [0, 0, 0])
-            sensor_total[:] = [sensor_total[0] + len(ref_df), sensor_total[1] + geom["moved"],
-                               sensor_total[2] + differs]
+            sensor_total = sensor_totals.setdefault(scenario, [0, 0, 0, 0])
+            sensor_total[:3] = [sensor_total[0] + len(ref_df), sensor_total[1] + geom["moved"],
+                                sensor_total[2] + differs]
             if differs:
                 sensor_diffs.append(f"| {scenario} | {building} | {len(ref_df)}/{len(other_df)} | "
                                     f"{geom['identical']} | {geom['moved']} | {geom['max_displacement']:.3f} |")
@@ -181,9 +182,11 @@ def compare(artifacts_dir: Path) -> str:
             lines.append(f"| **{scenario}** | **Total** | | {only_ref}/{only_other} | "
                          f"{area_ref:.1f}/{area_other:.1f} | **{_pct(area_ref, area_other)}** | |")
         lines.append("")
-        for scenario, (n, moved, n_differ) in sensor_totals.items():
+        for scenario, (n, moved, n_differ, n_missing) in sensor_totals.items():
             result = f"all {n} sensors identical" if not n_differ else \
                 f"{moved} of {n} sensors moved, {n_differ} building(s) differ"
+            if n_missing:
+                result += f"; {n_missing} building(s) missing on {other_os} (not counted)"
             lines.append(f"- **Sensor geometry, {scenario}**: {result}")
         if sensor_diffs:
             lines += ["", "Buildings with sensor differences:", "",
