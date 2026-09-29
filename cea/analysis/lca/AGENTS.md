@@ -283,6 +283,13 @@ hourly.operational_emission_timeline_extended                 # pd.DataFrame wit
   (exact match, then Unicode/whitespace-tolerant match) and raises a `ValueError` naming the
   available columns -- plus close-match suggestions -- rather than a raw pandas `usecols` error.
   Errors report the file's basename only; the on-disk path is a server-side temp file.
+- `_resolve_grid_intensity_column` also sniffs the file's delimiter (`_sniff_csv_delimiter`)
+  instead of assuming pandas' default comma, returning it alongside the resolved column name so
+  the caller reuses the same separator for the actual data read. Without this, a semicolon/tab-
+  delimited file (e.g. a European-locale spreadsheet export) doesn't raise a parse error --
+  with no comma to split on, the whole header line silently becomes one garbled column name, so
+  the user sees a single nonsensical "column not found" option instead of a clear signal that
+  the delimiter is wrong.
 - `csv-carbon-intensity-column-name`'s config type is `CsvColumnNameParameter`
   (`SourceParameterMixin`, `cea/config.py`), whose `.source-parameter` metadata names the
   sibling `grid-carbon-intensity-dataset-csv` field. This is pure GUI metadata: it doesn't

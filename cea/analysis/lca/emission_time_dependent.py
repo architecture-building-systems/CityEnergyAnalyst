@@ -1,3 +1,4 @@
+import csv
 import difflib
 import os
 import unicodedata
@@ -35,7 +36,34 @@ def _normalize_column_name(name: str) -> str:
     return unicodedata.normalize("NFKC", name).strip()
 
 
-def _resolve_grid_intensity_column(csv_path: str, requested_name: str) -> str:
+_CSV_DELIMITER_CANDIDATES = ',;\t|'
+
+
+def _sniff_csv_delimiter(csv_path: str) -> str:
+    """Detect the field delimiter of `csv_path` from a sample of its own bytes.
+
+    A file exported with a semicolon or tab delimiter (e.g. from a European-locale
+    spreadsheet) parsed with pandas' default comma separator doesn't fail -- with no comma
+    to split on, the whole header line is silently read as one garbled column name (containing
+    the literal delimiter), so the user never sees a clear error.
+
+    Falls back to ',' (pandas' own default) if the file can't be sampled or no delimiter
+    among `_CSV_DELIMITER_CANDIDATES` can be confidently detected -- e.g. a single-column
+    file has no delimiter to find, which is not an error.
+    """
+    try:
+        with open(csv_path, newline='', encoding='utf-8-sig') as f:
+            sample = f.read(4096)
+    except (OSError, UnicodeDecodeError):
+        return ','
+
+    try:
+        return csv.Sniffer().sniff(sample, delimiters=_CSV_DELIMITER_CANDIDATES).delimiter
+    except csv.Error:
+        return ','
+
+
+def _resolve_grid_intensity_column(csv_path: str, requested_name: str) -> tuple[str, str]:
     """Resolve the user-provided column name against the CSV's actual header row.
 
     Tries an exact match first, then a lenient match (Unicode-normalised,
@@ -44,13 +72,21 @@ def _resolve_grid_intensity_column(csv_path: str, requested_name: str) -> str:
     for a header using the subscript '₂') or with trailing whitespace copied
     along with it.
 
+    The header is parsed with a sniffed delimiter (see `_sniff_csv_delimiter`), not pandas'
+    default comma, so a semicolon/tab-delimited file resolves normally instead of presenting
+    its whole header line as a single unmatched "column".
+
+    Returns (resolved_column_name, delimiter) -- the caller must reuse `delimiter` when
+    reading the actual data, or it would parse against the wrong separator again.
+
     Raises ValueError listing the file's available columns (and close-match
     suggestions) when nothing resolves. Errors report the file's basename
     only: the on-disk path is a server-side temp file the user never sees.
     """
     basename = os.path.basename(csv_path)
+    delimiter = _sniff_csv_delimiter(csv_path)
     try:
-        header = pd.read_csv(csv_path, nrows=0)
+        header = pd.read_csv(csv_path, nrows=0, sep=delimiter)
     except FileNotFoundError as e:
         raise FileNotFoundError(f"Could not find the provided CSV file '{basename}'.") from e
     except PermissionError as e:
@@ -62,12 +98,12 @@ def _resolve_grid_intensity_column(csv_path: str, requested_name: str) -> str:
 
     columns = list(header.columns)
     if requested_name in columns:
-        return requested_name
+        return requested_name, delimiter
 
     normalized_requested = _normalize_column_name(requested_name)
     normalized_matches = [c for c in columns if _normalize_column_name(c) == normalized_requested]
     if len(normalized_matches) == 1:
-        return normalized_matches[0]
+        return normalized_matches[0], delimiter
 
     available = ', '.join(f"'{c}'" for c in columns)
     message = (
@@ -105,11 +141,12 @@ def _load_grid_emission_intensity_override(config: Configuration):
         )
 
     basename = os.path.basename(intensity_csv_path)
-    resolved_column_name = _resolve_grid_intensity_column(intensity_csv_path, intensity_column_name)
+    resolved_column_name, delimiter = _resolve_grid_intensity_column(intensity_csv_path, intensity_column_name)
 
     try:
         series: pd.Series = pd.read_csv(
             intensity_csv_path,
+            sep=delimiter,
             usecols=[resolved_column_name],
         )[resolved_column_name]
     except (EmptyDataError, ParserError, OSError) as e:
