@@ -118,11 +118,17 @@ def _selected(pv: pd.DataFrame) -> pd.DataFrame:
 
 
 def compare(artifacts_dir: Path) -> str:
-    intro = (f"Reference: `{REFERENCE_OS}`. Geometry: each sensor is matched to the nearest sensor on the other OS by "
-             f"XYZ, not row order; it is *moved* if none sits within {COORD_TOLERANCE_M} m with the same area "
-             f"(1e-6 m²). PV selection: sensors are paired if within half a grid cell (0.5 x sqrt(area)), so shifted "
-             f"grids still pair up; *radiation Δ* is the annual `total_rad_Whm2` difference of sensors selected on both "
-             f"OSes (mean / max, in %). Area Δ is (other - ref) / ref. Advisory only.")
+    intro = "\n".join([
+        f"**Reference:** `{REFERENCE_OS}` (advisory only, never fails the build).",
+        "",
+        (f"- **Geometry:** each sensor is matched to the nearest sensor on the other OS by XYZ, not row order. "
+         f"It is *moved* if none sits within {COORD_TOLERANCE_M} m with the same area (1e-6 m²)."),
+        ("- **PV selection:** sensors are paired if within half a grid cell (0.5 x sqrt(area)), "
+         "so shifted grids still pair up."),
+        ("- **Radiation Δ:** annual `total_rad_Whm2` difference of sensors selected on both OSes "
+         "(mean / max, in %)."),
+        "- **Area Δ:** (other - ref) / ref.",
+    ])
     lines = ["## Cross-OS radiation comparison", "", intro, ""]
     oses = sorted(p.name.removeprefix("radiation-") for p in artifacts_dir.iterdir() if p.is_dir())
     ref_root = artifacts_dir / f"radiation-{REFERENCE_OS}"
@@ -132,41 +138,63 @@ def compare(artifacts_dir: Path) -> str:
     for other_os in [o for o in oses if o != REFERENCE_OS]:
         other_root = artifacts_dir / f"radiation-{other_os}"
         lines += [f"### {other_os} vs {REFERENCE_OS}", "",
-                  ("| Scenario | Building | Sensors | Identical | Moved | Max displacement m | "
-                   "PV selected (ref/other) | PV only ref/other | PV area m² (ref/other) | PV area Δ | "
-                   "Radiation Δ mean/max |"),
-                  "|---|---|---|---|---|---|---|---|---|---|---|"]
+                  ("| Scenario | Building | PV selected (ref/other) | PV only ref/other | PV area m² (ref/other) | "
+                   "PV area Δ | Radiation Δ mean/max |"),
+                  "|---|---|---|---|---|---|---|"]
         totals = {}
+        sensor_totals = {}
+        sensor_diffs = []
         pair = {"same_pct": [], "shifted_pct": [], "only_rad_Whm2": []}
         for ref_geom in sorted(ref_root.glob("*/outputs/data/solar-radiation/*_geometry.csv")):
             rel = ref_geom.relative_to(ref_root)
             scenario, building = rel.parts[0], ref_geom.name.removesuffix("_geometry.csv")
             ref_df, other_df = _read(ref_geom), _read(other_root / rel)
             if other_df is None:
-                lines.append(f"| {scenario} | {building} | missing on {other_os} | | | | | | | | |")
+                sensor_diffs.append(f"| {scenario} | {building} | missing on {other_os} | | | |")
+                sensor_totals.setdefault(scenario, [0, 0, 0, 0])[3] += 1
                 continue
             geom = _compare_geometry(ref_df, other_df)
+            differs = geom["moved"] > 0 or len(ref_df) != len(other_df)
+            sensor_total = sensor_totals.setdefault(scenario, [0, 0, 0, 0])
+            sensor_total[:3] = [sensor_total[0] + len(ref_df), sensor_total[1] + geom["moved"],
+                                sensor_total[2] + differs]
+            if differs:
+                sensor_diffs.append(f"| {scenario} | {building} | {len(ref_df)}/{len(other_df)} | "
+                                    f"{geom['identical']} | {geom['moved']} | {geom['max_displacement']:.3f} |")
             pv_rel = Path(scenario) / "outputs" / "data" / "potentials" / "solar" / "sensors" / f"{building}_PV_sensors.csv"
             ref_pv, other_pv = _read(ref_root / pv_rel), _read(other_root / pv_rel)
-            pv_cells = [""] * 5
-            if ref_pv is not None and other_pv is not None:
-                ref_pv, other_pv = _selected(ref_pv), _selected(other_pv)
-                pv = _compare_pv(ref_pv, other_pv)
-                for key, values in pair.items():
-                    values.append(pv[key])
-                area_ref, area_other = (df["area_installed_module_m2"].sum() for df in (ref_pv, other_pv))
-                rad = "n/a" if pv["rad_pct_mean"] is None else f"{pv['rad_pct_mean']:.1f}% / {pv['rad_pct_max']:.1f}%"
-                pv_cells = [f"{len(ref_pv)}/{len(other_pv)}", f"{pv['only_ref']}/{pv['only_other']}",
-                            f"{area_ref:.1f}/{area_other:.1f}", _pct(area_ref, area_other), rad]
-                total = totals.setdefault(scenario, [0, 0, 0, 0, 0.0, 0.0])
-                total[:] = [total[0] + geom["identical"] + geom["moved"], total[1] + geom["moved"],
-                            total[2] + pv["only_ref"], total[3] + pv["only_other"],
-                            total[4] + area_ref, total[5] + area_other]
-            lines.append(f"| {scenario} | {building} | {len(ref_df)}/{len(other_df)} | {geom['identical']} | "
-                         f"{geom['moved']} | {geom['max_displacement']:.3f} | " + " | ".join(pv_cells) + " |")
-        for scenario, (n, moved, only_ref, only_other, area_ref, area_other) in totals.items():
-            lines.append(f"| **{scenario}** | **Total** | {n} | {n - moved} | {moved} ({moved / n * 100:.0f}%) | | | "
-                         f"{only_ref}/{only_other} | {area_ref:.1f}/{area_other:.1f} | **{_pct(area_ref, area_other)}** | |")
+            if ref_pv is None or other_pv is None:
+                lines.append(f"| {scenario} | {building} | missing PV sensors | | | | |")
+                continue
+            ref_pv, other_pv = _selected(ref_pv), _selected(other_pv)
+            pv = _compare_pv(ref_pv, other_pv)
+            for key, values in pair.items():
+                values.append(pv[key])
+            area_ref, area_other = (df["area_installed_module_m2"].sum() for df in (ref_pv, other_pv))
+            rad = "n/a" if pv["rad_pct_mean"] is None else f"{pv['rad_pct_mean']:.1f}% / {pv['rad_pct_max']:.1f}%"
+            total = totals.setdefault(scenario, [0, 0, 0.0, 0.0])
+            total[:] = [total[0] + pv["only_ref"], total[1] + pv["only_other"],
+                        total[2] + area_ref, total[3] + area_other]
+            lines.append(f"| {scenario} | {building} | {len(ref_pv)}/{len(other_pv)} | "
+                         f"{pv['only_ref']}/{pv['only_other']} | {area_ref:.1f}/{area_other:.1f} | "
+                         f"{_pct(area_ref, area_other)} | {rad} |")
+        for scenario, (only_ref, only_other, area_ref, area_other) in totals.items():
+            lines.append(f"| **{scenario}** | **Total** | | {only_ref}/{only_other} | "
+                         f"{area_ref:.1f}/{area_other:.1f} | **{_pct(area_ref, area_other)}** | |")
+        lines.append("")
+        for scenario, (n, moved, n_differ, n_missing) in sensor_totals.items():
+            if not n and n_missing:
+                result = f"no geometry on {other_os} ({n_missing} building(s) missing)"
+            else:
+                result = f"all {n} sensors identical" if not n_differ else \
+                    f"{moved} of {n} sensors moved, {n_differ} building(s) differ"
+                if n_missing:
+                    result += f"; {n_missing} building(s) missing on {other_os} (not counted)"
+            lines.append(f"- **Sensor geometry, {scenario}**: {result}")
+        if sensor_diffs:
+            lines += ["", "Buildings with sensor differences:", "",
+                      "| Scenario | Building | Sensors (ref/other) | Identical | Moved | Max displacement m |",
+                      "|---|---|---|---|---|---|", *sensor_diffs]
         same, shifted, only = (np.concatenate(pair[k]) if pair[k] else np.array([]) for k in pair)
         lines += ["",
                   ("- **Radiation Δ, sensors selected on both OSes at an identical position** "
