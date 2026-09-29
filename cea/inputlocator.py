@@ -1179,6 +1179,13 @@ class InputLocator(object):
         zone_building_names = sorted(gdf.read_file(self.get_zone_geometry())['name'].values)
         return zone_building_names
 
+    def get_surroundings_building_names(self):
+        """Return the list of buildings in the Surroundings"""
+        if not os.path.exists(self.get_surroundings_geometry()):
+            return []
+        import geopandas as gdf
+        return sorted(gdf.read_file(self.get_surroundings_geometry())['name'].values)
+
     def get_building_supply(self):
         """scenario/inputs/building-properties/supply.csv"""
         return os.path.join(self.get_building_properties_folder(), 'supply.csv')

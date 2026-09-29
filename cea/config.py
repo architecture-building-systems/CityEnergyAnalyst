@@ -2015,6 +2015,15 @@ class OptionalBuildingsParameter(BuildingsParameter):
     empty_means_all = False
 
 
+class SurroundingsBuildingsParameter(OptionalBuildingsParameter):
+    """A list of buildings in the surroundings, where empty means none (not all)."""
+
+    @property
+    def _choices(self):
+        locator = cea.inputlocator.InputLocator(self.config.scenario, plugins=[])
+        return locator.get_surroundings_building_names()
+
+
 def _pathway_event_building_sets(config: 'Configuration', section_name: str):
     """Existence of buildings entering ``year-of-state`` across the selected pathways.
 

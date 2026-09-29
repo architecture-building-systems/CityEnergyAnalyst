@@ -186,6 +186,32 @@ def write_building_properties(mapped_df, fields, path, locator, *, zone_building
     mapped.reset_index()[fields].to_csv(path, index=False)
 
 
+def remove_building_properties(locator, buildings):
+    """Remove `buildings` from every table and schedule `archetypes_mapper` writes.
+
+    For buildings leaving the zone when nothing new is mapped: the mapper drops orphaned rows
+    itself (`write_building_properties`), but only as part of mapping something, and never
+    deletes per-building schedule files.
+    """
+    buildings = set(buildings)
+    tables = [
+        locator.get_building_architecture(),
+        locator.get_building_air_conditioning(),
+        locator.get_building_comfort(),
+        locator.get_building_internal(),
+        locator.get_building_supply(),
+        locator.get_building_weekly_schedules_monthly_multiplier_csv(),
+    ]
+    for path in tables:
+        if os.path.isfile(path):
+            df = pd.read_csv(path)
+            df[~df['name'].isin(buildings)].to_csv(path, index=False)
+    for building in buildings:
+        schedule = locator.get_building_weekly_schedules(building)
+        if os.path.isfile(schedule):
+            os.remove(schedule)
+
+
 def indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typology_df, *, zone_buildings):
     comfort_DB = pd.read_csv(locator.get_database_archetypes_use_type())
     # define comfort
