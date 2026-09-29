@@ -949,3 +949,17 @@ def test_use_type_shares_must_add_up_to_one():
     for bad in ((0.5, 0.3, 0.0), (0.6, 0.6, 0.0), (0.0, 0.0, 0.0), (1.5, -0.5, 0.0)):
         with pytest.raises(ValueError, match="use type shares|Use type shares"):
             verify_input_typology(_typology(bad))
+
+
+def test_below_ground_floors_and_height_must_agree():
+    from cea.datamanagement.databases_verification import assert_input_geometry_acceptable_values_floor_height
+
+    def zone(floors_bg, height_bg):
+        return pd.DataFrame({"name": ["B"], "floors_ag": [3], "height_ag": [9.0], "floors_bg": [floors_bg],
+                             "height_bg": [height_bg]})
+
+    assert_input_geometry_acceptable_values_floor_height(zone(0, 0.0))
+    assert_input_geometry_acceptable_values_floor_height(zone(2, 6.0))
+    for floors_bg, height_bg in ((2, 0.0), (0, 6.0)):
+        with pytest.raises(Exception, match="floors_bg and height_bg"):
+            assert_input_geometry_acceptable_values_floor_height(zone(floors_bg, height_bg))

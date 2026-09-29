@@ -89,6 +89,21 @@ def assert_input_geometry_acceptable_values_floor_height(zone_df: pd.DataFrame):
             f'enclosed floor: {names}. Check floors_ag, height_ag and any void deck '
             f'({VOID_HEIGHT_COLUMN} / {VOID_FLOORS_COLUMN}) in your Zone shapefile.')
 
+    # Rule 3. Below-ground floors and depth must agree: both zero (no basement) or both positive.
+    #
+    # The two columns feed different parts of the model. `floors_bg` gives the basement floor area
+    # (demand `GFA_bg_m2`, embodied `floor_area_bg`) and `height_bg` gives the basement wall area
+    # (demand `Aop_bg`, embodied `area_walls_ext_bg`). Setting only one gives a basement that has
+    # floors but no walls, or walls but no floors, and both are silently simulated as given.
+    no_depth = (zone_df['floors_bg'] > 0) & (zone_df['height_bg'] <= 0)
+    no_floors = (zone_df['floors_bg'] <= 0) & (zone_df['height_bg'] > 0)
+    inconsistent = no_depth | no_floors
+    if inconsistent.any():
+        names = zone_df.loc[inconsistent, 'name'].tolist() if 'name' in zone_df.columns else []
+        raise Exception(
+            f'One or more buildings have floors_bg and height_bg that disagree: {names}. Either both must be 0 '
+            '(no basement) or both must be greater than 0. Please verify your Zone shapefile file')
+
 
 def assert_input_geometry_acceptable_values_floor_height_surroundings(surroundings_df):
     # Rule 0. nothing can be negative
