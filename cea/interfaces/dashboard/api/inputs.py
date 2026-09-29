@@ -23,7 +23,6 @@ import cea.config
 import cea.databases
 import cea.inputlocator
 from cea.datamanagement import archetype_lock
-from cea.datamanagement.archetypes_mapper import archetypes_mapper
 from cea.datamanagement.district_pathways.pathway_timeline import PathwayChildScenario
 from cea.datamanagement.utils import VOID_FLOORS_COLUMN
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
@@ -180,28 +179,6 @@ class ArchetypeLockForm(BaseModel):
     locked: bool
 
 
-def remap_and_relock(locator: cea.inputlocator.InputLocator, buildings: list[str]) -> archetype_lock.LockState:
-    """Re-derive the archetype-owned tables for `buildings` and advance the lock timestamp.
-
-    Shared by every path that upholds Archetype Lock's guarantee: (re-)locking the whole
-    district, an auto-remap after `zone.shp` moved a building's archetype key, and an
-    auto-remap after the archetype database itself changed. All three run the same six-flag
-    mapper call and then stamp `mapped_at` to now -- the mapper just ran, so the lock file's
-    record of "last mapped" needs to say so.
-    """
-    archetypes_mapper(
-        locator=locator,
-        update_architecture_dbf=True,
-        update_air_conditioning_systems_dbf=True,
-        update_indoor_comfort_dbf=True,
-        update_internal_loads_dbf=True,
-        update_supply_systems_dbf=True,
-        update_schedule_operation_cea=True,
-        list_buildings=buildings,
-    )
-    return archetype_lock.write_lock(locator, locked=True)
-
-
 @router.get('/archetype-lock')
 async def get_archetype_lock(scenario: CEAScenario):
     """The lock state, plus the baselines the input editor needs to determine per-building,
@@ -257,7 +234,7 @@ async def set_archetype_lock(scenario: CEAScenario, form: ArchetypeLockForm):
                     'remapped': False}
 
         buildings = list(locator.get_zone_building_names())
-        state = remap_and_relock(locator, buildings)
+        state = archetype_lock.remap_and_relock(locator, buildings)
         return {'locked': True, 'drifted': False, 'remapped': True,
                 'building_count': len(buildings), 'mapped_at': state.mapped_at}
 
@@ -518,7 +495,7 @@ async def save_all_inputs(scenario: CEAScenario, form: InputForm):
                 # rest of the district is left alone -- and a district-wide re-derive on every
                 # `const_type` edit would be needlessly slow for a large scenario. A save with
                 # no archetype changes never reaches this branch, so the lock file is untouched.
-                remap_and_relock(locator, remap_buildings)
+                archetype_lock.remap_and_relock(locator, remap_buildings)
                 out['remapped_buildings'] = remap_buildings
 
                 # Hand back what the mapper wrote. Without this the client keeps the values it
@@ -838,7 +815,7 @@ async def put_input_database_data(
                         logger.warning(f"Could not compare archetype codes, skipping the re-map: {e}")
                 if buildings:
                     try:
-                        remap_and_relock(locator, buildings)
+                        archetype_lock.remap_and_relock(locator, buildings)
                         result['remapped_buildings'] = buildings
                     except Exception as e:
                         # The database is already saved and `CEADatabase.save` has no

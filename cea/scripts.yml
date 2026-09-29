@@ -750,13 +750,15 @@ Utilities:
 
   - name: zone-surrounding-exchanger
     label: Zone-Surrounding Exchanger
-    short_description: Exchange between zone and surrounding geometries
+    short_description: Move buildings between the zone and the surroundings
     description: |
-      This Feature exchanges one or multiple geometries between zone and surroundings.
-
+      This Feature moves buildings between the zone and the surroundings. Existing results are
+      deleted because they no longer match the zone.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.zone_surrounding_exchanger
     parameters: ['general:scenario', zone-surrounding-exchanger]
+    input-files:
+      - [get_zone_geometry]
 
   - name: cea4-migrate
     label: CEA-4 Format Helper - Migrate
