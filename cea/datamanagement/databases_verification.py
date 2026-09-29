@@ -52,13 +52,12 @@ def assert_input_geometry_acceptable_values_floor_height(zone_df: pd.DataFrame):
         raise Exception("There are negative values in your geometry. This is not possible to simulate in CEA at the "
                         "moment Please verify your Zone or Surroundings shapefile file")
 
-    # Rule 1. Floors above ground cannot be less than 1 or negative.
-    rule1_1 = (zone_df['floors_ag'] < 1).any()
-    rule1_2 = (zone_df['height_ag'] < 1.0).any()
-    if rule1_1 or rule1_2:
-        raise Exception("one of more buildings have less than one floor above ground or the height above ground is "
-                        "less than 1 meter. This is not possible to simulate in CEA at the moment. Please verify your "
-                        "Zone or Surroundings shapefile file")
+    # Rule 1. Floors above ground cannot be less than 1.
+    # `height_ag` needs no check of its own: rule 2 requires a minimum height per enclosed floor,
+    # which cannot be met by a zero or negative height.
+    if (zone_df['floors_ag'] < 1).any():
+        raise Exception("one of more buildings have less than one floor above ground. This is not possible to "
+                        "simulate in CEA at the moment. Please verify your Zone shapefile file")
 
     # Rule 2. Storey height of the enclosed part of the building.
     #
@@ -81,7 +80,7 @@ def assert_input_geometry_acceptable_values_floor_height(zone_df: pd.DataFrame):
     # Rule 3. floors below ground cannot be negative
     rule3 = (zone_df['floors_bg'] < 0).any()
     if rule3:
-        raise Exception('one of more buildings have a negative floor below ground. This is not possible'
+        raise Exception('one of more buildings have a negative floor below ground. This is not possible '
                         'to simulate in CEA at the moment. Please verify your Zone or Surroundings file')
 
 
@@ -94,20 +93,13 @@ def assert_input_geometry_acceptable_values_floor_height_surroundings(surroundin
         raise Exception("There are negative values in your geometry. This is not possible to simulate in CEA at the "
                         "moment Please verify your Zone or Surroundings shapefile file")
 
-    # Rule 1. Floors above ground cannot be less than 1 or negative.
-    rule1_1 = surroundings_df['floors_ag'].where(surroundings_df['floors_ag'] < 1).any()
-    rule1_2 = surroundings_df['height_ag'].where(surroundings_df['height_ag'] < 1.0).any()
+    # Rule 1. Floors above ground cannot be less than 1 and the height must be greater than 0.
+    rule1_1 = (surroundings_df['floors_ag'] < 1).any()
+    rule1_2 = (surroundings_df['height_ag'] <= 0.0).any()
     if rule1_1 or rule1_2:
-        raise Exception("one of more buildings have less than one floor above ground or the height above ground is "
-                        "less than 1 meter. This is not possible to simulate in CEA at the moment. Please verify your "
-                        "Zone or Surroundings shapefile file")
-
-    # Rule 2. Where floor height is less than 1m on average above ground.
-    floor_height_check = surroundings_df['height_ag'] / surroundings_df['floors_ag']
-    rule2 = (floor_height_check <= 1.0).any()
-    if rule2:
-        raise Exception('one of more buildings have less report less than 1m height per floor. This is not possible'
-                        'to simulate in CEA at the moment. Please verify your Zone or Surroundings shapefile file')
+        raise Exception("one of more buildings have less than one floor above ground or a height above ground "
+                        "that is not greater than 0 meters. This is not possible to simulate in CEA at the moment. "
+                        "Please verify your Surroundings shapefile file")
 
 
 def assert_input_geometry_only_polygon(buildings_df):
@@ -205,13 +197,14 @@ def verify_input_geometry_zone(zone_df):
     # Verification 1. verify if all the column names are correct
     assert_columns_names(zone_df, COLUMNS_ZONE_GEOMETRY)
 
-    # Verification 2. verify if the floor_height ratio is correct
+    # Verification 2. verify no required value is empty; NaN slips through every `<` comparison below
+    check_na_values(zone_df, columns=COLUMNS_ZONE_GEOMETRY)
+
+    # Verification 3. verify if the floor_height ratio is correct
     assert_input_geometry_acceptable_values_floor_height(zone_df)
 
-    # Verification 3. verify geometries only contain Polygon
+    # Verification 4. verify geometries only contain Polygon
     assert_input_geometry_only_polygon(zone_df)
-
-    check_na_values(zone_df, columns=COLUMNS_ZONE_GEOMETRY)
 
     check_duplicated_names(zone_df)
 
@@ -227,10 +220,13 @@ def verify_input_geometry_surroundings(surroundings_df):
     # Verification 1. verify if all the column names are correct
     assert_columns_names(surroundings_df, COLUMNS_SURROUNDINGS_GEOMETRY)
 
-    # Verification 2. verify if the floor_height ratio is correct
+    # Verification 2. verify no required value is empty; NaN slips through every `<` comparison below
+    check_na_values(surroundings_df, columns=COLUMNS_SURROUNDINGS_GEOMETRY)
+
+    # Verification 3. verify the floors and height are positive
     assert_input_geometry_acceptable_values_floor_height_surroundings(surroundings_df)
 
-    # Verification 3. verify geometries only contain Polygon
+    # Verification 4. verify geometries only contain Polygon
     assert_input_geometry_only_polygon(surroundings_df)
 
 

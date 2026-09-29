@@ -847,3 +847,35 @@ def test_a_blank_cell_and_an_explicit_zero_mean_different_things():
         explicit_zero = pd.DataFrame({**legacy, VOID_HEIGHT_COLUMN: [0.0]})
         assert resolve_void_height(explicit_zero).iloc[0] == 0.0
         assert resolve_enclosed_floors_ag(explicit_zero).iloc[0] == 5.0
+
+
+def test_surroundings_need_positive_floors_and_height():
+    import pytest
+    from cea.datamanagement.databases_verification import (
+        assert_input_geometry_acceptable_values_floor_height_surroundings as check,
+    )
+
+    check(pd.DataFrame({"name": ["S1", "S2"], "height_ag": [0.5, 30.0], "floors_ag": [1, 10]}))
+    for height, floors in ((0.0, 1), (-1.0, 1), (9.0, 0)):
+        with pytest.raises(Exception):
+            check(pd.DataFrame({"name": ["S1"], "height_ag": [height], "floors_ag": [floors]}))
+
+
+def test_empty_values_are_rejected_before_the_range_checks():
+    """`NaN < x` is False, so an empty height or floor count would pass every range check."""
+    import pytest
+    from cea.datamanagement.databases_verification import (
+        verify_input_geometry_surroundings, verify_input_geometry_zone,
+    )
+
+    zone = gpd.GeoDataFrame(
+        {"name": ["B"], "floors_ag": [3], "floors_bg": [0], "height_ag": [float("nan")], "height_bg": [0.0]},
+        geometry=[Polygon([(0, 0), (1, 0), (1, 1)])])
+    with pytest.raises(ValueError, match="NA values"):
+        verify_input_geometry_zone(zone)
+
+    surroundings = gpd.GeoDataFrame(
+        {"name": ["S"], "floors_ag": [float("nan")], "height_ag": [9.0]},
+        geometry=[Polygon([(0, 0), (1, 0), (1, 1)])])
+    with pytest.raises(ValueError, match="NA values"):
+        verify_input_geometry_surroundings(surroundings)
