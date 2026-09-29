@@ -183,10 +183,13 @@ def compare(artifacts_dir: Path) -> str:
                          f"{area_ref:.1f}/{area_other:.1f} | **{_pct(area_ref, area_other)}** | |")
         lines.append("")
         for scenario, (n, moved, n_differ, n_missing) in sensor_totals.items():
-            result = f"all {n} sensors identical" if not n_differ else \
-                f"{moved} of {n} sensors moved, {n_differ} building(s) differ"
-            if n_missing:
-                result += f"; {n_missing} building(s) missing on {other_os} (not counted)"
+            if not n and n_missing:
+                result = f"no geometry on {other_os} ({n_missing} building(s) missing)"
+            else:
+                result = f"all {n} sensors identical" if not n_differ else \
+                    f"{moved} of {n} sensors moved, {n_differ} building(s) differ"
+                if n_missing:
+                    result += f"; {n_missing} building(s) missing on {other_os} (not counted)"
             lines.append(f"- **Sensor geometry, {scenario}**: {result}")
         if sensor_diffs:
             lines += ["", "Buildings with sensor differences:", "",
