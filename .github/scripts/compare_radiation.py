@@ -118,11 +118,17 @@ def _selected(pv: pd.DataFrame) -> pd.DataFrame:
 
 
 def compare(artifacts_dir: Path) -> str:
-    intro = (f"Reference: `{REFERENCE_OS}`. Geometry: each sensor is matched to the nearest sensor on the other OS by "
-             f"XYZ, not row order; it is *moved* if none sits within {COORD_TOLERANCE_M} m with the same area "
-             f"(1e-6 m²). PV selection: sensors are paired if within half a grid cell (0.5 x sqrt(area)), so shifted "
-             f"grids still pair up; *radiation Δ* is the annual `total_rad_Whm2` difference of sensors selected on both "
-             f"OSes (mean / max, in %). Area Δ is (other - ref) / ref. Advisory only.")
+    intro = "\n".join([
+        f"**Reference:** `{REFERENCE_OS}` (advisory only, never fails the build).",
+        "",
+        (f"- **Geometry:** each sensor is matched to the nearest sensor on the other OS by XYZ, not row order. "
+         f"It is *moved* if none sits within {COORD_TOLERANCE_M} m with the same area (1e-6 m²)."),
+        ("- **PV selection:** sensors are paired if within half a grid cell (0.5 x sqrt(area)), "
+         "so shifted grids still pair up."),
+        ("- **Radiation Δ:** annual `total_rad_Whm2` difference of sensors selected on both OSes "
+         "(mean / max, in %)."),
+        "- **Area Δ:** (other - ref) / ref.",
+    ])
     lines = ["## Cross-OS radiation comparison", "", intro, ""]
     oses = sorted(p.name.removeprefix("radiation-") for p in artifacts_dir.iterdir() if p.is_dir())
     ref_root = artifacts_dir / f"radiation-{REFERENCE_OS}"
