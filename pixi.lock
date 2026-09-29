@@ -512,7 +512,6 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/1e/d3/26bf1008eb3d2daa8ef4cacc7f3bfdc11818d111f7e2d0201bc6e3b49d45/annotated_doc-0.0.4-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/22/24/ed72f68cbc1333ca9b9f2200aa048bb6658ae41709bc1caad4310f4bdffd/watchfiles-1.2.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/27/e3/b519734372d305bd547534a9f32e4ce9f98552af753dce72cf3483a0ff0b/redis-8.0.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/2e/00/4c4f269f35ca7492f7715bcd961da3ebec615330a11a06d9fecbe6b834f0/cea_external_tools-0.2.3-cp312-cp312-manylinux_2_39_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/32/46/9cb0e58b2deb7f82b84065f37f3bffeb12413f947f9388e4cac22c4621ce/sortedcontainers-2.4.0-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/34/74/6230c8c2865586ce4c4b0eea994bccadd9e3e28f6acd9cade123ba8516fa/moocore-0.3.1-cp310-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/34/ba/f187f30fb2c8bb5dbb0de0fcb0dec2f8fab0b782ab42facc83ea02628f1b/google_cloud_storage_control-1.12.0-py3-none-any.whl
@@ -544,6 +543,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/72/c7/10c60af0607ab6fa136264f7f39d205932218516226d38585324ffda705d/sqlmodel-0.0.38-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/72/dc/0decaf5da92a7a969374474025787102d811d42aed1d32191fa338620e15/python_socketio-5.16.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/78/b6/6307fbef88d9b5ee7421e68d78a9f162e0da4900bc5f5793f6d3d0e34fb8/annotated_types-0.7.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/79/d2/4756a8de8b9d13f37ddfa67ddfe5d9b7ba556b108d9fa917d56760704b4f/cea_external_tools-0.2.4-cp312-cp312-manylinux_2_39_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/7b/7a/a8d32501bb95ecff342004a674720164f95ad616f269450b3bc13dc88ae3/netcdf4-1.7.4-cp311-abi3-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/7c/0d/8787b021d52eb8764c0bb18ab95f720cf554902044c6a5cb1865daf45763/python-louvain-0.16.tar.gz
       - pypi: https://files.pythonhosted.org/packages/7c/20/b122d4626976acb81132036d2ad1bb35a1a8775fceb837ec30964622516a/proto_plus-1.28.0-py3-none-any.whl
@@ -1115,6 +1115,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/88/39/799be3f2f0f38cc727ee3b4f1445fe6d5e4133064ec2e4115069418a5bb6/cloudpickle-3.1.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/89/22/c2dd50c09bf679bd38173656cd4402d2511e563b33bc88f90009cf50613c/grpc_google_iam_v1-0.14.4-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/8b/39/1c76c2da93f3c507e958e0aecee2391cc44d4625de6c728bbc555195b5a8/protobuf-7.35.0-cp310-abi3-manylinux2014_aarch64.whl
+      - pypi: https://files.pythonhosted.org/packages/8d/cd/1010eade30d2782520ef9c50e96ebd5d5fa289ac93cdc771ab45d4f75e3d/cea_external_tools-0.2.4.tar.gz
       - pypi: https://files.pythonhosted.org/packages/8e/bc/f47d1ff9cbb1620e1b5b697eef06010035735f07820180e74178226b27b3/pydantic_core-2.46.4-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl
       - pypi: https://files.pythonhosted.org/packages/90/1c/b1d8e3741e9fc89ed3b5f7ef5f22586c07ed6bb04e8343c2e98f0fa7ff04/lz4-4.4.5-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl
       - pypi: https://files.pythonhosted.org/packages/97/1e/98aaddf272552d9fef1f0296a9939d1487914a239e98678f6b20f8b0a5c8/numcodecs-0.16.5-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl
@@ -1149,7 +1150,6 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/db/bc/83e112abc66cd466c6b83f99118035867cecd41802f8d044638aa78a106e/locket-1.0.0-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/dc/83/6d810a8a9ebc9c307989b418840c20e46907c74d707beb67ab566773e6fc/xarray-2026.4.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/dc/9b/47798a6c91d8bdb567fe2698fe81e0c6b7cb7ef4d13da4114b41d239f65d/typing_inspection-0.4.2-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/e3/f7/75f1fd36b8fef9cf78f19b19cfbbb391fee691f9c53eddd320f81f03b2d4/cea_external_tools-0.2.3.tar.gz
       - pypi: https://files.pythonhosted.org/packages/e7/8a/f196038b2bea40c372d900803dac0d5e4eab578cb05b92ff7172ced4c1cf/skyfield-1.54-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e7/c8/e2645aa8ed02fd4c7a2f59d68783b65b1f3cbdfe39a6308e156509d1fee8/googleapis_common_protos-1.75.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e8/c9/4c62d431bf3a12215b716982a3ea1f208defec604f68450dbcf7463295c1/py4design_cea-0.32.1-py3-none-any.whl
@@ -1626,6 +1626,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/88/0a/469e2bd01be1490336e6c8707386845655d59261543315778a3ccc7e8019/zarr-3.2.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/88/39/799be3f2f0f38cc727ee3b4f1445fe6d5e4133064ec2e4115069418a5bb6/cloudpickle-3.1.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/89/22/c2dd50c09bf679bd38173656cd4402d2511e563b33bc88f90009cf50613c/grpc_google_iam_v1-0.14.4-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/8d/cd/1010eade30d2782520ef9c50e96ebd5d5fa289ac93cdc771ab45d4f75e3d/cea_external_tools-0.2.4.tar.gz
       - pypi: https://files.pythonhosted.org/packages/99/37/e8730c3587a65eb5645d4aba2d27aae48e8003614d6aaf15dda67f702f1f/bidict-0.23.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/9d/3f/b9d5739352badc11ca637c8f72525d519458622936bc3313ddefdc7dee96/jplephem-2.24-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/a2/09/77d55d46fd61b4a135c444fc97158ef34a095e5681d0a6c10b75bf356191/sympy-1.14.0-py3-none-any.whl
@@ -1659,7 +1660,6 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/dc/83/6d810a8a9ebc9c307989b418840c20e46907c74d707beb67ab566773e6fc/xarray-2026.4.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/dc/9b/47798a6c91d8bdb567fe2698fe81e0c6b7cb7ef4d13da4114b41d239f65d/typing_inspection-0.4.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/df/3d/01f6dd9190170a5a241e0e98c2d04be3664a9e6f5b9b872cde63aff1c3dd/cryptography-48.0.0-cp311-abi3-macosx_10_9_universal2.whl
-      - pypi: https://files.pythonhosted.org/packages/e3/f7/75f1fd36b8fef9cf78f19b19cfbbb391fee691f9c53eddd320f81f03b2d4/cea_external_tools-0.2.3.tar.gz
       - pypi: https://files.pythonhosted.org/packages/e7/8a/f196038b2bea40c372d900803dac0d5e4eab578cb05b92ff7172ced4c1cf/skyfield-1.54-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e7/c8/e2645aa8ed02fd4c7a2f59d68783b65b1f3cbdfe39a6308e156509d1fee8/googleapis_common_protos-1.75.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e8/c9/4c62d431bf3a12215b716982a3ea1f208defec604f68450dbcf7463295c1/py4design_cea-0.32.1-py3-none-any.whl
@@ -2107,6 +2107,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/4a/f3/00bb1e867fba351e2d784170955713bee200c43ea306c59f30bd7e748192/dask-2026.3.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/50/1a/86e1072b09b2f9049bb7378869f64b6747f96a4f3008142afed8955b52a4/cftime-1.6.5-cp312-cp312-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/52/59/0782e51887ac6b07ffd1570e0364cf901ebc36345fea669969d2084baebb/simple_websocket-1.1.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/5b/3b/d5a15bdc889628a5ddd8b5def0d044aed6aa6da094c63c5d530ca5398adb/cea_external_tools-0.2.4-cp312-cp312-macosx_13_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/5d/a0/7d793dce3fa811fe047d6ae2431c672364b462850c6235ae306c0efd025f/pyasn1-0.6.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/5f/84/933ac0a0b5c272496f448a683741cbf1fae680ee24336eaafc7871338e02/python_fasthtml-0.14.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/5f/8f/6af2ea19065c91d8b0ea3516fdfc8c0d349f407e8e9fbf4e5a17360de8ad/watchfiles-1.2.0-cp312-cp312-macosx_11_0_arm64.whl
@@ -2116,7 +2117,6 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/6a/be/d07585e440d58835bad8f1c9ca7823b5252ffeda4c797e653a20215fca65/numpy_financial-1.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/6c/f7/95473a929f0a02547461fa3698b7f8082ff40445ba5e21601f5d9a5e48ec/meteocalc-1.1.0.tar.gz
       - pypi: https://files.pythonhosted.org/packages/6e/e9/88f5332001b9dd5c8e0a4fab51015f740e01715a081c41bc0f7ad2bf76a5/polars-1.32.3-cp39-abi3-macosx_11_0_arm64.whl
-      - pypi: https://files.pythonhosted.org/packages/70/48/6ff50ae531c4684ca634790818d64497ffe91f6b06637cbd5b6bdcdb7943/cea_external_tools-0.2.3-cp312-cp312-macosx_13_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/71/70/38998b950a97ea279e6bd657575d22d1a2047256caf707d9a10fbce4f065/multiprocess-0.70.19-py312-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/71/e7/40fb618334dcdf7c5a316c0e7343c5cd82d3d866edc100d98e29bc945ecd/partd-1.4.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/72/c7/10c60af0607ab6fa136264f7f39d205932218516226d38585324ffda705d/sqlmodel-0.0.38-py3-none-any.whl
@@ -2564,6 +2564,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/0d/da/7bed8e864afbb8f1870f8120dc4148ecec5480ba988d4241769a2b308a35/gcsfs-2026.5.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/13/8a/f72344eab18674fd7b174f35abbce41ed88fea72927f111726732d0ca779/url_normalize-3.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/13/e2/9fbf2d571c0d5360f9cf6656de6c94b273d08ede1b628f23f319fa1a910d/salib-1.5.2-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/15/fc/2109da954c01d863fe2278160be72bda3b6c6e4ddb6d964a466401ba21f3/cea_external_tools-0.2.4-cp312-cp312-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/18/68/e89b4fa9242e59326c849c39ce0f49eb68499603c639405a8449900a4f15/netcdf4-1.7.4-cp311-abi3-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/1a/62/c8d562e7766786ba6587d09c5a8ba9f718ed3fa8af7f4553e8f91c36f302/xlrd-2.0.2-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/1b/89/45198e9624762af2dfd2cb8782598477ceb29f6e59caab560388ae1f4ec1/lxml-6.1.1-cp312-cp312-win_amd64.whl
@@ -2618,7 +2619,6 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/88/15/8856a0ab76708553ff597dd2e617b088c734ba87dc3fd395e2b2f3efffe8/cftime-1.6.5-cp312-cp312-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/88/39/799be3f2f0f38cc727ee3b4f1445fe6d5e4133064ec2e4115069418a5bb6/cloudpickle-3.1.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/89/22/c2dd50c09bf679bd38173656cd4402d2511e563b33bc88f90009cf50613c/grpc_google_iam_v1-0.14.4-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/94/c4/7df3633954579b66e72634044fede5d8eddd02b0e88e4751b0e690f56b6a/cea_external_tools-0.2.3-cp312-cp312-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/99/37/e8730c3587a65eb5645d4aba2d27aae48e8003614d6aaf15dda67f702f1f/bidict-0.23.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/9c/16/0a4c77e91c3e21c764748a7b4ebbfd13d3c61a0ef71965d7f221cbfdaa39/tzfpy-1.3.1-cp310-abi3-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/9d/3f/b9d5739352badc11ca637c8f72525d519458622936bc3313ddefdc7dee96/jplephem-2.24-py3-none-any.whl
@@ -24453,6 +24453,11 @@ packages:
   version: 0.8.0
   sha256: 880490234c10f70a9830743097e8958d6e4b9f5a0ffc24515023afeef984054d
   requires_python: '>=3.9'
+- pypi: https://files.pythonhosted.org/packages/15/fc/2109da954c01d863fe2278160be72bda3b6c6e4ddb6d964a466401ba21f3/cea_external_tools-0.2.4-cp312-cp312-win_amd64.whl
+  name: cea-external-tools
+  version: 0.2.4
+  sha256: df6d305cb1d62fedecb0e15d98673eac727a5e7b755c6dc5a36ff14795cc9bc9
+  requires_python: '>=3.8,<3.13'
 - pypi: https://files.pythonhosted.org/packages/16/62/bbdff92580d89d8ce31d710714b0e6a0e76dc71546a466fb50fd1ef84d6d/tzfpy-1.3.1-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
   name: tzfpy
   version: 1.3.1
@@ -24691,11 +24696,6 @@ packages:
   - pandas
   - matplotlib
   - setuptools
-- pypi: https://files.pythonhosted.org/packages/2e/00/4c4f269f35ca7492f7715bcd961da3ebec615330a11a06d9fecbe6b834f0/cea_external_tools-0.2.3-cp312-cp312-manylinux_2_39_x86_64.whl
-  name: cea-external-tools
-  version: 0.2.3
-  sha256: 0e15bc32e46d9df2d630eb5e9660b6f4f3ce5c99c86c740321d286619a8cff80
-  requires_python: '>=3.8,<3.13'
 - pypi: https://files.pythonhosted.org/packages/30/f5/310d104ddf41eb5a70f4c268d22508dfb0c3c8e86fec152be34d0d2ed819/greenlet-3.5.1-cp312-cp312-win_amd64.whl
   name: greenlet
   version: 3.5.1
@@ -25335,6 +25335,11 @@ packages:
   version: 3.53.1.0
   sha256: 8a97dd446862cc28c4c2b611413cb9ea994dda8fb9d6e2d7a4239bfda09ce347
   requires_python: '>=3.10'
+- pypi: https://files.pythonhosted.org/packages/5b/3b/d5a15bdc889628a5ddd8b5def0d044aed6aa6da094c63c5d530ca5398adb/cea_external_tools-0.2.4-cp312-cp312-macosx_13_0_arm64.whl
+  name: cea-external-tools
+  version: 0.2.4
+  sha256: 56d921c330f6cab156238d1b1d8048744fbe09b125c82ced56dbb6b67500e71e
+  requires_python: '>=3.8,<3.13'
 - pypi: https://files.pythonhosted.org/packages/5d/a0/7d793dce3fa811fe047d6ae2431c672364b462850c6235ae306c0efd025f/pyasn1-0.6.3-py3-none-any.whl
   name: pyasn1
   version: 0.6.3
@@ -25488,11 +25493,6 @@ packages:
   - cudf-polars-cu12 ; extra == 'gpu'
   - polars[async,cloudpickle,database,deltalake,excel,fsspec,graph,iceberg,numpy,pandas,plot,pyarrow,pydantic,style,timezone] ; extra == 'all'
   requires_python: '>=3.9'
-- pypi: https://files.pythonhosted.org/packages/70/48/6ff50ae531c4684ca634790818d64497ffe91f6b06637cbd5b6bdcdb7943/cea_external_tools-0.2.3-cp312-cp312-macosx_13_0_arm64.whl
-  name: cea-external-tools
-  version: 0.2.3
-  sha256: d6bb419d5ff54841d6b07ba63d293a331b2651552a15736f122120bfd9b0e4eb
-  requires_python: '>=3.8,<3.13'
 - pypi: https://files.pythonhosted.org/packages/70/5b/6baf9008817964454055ff3fe65f1de0b5f1e26c80c82f7fb108b7cd4ea3/protobuf-7.35.0-cp310-abi3-manylinux2014_x86_64.whl
   name: protobuf
   version: 7.35.0
@@ -25632,6 +25632,11 @@ packages:
   requires_dist:
   - typing-extensions>=4.0.0 ; python_full_version < '3.9'
   requires_python: '>=3.8'
+- pypi: https://files.pythonhosted.org/packages/79/d2/4756a8de8b9d13f37ddfa67ddfe5d9b7ba556b108d9fa917d56760704b4f/cea_external_tools-0.2.4-cp312-cp312-manylinux_2_39_x86_64.whl
+  name: cea-external-tools
+  version: 0.2.4
+  sha256: 3467f6b466b11980b67a643821bbea7219e9ded1491d08757f7e978c42f6f664
+  requires_python: '>=3.8,<3.13'
 - pypi: https://files.pythonhosted.org/packages/7b/7a/a8d32501bb95ecff342004a674720164f95ad616f269450b3bc13dc88ae3/netcdf4-1.7.4-cp311-abi3-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
   name: netcdf4
   version: 1.7.4
@@ -25850,6 +25855,11 @@ packages:
   - gssapi ; sys_platform != 'win32' and extra == 'gssauth'
   - sspilib ; sys_platform == 'win32' and extra == 'gssauth'
   requires_python: '>=3.9.0'
+- pypi: https://files.pythonhosted.org/packages/8d/cd/1010eade30d2782520ef9c50e96ebd5d5fa289ac93cdc771ab45d4f75e3d/cea_external_tools-0.2.4.tar.gz
+  name: cea-external-tools
+  version: 0.2.4
+  sha256: 565559264d64ab5a2924328c365d639a91565663f1b2b06c2047e1be2209d4a1
+  requires_python: '>=3.8,<3.13'
 - pypi: https://files.pythonhosted.org/packages/8d/db/627472e6b4ac34148ea52e6d3d15f6f366fc21c72fe7d6c7d3729d4b3ac5/ujson-5.12.1-cp312-cp312-macosx_11_0_arm64.whl
   name: ujson
   version: 5.12.1
@@ -25886,11 +25896,6 @@ packages:
   - sphinx-bootstrap-theme ; extra == 'docs'
   - flake8 ; extra == 'flake8'
   requires_python: '>=3.9'
-- pypi: https://files.pythonhosted.org/packages/94/c4/7df3633954579b66e72634044fede5d8eddd02b0e88e4751b0e690f56b6a/cea_external_tools-0.2.3-cp312-cp312-win_amd64.whl
-  name: cea-external-tools
-  version: 0.2.3
-  sha256: ead5b14aca10223aa7920029c4ac86f89052a140ed2c3ec2f89722fd677d9569
-  requires_python: '>=3.8,<3.13'
 - pypi: https://files.pythonhosted.org/packages/97/1e/98aaddf272552d9fef1f0296a9939d1487914a239e98678f6b20f8b0a5c8/numcodecs-0.16.5-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl
   name: numcodecs
   version: 0.16.5
@@ -26732,11 +26737,6 @@ packages:
   name: sgp4
   version: '2.25'
   sha256: 64c7597a60b770caac51566b1f621d1cd74df0409ef19c5e7ea3505d0dfbc677
-- pypi: https://files.pythonhosted.org/packages/e3/f7/75f1fd36b8fef9cf78f19b19cfbbb391fee691f9c53eddd320f81f03b2d4/cea_external_tools-0.2.3.tar.gz
-  name: cea-external-tools
-  version: 0.2.3
-  sha256: a045b0ebafe5abe1d0bc30e77eb04feca55b27d0adf2f8a13d88b0f1dd66292a
-  requires_python: '>=3.8,<3.13'
 - pypi: https://files.pythonhosted.org/packages/e5/70/2f73c133b71709c412bc81d8b721e28dc6237ba9d7dad861b7bfbb70408a/netcdf4-1.7.4-cp311-abi3-macosx_14_0_arm64.whl
   name: netcdf4
   version: 1.7.4
