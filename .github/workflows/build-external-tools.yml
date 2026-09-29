@@ -43,6 +43,17 @@ jobs:
         with:
           run-install: false
 
+      - name: Set up MSVC dev environment (Windows only)
+        # The default pixi environment has no C/C++ compiler package (unlike the docker-build-wheel
+        # feature, which pulls in cxx-compiler) -- it relies on the runner's own compiler being on
+        # PATH. On ubuntu/macOS that's true by default; on Windows, cl.exe is only on PATH inside a
+        # "Developer" shell, which this step sets up. Without it, CMake fails with
+        # "CMAKE_C_COMPILER not set, after EnableLanguage" (whether scikit-build-core picks Ninja
+        # here, which needs the compiler pre-resolved on PATH, unlike the native Visual Studio
+        # generator, which finds it itself, wasn't verified -- this step works either way).
+        if: matrix.os == 'windows-latest'
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Build wheel
         working-directory: external
         run: pixi run build-wheel

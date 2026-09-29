@@ -1,0 +1,96 @@
+From 1b6eb07d6779645d458b3daf6e031147fc29f918 Mon Sep 17 00:00:00 2001
+From: scratch <scratch@example.com>
+Date: Mon, 21 Sep 2026 23:23:55 +0200
+Subject: [PATCH] Use a portable drand48-compatible generator on Windows
+
+---
+ src/common/random.h | 26 +++++++++++++-------------
+ src/common/urand.c  | 30 ++++++++++++++++++++++++++++++
+ 2 files changed, 43 insertions(+), 13 deletions(-)
+
+diff --git a/src/common/random.h b/src/common/random.h
+index e293ceb..100ba76 100644
+--- a/src/common/random.h
++++ b/src/common/random.h
+@@ -11,24 +11,24 @@
+ extern "C" {
+ #endif
+ 
+-#if defined(_WIN32) || defined(_WIN64)
+-#if (RAND_MAX <= 65536)
+-#define random()	((long)rand()<<16^(long)rand()<<6^(long)rand()>>4)
+-#else
+-#define random()	rand()
+-#endif
+-#define srandom(s)	srand((unsigned)(s))
+-
+-#define frandom()	(rand()*(1./(RAND_MAX+.5)))
+-
++#if defined(_WIN32) || defined(_WIN64) || defined(RAD_PORTABLE_RANDOM)
++/*
++ * The Windows C runtime has no drand48() family and its rand() is a different, 15 bit generator, so the random
++ * sample streams (and therefore the results) differed from Linux and macOS. Use the same 48 bit linear
++ * congruential generator as POSIX drand48()/lrand48()/srand48(), so all platforms draw the same numbers.
++ * RAD_PORTABLE_RANDOM forces this on other platforms, to check the two implementations agree.
++ */
++extern void	rad_srand48(long seed);
++extern long	rad_lrand48(void);
++extern double	rad_drand48(void);
++#define	 random()	rad_lrand48()
++#define  srandom(s)	rad_srand48((long)(s))
++#define	 frandom()	rad_drand48()
+ #else
+-
+ #define	 random()	lrand48()
+ #define  srandom(s)	srand48((long)(s))
+ #define	 frandom()	drand48()
+-
+ #endif
+-
+ extern unsigned short	*urperm;
+ extern int	urmask;
+ 
+diff --git a/src/common/urand.c b/src/common/urand.c
+index aac0236..5c6b61a 100644
+--- a/src/common/urand.c
++++ b/src/common/urand.c
+@@ -10,6 +10,36 @@ static const char	RCSid[] = "$Id: urand.c,v 2.11 2015/05/27 08:42:06 greg Exp $"
+ #include  "standard.h"
+ #include  "random.h"
+ 
++
++/* 48 bit linear congruential generator, identical to POSIX drand48()/lrand48()/srand48() */
++static unsigned long long	rad_rand48_state = 0x1234ABCD330EULL;	/* POSIX default state before srand48() */
++
++static void
++rad_rand48_step(void)
++{
++	rad_rand48_state = (rad_rand48_state * 0x5DEECE66DULL + 0xBULL) & 0xFFFFFFFFFFFFULL;
++}
++
++void
++rad_srand48(long seed)
++{
++	rad_rand48_state = (((unsigned long long)seed & 0xFFFFFFFFULL) << 16) | 0x330EULL;
++}
++
++long
++rad_lrand48(void)
++{
++	rad_rand48_step();
++	return (long)(rad_rand48_state >> 17);
++}
++
++double
++rad_drand48(void)
++{
++	rad_rand48_step();
++	return (double)rad_rand48_state / 281474976710656.0;	/* 2^48 */
++}
++
+ #undef initurand
+ 
+ #define  MAXORDER	(8*sizeof(unsigned short))
+-- 
+2.54.0 (Apple Git-157)
+
