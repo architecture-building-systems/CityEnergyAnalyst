@@ -93,12 +93,13 @@ Both tools support local source directories or automatic fetching from GitHub:
 - `DAYSIM_GIT_REPOSITORY` - Git repository URL (default: `https://github.com/reyery/Daysim.git`)
 - `DAYSIM_GIT_TAG` - Git tag/branch to use
 
-**Cross-platform determinism** (#4080): the pinned DAYSIM commit gives different radiation
-results on Windows than on Linux/macOS for identical inputs, because Windows uses the C
+**Cross-platform determinism** (#4080): earlier pinned DAYSIM commits gave different radiation
+results on Windows than on Linux/macOS for identical inputs, because Windows used the C
 runtime's `rand()` where the others use `drand48()`. `daysim-portable-random.patch` (this
-directory) fixes this -- verified bit-identical across all three OSes in CI -- but is not yet
-applied to the fork: it needs to be committed to `reyery/Daysim` and `DAYSIM_GIT_TAG` above
-bumped to that commit before a new `cea-external-tools` release picks it up.
+directory, kept for reference) fixes this -- verified bit-identical across all three OSes in CI
+-- and is applied on `reyery/Daysim` as commit
+[`560374a`](https://github.com/reyery/Daysim/commit/560374adce48f43dd2422c55e30feafdc69271d1)
+(branch `portable-random`), which `DAYSIM_GIT_TAG` above is pinned to.
 
 ### CRAX
 - `CRAX_SOURCE_DIR` - Path to local CRAX source (default: `./crax`)
