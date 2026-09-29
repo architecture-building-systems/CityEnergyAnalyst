@@ -35,22 +35,29 @@ COLUMNS_ZONE = ['name', 'floors_bg', 'floors_ag', VOID_HEIGHT_COLUMN, 'height_bg
 
 
 def assert_columns_names(dataframe: pd.DataFrame, columns):
-    try:
-        dataframe[columns]
-    except ValueError:
-        print(
-            "one or more columns in the Zone or Surroundings input files is not compatible with CEA, please ensure the column" +
-            " names comply with:", columns)
+    missing = [column for column in columns if column not in dataframe.columns]
+    if missing:
+        raise ValueError(f'The Zone or Surroundings input file is missing the column(s) {missing}. '
+                         f'Please ensure the column names comply with: {list(columns)}')
+
+
+# Columns whose values are heights or floor counts and so can never be negative. Other numeric columns a
+# shapefile may carry (an elevation, a coordinate) are none of CEA's business.
+NON_NEGATIVE_GEOMETRY_COLUMNS = ['floors_ag', 'floors_bg', 'height_ag', 'height_bg', *OPTIONAL_VOID_DECK_COLUMNS]
+
+
+def assert_no_negative_geometry_values(geometry_df: pd.DataFrame):
+    columns = [column for column in NON_NEGATIVE_GEOMETRY_COLUMNS if column in geometry_df.columns]
+    negative = (geometry_df[columns].apply(pd.to_numeric, errors='coerce') < 0.0).any()
+    if negative.any():
+        raise Exception(f"There are negative values in the column(s) {negative[negative].index.tolist()} of your "
+                        "geometry. This is not possible to simulate in CEA at the moment. "
+                        "Please verify your Zone or Surroundings shapefile file")
 
 
 def assert_input_geometry_acceptable_values_floor_height(zone_df: pd.DataFrame):
     # Rule 0. nothing can be negative
-    numeric_dtypes = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
-    zone_df_data = zone_df.select_dtypes(include=numeric_dtypes)
-    rule0 = (zone_df_data < 0.0).any().any()
-    if rule0:
-        raise Exception("There are negative values in your geometry. This is not possible to simulate in CEA at the "
-                        "moment Please verify your Zone or Surroundings shapefile file")
+    assert_no_negative_geometry_values(zone_df)
 
     # Rule 1. Floors above ground cannot be less than 1.
     # `height_ag` needs no check of its own: rule 2 requires a minimum height per enclosed floor,
@@ -77,21 +84,10 @@ def assert_input_geometry_acceptable_values_floor_height(zone_df: pd.DataFrame):
             f'enclosed floor: {names}. Check floors_ag, height_ag and any void deck '
             f'({VOID_HEIGHT_COLUMN} / {VOID_FLOORS_COLUMN}) in your Zone shapefile.')
 
-    # Rule 3. floors below ground cannot be negative
-    rule3 = (zone_df['floors_bg'] < 0).any()
-    if rule3:
-        raise Exception('one of more buildings have a negative floor below ground. This is not possible '
-                        'to simulate in CEA at the moment. Please verify your Zone or Surroundings file')
-
 
 def assert_input_geometry_acceptable_values_floor_height_surroundings(surroundings_df):
     # Rule 0. nothing can be negative
-    numeric_dtypes = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
-    surroundings_df_data = surroundings_df.select_dtypes(include=numeric_dtypes)
-    rule0 = surroundings_df_data.where(surroundings_df_data < 0.0).any().any()
-    if rule0:
-        raise Exception("There are negative values in your geometry. This is not possible to simulate in CEA at the "
-                        "moment Please verify your Zone or Surroundings shapefile file")
+    assert_no_negative_geometry_values(surroundings_df)
 
     # Rule 1. Floors above ground cannot be less than 1 and the height must be greater than 0.
     rule1_1 = (surroundings_df['floors_ag'] < 1).any()
@@ -100,6 +96,16 @@ def assert_input_geometry_acceptable_values_floor_height_surroundings(surroundin
         raise Exception("one of more buildings have less than one floor above ground or a height above ground "
                         "that is not greater than 0 meters. This is not possible to simulate in CEA at the moment. "
                         "Please verify your Surroundings shapefile file")
+
+
+def assert_input_geometry_valid(buildings_df):
+    """Missing, empty or self-intersecting footprints fail deep inside the 3D geometry build with no building named."""
+    geometry = buildings_df.geometry
+    invalid = geometry.isna() | geometry.is_empty | ~geometry.is_valid
+    if invalid.any():
+        raise Exception('Some buildings have a missing, empty or invalid (e.g. self-intersecting) geometry: '
+                        f'{buildings_df.loc[invalid, NAME_COLUMN].tolist()}. Please verify your Zone or Surroundings '
+                        'shapefile file')
 
 
 def assert_input_geometry_only_polygon(buildings_df):
@@ -203,10 +209,12 @@ def verify_input_geometry_zone(zone_df):
     # Verification 3. verify if the floor_height ratio is correct
     assert_input_geometry_acceptable_values_floor_height(zone_df)
 
-    # Verification 4. verify geometries only contain Polygon
-    assert_input_geometry_only_polygon(zone_df)
-
+    # Verification 4. verify names are unique
     check_duplicated_names(zone_df)
+
+    # Verification 5. verify geometries are valid and only contain Polygon
+    assert_input_geometry_valid(zone_df)
+    assert_input_geometry_only_polygon(zone_df)
 
     check_void_deck_values(zone_df)
 
@@ -223,10 +231,14 @@ def verify_input_geometry_surroundings(surroundings_df):
     # Verification 2. verify no required value is empty; NaN slips through every `<` comparison below
     check_na_values(surroundings_df, columns=COLUMNS_SURROUNDINGS_GEOMETRY)
 
-    # Verification 3. verify the floors and height are positive
+    # Verification 3. verify names are unique; each building's 3D geometry is saved under its name
+    check_duplicated_names(surroundings_df)
+
+    # Verification 4. verify the floors and height are positive
     assert_input_geometry_acceptable_values_floor_height_surroundings(surroundings_df)
 
-    # Verification 4. verify geometries only contain Polygon
+    # Verification 5. verify geometries are valid and only contain Polygon
+    assert_input_geometry_valid(surroundings_df)
     assert_input_geometry_only_polygon(surroundings_df)
 
 

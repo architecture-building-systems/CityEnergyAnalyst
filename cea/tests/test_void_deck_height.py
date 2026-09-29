@@ -879,3 +879,41 @@ def test_empty_values_are_rejected_before_the_range_checks():
         geometry=[Polygon([(0, 0), (1, 0), (1, 1)])])
     with pytest.raises(ValueError, match="NA values"):
         verify_input_geometry_surroundings(surroundings)
+
+
+def _surroundings(**overrides):
+    square = Polygon([(0, 0), (10, 0), (10, 10), (0, 10)])
+    data = {"name": ["S1"], "floors_ag": [3], "height_ag": [9.0], "geometry": [square]}
+    data.update(overrides)
+    return gpd.GeoDataFrame(data, geometry="geometry")
+
+
+def test_missing_columns_are_named():
+    from cea.datamanagement.databases_verification import verify_input_geometry_surroundings
+
+    with pytest.raises(ValueError, match="height_ag"):
+        verify_input_geometry_surroundings(_surroundings().drop(columns=["height_ag"]))
+
+
+def test_surroundings_reject_duplicate_names_and_bad_footprints():
+    from cea.datamanagement.databases_verification import verify_input_geometry_surroundings
+
+    verify_input_geometry_surroundings(_surroundings())
+
+    square = Polygon([(0, 0), (10, 0), (10, 10), (0, 10)])
+    bowtie = Polygon([(0, 0), (10, 10), (10, 0), (0, 10)])
+    with pytest.raises(Exception, match="Duplicated"):
+        verify_input_geometry_surroundings(_surroundings(
+            name=["S1", "S1"], floors_ag=[3, 3], height_ag=[9.0, 9.0], geometry=[square, square]))
+    with pytest.raises(Exception, match=r"invalid.*S1"):
+        verify_input_geometry_surroundings(_surroundings(geometry=[bowtie]))
+    with pytest.raises(Exception, match="missing, empty or invalid"):
+        verify_input_geometry_surroundings(_surroundings(geometry=[Polygon()]))
+
+
+def test_negative_check_ignores_unrelated_numeric_columns():
+    from cea.datamanagement.databases_verification import assert_no_negative_geometry_values
+
+    assert_no_negative_geometry_values(pd.DataFrame({"height_ag": [9.0], "elevation": [-3.0]}))
+    with pytest.raises(Exception, match="floors_bg"):
+        assert_no_negative_geometry_values(pd.DataFrame({"height_ag": [9.0], "floors_bg": [-1]}))
