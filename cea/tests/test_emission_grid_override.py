@@ -114,6 +114,22 @@ def test_leap_year_nan_outside_feb29_is_still_reported(tmp_path):
     assert "out of 8760 rows" in str(exc_info.value)
 
 
+def test_semicolon_delimited_file_resolves_column(tmp_path):
+    """A semicolon-delimited export (e.g. European-locale spreadsheet) must resolve
+    normally -- not present its whole header line as a single unmatched column."""
+    values = np.arange(HOURS_IN_YEAR, dtype=float)
+    csv_path = os.path.join(str(tmp_path), "grid.csv")
+    pd.DataFrame({"Datetime (UTC)": range(HOURS_IN_YEAR), "Carbon intensity": values}).to_csv(
+        csv_path, sep=';', index=False
+    )
+    config = _make_config(csv_path, "Carbon intensity")
+
+    override, result = _load_grid_emission_intensity_override(config)
+
+    assert override is True
+    np.testing.assert_array_equal(result, values)
+
+
 def test_unicode_and_whitespace_tolerant_match(tmp_path):
     # Real-world header uses a Unicode subscript '₂'; user types plain ASCII with trailing space.
     values = np.arange(HOURS_IN_YEAR, dtype=float)
