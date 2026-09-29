@@ -29,6 +29,11 @@ COLUMNS_SURROUNDINGS_GEOMETRY = ['name', 'height_ag', 'floors_ag']
 COLUMNS_ZONE_TYPOLOGY = ['name', 'year', 'const_type',
                          'use_type1', 'use_type1r', 'use_type2', 'use_type2r', 'use_type3', 'use_type3r']
 NAME_COLUMN = 'name'
+USE_TYPE_RATIO_COLUMNS = ['use_type1r', 'use_type2r', 'use_type3r']
+# Shares are typed by hand, so 0.33 + 0.33 + 0.34 and 0.333 x 3 both have to pass.
+USE_TYPE_RATIO_SUM_TOLERANCE = 0.01
+# Building names become file and folder names (e.g. `<name>_radiation.csv`), so these cannot be in one.
+FILENAME_UNSAFE_CHARACTERS = '/\\:*?"<>|'
 COLUMNS_ZONE = ['name', 'floors_bg', 'floors_ag', VOID_HEIGHT_COLUMN, 'height_bg', 'height_ag', 'reference', 'geometry',
                 'year', 'const_type', 'use_type1', 'use_type1r', 'use_type2', 'use_type2r', 'use_type3', 'use_type3r',
                 'house_no', 'street', 'postcode', 'house_name', 'resi_type', 'city', 'country']
@@ -123,6 +128,19 @@ def check_duplicated_names(df):
             'Duplicated names in the input file: {names}'.format(names=', '.join(df[duplicated_names][NAME_COLUMN].values)))
 
 
+def check_building_names(df):
+    """Names end up in file names, so reject blanks, surrounding whitespace and characters a file name cannot hold."""
+    names = df[NAME_COLUMN].astype(str)
+    blank = names.str.strip() == ''
+    padded = names != names.str.strip()
+    unsafe = names.apply(lambda name: any(char in name for char in FILENAME_UNSAFE_CHARACTERS))
+    invalid = blank | padded | unsafe
+    if invalid.any():
+        raise ValueError(f'Some building names are blank, have leading or trailing spaces, or contain one of '
+                         f'{" ".join(FILENAME_UNSAFE_CHARACTERS)}: {names[invalid].tolist()}. '
+                         'Please rename these buildings.')
+
+
 def check_na_values(df, columns=None):
     if columns is not None:
         df = df[columns]
@@ -209,7 +227,8 @@ def verify_input_geometry_zone(zone_df):
     # Verification 3. verify if the floor_height ratio is correct
     assert_input_geometry_acceptable_values_floor_height(zone_df)
 
-    # Verification 4. verify names are unique
+    # Verification 4. verify names are usable and unique
+    check_building_names(zone_df)
     check_duplicated_names(zone_df)
 
     # Verification 5. verify geometries are valid and only contain Polygon
@@ -231,7 +250,8 @@ def verify_input_geometry_surroundings(surroundings_df):
     # Verification 2. verify no required value is empty; NaN slips through every `<` comparison below
     check_na_values(surroundings_df, columns=COLUMNS_SURROUNDINGS_GEOMETRY)
 
-    # Verification 3. verify names are unique; each building's 3D geometry is saved under its name
+    # Verification 3. verify names are usable and unique; each building's 3D geometry is saved under its name
+    check_building_names(surroundings_df)
     check_duplicated_names(surroundings_df)
 
     # Verification 4. verify the floors and height are positive
@@ -242,13 +262,39 @@ def verify_input_geometry_surroundings(surroundings_df):
     assert_input_geometry_only_polygon(surroundings_df)
 
 
+def check_use_type_ratios(typology_df):
+    """The use type shares split a building's floor area, so each must be 0-1 and together they must make 1.
+
+    Nothing downstream normalises them: the schedules are weighted by the shares as given, so a sum of 0.8
+    silently drops 20% of the building's demand and 1.2 adds 20%.
+    """
+    ratios = typology_df[USE_TYPE_RATIO_COLUMNS].apply(pd.to_numeric, errors='coerce')
+    if ratios.isna().any().any():
+        raise ValueError(f'The columns {USE_TYPE_RATIO_COLUMNS} should contain numbers. '
+                         'Please check your typology file.')
+
+    out_of_range = ((ratios < 0.0) | (ratios > 1.0)).any(axis=1)
+    if out_of_range.any():
+        raise ValueError(f'Use type shares must be between 0 and 1: {typology_df.loc[out_of_range, NAME_COLUMN].tolist()}. '
+                         'Please check your typology file.')
+
+    wrong_sum = (ratios.sum(axis=1) - 1.0).abs() > USE_TYPE_RATIO_SUM_TOLERANCE
+    if wrong_sum.any():
+        raise ValueError(f'Use type shares {USE_TYPE_RATIO_COLUMNS} must add up to 1 for every building: '
+                         f'{typology_df.loc[wrong_sum, NAME_COLUMN].tolist()}. Please check your typology file.')
+
+
 def verify_input_typology(typology_df):
     # Verification 1. verify if all the column names are correct
     assert_columns_names(typology_df, COLUMNS_ZONE_TYPOLOGY)
 
     check_na_values(typology_df, columns=COLUMNS_ZONE_TYPOLOGY)
 
+    check_building_names(typology_df)
+
     check_duplicated_names(typology_df)
+
+    check_use_type_ratios(typology_df)
 
 
 def verify_input_terrain(terrain_raster):

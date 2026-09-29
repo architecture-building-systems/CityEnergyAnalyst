@@ -917,3 +917,35 @@ def test_negative_check_ignores_unrelated_numeric_columns():
     assert_no_negative_geometry_values(pd.DataFrame({"height_ag": [9.0], "elevation": [-3.0]}))
     with pytest.raises(Exception, match="floors_bg"):
         assert_no_negative_geometry_values(pd.DataFrame({"height_ag": [9.0], "floors_bg": [-1]}))
+
+
+@pytest.mark.parametrize("name", ["", " B1", "B1 ", "B/1", "B:1", 'B"1', "B|1"])
+def test_unusable_building_names_are_rejected(name):
+    from cea.datamanagement.databases_verification import verify_input_geometry_surroundings
+
+    with pytest.raises(ValueError, match="building names"):
+        verify_input_geometry_surroundings(_surroundings(name=[name]))
+
+
+@pytest.mark.parametrize("name", ["B1001", "Building 1", "b_1-2.a"])
+def test_ordinary_building_names_pass(name):
+    from cea.datamanagement.databases_verification import verify_input_geometry_surroundings
+
+    verify_input_geometry_surroundings(_surroundings(name=[name]))
+
+
+def _typology(*ratios):
+    return pd.DataFrame({
+        "name": [f"B{i}" for i in range(len(ratios))], "year": 2000, "const_type": "STANDARD1",
+        "use_type1": "MULTI_RES", "use_type1r": [r[0] for r in ratios],
+        "use_type2": "OFFICE", "use_type2r": [r[1] for r in ratios],
+        "use_type3": "NONE", "use_type3r": [r[2] for r in ratios]})
+
+
+def test_use_type_shares_must_add_up_to_one():
+    from cea.datamanagement.databases_verification import verify_input_typology
+
+    verify_input_typology(_typology((1.0, 0.0, 0.0), (0.5, 0.5, 0.0), (0.33, 0.33, 0.34), (0.333, 0.333, 0.333)))
+    for bad in ((0.5, 0.3, 0.0), (0.6, 0.6, 0.0), (0.0, 0.0, 0.0), (1.5, -0.5, 0.0)):
+        with pytest.raises(ValueError, match="use type shares|Use type shares"):
+            verify_input_typology(_typology(bad))
