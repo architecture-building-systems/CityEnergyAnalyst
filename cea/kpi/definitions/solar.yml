@@ -3,10 +3,10 @@
 # Source CSV: outputs/data/potentials/solar/PV_<panel_type>_total_buildings.csv
 # (one row per building, produced by `cea photovoltaic`). Column
 # meanings live in cea/schemas.yml under `PV_total_buildings`.
-# `locator_args.panel_type` is hardcoded to `monocrystalline` —
-# CEA's most common default. Districts running with a different
-# panel type would land on a missing CSV and the KPI surfaces as
-# `KPINotAvailable` with the upstream-tool hint.
+# `panel_type` has no fixed default: it resolves to the first PV
+# panel code with results on disk (see `effective_locator_args`),
+# and the card annotates which panel type (with its database
+# description) the value belongs to.
 #
 # v1 scope (locked 2026-05-06): PV generation + orientation
 # contribution + system efficiency. Trimmed compared to the
@@ -47,19 +47,16 @@ kpis:
       Annual PV = Σ(E_PV_gen_kWh)
         in [kWh/yr]
     description: >
-      District-level PV potential under the configured panel
-      type (monocrystalline). Aggregates rooftop + facade
-      installations.
+      District-level PV potential under the selected panel
+      type. Aggregates rooftop + facade installations.
+    annotation: pv_panel_type
     source:
       locator: PV_total_buildings
-      locator_args:
-        panel_type: monocrystalline
       parameters:
         panel_type:
           label: Panel type
           options_generator: solar_panel_types
-          default: monocrystalline
-          description: Which PV panel code to read totals for.
+          description: Which PV panel type to read totals for. Defaults to the first one with results.
       formula:
         kind: aggregate
         op: sum
@@ -77,16 +74,14 @@ kpis:
 
       Share = Σ(PV_roofs_top_E_kWh) ÷ Σ(E_PV_gen_kWh) × 100
         in [%]
+    annotation: pv_panel_type
     source:
       locator: PV_total_buildings
-      locator_args:
-        panel_type: monocrystalline
       parameters:
         panel_type:
           label: Panel type
           options_generator: solar_panel_types
-          default: monocrystalline
-          description: Which PV panel code to read totals for.
+          description: Which PV panel type to read totals for. Defaults to the first one with results.
       formula:
         kind: share_of
         part:
@@ -111,16 +106,14 @@ kpis:
 
       Share = Σ(PV_walls_south_E_kWh) ÷ Σ(E_PV_gen_kWh) × 100
         in [%]
+    annotation: pv_panel_type
     source:
       locator: PV_total_buildings
-      locator_args:
-        panel_type: monocrystalline
       parameters:
         panel_type:
           label: Panel type
           options_generator: solar_panel_types
-          default: monocrystalline
-          description: Which PV panel code to read totals for.
+          description: Which PV panel type to read totals for. Defaults to the first one with results.
       formula:
         kind: share_of
         part:
@@ -145,16 +138,14 @@ kpis:
 
       Efficiency = Σ(E_PV_gen_kWh) ÷ Σ(radiation_kWh) × 100
         in [%]
+    annotation: pv_panel_type
     source:
       locator: PV_total_buildings
-      locator_args:
-        panel_type: monocrystalline
       parameters:
         panel_type:
           label: Panel type
           options_generator: solar_panel_types
-          default: monocrystalline
-          description: Which PV panel code to read totals for.
+          description: Which PV panel type to read totals for. Defaults to the first one with results.
       formula:
         kind: share_of
         part:

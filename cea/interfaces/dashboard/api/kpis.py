@@ -25,10 +25,13 @@ from fastapi import APIRouter, HTTPException, status
 import cea.inputlocator
 from cea.interfaces.dashboard.api.utils import CEAScenario
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
+from cea.kpi.annotations import annotate
 from cea.kpi.cache import compute_kpi_cached
 from cea.kpi.exceptions import KPIDefinitionError, KPINotAvailable
 from cea.kpi.option_generators import run_generator
 from cea.kpi.registry import kpis_for_feature, load_registry
+from cea.kpi.resolver import effective_locator_args
+from cea.kpi.units import UNIT_PARAMETER, convert, unit_choices
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2026, UUEN PTE. LTD."
@@ -68,10 +71,11 @@ async def get_kpi_registry():
             "info_note": kpi.info_note,
             "description": kpi.description,
             # Whether this KPI declares any user-configurable
-            # parameters (panel_type, whatif_name, etc.) — drives
-            # the canvas picker's step-1 button label ("Next" vs
-            # "Add KPI") without a per-KPI step-2 fetch.
-            "has_parameters": bool(kpi.source.parameters),
+            # parameters (panel_type, whatif_name, etc.) or offers a
+            # choice of display unit — drives the canvas picker's
+            # step-1 button label ("Next" vs "Add KPI") without a
+            # per-KPI step-2 fetch.
+            "has_parameters": bool(kpi.source.parameters or unit_choices(kpi.unit)),
         }
         for kpi in registry.values()
     ]
@@ -170,6 +174,14 @@ async def get_kpis(
     }
 
 
+def _default_for(param, choices):
+    """The value the picker pre-selects: the yml default, else the generator's first
+    choice -- the same fallback `effective_locator_args` applies at fetch time."""
+    if param.default is not None or not choices:
+        return param.default
+    return choices[0]["value"]
+
+
 def _parse_locator_args(raw: Optional[str]) -> Optional[dict]:
     """Decode the ``locator_args`` query param.
 
@@ -218,10 +230,10 @@ async def get_kpi_parameters(
           "parameters": {
             "panel_type": {
               "label": "Panel type",
-              "default": "monocrystalline",
+              "default": "PV1",
               "choices": [
-                {"value": "monocrystalline", "label": "monocrystalline"},
-                {"value": "amorphous", "label": "amorphous"}
+                {"value": "PV1", "label": "PV1 · typical csi 2024 (BIPV)"},
+                {"value": "PV3", "label": "PV3 · typical cdte 2024 (BIPV)"}
               ]
             }
           }
@@ -257,13 +269,24 @@ async def get_kpi_parameters(
         out[name] = {
             "label": param.label,
             "type": param.type,
-            "default": param.default,
+            "default": _default_for(param, choices),
             "description": param.description,
             "choices": choices,
             # Frontend uses this to decide which other parameter
             # changes should trigger a re-fetch. Empty when the
             # generator doesn't depend on anything.
             "depends_on": list(param.depends_on or []),
+        }
+
+    units = unit_choices(kpi.unit)
+    if units:
+        out[UNIT_PARAMETER] = {
+            "label": "Unit",
+            "type": "string",
+            "default": kpi.unit,
+            "description": "Unit to show the value in.",
+            "choices": [{"value": u, "label": u} for u in units],
+            "depends_on": [],
         }
 
     return {"parameters": out, "kpi_id": kpi_id}
@@ -285,7 +308,10 @@ async def get_kpi_value(
     (e.g. mono vs amorphous solar) get distinct values without
     the bulk endpoint's "share fetch across feature" assumption.
     """
-    args_override = _parse_locator_args(locator_args)
+    args_override = _parse_locator_args(locator_args) or {}
+    # The display unit is applied to the cached base value below; it is
+    # not a locator argument and must not split the cache.
+    display_unit = args_override.pop(UNIT_PARAMETER, None)
 
     registry = load_registry()
     if kpi_id not in registry:
@@ -307,11 +333,15 @@ async def get_kpi_value(
     }
 
     try:
+        # Resolved once and shared with the annotation, so defaults filled from
+        # an options generator (e.g. panel_type) are looked up a single time.
+        locator = cea.inputlocator.InputLocator(scenario_path)
+        effective_args = effective_locator_args(kpi, locator, args_override)
         result = compute_kpi_cached(
             kpi_id,
             scenario_path,
             whatif=whatif,
-            locator_args_override=args_override,
+            locator_args_override=effective_args,
         )
     except KPINotAvailable as exc:
         return {
@@ -328,9 +358,35 @@ async def get_kpi_value(
             detail=f"KPI definition error for '{kpi_id}': {exc}",
         )
 
+    value, unit, unit_scale = result.value, result.unit, 1.0
+    if display_unit and display_unit in unit_choices(unit):
+        unit_scale = convert(1.0, unit, display_unit)
+        value, unit = value * unit_scale, display_unit
+
     return {
         **base_payload,
         "available": True,
-        "value": result.value,
+        "value": value,
+        "unit": unit,
+        # Base-unit -> display-unit factor, for values fetched elsewhere in the
+        # base unit (the pathway sparkline reads the bulk endpoint).
+        "unit_scale": unit_scale,
+        "annotations": _annotations(kpi, locator, effective_args),
         "computed_at": result.computed_at,
     }
+
+
+def _annotations(kpi, locator, effective_args):
+    """Rows describing what the value was measured for (see `cea/kpi/annotations.py`).
+
+    Annotations read user-editable files (the what-if configuration, the component
+    database), so anything can go wrong in them -- including a YAML parse error.
+    They only describe a value that computed fine, so any failure drops them (logged)
+    rather than failing the request."""
+    if kpi.annotation is None:
+        return []
+    try:
+        return annotate(kpi.annotation, locator, effective_args)
+    except Exception:
+        logger.exception("Annotation '%s' for %s failed", kpi.annotation, kpi.id)
+        return []

@@ -39,7 +39,7 @@ from cea.kpi.resolver import (
     KPIResult,
     _resolve_source_path,
     compute_kpi,
-    merge_locator_args,
+    effective_locator_args,
 )
 from cea.kpi.status import read_kpi, write_kpi, clear_kpi as _clear_kpi
 from cea.utilities.fingerprint import hash_files, hash_folder, hash_payload
@@ -79,16 +79,17 @@ def compute_kpi_cached(
         raise KPIDefinitionError(f"unknown KPI id '{kpi_id}'")
     kpi = registry[kpi_id]
 
-    # Merge yml defaults with the per-call override once, up-front;
-    # both the cache key (`args_hash`) and the resolver call see
-    # the same effective args, so a hit/miss decision is consistent
-    # with the value that would actually be computed.
-    merged_args = merge_locator_args(kpi.source.locator_args, locator_args_override)
+    # Resolve the effective args once, up-front (yml defaults, the
+    # per-call override, then generator-picked choices for anything
+    # still unset); the cache key (`args_hash`) and the resolver call
+    # both see them, so a hit/miss decision is consistent with the
+    # value that would actually be computed.
+    locator = InputLocator(scenario)
+    merged_args = effective_locator_args(kpi, locator, locator_args_override)
     args_hash = _args_hash_for(merged_args)
     cache_key = _cache_key(kpi_id, merged_args)
 
-    locator = InputLocator(scenario)
-    source_path = _resolve_source_path(kpi, locator, locator_args_override)
+    source_path = _resolve_source_path(kpi, locator, merged_args)
     sources = [source_path]
 
     inputs_hash = _safe_hash_folder(locator.get_input_folder())
@@ -112,7 +113,7 @@ def compute_kpi_cached(
         kpi_id,
         scenario,
         whatif=whatif,
-        locator_args_override=locator_args_override,
+        locator_args_override=merged_args,
     )
     # Re-hash sources from the resolver's reported list — usually
     # identical to what we computed up front, but the resolver is
