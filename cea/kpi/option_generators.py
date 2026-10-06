@@ -26,8 +26,8 @@ import os
 from typing import Any, Callable, Dict, List, Mapping, Optional
 
 from cea.inputlocator import InputLocator
-from cea.kpi.annotations import describe_pv_panel, pv_panel_descriptions
 from cea.kpi.exceptions import KPIDefinitionError
+from cea.kpi.pv_panels import describe_pv_panel, pv_panel_descriptions
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2026, UUEN PTE. LTD."

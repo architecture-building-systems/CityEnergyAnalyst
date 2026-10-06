@@ -150,6 +150,11 @@ def effective_locator_args(
     ``panel_type`` resolves to the first PV panel code the scenario
     actually has results for, rather than a hardcoded code that may not
     exist. No choice at all means the upstream tool has not run.
+
+    Idempotent: passing the result back as ``override`` returns it
+    unchanged without running any generator. The API, the cache and
+    :func:`_resolve_source_path` each call this on the way down and
+    rely on that to agree on one set of args.
     """
     merged = merge_locator_args(kpi.source.locator_args, override)
     for name, param in kpi.source.parameters.items():
