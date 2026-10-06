@@ -166,16 +166,18 @@ def test_the_database_is_read_once_until_it_changes(locator, monkeypatch):
     reads = []
     real_read_csv = pd.read_csv
     monkeypatch.setattr(pv_panels.pd, "read_csv", lambda *a, **kw: reads.append(a) or real_read_csv(*a, **kw))
-    is_panels = lambda call: os.path.basename(call[0]) == "PHOTOVOLTAIC_PANELS.csv"
+
+    def panel_reads():
+        return [call for call in reads if os.path.basename(call[0]) == "PHOTOVOLTAIC_PANELS.csv"]
 
     # Four solar KPIs each resolve their default panel, then one card fetches its value.
     asyncio.run(get_kpis(scenario_path=locator.scenario, feature="solar", whatif=None))
     _value(locator, PV_GENERATION)
-    assert len([c for c in reads if is_panels(c)]) == 1
+    assert len(panel_reads()) == 1
 
     _write_panels(locator, code=["PV1"], description=["a renamed panel"])
     assert _value(locator, PV_GENERATION)["annotations"] == [{"label": "Panel", "value": "PV1 · a renamed panel"}]
-    assert len([c for c in reads if is_panels(c)]) == 2
+    assert len(panel_reads()) == 2
 
 
 # --------------------------------------------------------------------------- panel_type default
