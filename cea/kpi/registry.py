@@ -25,9 +25,11 @@ from typing import Iterable
 import yaml
 
 from cea.inputlocator import InputLocator
+from cea.kpi.annotations import known_providers
 from cea.kpi.calculators import columns_referenced
 from cea.kpi.exceptions import KPIDefinitionError
 from cea.kpi.schema import KPIDefinition, KPIDefinitionFile
+from cea.kpi.units import UNIT_PARAMETER
 from cea.utilities.fingerprint import hash_payload
 
 __author__ = "Zhongming Shi"
@@ -107,6 +109,15 @@ def _validate_one(
     schemas: dict,
     locator_methods: set[str],
 ) -> None:
+    if kpi.annotation is not None and kpi.annotation not in known_providers():
+        raise KPIDefinitionError(
+            f"{kpi.id}: annotation '{kpi.annotation}' is not a provider in "
+            f"cea/kpi/annotations.py (known: {sorted(known_providers())})"
+        )
+    if UNIT_PARAMETER in kpi.source.parameters:
+        raise KPIDefinitionError(
+            f"{kpi.id}: parameter name '{UNIT_PARAMETER}' is reserved for the display unit"
+        )
     if kpi.source.locator not in locator_methods:
         raise KPIDefinitionError(
             f"{kpi.id}: source.locator '{kpi.source.locator}' is not a "

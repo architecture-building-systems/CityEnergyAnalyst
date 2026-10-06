@@ -179,6 +179,9 @@ class KPIDefinition(_StrictBase):
     headline: bool = False  # surfaces in the OverviewCard ribbon
     info_note: Optional[str] = None  # tooltip body (e.g. GFA caveat)
     description: Optional[str] = None  # longer explainer for hover
+    # Name of a provider in `cea/kpi/annotations.py` whose rows the KPI card
+    # shows under the value (e.g. which PV panel type was measured).
+    annotation: Optional[str] = None
     source: KPISource
 
 

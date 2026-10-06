@@ -27,6 +27,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional
 
 from cea.inputlocator import InputLocator
 from cea.kpi.exceptions import KPIDefinitionError
+from cea.kpi.pv_panels import describe_pv_panel, pv_panel_descriptions
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2026, UUEN PTE. LTD."
@@ -102,7 +103,8 @@ def _pv_panel_types(locator: InputLocator) -> ChoiceList:
     """Scan ``outputs/data/potentials/solar`` for `PV_<code>_total_buildings.csv`
     files and return the discovered panel codes. Mirrors the same
     on-disk scan the renewable-energy-potentials map layer uses for
-    its panel-type dropdown so the two surfaces stay in sync."""
+    its panel-type dropdown so the two surfaces stay in sync. Labels
+    carry the panel's database description."""
     folder = locator.get_potentials_solar_folder()
     if not os.path.isdir(folder):
         return []
@@ -112,7 +114,8 @@ def _pv_panel_types(locator: InputLocator) -> ChoiceList:
         if not stem or stem.startswith("PVT"):
             continue
         codes.add(stem)
-    return [{"value": c, "label": c} for c in sorted(codes)]
+    descriptions = pv_panel_descriptions(locator)
+    return [{"value": c, "label": describe_pv_panel(c, descriptions)} for c in sorted(codes)]
 
 
 @register("whatif_names")

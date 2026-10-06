@@ -111,6 +111,7 @@ kpis:
 
       PV = Σ(PV_MWh)
         in [MWh/yr]
+    annotation: installed_pv_by_orientation
     source:
       locator: get_final_energy_buildings_file
       locator_args:
@@ -165,6 +166,7 @@ kpis:
 
       Share = Σ(PV_MWh + SOLAR_MWh) ÷ Σ(TOTAL_MWh) × 100
         in [%]
+    annotation: installed_pv_by_orientation
     source:
       locator: get_final_energy_buildings_file
       locator_args:

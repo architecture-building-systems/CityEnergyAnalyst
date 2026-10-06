@@ -33,6 +33,7 @@ import cea.scripts
 from cea.inputlocator import InputLocator
 from cea.kpi.calculators import evaluate
 from cea.kpi.exceptions import KPIDefinitionError, KPINotAvailable
+from cea.kpi.option_generators import run_generator
 from cea.kpi.registry import load_registry
 
 __author__ = "Zhongming Shi"
@@ -123,12 +124,7 @@ def _resolve_source_path(
         raise KPIDefinitionError(
             f"{kpi.id}: InputLocator has no method '{kpi.source.locator}'"
         )
-    # Merged kwargs forwarded to the locator. yml's ``locator_args``
-    # carries the defaults; per-call overrides (from user-configured
-    # KPI cards) layer on top. Override values that are ``None`` are
-    # ignored so the yml default isn't silently nulled out by an
-    # unset form field.
-    merged = merge_locator_args(kpi.source.locator_args, override)
+    merged = effective_locator_args(kpi, locator, override)
     try:
         return method(**merged)
     except TypeError as exc:
@@ -138,6 +134,46 @@ def _resolve_source_path(
             f"or the override passed to ``compute_kpi`` so the "
             f"keys match the locator method's parameters."
         ) from exc
+
+
+def effective_locator_args(
+    kpi,
+    locator: InputLocator,
+    override: Optional[Mapping[str, Any]] = None,
+) -> Dict[str, Any]:
+    """The kwargs actually forwarded to the KPI's locator method.
+
+    yml ``locator_args`` carry the defaults and per-card overrides layer
+    on top (see :func:`merge_locator_args`). A parameter still unset
+    takes its declared ``default``; one with no default but an
+    ``options_generator`` takes the generator's first choice -- e.g.
+    ``panel_type`` resolves to the first PV panel code the scenario
+    actually has results for, rather than a hardcoded code that may not
+    exist. No choice at all means the upstream tool has not run.
+
+    Idempotent: passing the result back as ``override`` returns it
+    unchanged without running any generator. The API, the cache and
+    :func:`_resolve_source_path` each call this on the way down and
+    rely on that to agree on one set of args.
+    """
+    merged = merge_locator_args(kpi.source.locator_args, override)
+    for name, param in kpi.source.parameters.items():
+        if name in merged:
+            continue
+        if param.default is not None:
+            merged[name] = param.default
+            continue
+        if not param.options_generator:
+            continue
+        choices = run_generator(param.options_generator, locator, merged)
+        if not choices:
+            raise KPINotAvailable(
+                kpi.id,
+                reason=f"no {param.label.lower()} found in this scenario",
+                upstream_tool=_upstream_tool_for(kpi.source.locator),
+            )
+        merged[name] = choices[0]["value"]
+    return merged
 
 
 def merge_locator_args(
