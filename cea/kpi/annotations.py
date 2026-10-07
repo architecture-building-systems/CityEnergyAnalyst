@@ -6,21 +6,22 @@ A KPI opts in with ``annotation: <name>`` in its yml entry. Providers are
 registered here with ``@register("<name>")`` (the registry rejects unknown
 names at load) and return a list of ``{"label": ..., "value": ...}`` rows.
 
-They are computed per request, outside the value cache: each reads one small
-file (a database CSV or the what-if configuration), and a stale annotation
-next to a fresh value would be worse than the read.
+They are computed per request, outside the value cache, so an annotation is
+never staler than the files it describes. The files themselves (the PV panel
+database, the what-if configuration -- which lists every building and can run
+to megabytes) are read through `cea.kpi.file_cache`, so a request only pays
+for parsing them after they change.
 """
 
 from __future__ import annotations
 
-import os
 from collections import Counter
-from typing import Any, Callable, Dict, List, Mapping
-
-import pandas as pd
+from typing import Any, Callable, Dict, List, Mapping, Tuple
 
 from cea.inputlocator import InputLocator
 from cea.kpi.exceptions import KPIDefinitionError
+from cea.kpi.file_cache import read_cached
+from cea.kpi.pv_panels import describe_pv_panel, pv_panel_descriptions
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2026, UUEN PTE. LTD."
@@ -67,20 +68,6 @@ def annotate(name: str, locator: InputLocator, args: Mapping[str, Any]) -> Annot
     return fn(locator, args)
 
 
-def pv_panel_descriptions(locator: InputLocator) -> Dict[str, str]:
-    """``{code: description}`` from the scenario's PV panel database; empty when missing."""
-    path = locator.get_db4_components_conversion_conversion_technology_csv("PHOTOVOLTAIC_PANELS")
-    if not os.path.isfile(path):
-        return {}
-    panels = pd.read_csv(path, usecols=["code", "description"]).drop_duplicates("code")
-    return dict(zip(panels["code"], panels["description"]))
-
-
-def describe_pv_panel(code: str, descriptions: Mapping[str, str]) -> str:
-    description = descriptions.get(code)
-    return f"{code} · {description}" if description else f"{code} (not in database)"
-
-
 @register("pv_panel_type")
 def _pv_panel_type(locator: InputLocator, args: Mapping[str, Any]) -> Annotation:
     """The PV panel type the KPI was computed for, with its database description."""
@@ -101,16 +88,12 @@ def _electric_pv_panel(technology: str | None) -> str | None:
     return None
 
 
-@register("installed_pv_by_orientation")
-def _installed_pv_by_orientation(locator: InputLocator, args: Mapping[str, Any]) -> Annotation:
-    """PV panel types installed on each orientation in the what-if, across all buildings.
+# Buildings in the what-if, and per orientation how many of them carry each panel code.
+_InstalledPV = Tuple[int, Dict[str, Counter]]
 
-    Orientations with the same installation are grouped into one row. When buildings differ,
-    each panel type shows how many buildings carry it.
-    """
-    configuration = locator.read_analysis_configuration(args.get("whatif_name", "")) or {}
-    buildings = configuration.get("buildings") or {}
 
+def _installed_pv(configuration: Any) -> _InstalledPV:
+    buildings = (configuration or {}).get("buildings") or {}
     by_orientation: Dict[str, Counter] = {key: Counter() for key in _ORIENTATIONS}
     for building in buildings.values():
         solar = (building or {}).get("solar") or {}
@@ -118,6 +101,27 @@ def _installed_pv_by_orientation(locator: InputLocator, args: Mapping[str, Any])
             panel = _electric_pv_panel(solar.get(key))
             if panel:
                 by_orientation[key][panel] += 1
+    return len(buildings), by_orientation
+
+
+@register("installed_pv_by_orientation")
+def _installed_pv_by_orientation(locator: InputLocator, args: Mapping[str, Any]) -> Annotation:
+    """PV panel types installed on each orientation in the what-if, across all buildings.
+
+    Orientations with the same installation are grouped into one row. A panel type that
+    is not on every building shows how many carry it -- final-energy attaches the solar
+    configuration only to the buildings selected for it, so partial coverage is the norm.
+    """
+    whatif_name = args.get("whatif_name", "")
+    path = locator.find_analysis_configuration_file(whatif_name)
+    if path is None:
+        return []
+    # Only the tally is kept, not the parsed configuration.
+    total, by_orientation = read_cached(
+        path,
+        lambda _path: _installed_pv(locator.read_analysis_configuration(whatif_name)),
+        kind="installed_pv_by_orientation",
+    )
     if not any(by_orientation.values()):
         return []
 
@@ -127,10 +131,10 @@ def _installed_pv_by_orientation(locator: InputLocator, args: Mapping[str, Any])
         counts = by_orientation[key]
         if not counts:
             continue
-        if len(counts) == 1:
+        if len(counts) == 1 and next(iter(counts.values())) == total:
             value = describe_pv_panel(next(iter(counts)), descriptions)
         else:
-            value = ", ".join(f"{describe_pv_panel(code, descriptions)} ({n} building{'' if n == 1 else 's'})"
+            value = ", ".join(f"{describe_pv_panel(code, descriptions)} ({n} of {total} buildings)"
                               for code, n in sorted(counts.items()))
         rows.setdefault(value, []).append(key)
     return [{"label": _orientations_label(keys), "value": value} for value, keys in rows.items()]

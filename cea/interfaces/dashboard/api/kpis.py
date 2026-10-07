@@ -15,12 +15,17 @@ The endpoint is a thin wrapper around :func:`cea.kpi.cache.compute_kpi_cached`:
 the cache layer owns the three-hash freshness gate, status-file
 read/write, and on-miss recompute. The endpoint just iterates,
 catches :class:`KPINotAvailable` per KPI, and shapes the JSON.
+
+Every scenario-reading route hashes and parses files on disk, so each
+runs its (synchronous) body in the threadpool rather than on the event
+loop -- a slow scenario must not stall the rest of the server.
 """
 
 import json
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, status
+from fastapi.concurrency import run_in_threadpool
 
 import cea.inputlocator
 from cea.interfaces.dashboard.api.utils import CEAScenario
@@ -100,7 +105,10 @@ async def get_kpis(
     Truly broken KPIs (registry / formula errors) raise 500; those
     are bugs to fix in the yml, not user-facing states.
     """
+    return await run_in_threadpool(_get_kpis, scenario_path, feature, whatif)
 
+
+def _get_kpis(scenario_path: str, feature: str, whatif: Optional[str]):
     # Surface a tight error if the feature doesn't exist in the
     # registry — easier to debug than an empty array. Feature is
     # the id-prefix (yml file stem); `category` is now reserved
@@ -242,6 +250,10 @@ async def get_kpi_parameters(
     Empty ``parameters`` map → KPI is fully configured by the yml
     (defaults work as-is, no step-2 form needed).
     """
+    return await run_in_threadpool(_get_kpi_parameters, kpi_id, scenario_path, args)
+
+
+def _get_kpi_parameters(kpi_id: str, scenario_path: str, args: Optional[str]):
     registry = load_registry()
     if kpi_id not in registry:
         raise HTTPException(
@@ -308,6 +320,10 @@ async def get_kpi_value(
     (e.g. mono vs amorphous solar) get distinct values without
     the bulk endpoint's "share fetch across feature" assumption.
     """
+    return await run_in_threadpool(_get_kpi_value, kpi_id, scenario_path, locator_args, whatif)
+
+
+def _get_kpi_value(kpi_id: str, scenario_path: str, locator_args: Optional[str], whatif: Optional[str]):
     args_override = _parse_locator_args(locator_args) or {}
     # The display unit is applied to the cached base value below; it is
     # not a locator argument and must not split the cache.

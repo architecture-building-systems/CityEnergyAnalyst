@@ -4,7 +4,12 @@ param(
     [string]$EventName,
     [string]$CeaVersion,
     [string]$InstallerStep,
-    [string]$ErrorCode
+    [string]$ErrorCode,
+    [string]$ErrorDetail,
+    [string]$RetryCount,
+    [string]$RepeatFailure,
+    [string]$DaysSinceInstall,
+    [string]$WasCompletedInstall
 )
 
 # Fire-and-forget anonymous installer telemetry. This must never affect the
@@ -18,11 +23,15 @@ try {
         os                         = "windows"
         arch                       = $env:PROCESSOR_ARCHITECTURE
         '$process_person_profile' = $false
-        '$geoip_disable'           = $true
     }
 
-    if ($InstallerStep) { $properties.installer_step = $InstallerStep }
-    if ($ErrorCode)      { $properties.error_code     = $ErrorCode }
+    if ($InstallerStep)      { $properties.installer_step       = $InstallerStep }
+    if ($ErrorCode)          { $properties.error_code           = $ErrorCode }
+    if ($ErrorDetail)        { $properties.error_detail         = $ErrorDetail.Substring(0, [Math]::Min(64, $ErrorDetail.Length)) }
+    if ($RetryCount)         { $properties.retry_count          = $RetryCount }
+    if ($RepeatFailure)      { $properties.repeat_failure       = $RepeatFailure -eq "1" }
+    if ($DaysSinceInstall)   { $properties.days_since_install   = $DaysSinceInstall }
+    if ($WasCompletedInstall) { $properties.was_completed_install = $WasCompletedInstall -eq "1" }
 
     $body = @{
         api_key     = $ApiKey

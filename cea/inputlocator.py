@@ -10,6 +10,9 @@ import tempfile
 
 import yaml
 
+# libyaml's loader parses large what-if configurations an order of magnitude faster.
+_YAML_LOADER = getattr(yaml, 'CSafeLoader', yaml.SafeLoader)
+
 
 def _read_structured_file(path):
     """Read a structured config file and return the parsed dict.
@@ -20,7 +23,7 @@ def _read_structured_file(path):
     """
     with open(path, 'r') as handle:
         if path.endswith(('.yml', '.yaml')):
-            return yaml.safe_load(handle)
+            return yaml.load(handle, Loader=_YAML_LOADER)
         return json.load(handle)
 
 

@@ -20,4 +20,15 @@ Step 2: Run CEA Desktop App
 #. Locate the CEA icon (usually on desktop) and double click on it
 #. Start using CEA Dashboard
 
+Troubleshooting
+----------------
+
+If the installer reports a failure, it also prints the tail of the CEA Desktop
+installer's own log to the Details pane, and that log persists on disk even
+after a failed install, at::
+
+    %APPDATA%\CEA-4 Desktop\logs\installer.log
+
+Please attach this file when reporting an installation issue - see below.
+
 .. include:: installation-footer.rst

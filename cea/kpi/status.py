@@ -51,6 +51,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import threading
 from typing import Any
 
 from cea.inputlocator import InputLocator
@@ -68,6 +69,10 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 SCHEMA_VERSION = 1
+
+# `FileLock` serialises processes; this serialises the threads of one process
+# (the dashboard runs KPI requests in a threadpool).
+_WRITE_LOCK = threading.Lock()
 
 
 def read_status(scenario: str) -> dict[str, Any]:
@@ -104,7 +109,7 @@ def write_kpi(scenario: str, kpi_id: str, payload: dict[str, Any]) -> None:
     try:
         path = InputLocator(scenario).get_kpi_status_file()
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        with FileLock(kpi_status_lock_path(scenario)):
+        with _WRITE_LOCK, FileLock(kpi_status_lock_path(scenario)):
             # Read inside the lock so a competing writer can't slip a
             # newer record in between our read and our write — that
             # would have us round-trip its update right back out.
@@ -148,7 +153,7 @@ def clear_kpi(
     try:
         path = InputLocator(scenario).get_kpi_status_file()
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        with FileLock(kpi_status_lock_path(scenario)):
+        with _WRITE_LOCK, FileLock(kpi_status_lock_path(scenario)):
             if not os.path.isfile(path):
                 return
             current = read_status(scenario)
