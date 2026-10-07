@@ -124,10 +124,6 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
         shapefile["floors_ag"] = [int(x) if not np.isnan(x) else data_osm_floors_joined for x in
                                   shapefile['building:levels'] + shapefile['roof:levels']]
 
-        # Always written, so the column is there for the user to edit. 0 means the
-        # building is enclosed to the ground, which is the right default from OSM.
-        shapefile[VOID_HEIGHT_COLUMN] = 0.0
-
         if 'height' in list_of_columns:
             #  Replaces 'nan' values with CEA assumption
             shapefile["height_ag"] = shapefile["height"].fillna(shapefile["floors_ag"] * constants.H_F).astype(float)
@@ -142,20 +138,23 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
             shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
 
         # add fields for floors and height below ground
-        shapefile["height_bg"] = pd.Series(np.nan)
-        shapefile["floors_bg"] = pd.Series(np.nan)
+        shapefile["height_bg"] = np.nan
+        shapefile["floors_bg"] = np.nan
 
-        # Correct levels below ground if a minimum floor level or height is indicated
+        # A minimum level or height means the building starts above the ground. It is recorded as a
+        # negative depth below ground so `fix_overlapping_geoms` can tell which buildings really share
+        # space; `polygon_to_zone` resets it to 0 afterwards because CEA cannot simulate negative depths.
+        # Missing values were coerced to 0 above, so only positive values are meaningful.
         if 'building:min_level' in list_of_columns:
-            has_min_floor = shapefile["building:min_level"] == shapefile["building:min_level"]
-            shapefile[has_min_floor].floors_bg = [- int(x) for x in shapefile[has_min_floor]["building:min_level"]]
-            shapefile[has_min_floor].height_bg = shapefile[has_min_floor].floors_bg * constants.H_F
+            has_min_floor = shapefile["building:min_level"] > 0
+            shapefile.loc[has_min_floor, "floors_bg"] = -shapefile.loc[has_min_floor, "building:min_level"]
+            shapefile.loc[has_min_floor, "height_bg"] = shapefile.loc[has_min_floor, "floors_bg"] * constants.H_F
         if 'min_height' in list_of_columns:
-            has_min_height = shapefile["min_height"] == shapefile["min_height"]
-            shapefile[has_min_height].height_bg = [- int(x) for x in shapefile[has_min_height]["min_height"]]
+            has_min_height = shapefile["min_height"] > 0
+            shapefile.loc[has_min_height, "height_bg"] = -shapefile.loc[has_min_height, "min_height"]
         # add missing floors and height below ground
-        shapefile.loc[shapefile.height_bg.isna(), "height_bg"] = [buildings_height_below_ground] * no_buildings
-        shapefile.loc[shapefile.floors_bg.isna(), "floors_bg"] = [buildings_floors_below_ground] * no_buildings
+        shapefile.loc[shapefile.height_bg.isna(), "height_bg"] = buildings_height_below_ground
+        shapefile.loc[shapefile.floors_bg.isna(), "floors_bg"] = buildings_floors_below_ground
         shapefile["floors_bg"] = shapefile["floors_bg"].astype(int)
     else:
         shapefile['reference'] = "User - assumption"
@@ -172,6 +171,10 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
         # add fields for floors and height below ground
         shapefile["height_bg"] = [buildings_height_below_ground] * no_buildings
         shapefile["floors_bg"] = [buildings_floors_below_ground] * no_buildings
+
+    # Always written, whichever branch produced the attributes, so the column is there for the user
+    # to edit. 0 means the building is enclosed to the ground, which is the right default.
+    shapefile[VOID_HEIGHT_COLUMN] = 0.0
 
     # Make the geometry plausible, for whichever branch produced it. This runs for both the
     # OSM path and the user-assumption path, because both can emit a building CEA then refuses
@@ -274,6 +277,7 @@ def fix_overlapping_geoms(buildings, zone):
     # PREPROCESSING OF BUILDING ATTRIBUTES
     # get zone's geometry
     geometries = buildings.geometry
+    geometry_column = buildings.geometry.name
 
     # CREATE GRID TO PARTITION THE BUILDINGS (more efficient - hopefully)
     # calculate grid-parameters based on the zone polygon dimensions
@@ -335,22 +339,20 @@ def fix_overlapping_geoms(buildings, zone):
                     pass  # no vertical overlap
                 elif (buildings.reference[ovrlp_bldg_index] == "OSM - as it is") & \
                      (buildings.reference[building_index] != "OSM - as it is"):  # Give OSM priority
-                    buildings.geometry[building_index] = \
+                    buildings.loc[building_index, geometry_column] = \
                         buildings.geometry[building_index].difference(buildings.geometry[ovrlp_bldg_index])
                 elif (buildings.reference[building_index] == "OSM - as it is") & \
                      (buildings.reference[ovrlp_bldg_index] != "OSM - as it is"):  # Give OSM priority
-                    buildings.geometry[ovrlp_bldg_index] = \
+                    buildings.loc[ovrlp_bldg_index, geometry_column] = \
                         buildings.geometry[ovrlp_bldg_index].difference(buildings.geometry[building_index])
                 elif (buildings.height_ag[building_index] + buildings.height_bg[building_index]) <= \
                         (buildings.height_ag[ovrlp_bldg_index] + buildings.height_bg[ovrlp_bldg_index]):
-                    buildings.geometry[building_index] = \
-                        buildings.geometry[building_index].difference(
-                            buildings.geometry[ovrlp_bldg_index])
+                    buildings.loc[building_index, geometry_column] = \
+                        buildings.geometry[building_index].difference(buildings.geometry[ovrlp_bldg_index])
                 elif (buildings.height_ag[building_index] + buildings.height_bg[building_index]) > \
                         (buildings.height_ag[ovrlp_bldg_index] + buildings.height_bg[ovrlp_bldg_index]):
-                    buildings.geometry[ovrlp_bldg_index] = \
-                        buildings.geometry[ovrlp_bldg_index].difference(
-                            buildings.geometry[building_index])
+                    buildings.loc[ovrlp_bldg_index, geometry_column] = \
+                        buildings.geometry[ovrlp_bldg_index].difference(buildings.geometry[building_index])
 
     return buildings
 
@@ -572,6 +574,11 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
         # reassign building names to account for exploded MultiPolygons
         shapefile["name"] = ["B" + str(x + 1000) for x in range(shapefile.shape[0])]
 
+    # Buildings that start above the ground were marked with negative depths for the overlap check
+    # above. CEA cannot simulate those, so they become buildings without a basement.
+    floating = (shapefile["height_bg"] < 0) | (shapefile["floors_bg"] < 0)
+    shapefile.loc[floating, ["height_bg", "floors_bg"]] = 0
+
     return shapefile
 
 
@@ -602,12 +609,12 @@ def flatten_geometries(gdf):
     gdf = gdf.loc[~ gdf.geometry.geom_type.isin(DISCARDED_GEOMETRY_TYPES)]
     # Process individual geometries in MultiPolygon and GeometryCollection data types
     for i in gdf.loc[gdf.index.get_level_values(1) == 1].index.get_level_values(0):
+        parts = gdf.loc[gdf.index.get_level_values(0) == i]
+        merged = unary_union(list(parts.geometry))
         # if polygons can be joined into one Polygon, keep the joined Polygon
-        if unary_union(list(gdf.loc[gdf.index.get_level_values(0) == i].geometry)) == 'Polygon':
-            gdf.loc[gdf.index.get_level_values(0) == i].geometry = unary_union(list(
-                gdf.loc[gdf.index.get_level_values(0) == i].geometry))
-            gdf.drop(gdf.loc[(gdf.index.get_level_values(0) == i) &
-                             (gdf.index.get_level_values(1) == 0)].index, inplace=True)
+        if merged.geom_type == 'Polygon':
+            gdf.loc[parts.index[0], gdf.geometry.name] = merged
+            gdf.drop(parts.index[1:], inplace=True)
         # else, polygons are joined into a MultiPolygon, keep each individual Polygon as a separate building
     # rename buildings
     gdf = gdf.reset_index(drop=True)

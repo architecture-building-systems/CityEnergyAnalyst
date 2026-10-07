@@ -23,10 +23,6 @@ BUILDING_B = box(8.5141, 47.1760, 8.5144, 47.1763)
 BUILDING_C = box(8.5147, 47.1760, 8.5150, 47.1763)
 
 
-# fix_overlapping_geoms edits geometries through chained assignment, which pandas 3 silently drops
-OVERLAP_NOOP = pytest.mark.xfail(strict=True, reason="overlapping geometries are never cut, see #4104")
-
-
 def _osm(geometries, **columns):
     return osm_buildings(geometries, **columns)
 
@@ -54,6 +50,15 @@ class TestCleanGeometries:
         output = zone_helper.clean_geometries(raw_geometries)
         assert len(output) == 3
         assert set(output.geometry.geom_type) == {"Polygon"}
+
+    def test_touching_parts_of_one_feature_are_merged_into_one_building(self):
+        raw_geometries = gpd.GeoDataFrame({"geometry": [
+            GeometryCollection([box(0, 0, 1, 1), box(1, 0, 2, 1)]),
+            MultiPolygon([box(5, 5, 6, 6), box(8, 8, 9, 9)]),
+        ]})
+        output = zone_helper.flatten_geometries(raw_geometries)
+        assert len(output) == 3
+        assert sorted(output.geometry.area) == [1.0, 1.0, 2.0]
 
     def test_flatten_geometries_drops_points_and_lines(self):
         raw_geometries = gpd.GeoDataFrame({"geometry": [Point(0, 0), LineString([(0, 0), (1, 1)]), box(0, 0, 1, 1)]})
@@ -169,11 +174,18 @@ class TestAssignAttributesFromOsm:
         assert result["use_type1"].iloc[0] == "SCHOOL"
         assert result["category"].iloc[0] == "yes"
 
-    def test_minimum_level_columns_are_accepted(self):
-        result = _assign(_osm([BUILDING_A], **{"building:levels": ["3"], "building:min_level": ["1"],
-                                                "min_height": ["2"]}))
-        assert result["floors_ag"].iloc[0] == 3
-        assert {"height_bg", "floors_bg"} <= set(result.columns)
+    def test_minimum_level_marks_the_building_as_starting_above_ground(self):
+        result = _assign(_osm([BUILDING_A, BUILDING_B], **{"building:levels": ["3", "3"],
+                                                            "building:min_level": ["2", None]}))
+        assert (result["floors_bg"].iloc[0], result["height_bg"].iloc[0]) == (-2, -2 * constants.H_F)
+        # buildings without a minimum level keep the configured defaults
+        assert (result["floors_bg"].iloc[1], result["height_bg"].iloc[1]) == (1, 3.0)
+
+    def test_minimum_height_overrides_the_height_below_ground(self):
+        result = _assign(_osm([BUILDING_A, BUILDING_B], **{"building:levels": ["3", "3"],
+                                                            "min_height": ["5", None]}))
+        assert result["height_bg"].iloc[0] == -5
+        assert result["height_bg"].iloc[1] == 3.0
 
 
 class TestAssignAttributesAdditional:
@@ -210,7 +222,6 @@ class TestFixOverlappingGeoms:
         result = zone_helper.fix_overlapping_geoms(buildings.copy(), self._zone())
         assert result.geometry.equals(buildings.geometry)
 
-    @OVERLAP_NOOP
     def test_taller_building_cuts_the_lower_one(self):
         low = box(8.5135, 47.1760, 8.5140, 47.1763)
         tall = box(8.5138, 47.1760, 8.5143, 47.1763)
@@ -219,7 +230,6 @@ class TestFixOverlappingGeoms:
         assert result.geometry.iloc[0].area < low.area
         assert not result.geometry.iloc[0].intersects(tall.buffer(-1e-9))
 
-    @OVERLAP_NOOP
     def test_osm_building_takes_priority_over_assumed_one(self):
         first = box(8.5135, 47.1760, 8.5140, 47.1763)
         second = box(8.5138, 47.1760, 8.5143, 47.1763)
@@ -229,7 +239,6 @@ class TestFixOverlappingGeoms:
         assert result.geometry.iloc[0].equals(first)
         assert result.geometry.iloc[1].area < second.area
 
-    @OVERLAP_NOOP
     def test_osm_priority_works_in_either_order(self):
         first = box(8.5135, 47.1760, 8.5140, 47.1763)
         second = box(8.5138, 47.1760, 8.5143, 47.1763)
@@ -367,6 +376,15 @@ class TestPolygonToZone:
 
         assert len(zone) == 2
 
+    def test_floating_buildings_have_no_basement_in_the_zone(self, monkeypatch):
+        buildings = _osm([BUILDING_A, BUILDING_B], **{"building:levels": ["3", "3"], "building:min_level": ["2", None]})
+        monkeypatch.setattr(zone_helper.osmnx, "features_from_polygon", fake_features_from_polygon([buildings]))
+
+        zone = zone_helper.polygon_to_zone(None, 1, None, 3.0, False, False, self._polygon())
+
+        assert list(zone["floors_bg"]) == [0, 1]
+        assert list(zone["height_bg"]) == [0.0, 3.0]
+
     def test_overlap_fixing_can_be_requested_without_parts(self, monkeypatch):
         buildings = _osm([box(8.5135, 47.1760, 8.5140, 47.1763), box(8.5138, 47.1760, 8.5143, 47.1763)],
                          **{"building:levels": ["2", "8"]})
@@ -397,7 +415,6 @@ class TestMain:
         assert list(zone["const_type"]) == ["STANDARD1", "STANDARD2", "STANDARD1"]
         assert list(zone["floors_ag"]) == [3, 5, 8]
 
-    @pytest.mark.xfail(strict=True, reason="height_vd is not written for user-supplied heights, see #4103")
     def test_user_assumptions_override_osm_attributes(self, scenario, monkeypatch):
         config, locator = scenario
         config.zone_helper.include_building_parts = False
