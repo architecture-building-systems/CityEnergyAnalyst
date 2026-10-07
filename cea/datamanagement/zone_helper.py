@@ -85,6 +85,15 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
             else:
                 shapefile[column] = 0
 
+        # A building part that starts above the ground (`min_height` in metres, or `building:min_level`
+        # skipped levels) is modelled as a void deck: the open height beneath it. `height_ag` stays the
+        # OSM top height, which already includes the void. `min_height` wins over `min_level`, and the
+        # missing values were coerced to 0 above, so only positive values are meaningful.
+        min_level = shapefile['building:min_level']
+        min_height = shapefile['min_height']
+        void_height = min_height.where(min_height > 0, min_level * constants.H_F).astype(float)
+        skipped_levels = min_level.where(min_level > 0, (void_height / constants.H_F).round()).astype(int)
+
         # get the median from the area
         data_floors_sum = [x + y for x, y in zip([parse_building_floors(x) for x in shapefile['building:levels']],
                                                  [parse_building_floors(y) for y in shapefile['roof:levels']])]
@@ -121,42 +130,30 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
                                       ~shapefile['building:levels'].isna()]
             shapefile['height'] = shapefile[['building:levels', 'roof:levels']].sum(axis=1) * constants.H_F
 
+        # `building:levels` of a part counts the levels skipped beneath it, which CEA does not enclose
         shapefile["floors_ag"] = [int(x) if not np.isnan(x) else data_osm_floors_joined for x in
                                   shapefile['building:levels'] + shapefile['roof:levels']]
+        shapefile["floors_ag"] = (shapefile["floors_ag"] - skipped_levels).clip(lower=1)
 
         if 'height' in list_of_columns:
             #  Replaces 'nan' values with CEA assumption
-            shapefile["height_ag"] = shapefile["height"].fillna(shapefile["floors_ag"] * constants.H_F).astype(float)
+            shapefile["height_ag"] = shapefile["height"].fillna(
+                shapefile["floors_ag"] * constants.H_F + void_height).astype(float)
             #  Replaces values of height = 0 with CEA assumption
             # TODO: Check whether buildings with height between 0 and 1 meter are actually mostly underground
             #  These might not be errors, but rather partially or fully underground buildings. This should be verified.
             #  Also, the radiation script cannot process buildings with height 0 m at the moment.
             #  Once the radiation script can process underground buildings, this step might need to be revised.
-            shapefile["height_ag"] = shapefile["height_ag"].where(shapefile["height_ag"] != 0,
-                                                                  shapefile["floors_ag"] * constants.H_F).astype(float)
+            shapefile["height_ag"] = shapefile["height_ag"].where(
+                shapefile["height_ag"] != 0, shapefile["floors_ag"] * constants.H_F + void_height).astype(float)
         else:
-            shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F
+            shapefile["height_ag"] = shapefile["floors_ag"] * constants.H_F + void_height
 
-        # add fields for floors and height below ground
-        shapefile["height_bg"] = np.nan
-        shapefile["floors_bg"] = np.nan
-
-        # A minimum level or height means the building starts above the ground. It is recorded as a
-        # negative depth below ground so `fix_overlapping_geoms` can tell which buildings really share
-        # space; `polygon_to_zone` resets it to 0 afterwards because CEA cannot simulate negative depths.
-        # Missing values were coerced to 0 above, so only positive values are meaningful.
-        if 'building:min_level' in list_of_columns:
-            has_min_floor = shapefile["building:min_level"] > 0
-            shapefile.loc[has_min_floor, "floors_bg"] = -shapefile.loc[has_min_floor, "building:min_level"]
-            shapefile.loc[has_min_floor, "height_bg"] = shapefile.loc[has_min_floor, "floors_bg"] * constants.H_F
-        if 'min_height' in list_of_columns:
-            has_min_height = shapefile["min_height"] > 0
-            shapefile.loc[has_min_height, "height_bg"] = -shapefile.loc[has_min_height, "min_height"]
-        # add missing floors and height below ground
-        shapefile.loc[shapefile.height_bg.isna(), "height_bg"] = buildings_height_below_ground
-        shapefile.loc[shapefile.floors_bg.isna(), "floors_bg"] = buildings_floors_below_ground
-        shapefile["floors_bg"] = shapefile["floors_bg"].astype(int)
+        # OSM has no below ground information, so use the given values
+        shapefile["height_bg"] = buildings_height_below_ground
+        shapefile["floors_bg"] = buildings_floors_below_ground
     else:
+        void_height = 0.0
         shapefile['reference'] = "User - assumption"
         if buildings_height is None and buildings_floors is not None:
             shapefile["floors_ag"] = [buildings_floors] * no_buildings
@@ -174,7 +171,7 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
 
     # Always written, whichever branch produced the attributes, so the column is there for the user
     # to edit. 0 means the building is enclosed to the ground, which is the right default.
-    shapefile[VOID_HEIGHT_COLUMN] = 0.0
+    shapefile[VOID_HEIGHT_COLUMN] = void_height
 
     # Make the geometry plausible, for whichever branch produced it. This runs for both the
     # OSM path and the user-assumption path, because both can emit a building CEA then refuses
@@ -193,9 +190,12 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
     # The OSM path used to set `height_ag = floors_ag`, i.e. 1 m per floor. That satisfied the
     # old "at least 1 m" check arithmetically while producing a building no one could occupy,
     # and it is why OSM imports were full of 1 m storeys.
-    implausible = shapefile['height_ag'] < shapefile['floors_ag'] * MINIMUM_STOREY_HEIGHT_M
+    # The storeys only have the height above the void deck to share.
+    enclosed_height = shapefile['height_ag'] - shapefile[VOID_HEIGHT_COLUMN]
+    implausible = enclosed_height < shapefile['floors_ag'] * MINIMUM_STOREY_HEIGHT_M
     shapefile.loc[implausible, 'height_ag'] = (
-        shapefile.loc[implausible, 'floors_ag'] * constants.H_F).astype(float)
+        shapefile.loc[implausible, VOID_HEIGHT_COLUMN] + shapefile.loc[implausible, 'floors_ag'] * constants.H_F
+    ).astype(float)
 
     # add description
     if "description" in list_of_columns:
@@ -272,7 +272,8 @@ def fix_overlapping_geoms(buildings, zone):
             lower building's footprint-polygon.
 
     As a preprocessing step the OSM-information on "min_heights" and "min_levels" gets assigned to the building's
-    height and levels below ground (introduced in the zone-helper.assign_attributes() function) as negative values.
+    void deck height (introduced in the zone-helper.assign_attributes() function), so the vertical extent of a
+    building is from `height_vd` to `height_ag`.
     """
     # PREPROCESSING OF BUILDING ATTRIBUTES
     # get zone's geometry
@@ -334,8 +335,8 @@ def fix_overlapping_geoms(buildings, zone):
             for ovrlp_bldg_index in overlapping_buildings.index:
                 if ovrlp_bldg_index == building_index:
                     pass  # same building -> doesn't count as overlap
-                elif (buildings.height_ag[ovrlp_bldg_index] <= -buildings.height_bg[building_index]) or \
-                    (buildings.height_ag[building_index] <= -buildings.height_bg[ovrlp_bldg_index]):
+                elif (buildings.height_ag[ovrlp_bldg_index] <= buildings[VOID_HEIGHT_COLUMN][building_index]) or \
+                    (buildings.height_ag[building_index] <= buildings[VOID_HEIGHT_COLUMN][ovrlp_bldg_index]):
                     pass  # no vertical overlap
                 elif (buildings.reference[ovrlp_bldg_index] == "OSM - as it is") & \
                      (buildings.reference[building_index] != "OSM - as it is"):  # Give OSM priority
@@ -573,11 +574,6 @@ def polygon_to_zone(buildings_floors, buildings_floors_below_ground, buildings_h
         shapefile = flatten_geometries(shapefile)
         # reassign building names to account for exploded MultiPolygons
         shapefile["name"] = ["B" + str(x + 1000) for x in range(shapefile.shape[0])]
-
-    # Buildings that start above the ground were marked with negative depths for the overlap check
-    # above. CEA cannot simulate those, so they become buildings without a basement.
-    floating = (shapefile["height_bg"] < 0) | (shapefile["floors_bg"] < 0)
-    shapefile.loc[floating, ["height_bg", "floors_bg"]] = 0
 
     return shapefile
 
