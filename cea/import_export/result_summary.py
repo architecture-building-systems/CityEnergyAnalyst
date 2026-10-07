@@ -2040,7 +2040,7 @@ def get_building_year_standard_main_use_type(locator):
     return df
 
 
-def filter_by_year_range(df_typology, integer_year_start=None, integer_year_end=None):
+def filter_by_year_range(df_typology, integer_year_start=None, integer_year_end=None, scenario_df=None):
     """
     Filters rows in the DataFrame based on a year range.
 
@@ -2071,12 +2071,18 @@ def filter_by_year_range(df_typology, integer_year_start=None, integer_year_end=
 
     # Check if the filtered DataFrame is empty
     if filtered_df.empty:
-        raise ValueError("No buildings meet the selected criteria for the specified year range.")
+        years = (df_typology if scenario_df is None else scenario_df)['construction_year']
+        raise ValueError(
+            f"No buildings meet the selected criteria for the specified year range: none were built between "
+            f"{integer_year_start} and {integer_year_end}. Buildings in this scenario were built between "
+            f"{years.min()} and {years.max()}. Note that 'filter-buildings-by-year-start' and "
+            f"'filter-buildings-by-year-end' filter buildings by their year of construction."
+        )
 
     return filtered_df
 
 
-def filter_by_standard(df_typology, list_standard):
+def filter_by_standard(df_typology, list_standard, scenario_df=None):
     """
     Filters rows in the DataFrame based on whether the 'standard' column matches any item in list_standard.
 
@@ -2096,12 +2102,17 @@ def filter_by_standard(df_typology, list_standard):
 
     # Check if the filtered DataFrame is empty
     if filtered_df.empty:
-        raise ValueError("No buildings meet the selected criteria for the specified standards.")
+        available = ', '.join(sorted(
+            (df_typology if scenario_df is None else scenario_df)['construction_type'].astype(str).unique()))
+        raise ValueError(
+            "No buildings meet the selected criteria for the specified standards. "
+            f"Construction types of the buildings in this scenario: {available}."
+        )
 
     return filtered_df
 
 
-def filter_by_main_use(df_typology, list_main_use_type):
+def filter_by_main_use(df_typology, list_main_use_type, scenario_df=None):
     """
     Filters rows in the DataFrame based on whether the 'main_use_type' column matches any item in list_main_use_type.
 
@@ -2123,7 +2134,12 @@ def filter_by_main_use(df_typology, list_main_use_type):
 
     # Check if the filtered DataFrame is empty
     if filtered_df.empty:
-        raise ValueError("No buildings meet the selected criteria for the specified main use types.")
+        available = ', '.join(sorted(
+            (df_typology if scenario_df is None else scenario_df)['main_use_type'].astype(str).unique()))
+        raise ValueError(
+            "No buildings meet the selected criteria for the specified main use types. "
+            f"Main use types of the buildings in this scenario: {available}."
+        )
 
     return filtered_df
 
@@ -2882,21 +2898,42 @@ def copy_costs_to_summary(locator, summary_folder, list_buildings, network_name=
         return False, f"Error copying cost files: {str(e)}"
 
 
+def _selects_every_database_choice(database_csv_path, column, selected):
+    """Whether `selected` covers every `column` value of the archetype database at `database_csv_path`.
+
+    A blank multi-choice filter reaches here already expanded to every choice the database
+    offers (`MultiChoiceParameter.empty_means_all`), which is indistinguishable from the user
+    ticking all of them. Both mean "do not filter": applying the list with `isin()` instead
+    would drop every building whose value is missing from the database (e.g. a zone file
+    carrying `const_type` codes of a different database), which the user has no way to select.
+    """
+    try:
+        choices = pd.read_csv(database_csv_path, usecols=[column])[column].dropna().astype(str)
+    except (OSError, ValueError):
+        return False
+    # an empty database offers nothing to cover, so a selection is a real filter, not "everything"
+    return not choices.empty and set(choices).issubset({str(s) for s in selected})
+
+
 def filter_buildings(locator, list_buildings,
                      integer_year_start, integer_year_end, list_standard,
                      list_main_use_type, ratio_main_use_type):
-    df_buildings = get_building_year_standard_main_use_type(locator)
+    # no-match errors describe the whole scenario, not what earlier filters left of it
+    scenario_df = get_building_year_standard_main_use_type(locator)
+    df_buildings = scenario_df
     # Names: only filter if explicitly provided
     if list_buildings:
         df_buildings = filter_by_building_names(df_buildings, list_buildings)
     # Year range: always safe (defaults handled inside)
-    df_buildings = filter_by_year_range(df_buildings, integer_year_start, integer_year_end)
-    # Construction type: only if provided
-    if list_standard:
-        df_buildings = filter_by_standard(df_buildings, list_standard)
-    # Main use type: only if provided
-    if list_main_use_type:
-        df_buildings = filter_by_main_use(df_buildings, list_main_use_type)
+    df_buildings = filter_by_year_range(df_buildings, integer_year_start, integer_year_end, scenario_df)
+    # Construction type: only if provided, and only if it actually narrows the selection
+    if list_standard and not _selects_every_database_choice(
+            locator.get_database_archetypes_construction_type(), 'const_type', list_standard):
+        df_buildings = filter_by_standard(df_buildings, list_standard, scenario_df)
+    # Main use type: only if provided, and only if it actually narrows the selection
+    if list_main_use_type and not _selects_every_database_choice(
+            locator.get_database_archetypes_use_type(), 'use_type', list_main_use_type):
+        df_buildings = filter_by_main_use(df_buildings, list_main_use_type, scenario_df)
     # Main use ratio: only if provided (defaults to 0 if None/empty)
     if ratio_main_use_type is not None:
         df_buildings = filter_by_main_use_ratio(df_buildings, ratio_main_use_type)

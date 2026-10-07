@@ -40,6 +40,9 @@ def epw_to_dataframe(weather_path):
 
 def epw_reader(weather_path):
     epw_data = epw_to_dataframe(weather_path)
+    if epw_data.empty:
+        raise ValueError(f"The weather file contains no hourly data: {weather_path}. "
+                         "Import or fetch the weather file again (e.g. with Weather Helper).")
 
     year = epw_data["year"][0]
     # Create date range from epw data
