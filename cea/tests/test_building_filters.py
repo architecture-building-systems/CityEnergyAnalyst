@@ -67,6 +67,12 @@ def test_a_partial_use_type_selection_still_filters(locator):
     assert select(locator, [], use_types=['OFFICE']) == ['B2']
 
 
+def test_a_selection_against_an_empty_database_still_filters(locator):
+    # nothing to cover is not "everything selected"
+    pd.DataFrame({'const_type': []}).to_csv(locator.get_database_archetypes_construction_type(), index=False)
+    assert select(locator, ['SFH_A']) == ['B3']
+
+
 def test_no_match_names_the_construction_types_the_scenario_has(locator):
     with pytest.raises(ValueError, match='SFH_A, STANDARD4'):
         select(locator, ['MFH_A'])

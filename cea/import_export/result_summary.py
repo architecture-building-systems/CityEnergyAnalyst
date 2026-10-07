@@ -2909,7 +2909,8 @@ def _selects_every_database_choice(database_csv_path, column, selected):
         choices = pd.read_csv(database_csv_path, usecols=[column])[column].dropna().astype(str)
     except (OSError, ValueError):
         return False
-    return set(choices).issubset({str(s) for s in selected})
+    # an empty database offers nothing to cover, so a selection is a real filter, not "everything"
+    return not choices.empty and set(choices).issubset({str(s) for s in selected})
 
 
 def filter_buildings(locator, list_buildings,
