@@ -15,6 +15,7 @@ from cea.datamanagement import (
     terrain_helper,
     zone_helper,
 )
+from cea.tests.datamanagement.fakes import fake_terrain_tiles
 from cea.utilities import create_polygon
 
 # Zug site coordinates
@@ -22,12 +23,13 @@ POLYGON_COORDINATES = [(8.513465734818856, 47.178027239429234), (8.5154720271620
                        (8.515214535096632, 47.175496635565885), (8.513139577193424, 47.175600066313542),
                        (8.513465734818856, 47.178027239429234)]
 
+# Terrain tiles are served from memory too (see fakes.fake_terrain_tiles).
 # Recorded once against the real Overpass API (see scripts/record_osm_fixtures.py) for this
 # exact polygon, so the workflow doesn't depend on live network access in CI -- overpass-api.de
 # has repeatedly timed out from GitHub-hosted runners even though the API itself is fine.
 # The workflow calls osmnx.features_from_polygon / osmnx.graph_from_bbox in a fixed order for
 # a fixed input, so replaying the recorded calls by position reproduces the same run.
-FIXTURES_DIR = os.path.join(os.path.dirname(__file__), "fixtures", "osm_zug")
+FIXTURES_DIR = os.path.join(os.path.dirname(__file__), "..", "fixtures", "osm_zug")
 
 
 def _load_fixture(name, index):
@@ -67,7 +69,8 @@ class TestInputSetupWorkflowCase(unittest.TestCase):
         create_polygon.main(self.config)
         zone_helper.main(self.config)
         surroundings_helper.main(self.config)
-        terrain_helper.main(self.config)
+        with fake_terrain_tiles():
+            terrain_helper.main(self.config)
         streets_helper.main(self.config)
         archetypes_mapper.main(self.config)
 

@@ -1,6 +1,6 @@
 """One-off script: run the input-setup workflow for real against Overpass, recording
 every osmnx.features_from_polygon / osmnx.graph_from_bbox call (in order) to
-cea/tests/fixtures/osm_zug/ so test_inputs_setup_workflow.py can replay them offline.
+cea/tests/fixtures/osm_zug/ so cea/tests/datamanagement/test_inputs_setup_workflow.py can replay them offline.
 
 Not part of the test suite itself -- run manually whenever the recorded calls need
 refreshing (e.g. the workflow starts calling osmnx differently).

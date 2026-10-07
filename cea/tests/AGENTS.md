@@ -45,6 +45,14 @@ cea.api.pathway_validate_all_states(...)
 # Simulate cache.get / RedLock / cache.set failures without depending on Redis.
 ```
 
+### DO: Use `cea/tests/datamanagement/fakes.py` for helpers that call OSM or terrain tiles
+```python
+monkeypatch.setattr(zone_helper.osmnx, "features_from_polygon", fake_features_from_polygon([osm_buildings([...])]))
+with fake_terrain_tiles():
+    terrain_helper.main(config)
+```
+Integration workflows (`cea/tests/workflows/*.yml`) must not call network-backed helpers; cover those in unit tests.
+
 ### DON'T: Patch a class at module import time
 ```python
 # Bad: leaks into every test that runs afterwards, in any file.
