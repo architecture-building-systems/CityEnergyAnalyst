@@ -60,6 +60,23 @@ class TestCleanGeometries:
         assert len(output) == 3
         assert sorted(output.geometry.area) == [1.0, 1.0, 2.0]
 
+    def test_only_the_touching_parts_of_a_feature_are_merged(self):
+        raw_geometries = gpd.GeoDataFrame({"geometry": [
+            MultiPolygon([box(0, 0, 1, 1), box(1, 0, 2, 1), box(8, 8, 9, 9)]),
+        ]})
+        output = zone_helper.flatten_geometries(raw_geometries)
+        assert sorted(output.geometry.area) == [1.0, 2.0]
+
+    def test_osm_style_index_is_not_mistaken_for_part_numbers(self):
+        # features_from_polygon is indexed by (element, id); an OSM id of 1 must not look like part 1, which
+        # would merge the touching but unrelated ways
+        index = pd.MultiIndex.from_tuples([("way", 1), ("way", 2), ("relation", 1)], names=["element", "id"])
+        raw_geometries = gpd.GeoDataFrame({"geometry": [box(0, 0, 1, 1), box(1, 0, 2, 1), box(9, 9, 10, 10)]},
+                                          index=index)
+        output = zone_helper.flatten_geometries(raw_geometries)
+        assert len(output) == 3
+        assert sorted(output.geometry.area) == [1.0, 1.0, 1.0]
+
     def test_flatten_geometries_drops_points_and_lines(self):
         raw_geometries = gpd.GeoDataFrame({"geometry": [Point(0, 0), LineString([(0, 0), (1, 1)]), box(0, 0, 1, 1)]})
         output = zone_helper.flatten_geometries(raw_geometries)

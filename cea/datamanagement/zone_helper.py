@@ -599,19 +599,21 @@ def flatten_geometries(gdf):
     from shapely.ops import unary_union
     DISCARDED_GEOMETRY_TYPES = ['Point', 'LineString']
 
-    # Explode MultiPolygons and GeometryCollections
-    gdf = gdf.explode(index_parts=True)
+    # Explode MultiPolygons and GeometryCollections. The index is reset first because OSM data comes with a
+    # (element, id) MultiIndex, and the part number has to be the only level added by `explode`.
+    gdf = gdf.reset_index(drop=True).explode(index_parts=True)
     # Drop geometry types that cannot be processed by CEA
     gdf = gdf.loc[~ gdf.geometry.geom_type.isin(DISCARDED_GEOMETRY_TYPES)]
     # Process individual geometries in MultiPolygon and GeometryCollection data types
-    for i in gdf.loc[gdf.index.get_level_values(1) == 1].index.get_level_values(0):
+    parts_per_feature = gdf.groupby(level=0).size()
+    for i in parts_per_feature[parts_per_feature > 1].index:
         parts = gdf.loc[gdf.index.get_level_values(0) == i]
         merged = unary_union(list(parts.geometry))
-        # if polygons can be joined into one Polygon, keep the joined Polygon
-        if merged.geom_type == 'Polygon':
-            gdf.loc[parts.index[0], gdf.geometry.name] = merged
-            gdf.drop(parts.index[1:], inplace=True)
-        # else, polygons are joined into a MultiPolygon, keep each individual Polygon as a separate building
+        # touching polygons are joined into one, and polygons that stay apart remain separate buildings
+        components = list(getattr(merged, 'geoms', [merged]))
+        if len(components) < len(parts):
+            gdf.loc[parts.index[:len(components)], gdf.geometry.name] = components
+            gdf.drop(parts.index[len(components):], inplace=True)
     # rename buildings
     gdf = gdf.reset_index(drop=True)
 
