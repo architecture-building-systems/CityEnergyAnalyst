@@ -464,7 +464,11 @@ def verify_building_standards(building_typology_df, db_standards):
 
     if not typology_standards.issubset(db_standards):
         diff = typology_standards.difference(db_standards)
-        raise ValueError(f'The following standards are not found in the database: {", ".join(diff)}')
+        raise ValueError(
+            f'The following standards are not found in the database: {", ".join(sorted(diff))}. '
+            f'Standards available in the database: {", ".join(sorted(db_standards))}. '
+            "Either change the buildings' construction type (const_type) in the zone geometry to one of these, "
+            'or use a database that defines the missing standards.')
 
 
 def main(config: cea.config.Configuration):

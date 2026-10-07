@@ -638,7 +638,9 @@ def calc_surface_azimuth(xdir, ydir, B):
     surface_azimuth = np.where((xdir < 0) & (ydir >= 0), 360 + teta_z, surface_azimuth)  # (xdir,ydir) = (-,+)
     surface_azimuth = np.where((xdir >= 0) & (ydir < 0), 180 + teta_z, surface_azimuth)  # (xdir,ydir) = (+,-)
 
-    if np.size(surface_azimuth) == 1:
+    # only scalar inputs give a scalar back: a one-element array (a surface with a single sensor)
+    # stays an array, and `float()` rejects it anyway
+    if np.ndim(surface_azimuth) == 0:
         return float(surface_azimuth)
     return surface_azimuth  # degree
 

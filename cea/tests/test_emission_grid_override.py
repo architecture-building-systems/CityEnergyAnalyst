@@ -215,3 +215,16 @@ def test_csv_path_without_column_name_raises():
     config = _make_config("/some/path.csv", None)
     with pytest.raises(ValueError, match="csv_carbon_intensity_column_name"):
         _load_grid_emission_intensity_override(config)
+
+
+def test_non_utf8_file_reports_how_to_fix_it(tmp_path):
+    # e.g. Excel's "Unicode Text" export: neither the header nor pandas' own decode error
+    # ("'utf-8' codec can't decode byte ...") tells the user what to do about it
+    path = os.path.join(str(tmp_path), "grid.csv")
+    pd.DataFrame({"Carbon intensity": np.arange(HOURS_IN_YEAR, dtype=float)}).to_csv(
+        path, index=False, encoding="utf-16")
+    config = _make_config(path, "Carbon intensity")
+
+    with pytest.raises(ValueError, match="not UTF-8 encoded") as excinfo:
+        _load_grid_emission_intensity_override(config)
+    assert str(tmp_path) not in str(excinfo.value)

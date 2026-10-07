@@ -38,6 +38,13 @@ def _normalize_column_name(name: str) -> str:
 
 _CSV_DELIMITER_CANDIDATES = ',;\t|'
 
+# UnicodeDecodeError is a ValueError, not an OSError, so it needs its own handler; pandas' own
+# message ("'utf-8' codec can't decode byte ...") gives the user nothing to act on.
+_NOT_UTF8_MESSAGE = (
+    "Could not read '{basename}': the file is not UTF-8 encoded. "
+    "Save it again as 'CSV UTF-8 (Comma delimited)' and re-upload it."
+)
+
 
 def _sniff_csv_delimiter(csv_path: str) -> str:
     """Detect the field delimiter of `csv_path` from a sample of its own bytes.
@@ -93,6 +100,8 @@ def _resolve_grid_intensity_column(csv_path: str, requested_name: str) -> tuple[
         raise PermissionError(
             f"Permission denied reading '{basename}'. It may be open in another program."
         ) from e
+    except UnicodeDecodeError as e:
+        raise ValueError(_NOT_UTF8_MESSAGE.format(basename=basename)) from e
     except (EmptyDataError, ParserError, OSError) as e:
         raise ValueError(f"Could not parse '{basename}': {e}") from e
 
@@ -137,7 +146,8 @@ def _load_grid_emission_intensity_override(config: Configuration):
         return False, None
     if not intensity_column_name:
         raise ValueError(
-            "If grid_carbon_intensity_dataset_csv is provided, csv_carbon_intensity_column_name must also be provided."
+            "If grid_carbon_intensity_dataset_csv is provided, csv_carbon_intensity_column_name must also be provided. "
+            f"Select the column of '{os.path.basename(intensity_csv_path)}' that holds the grid carbon intensity."
         )
 
     basename = os.path.basename(intensity_csv_path)
@@ -149,6 +159,9 @@ def _load_grid_emission_intensity_override(config: Configuration):
             sep=delimiter,
             usecols=[resolved_column_name],
         )[resolved_column_name]
+    except UnicodeDecodeError as e:
+        # the header decoded but a later row did not
+        raise ValueError(_NOT_UTF8_MESSAGE.format(basename=basename)) from e
     except (EmptyDataError, ParserError, OSError) as e:
         raise ValueError(
             f"Could not parse '{basename}' with column '{resolved_column_name}': {e}"
@@ -741,9 +754,17 @@ def _build_feedstock_policies(ref_yr, tar_yr, tar_ef, electricity_carrier_name):
         return {electricity_carrier_name: (ref_yr, tar_yr, tar_ef)}
     if ref_yr is None and tar_yr is None and tar_ef is None:
         return None
+    values = {
+        'grid_decarbonise_reference_year': ref_yr,
+        'grid_decarbonise_target_year': tar_yr,
+        'grid_decarbonise_target_emission_factor': tar_ef,
+    }
+    missing = ', '.join(name for name, value in values.items() if value is None)
+    provided = ', '.join(name for name, value in values.items() if value is not None)
     raise ValueError(
         'If one of grid_decarbonise_reference_year, grid_decarbonise_target_year, or '
-        'grid_decarbonise_target_emission_factor is set, all must be set.'
+        'grid_decarbonise_target_emission_factor is set, all must be set. '
+        f'Missing: {missing}. Either set it, or clear {provided} to skip grid decarbonisation.'
     )
 
 

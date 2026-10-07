@@ -395,6 +395,12 @@ def building_2d_to_3d(zone_df: gpd.GeoDataFrame,
     # merge architecture wwr data into zone buildings dataframe with "name" column,
     # because we want to use the void deck when creating the building solid.
     zone_building_names = zone_buildings_df.index.values
+    missing_envelope = sorted(set(zone_building_names) - set(architecture_wwr_df.index))
+    if missing_envelope:
+        raise ValueError(
+            f"The following buildings are in the zone geometry but have no envelope properties: "
+            f"{', '.join(map(str, missing_envelope))}. Run Archetypes Mapper to assign building properties "
+            "to all buildings before running this script.")
     zone_building_solid_list, zone_elevations = calc_building_solids(zone_buildings_df, zone_simplification,
                                                                      elevation_map, num_processes)
 
@@ -985,7 +991,7 @@ def tree_geometry_generator(tree_df, terrain_raster):
         surfaces = [
             fetch.faces_frm_solid(solid) for (solid, _) in pool.starmap(
                 process_geometries, (
-                    (geom, elevation_map, (0, 1), z) for geom, z in zip(tree_df['geometry'], tree_df['height_tc'])
+                    (geom, elevation_map, [0, z]) for geom, z in zip(tree_df['geometry'], tree_df['height_tc'])
                 )
             )
         ]
