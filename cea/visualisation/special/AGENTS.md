@@ -33,6 +33,17 @@ timeline_df = _apply_cutoff_year(timeline_df, cutoff_year)
 period_start, period_end = _resolve_effective_year_bounds(context, cutoff_year)
 ```
 
+### DO: Size Sankey batches through `sankey_scale.scale_figures`
+```python
+scale_figures([fig for each what-if], unit_label)  # one px-per-unit scale for the batch
+```
+Equal flows must draw at equal width across figures. Plotly's scale depends on node
+padding and per-column node counts, not just the total, so never set a Sankey's
+`height` by hand: `sankey_scale` solves it exactly (250 px minimum wins over 750 px
+maximum, for the plot tool) and records `layout.meta.sankey_scale`, which the GUI canvas
+reuses to keep the Sankeys of a card, and of compare columns, at one scale within the card
+height — no minimum there (`sankeyScale.js` mirrors the model — keep the two in step).
+
 ### DON'T: Route pathway plots through plot_input_processor/result_summary export files
 ```python
 # Avoid this for pathway plots:
@@ -42,4 +53,5 @@ period_start, period_end = _resolve_effective_year_bounds(context, cutoff_year)
 ## Related Files
 - pathway_emission_timeline.py - Dedicated pathway timeline plot entry.
 - emission_timeline.py - Shared timeline figure behaviour and styling.
+- sankey_scale.py - Shared vertical scale for energy and cost Sankey batches.
 - ../../datamanagement/district_pathways/pathway_emissions_timeline.py - Pathway timeline CSV generation.
