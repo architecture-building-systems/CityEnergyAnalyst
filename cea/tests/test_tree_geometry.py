@@ -35,3 +35,12 @@ def test_each_tree_becomes_a_closed_set_of_surfaces():
     assert len(surfaces) == 2
     # a box extruded from the ground to the canopy top: 4 sides + top + bottom
     assert all(len(faces) == 6 for faces in surfaces)
+
+
+def test_a_tree_of_no_height_is_skipped():
+    trees = gpd.GeoDataFrame(
+        {'height_tc': [0.0, 6.0]},
+        geometry=[box(40, 40, 44, 44), box(60, 60, 63, 63)],
+        crs=f'EPSG:{EPSG}',
+    )
+    assert len(tree_geometry_generator(trees, flat_terrain())) == 1

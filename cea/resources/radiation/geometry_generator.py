@@ -984,6 +984,9 @@ def tree_geometry_generator(tree_df, terrain_raster):
 
     elevation_map = ElevationMap.read_raster(terrain_raster)
 
+    # a tree of no height is nothing to cast a shadow, and a zero-height loft cannot close into a solid
+    tree_df = tree_df[tree_df['height_tc'] > Z_LEVEL_TOLERANCE_M]
+
     from multiprocessing.pool import Pool
     from multiprocessing import cpu_count
 

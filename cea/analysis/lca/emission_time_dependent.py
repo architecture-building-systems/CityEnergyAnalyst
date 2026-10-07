@@ -363,14 +363,7 @@ def total_yearly(config: Configuration) -> None:
         tar_yr = emissions_cfg.grid_decarbonise_target_year
         tar_ef = emissions_cfg.grid_decarbonise_target_emission_factor
 
-        if ref_yr is not None and tar_yr is not None and tar_ef is not None: # all exist
-            feedstock_policies_arg = {electricity_carrier(locator): (ref_yr, tar_yr, tar_ef)}
-        elif ref_yr is None and tar_yr is None and tar_ef is None: # all None
-            feedstock_policies_arg = None
-        else:
-            raise ValueError(
-                "If one of grid_decarbonise_reference_year, grid_decarbonise_target_year, or grid_decarbonise_target_emission_factor is set, all must be set."
-            )
+        feedstock_policies_arg = _build_feedstock_policies(ref_yr, tar_yr, tar_ef, electricity_carrier(locator))
         timeline.fill_operational_emissions(
             feedstock_policies=feedstock_policies_arg
         )

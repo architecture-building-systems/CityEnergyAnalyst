@@ -228,3 +228,9 @@ def test_non_utf8_file_reports_how_to_fix_it(tmp_path):
     with pytest.raises(ValueError, match="not UTF-8 encoded") as excinfo:
         _load_grid_emission_intensity_override(config)
     assert str(tmp_path) not in str(excinfo.value)
+
+
+def test_partial_decarbonisation_settings_name_what_is_missing():
+    from cea.analysis.lca.emission_time_dependent import _build_feedstock_policies
+    with pytest.raises(ValueError, match="Missing: grid_decarbonise_target_emission_factor"):
+        _build_feedstock_policies(2025, 2040, None, 'GRID')

@@ -81,3 +81,9 @@ def test_no_match_names_the_construction_types_the_scenario_has(locator):
 def test_an_empty_year_range_reports_the_years_the_scenario_has(locator):
     with pytest.raises(ValueError, match='between 1965 and 1998'):
         select(locator, [], year_start=2025, year_end=2100)
+
+
+def test_no_match_reports_the_whole_scenario_not_what_earlier_filters_left(locator):
+    # the year filter leaves only B3 (SFH_A); B1/B2 (STANDARD4) are still in the scenario
+    with pytest.raises(ValueError, match='SFH_A, STANDARD4'):
+        select(locator, ['MFH_A'], year_start=1990)
