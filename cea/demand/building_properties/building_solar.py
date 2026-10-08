@@ -208,7 +208,7 @@ def get_thermal_resistance_surface(prop_envelope, weather_data):
     # theta_ss is the arithmetic average of the surface temperature and the sky temperature, in °C.
         # assume the surface temperature is equal to the outdoor air temperature
     temp_s_prev = np.array(
-        [weather_data['drybulb_C'].values[0]] + list(weather_data['drybulb_C'].values[0:HOURS_IN_YEAR - 1]))
+        [weather_data['drybulb_C'].values[-1]] + list(weather_data['drybulb_C'].values[0:HOURS_IN_YEAR - 1]))
         # generate an array of 0.5 * (sky_temp(t) + air_temp(t-1))
     theta_ss = 0.5 * (weather_data['skytemp_C'].values + temp_s_prev)
 
