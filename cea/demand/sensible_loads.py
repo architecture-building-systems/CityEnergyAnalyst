@@ -89,11 +89,8 @@ def calc_I_rad(t, tsd: TimeSeriesData, bpr: BuildingPropertiesRow):
         I_rad: vector solar radiation re-irradiated to the sky.
     """
 
-    temp_s_prev = tsd.rc_model_temperatures.theta_c[t - 1]
-    if np.isnan(tsd.rc_model_temperatures.theta_c[t - 1]):
-        temp_s_prev = tsd.weather.T_ext[t - 1]
-
     # theta_ss is the arithmetic average of the surface temperature and the sky temperature, in °C.
+    temp_s_prev = tsd.weather.T_ext[t - 1]  # assume the surface temperature is equal to the outdoor air temperature
     theta_ss = 0.5 * (tsd.weather.T_sky[t] + temp_s_prev)  # [see 11.4.6 in ISO 13790]
 
     # delta_theta_er is the average difference between outdoor air temperature and sky temperature

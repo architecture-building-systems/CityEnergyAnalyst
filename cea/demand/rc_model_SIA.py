@@ -741,7 +741,7 @@ def calc_rc_model_temperatures_no_heating_cooling(bpr: BuildingPropertiesRow, ts
 
 def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr: BuildingPropertiesRow, tsd: TimeSeriesData, t: int, config):
     # calculate node temperatures of RC model
-    theta_m_t_1 = tsd.rc_model_temperatures.theta_m[t - 1]
+    theta_m_t_1 = tsd.rc_model_temperatures.theta_m_t[t - 1]
     if np.isnan(theta_m_t_1):
         theta_m_t_1 = tsd.weather.T_ext[t - 1]
 
@@ -766,7 +766,7 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr: BuildingPropertiesRow, 
     a_w = bpr.envelope.Awin_ag
     c_m = bpr.rc_model.Cm / 3600  # (Wh/K) SIA 2044 unit is Wh/K, ISO unit is J/K
 
-    T_int, theta_c, theta_m, theta_o, theta_ea, theta_ec, theta_em, h_ea, h_ec, h_em, h_op_m \
+    T_int, theta_c, theta_m, theta_m_t, theta_o, theta_ea, theta_ec, theta_em, h_ea, h_ec, h_em, h_op_m \
         = _calc_rc_model_temperatures(Ea, El, Epro, Htr_op, Htr_w, I_sol, Qs, T_ext, a_m, a_t, a_w, c_m, m_ve_inf,
                                                                      m_ve_mech, m_ve_window, phi_hc_cv,
                                                                      phi_hc_r, theta_m_t_1, theta_ve_mech)
@@ -784,7 +784,7 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr: BuildingPropertiesRow, 
                             "between {} and {}.".format(bpr.name, t, round(T_int, 2), round(theta_c, 2),  round(theta_m, 2),
                                                          bpr.rc_model.Hs_ag, T_WARNING_LOW, T_WARNING_HIGH))
 
-    rc_model_temp = {'theta_m': theta_m, 'theta_c': theta_c, 'T_int': T_int, 'theta_o': theta_o, 'theta_ea': theta_ea,
+    rc_model_temp = {'theta_m': theta_m, 'theta_m_t': theta_m_t, 'theta_c': theta_c, 'T_int': T_int, 'theta_o': theta_o, 'theta_ea': theta_ea,
                      'theta_ec': theta_ec, 'theta_em': theta_em, 'h_ea': h_ea, 'h_ec': h_ec, 'h_em': h_em,
                      'h_op_m': h_op_m}
     return rc_model_temp
@@ -822,7 +822,7 @@ def _calc_rc_model_temperatures(Eaf, Elf, Epro, Htr_op, Htr_w, I_sol, Qs, T_ext,
     theta_c = calc_theta_c(phi_a, phi_c, theta_ea, theta_ec, theta_m, h_1, h_mc, h_ec, h_ea)
     T_int = calc_T_int(phi_a=phi_a, theta_ea=theta_ea, theta_c=theta_c, h_ac=h_ac, h_ea=h_ea)
     theta_o = calc_theta_o(T_int=T_int, theta_c=theta_c)
-    return T_int, theta_c, theta_m, theta_o, theta_ea, theta_ec, theta_em, h_ea, h_ec, h_em, h_op_m
+    return T_int, theta_c, theta_m, theta_m_t, theta_o, theta_ea, theta_ec, theta_em, h_ea, h_ec, h_em, h_op_m
 
 
 def calc_rc_model_temperatures_heating(phi_hc, bpr: BuildingPropertiesRow, tsd: TimeSeriesData, t: int, config):

@@ -467,7 +467,10 @@ class RCModelTemperatures:
     """Internal air temperature [C]"""
 
     theta_m: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Temperature of the thermal mass node (RC model) [C]"""
+    """Average temperature of the thermal mass node (RC model) during timestep t [C]"""
+
+    theta_m_t: npt.NDArray[np.float64] = field(default_factory=empty_array)
+    """Temperature of the thermal mass node (RC model) at the end of timestep t [C]"""
 
     theta_c: npt.NDArray[np.float64] = field(default_factory=empty_array)
     """Temperature of the surface node (RC model) [C]"""
