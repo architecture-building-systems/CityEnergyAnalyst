@@ -858,6 +858,9 @@ class WhatIfNameParameter(StringParameter):
         Validate and encode what-if name.
         Raises ValueError if name contains invalid characters or collides with existing scenario.
         """
+        if isinstance(value, (list, tuple, set, dict)):
+            # `str()` below would turn a list into a folder literally named "['baseline']"
+            raise ValueError(f"What-if name must be a single name, got {type(value).__name__}: {value}")
         if not str(value) or str(value).strip() == '':
             if self.nullable:
                 return ''
@@ -922,6 +925,9 @@ class NetworkLayoutNameParameter(StringParameter):
         Validate and encode network name.
         Raises ValueError if name contains invalid characters or collides with existing network.
         """
+        if isinstance(value, (list, tuple, set, dict)):
+            # `str()` below would turn a list into a folder literally named "['network']"
+            raise ValueError(f"Network name must be a single name, got {type(value).__name__}: {value}")
         if not value or str(value).strip() == '':
             if self.nullable:
                 return ''

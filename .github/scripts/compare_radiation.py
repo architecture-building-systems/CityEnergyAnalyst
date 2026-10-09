@@ -130,6 +130,9 @@ def compare(artifacts_dir: Path) -> str:
         "- **Area Δ:** (other - ref) / ref.",
     ])
     lines = ["## Cross-OS radiation comparison", "", intro, ""]
+    if not artifacts_dir.is_dir():
+        # download-artifact creates nothing when no job uploaded outputs (e.g. unit tests failed, so integration was skipped)
+        return "\n".join(lines + ["No radiation artifacts were uploaded (integration tests did not run); nothing to compare."])
     oses = sorted(p.name.removeprefix("radiation-") for p in artifacts_dir.iterdir() if p.is_dir())
     ref_root = artifacts_dir / f"radiation-{REFERENCE_OS}"
     if not ref_root.is_dir():

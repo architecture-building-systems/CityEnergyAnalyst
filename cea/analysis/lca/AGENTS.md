@@ -290,6 +290,8 @@ hourly.operational_emission_timeline_extended                 # pd.DataFrame wit
   with no comma to split on, the whole header line silently becomes one garbled column name, so
   the user sees a single nonsensical "column not found" option instead of a clear signal that
   the delimiter is wrong.
+- A file that isn't UTF-8 raises `UnicodeDecodeError`, which is a `ValueError` and *not* an
+  `OSError`/`ParserError`: both reads catch it separately and raise `_NOT_UTF8_MESSAGE`.
 - `csv-carbon-intensity-column-name`'s config type is `CsvColumnNameParameter`
   (`SourceParameterMixin`, `cea/config.py`), whose `.source-parameter` metadata names the
   sibling `grid-carbon-intensity-dataset-csv` field. This is pure GUI metadata: it doesn't

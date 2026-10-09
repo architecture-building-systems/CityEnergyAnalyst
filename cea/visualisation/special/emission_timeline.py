@@ -1008,7 +1008,8 @@ def create_emission_timeline_plot(config):
     print(f"Filtered buildings list: {list_buildings}")
     print(f"Number of buildings: {len(list_buildings)}")
 
-    context = config.plots_emission_timeline.context
+    # `context` is saved state that may carry another plot's feature; this script only plots this one
+    context = {**config.plots_emission_timeline.context, 'feature': 'emission-timeline'}
 
     # Generate emission timeline
     fig = plot_emission_timeline(config, context)
