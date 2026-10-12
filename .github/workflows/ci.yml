@@ -51,6 +51,7 @@ jobs:
         with:
           cache: true
           pixi-version: v0.72.0
+          locked: true
 
       - name: Install CEA
         run: pixi run pip install . --group dev

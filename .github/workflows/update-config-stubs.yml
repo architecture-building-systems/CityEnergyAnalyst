@@ -30,6 +30,7 @@ jobs:
         uses: prefix-dev/setup-pixi@v0.10.0
         with:
           cache: true
+          locked: true
 
       - name: Install CEA
         run: pixi run pip install .

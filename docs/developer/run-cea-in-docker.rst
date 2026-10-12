@@ -65,10 +65,9 @@ command so that the container does not persist after it exits after running the 
 2. To run the docker container via shell (as the CEA Console)::
 
     > docker run -it -v /home/cea_projects:/projects dockeruser/cea /bin/bash
-    root@df9d4b16e5c0:> source /venv/bin/activate
-    (venv) root@df9d4b16e5c0:> cea --help
+    cea@df9d4b16e5c0:~$ cea --help
 
-   * The ``-it`` flag sets up interactive and tty so you can actually _do_ something there. Note, in order to use any of the CEA functionality, you'll need to type ``source /venv/bin/activate``.
+   * The ``-it`` flag sets up interactive and tty so you can actually _do_ something there. The environment is activated automatically, so ``cea`` is available straight away.
    * The `-v /home/cea_projects:/projects` binds the folder ``/home/cea_projects`` in host to the folder ``/projects`` inside the container. Files saved in ``/home/cea_projects`` will be shared with the container.
 
 3. To run ``cea workflow``. First make sure the project folder and ``workflow.yml`` are in the correct path, in the example is ``/home/cea_projects``.::
@@ -92,3 +91,12 @@ command so that the container does not persist after it exits after running the 
    * The ``-t`` flag connects the container to your terminal, so you can see the output. You can drop this argument, but then you'll not be able to see any error messages etc. of the backend.
    * The ``-p 5050:5050`` flag connects the port 5050 on the host machine (your computer) to the port 5050 in the container (an instance of the cea-server docker image).
    * If you browse to http://localhost:5050/ you will see a description of the api you can use. This is the same api used by the CityEnergyAnalyst-GUI project, so you can essentially do anything that can be done in the GUI programmatically using this api.
+
+Choosing the user inside the container
+--------------------------------------
+
+The container runs as the user ``cea`` (uid and gid ``57439`` by default). Files written to a folder mounted with ``-v``
+are owned by that uid on the host. To match your own user, rebuild the image with the build arguments ``CEA_UID`` and
+``CEA_GID``::
+
+    > docker build --build-arg CEA_UID=$(id -u) --build-arg CEA_GID=$(id -g) -t cea .
