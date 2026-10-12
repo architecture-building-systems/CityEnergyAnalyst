@@ -110,4 +110,4 @@ The container runs as the user ``cea`` (uid and gid ``57439`` by default). Files
 are owned by that uid on the host. To match your own user, rebuild the image with the build arguments ``CEA_UID`` and
 ``CEA_GID``::
 
-    > docker build --build-arg CEA_UID=$(id -u) --build-arg CEA_GID=$(id -g) -t cea .
+    > docker build --build-arg CEA_UID=$(id -u) --build-arg CEA_GID=$(id -g) -t dockeruser/cea:latest .
