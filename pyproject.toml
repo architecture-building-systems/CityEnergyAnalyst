@@ -149,9 +149,6 @@ filterwarnings = [
     "ignore:datetime.datetime.utcfromtimestamp\\(\\) is deprecated:DeprecationWarning:libpysal",
     "ignore:You will likely lose important projection information:UserWarning:pyproj",
     "ignore:Neither gdal.UseExceptions:FutureWarning",
-    # ESRI Shapefile format limits (10-char field names), unavoidable for .shp output
-    "ignore:Column names longer than 10 characters:UserWarning",
-    "ignore:Normalized/laundered field name:RuntimeWarning",
 ]
 
 [tool.pixi.tasks]
