@@ -57,22 +57,36 @@ def test_verification_does_not_invent_void_deck():
     assert VOID_FLOORS_COLUMN not in zone.columns
 
 
+# The storey-height rule runs before the void-deck-specific ones, so a void deck that leaves no
+# room for the floors is reported by it; the column rules catch the rest.
+STOREY_RULE = r"less than 2\.0 m of height per enclosed floor"
+
+
 @pytest.mark.parametrize("extra, message", [
-    ({VOID_FLOORS_COLUMN: [1.5, 0]}, "integer"),
-    ({VOID_FLOORS_COLUMN: [-1, 0]}, "negative"),
-    ({VOID_FLOORS_COLUMN: [4, 0]}, "greater than or equal"),
-    ({VOID_FLOORS_COLUMN: ["a", "b"]}, "integer"),
+    ({VOID_FLOORS_COLUMN: [1.5, 0]}, "no decimals"),
+    ({VOID_FLOORS_COLUMN: [-1, 0]}, "negative values"),
+    ({VOID_FLOORS_COLUMN: [4, 0]}, STOREY_RULE),
+    ({VOID_FLOORS_COLUMN: ["a", "b"]}, "integer type"),
     # Not superseded for B2, where height_vd is blank, so the legacy rule still applies there.
-    ({VOID_FLOORS_COLUMN: [1, 4], VOID_HEIGHT_COLUMN: [3.0, NAN]}, "greater than or equal"),
-    ({VOID_HEIGHT_COLUMN: [-1.0, 0.0]}, "negative"),
-    ({VOID_HEIGHT_COLUMN: [12.0, 0.0]}, "nothing enclosed"),
+    ({VOID_FLOORS_COLUMN: [1, 4], VOID_HEIGHT_COLUMN: [3.0, NAN]}, STOREY_RULE),
+    ({VOID_HEIGHT_COLUMN: [-1.0, 0.0]}, "negative values"),
+    ({VOID_HEIGHT_COLUMN: [12.0, 0.0]}, STOREY_RULE),
 ], ids=["fractional", "negative", "swallows building", "text", "legacy applies where blank",
         "negative metres", "metres swallow building"])
 def test_verification_still_rejects_genuinely_bad_values(extra, message):
-    # Several of these trip an earlier, more general check (plain `Exception`), so the
-    # message is only a hint at which rule is expected to fire.
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match=message):
         verify_input_geometry_zone(make_zone(extra))
+
+
+def test_the_void_column_rules_reject_a_void_deck_swallowing_the_building_on_their_own():
+    """Unreachable through `verify_input_geometry_zone` (the storey rule fires first), but the
+    column checks are public and must not depend on running after it."""
+    from cea.datamanagement.databases_verification import check_void_deck_values, check_void_height_values
+
+    with pytest.raises(ValueError, match="greater than or equal"):
+        check_void_deck_values(make_zone({VOID_FLOORS_COLUMN: [4, 0]}))
+    with pytest.raises(ValueError, match="nothing enclosed"):
+        check_void_height_values(make_zone({VOID_HEIGHT_COLUMN: [12.0, 0.0]}))
 
 
 def test_required_columns_are_still_required():
@@ -175,6 +189,7 @@ def editor(tmp_path, monkeypatch):
     locator = InputLocator(scenario)
 
     class Editor:
+        scenario_path = scenario
         zone_path = locator.get_zone_geometry()
 
         def write(self, extra=None):
@@ -265,6 +280,16 @@ def test_a_bad_void_deck_is_refused(editor, edit):
     assert editor.save(form)
 
 
+@pytest.mark.parametrize("column", [VOID_FLOORS_COLUMN, VOID_HEIGHT_COLUMN])
+def test_text_in_a_void_deck_cell_is_refused_not_blanked(editor, column):
+    """Text must not be read as a blank (= no void deck) and then written to the shapefile."""
+    editor.write({column: [NAN, NAN]})
+    form = editor.load()
+    editor.edit(form, "B1", **{column: "abc"})
+
+    assert editor.save(form)
+
+
 def test_clearing_a_void_deck_cell_saves(editor):
     editor.write({VOID_FLOORS_COLUMN: [1, 1], VOID_HEIGHT_COLUMN: [3.0, 3.0]})
     form = editor.load()
@@ -323,7 +348,7 @@ def test_the_editor_receives_numeric_bounds(editor):
     from cea.interfaces.dashboard.api import inputs
 
     editor.write({VOID_FLOORS_COLUMN: [0, 0]})
-    columns = inputs.get_building_properties(str(editor.zone_path).split("/inputs")[0])["columns"]["zone"]
+    columns = inputs.get_building_properties(editor.scenario_path)["columns"]["zone"]
 
     assert columns["floors_ag"]["min"] == 1
     assert columns["height_ag"]["min"] == 2.0

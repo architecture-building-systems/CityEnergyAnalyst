@@ -360,10 +360,17 @@ def zone_attribute_problems(table: Any, geojson: Any) -> list[str]:
         # Unreadable geometry is reported by `shapefile_payload_problems`.
         return []
 
-    # Cells arrive as typed in the editor, so numbers may be strings.
-    numeric = [c for c in COLUMNS_ZONE_GEOMETRY + OPTIONAL_COLUMNS_ZONE_GEOMETRY
-               if c != 'name' and c in zone_df.columns]
-    zone_df[numeric] = zone_df[numeric].apply(pd.to_numeric, errors='coerce')
+    # Cells arrive as typed in the editor, so numbers may be strings. A required column that
+    # cannot be read as a number becomes NaN, which `check_na_values` rejects. An optional
+    # one keeps its text instead: coercing it would turn "abc" into a blank, pass, and then
+    # be written to the shapefile as "abc".
+    for column in COLUMNS_ZONE_GEOMETRY + OPTIONAL_COLUMNS_ZONE_GEOMETRY:
+        if column == 'name' or column not in zone_df.columns:
+            continue
+        numbers = pd.to_numeric(zone_df[column], errors='coerce')
+        if column in OPTIONAL_COLUMNS_ZONE_GEOMETRY:
+            numbers = numbers.where(numbers.notna() | zone_df[column].isna(), zone_df[column])
+        zone_df[column] = numbers
 
     try:
         verify_zone_attributes(zone_df)
