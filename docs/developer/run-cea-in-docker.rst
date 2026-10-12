@@ -28,6 +28,14 @@ following command::
 Notice the ``.`` at the end of the command - be sure to include it, as it tells ``docker`` where to find the
 ``Dockerfile``.
 
+The image is built from ``pixi.lock``, so it contains exactly the package versions pinned there. If ``pyproject.toml``
+and ``pixi.lock`` are out of sync the build fails; run ``pixi lock`` and commit the updated ``pixi.lock``.
+
+.. note::
+    The image targets ``linux/amd64``. On a machine with an ARM processor (e.g. Apple Silicon) add
+    ``--platform linux/amd64``, otherwise Docker resolves the ``linux-aarch64`` packages, which need a C++ compiler
+    to build ``cea-external-tools``. The build and the container then run under emulation and are slower.
+
 The docker image should show up in your local computer::
 
     > docker images
@@ -57,10 +65,13 @@ Running the image in a new container
 
 1. To test the docker image::
 
-    > docker run --rm dockeruser/cea cea test
+    > docker run --rm dockeruser/cea bash -c "uv pip install pytest && cea test"
+
+   * ``pytest`` is not part of the image, so it is installed first.
 
    * The ``--rm`` flag removes the container after it finishes running. This is useful when running the ``cea test``
 command so that the container does not persist after it exits after running the tests.
+   * Use ``cea test --type integration`` to run the example workflows (this takes a long time).
 
 2. To run the docker container via shell (as the CEA Console)::
 
