@@ -165,30 +165,36 @@ def check_na_values(df, columns=None):
         raise ValueError(f'There are NA values detected in the following required columns: {", ".join(na_columns)}')
     
 def check_void_deck_values(df):
-    """
-    void_deck should exist in the zone geometry file. If not, create a new column with void_deck = 0 and print a warning.
-    If void_deck exists, check if it's >= 0 and is a integer.
-    """
+    """Validate the legacy `void_deck` column when the scenario carries it.
 
-    # Check if void_deck contains integer-like values (handles both int and float dtypes from shapefiles)
-    if not pd.api.types.is_integer_dtype(df['void_deck']):
-        # If it's float, check if all values are whole numbers
-        if pd.api.types.is_float_dtype(df['void_deck']):
-            if not (df['void_deck'] % 1 == 0).all():
-                raise ValueError('The void_deck column should contain only integer values (no decimals). Please check your zone geometry file.')
-            # Convert to integer type if all values are whole numbers
-            df['void_deck'] = df['void_deck'].astype(int)
-        else:
-            raise ValueError('The void_deck column should be of integer type. Please check your zone geometry file.')
+    Optional: its absence is fine, and a blank cell means "no void deck". Buildings whose
+    `height_vd` cell holds a value are skipped, as `height_vd` supersedes `void_deck` there.
+    Otherwise `void_deck` must be a non-negative whole number below `floors_ag`.
+    """
+    if VOID_FLOORS_COLUMN not in df.columns:
+        return
 
-    if (df['void_deck'] < 0).any():
+    void_floors = pd.to_numeric(df[VOID_FLOORS_COLUMN], errors='coerce')
+    if (void_floors.isna() & df[VOID_FLOORS_COLUMN].notna()).any():
+        raise ValueError('The void_deck column should be of integer type. Please check your zone geometry file.')
+
+    if VOID_HEIGHT_COLUMN in df.columns:
+        superseded = pd.to_numeric(df[VOID_HEIGHT_COLUMN], errors='coerce').notna()
+        void_floors = void_floors.where(~superseded)
+
+    void_floors = void_floors.dropna()
+    if void_floors.empty:
+        return
+
+    if not (void_floors % 1 == 0).all():
+        raise ValueError('The void_deck column should contain only integer values (no decimals). Please check your zone geometry file.')
+
+    if (void_floors < 0).any():
         raise ValueError('The void_deck column should not contain negative values. Please check your zone geometry file.')
 
     # `>=`, not `>`: a void deck spanning every storey leaves no enclosed floor, so the
     # building has no above-ground floor area, no storey height, and no solid to extrude.
-    # `migrate_void_deck_data` has always called this invalid -- it just warned instead.
-    # Matches the `height_vd` rule, which requires at least 1 m of enclosed building.
-    if (df['void_deck'] >= df['floors_ag']).any():
+    if (void_floors >= df.loc[void_floors.index, 'floors_ag']).any():
         raise ValueError('The void_deck column should not contain values greater than or equal to the number of floors above ground. '
                          'Please check your zone geometry file.')
 
@@ -225,14 +231,6 @@ def check_void_height_values(df):
 
 
 def verify_input_geometry_zone(zone_df):
-    # TODO: remove this when void_deck always exist in geometry
-    not_exist_before = False
-    if 'void_deck' not in zone_df.columns:
-        # add void_deck to pass the verification first
-        Warning('The void_deck column should always exist in the zone geometry file. ')
-        zone_df['void_deck'] = 0
-        not_exist_before = True
-        
     # Verification 1. verify if all the column names are correct
     assert_columns_names(zone_df, COLUMNS_ZONE_GEOMETRY)
 
@@ -253,10 +251,6 @@ def verify_input_geometry_zone(zone_df):
     check_void_deck_values(zone_df)
 
     check_void_height_values(zone_df)
-
-    if not_exist_before:
-        # delete the void_deck column if it was not exist before
-        zone_df.drop(columns=['void_deck'], inplace=True)
 
 def verify_input_geometry_surroundings(surroundings_df):
     # Verification 1. verify if all the column names are correct
