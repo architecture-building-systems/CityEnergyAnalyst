@@ -138,7 +138,8 @@ def test_the_optional_column_survives_the_zone_column_selection():
     optional = [c for c in OPTIONAL_COLUMNS_ZONE_GEOMETRY if c in zone_gdf.columns]
     selected = zone_gdf[COLUMNS_ZONE_GEOMETRY + optional]
 
-    assert resolve_void_height(selected).tolist() == [4.5]
+    with pytest.warns(RuntimeWarning, match="disagree"):
+        assert resolve_void_height(selected).tolist() == [4.5]
 
 
 def test_a_legacy_zone_without_the_optional_column_still_selects():

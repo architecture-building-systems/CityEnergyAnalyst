@@ -288,7 +288,7 @@ def resolve_job_scenario(script: str, config, scenario: Optional[str]) -> Option
     try:
         needs_scenario = script_takes_scenario_path(script, config)
     except cea.ScriptNotFoundException as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                             detail=f"Unknown script: {script}.") from e
 
     if not needs_scenario:
@@ -342,11 +342,11 @@ async def create_new_job(request: Request, session: SessionDep, project_id: CEAP
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported content type.")
 
     if script is None or not isinstance(script, str) or not script.strip():
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Missing required field: 'script'.")
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Missing required field: 'script'.")
 
     parameters = parameters or {}
     if not isinstance(parameters, dict):
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Field 'parameters' must be an object.")
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Field 'parameters' must be an object.")
 
     # Resolve (and validate) the script's scenario requirement up front, before any temp
     # files are created for this job -- a rejected request should leave nothing to clean up.

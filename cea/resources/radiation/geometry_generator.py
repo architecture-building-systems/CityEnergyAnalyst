@@ -977,7 +977,7 @@ def check_terrain_bounds(zone_df, surroundings_df, trees_df, terrain_raster):
                          'Bounds of terrain must be larger than the total bounds of the scene.')
 
 
-def tree_geometry_generator(tree_df, terrain_raster):
+def tree_geometry_generator(tree_df, terrain_raster, num_processes: int = 1):
     terrian_projection = terrain_raster.GetProjection()
     proj4_str = osr.SpatialReference(wkt=terrian_projection).ExportToProj4()
     tree_df = tree_df.to_crs(proj4_str)
@@ -987,17 +987,10 @@ def tree_geometry_generator(tree_df, terrain_raster):
     # a tree of no height is nothing to cast a shadow, and a zero-height loft cannot close into a solid
     tree_df = tree_df[tree_df['height_tc'] > Z_LEVEL_TOLERANCE_M]
 
-    from multiprocessing.pool import Pool
-    from multiprocessing import cpu_count
-
-    with Pool(cpu_count() - 1) as pool:
-        surfaces = [
-            fetch.faces_frm_solid(solid) for (solid, _) in pool.starmap(
-                process_geometries, (
-                    (geom, elevation_map, [0, z]) for geom, z in zip(tree_df['geometry'], tree_df['height_tc'])
-                )
-            )
-        ]
+    n = len(tree_df)
+    out = cea.utilities.parallel.vectorize(process_geometries, num_processes)(
+        tree_df['geometry'], repeat(elevation_map, n), [[0, z] for z in tree_df['height_tc']])
+    surfaces = [fetch.faces_frm_solid(solid) for (solid, _) in out]
 
     return surfaces
 
@@ -1063,7 +1056,7 @@ def geometry_main(config: cea.config.Configuration,
     tree_surfaces = []
     if len(trees_df.geometry) > 0:
         print("Creating tree surfaces")
-        tree_surfaces = tree_geometry_generator(trees_df, terrain_raster)
+        tree_surfaces = tree_geometry_generator(trees_df, terrain_raster, config.get_number_of_processes())
 
     return terrain_tin, geometry_3D_zone, geometry_3D_surroundings, tree_surfaces
 
