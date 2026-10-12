@@ -5,6 +5,7 @@ NOTE: ADD YOUR SCRIPT'S DOCUMENTATION HERE (what, why, include literature refere
 
 import math
 import os
+import warnings
 from typing import Union
 
 import numpy as np
@@ -284,7 +285,10 @@ def fix_overlapping_geoms(buildings, zone):
     # calculate grid-parameters based on the zone polygon dimensions
     [[west_bound_long, south_bound_lat, east_bound_long,
         north_bound_lat]] = zone.bounds.to_numpy()
-    [(centroid_long, centroid_lat)] = zone.centroid.get(0).coords[:]
+    with warnings.catch_warnings():
+        # a geographic-CRS centroid is accurate enough for the cos(latitude) grid-size estimate below
+        warnings.filterwarnings("ignore", message=".*geographic CRS.*", category=UserWarning)
+        [(centroid_long, centroid_lat)] = zone.centroid.get(0).coords[:]
     grid_size_long = 180 * GRID_SIZE_M / \
         (np.pi * EARTH_RADIUS_M * np.cos(centroid_lat * np.pi / 180))
     grid_size_lat = 180 * GRID_SIZE_M / (np.pi * EARTH_RADIUS_M)

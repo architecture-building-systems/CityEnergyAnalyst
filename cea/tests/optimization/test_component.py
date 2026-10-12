@@ -534,11 +534,12 @@ class TestAbsorptionChiller(unittest.TestCase):
         # Use large capacity to force multiple units
         test_capacity_kW = (overall_cap_max / 1000) * 3.5
 
-        ach = AbsorptionChiller(
-            ach_model_code=test_code,
-            placement='primary',
-            capacity=test_capacity_kW
-        )
+        with self.assertWarnsRegex(UserWarning, "exceeds the maximum available"):
+            ach = AbsorptionChiller(
+                ach_model_code=test_code,
+                placement='primary',
+                capacity=test_capacity_kW
+            )
 
         # Verify multiple units created
         self.assertGreater(ach.n_units, 1)
@@ -1533,14 +1534,15 @@ class TestHeatExchanger(unittest.TestCase):
         operating_temp_max = code_rows['T_max_operating'].max()
         delta_temp = operating_temp_max - operating_temp_min
 
-        hex = HeatExchanger(
-            he_model_code=test_code,
-            placed_before='primary',
-            placed_after='secondary',
-            capacity=test_capacity_kW,
-            temperature_before=operating_temp_min + 0.1 * delta_temp,
-            temperature_after=operating_temp_max - 0.1 * delta_temp
-        )
+        with self.assertWarnsRegex(UserWarning, "exceeds the maximum available"):
+            hex = HeatExchanger(
+                he_model_code=test_code,
+                placed_before='primary',
+                placed_after='secondary',
+                capacity=test_capacity_kW,
+                temperature_before=operating_temp_min + 0.1 * delta_temp,
+                temperature_after=operating_temp_max - 0.1 * delta_temp
+            )
 
         # Verify multiple units created
         self.assertGreater(hex.n_units, 1)

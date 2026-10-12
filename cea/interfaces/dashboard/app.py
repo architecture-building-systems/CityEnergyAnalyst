@@ -143,7 +143,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     cors_headers = cors_config.get_response_headers(request_origin)
 
     return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
         content={"detail": exc.errors()},
         headers=cors_headers
     )

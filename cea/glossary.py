@@ -17,6 +17,8 @@ __status__ = "Production"
 
 EXCEL_FILE_TYPES = {"xls", "xlsx"}
 TABULAR_FILE_TYPES = {"shp", "dbf", "csv"}
+# file types without a column schema (rasters, weather files, JSON/GeoJSON)
+NON_TABULAR_FILE_TYPES = {"json", "geojson", "epw", "tif"}
 
 __glossary_df = None  # keep a copy of this as it won't be changed during runtime. ever.
 
@@ -44,7 +46,7 @@ def read_glossary_df(plugins):
                 for col in schemas[lm]["schema"]["columns"]:
                     cd = schemas[lm]["schema"]["columns"][col]  # cd: column definition
                     rows.append(glossary_row(script, file_path, col, lm, cd, worksheet=""))
-            else:
+            elif schemas[lm]["file_type"] not in NON_TABULAR_FILE_TYPES:
                 warnings.warn(f"Unknown file type for {lm}: {schemas[lm]['file_type']}")
 
         glossary_df = pd.concat([glossary_df, pd.DataFrame(rows)], ignore_index=True)

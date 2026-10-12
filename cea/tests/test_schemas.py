@@ -12,7 +12,7 @@ import inspect
 import cea.config
 import cea.inputlocator
 import cea.schemas
-from cea.glossary import EXCEL_FILE_TYPES, TABULAR_FILE_TYPES
+from cea.glossary import EXCEL_FILE_TYPES, NON_TABULAR_FILE_TYPES, TABULAR_FILE_TYPES
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -75,7 +75,7 @@ class TestSchemas(unittest.TestCase):
                 for col in schemas[lm]["schema"]["columns"]:
                     self.assertIn("description", schemas[lm]["schema"]["columns"][col],
                                   f"Missing description for {lm}/{col}")
-            else:
+            elif schemas[lm]["file_type"] not in NON_TABULAR_FILE_TYPES:
                 warnings.warn(f"Unknown file type for {lm}: {schemas[lm]['file_type']}")
 
     def test_all_schemas_have_a_columns_entry(self):
@@ -89,7 +89,7 @@ class TestSchemas(unittest.TestCase):
                     self.assertIn("columns", schemas[lm]["schema"][ws], f"Missing columns for {lm}/{ws}")
             elif schemas[lm]["file_type"] in TABULAR_FILE_TYPES:
                 self.assertIn("columns", schemas[lm]["schema"], f"Missing columns for {lm}")
-            else:
+            elif schemas[lm]["file_type"] not in NON_TABULAR_FILE_TYPES:
                 warnings.warn(f"Unknown file type for {lm}: {schemas[lm]['file_type']}")
                 
     def test_all_schema_columns_documented(self):
@@ -224,7 +224,6 @@ class TestSchemas(unittest.TestCase):
                     continue
 
                 if folder is None:
-                    warnings.warn(f"{attrib} returned None, skipping...")
                     continue
                 folder = os.path.normcase(os.path.normpath(os.path.abspath(folder)))
                 if folder in folders:
