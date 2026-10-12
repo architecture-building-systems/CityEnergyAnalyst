@@ -53,6 +53,13 @@ jobs:
           docker run --rm cea:test bash -c
           "uv pip install pytest && python -m pytest --pyargs cea.tests.test_dashboard_public_routes"
 
+      # Runs the example workflows end to end, including DAYSIM/CRAX from the cea-external-tools wheel
+      # in the lock (the image no longer builds that wheel itself). pytest is not part of the image.
+      - name: Run the integration tests in the image
+        run: >-
+          docker run --rm cea:test bash -c
+          "uv pip install pytest && cea test --type integration"
+
   docker:
     needs: verify
     if: github.event_name == 'release'
