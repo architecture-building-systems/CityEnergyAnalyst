@@ -147,8 +147,6 @@ filterwarnings = [
     "ignore:Using `httpx` with `starlette.testclient`",
     "ignore:The 'shapely.geos' module is deprecated:DeprecationWarning",
     "ignore:datetime.datetime.utcfromtimestamp\\(\\) is deprecated:DeprecationWarning:libpysal",
-    "ignore:You will likely lose important projection information:UserWarning:pyproj",
-    "ignore:Neither gdal.UseExceptions:FutureWarning",
 ]
 
 [tool.pixi.tasks]
