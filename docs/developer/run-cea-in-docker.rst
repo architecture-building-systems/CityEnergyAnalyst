@@ -28,6 +28,14 @@ following command::
 Notice the ``.`` at the end of the command - be sure to include it, as it tells ``docker`` where to find the
 ``Dockerfile``.
 
+The image is built from ``pixi.lock``, so it contains exactly the package versions pinned there. If ``pyproject.toml``
+and ``pixi.lock`` are out of sync the build fails; run ``pixi lock`` and commit the updated ``pixi.lock``.
+
+.. note::
+    The image targets ``linux/amd64``. On a machine with an ARM processor (e.g. Apple Silicon) add
+    ``--platform linux/amd64``, otherwise Docker resolves the ``linux-aarch64`` packages, which need a C++ compiler
+    to build ``cea-external-tools``. The build and the container then run under emulation and are slower.
+
 The docker image should show up in your local computer::
 
     > docker images
@@ -57,18 +65,20 @@ Running the image in a new container
 
 1. To test the docker image::
 
-    > docker run --rm dockeruser/cea cea test
+    > docker run --rm dockeruser/cea bash -c "uv pip install pytest && cea test"
+
+   * ``pytest`` is not part of the image, so it is installed first.
 
    * The ``--rm`` flag removes the container after it finishes running. This is useful when running the ``cea test``
 command so that the container does not persist after it exits after running the tests.
+   * Use ``cea test --type integration`` to run the example workflows (this takes a long time).
 
 2. To run the docker container via shell (as the CEA Console)::
 
     > docker run -it -v /home/cea_projects:/projects dockeruser/cea /bin/bash
-    root@df9d4b16e5c0:> source /venv/bin/activate
-    (venv) root@df9d4b16e5c0:> cea --help
+    cea@df9d4b16e5c0:~$ cea --help
 
-   * The ``-it`` flag sets up interactive and tty so you can actually _do_ something there. Note, in order to use any of the CEA functionality, you'll need to type ``source /venv/bin/activate``.
+   * The ``-it`` flag sets up interactive and tty so you can actually _do_ something there. The environment is activated automatically, so ``cea`` is available straight away.
    * The `-v /home/cea_projects:/projects` binds the folder ``/home/cea_projects`` in host to the folder ``/projects`` inside the container. Files saved in ``/home/cea_projects`` will be shared with the container.
 
 3. To run ``cea workflow``. First make sure the project folder and ``workflow.yml`` are in the correct path, in the example is ``/home/cea_projects``.::
@@ -92,3 +102,12 @@ command so that the container does not persist after it exits after running the 
    * The ``-t`` flag connects the container to your terminal, so you can see the output. You can drop this argument, but then you'll not be able to see any error messages etc. of the backend.
    * The ``-p 5050:5050`` flag connects the port 5050 on the host machine (your computer) to the port 5050 in the container (an instance of the cea-server docker image).
    * If you browse to http://localhost:5050/ you will see a description of the api you can use. This is the same api used by the CityEnergyAnalyst-GUI project, so you can essentially do anything that can be done in the GUI programmatically using this api.
+
+Choosing the user inside the container
+--------------------------------------
+
+The container runs as the user ``cea`` (uid and gid ``57439`` by default). Files written to a folder mounted with ``-v``
+are owned by that uid on the host. To match your own user, rebuild the image with the build arguments ``CEA_UID`` and
+``CEA_GID``::
+
+    > docker build --build-arg CEA_UID=$(id -u) --build-arg CEA_GID=$(id -g) -t dockeruser/cea:latest .

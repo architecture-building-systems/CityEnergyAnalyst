@@ -1,64 +1,56 @@
-FROM ghcr.io/prefix-dev/pixi:bookworm-slim AS build
+# ---- build: materialise the locked environment ----
+# trixie (glibc 2.41) is required: pixi.lock is solved against glibc 2.39
+FROM ghcr.io/prefix-dev/pixi:0.72.0-trixie-slim AS build
+WORKDIR /app
+COPY pyproject.toml pixi.lock ./
+# --locked fails the build if pixi.lock is out of sync with pyproject.toml
+RUN pixi install --locked
 
-# build cea-external-tools wheel
-COPY external /tmp/external
-WORKDIR /tmp/external
+# ---- install CEA itself (not part of the lock) without touching its dependencies ----
+COPY . /src
+RUN pixi run uv build --wheel /src --out-dir /wheels \
+ && pixi run uv pip install --no-deps /wheels/cityenergyanalyst-*.whl \
+ && pixi run python -c "import cea; print(cea.__version__)"
 
-RUN pixi run docker-build-wheel
+# activation script (sets PATH, CONDA_PREFIX and GDAL_DATA/PROJ_* via activate.d) and entrypoint
+RUN pixi shell-hook -s bash > /app/activate.sh \
+ && printf '#!/bin/bash\nsource /app/activate.sh\nexec "$@"\n' > /app/entrypoint.sh
 
-FROM mambaorg/micromamba:bookworm-slim AS cea
+# ---- runtime ----
+FROM debian:trixie-slim AS cea
 LABEL org.opencontainers.image.source=https://github.com/architecture-building-systems/CityEnergyAnalyst
 
-USER root
+# Default 57439 is the uid/gid of the previous mambaorg/micromamba image's user, so ownership of
+# bind-mounted project folders is unchanged. Override at build time, e.g.
+#   docker build --build-arg CEA_UID=1000 --build-arg CEA_GID=1000 .
+ARG CEA_UID=57439
+ARG CEA_GID=57439
+RUN groupadd --gid ${CEA_GID} cea \
+ && useradd --uid ${CEA_UID} --gid ${CEA_GID} --create-home --shell /bin/bash cea \
+ && mkdir -p /project/reference-case-open \
+ && chown -R cea:cea /project
 
-# create directory for projects and set MAMBA_USER as owner
-RUN mkdir -p /project && chown $MAMBA_USER /project
+# the prefix path must match the build stage exactly - conda prefixes are not relocatable
+COPY --from=build --chown=cea:cea /app/.pixi/envs/default /app/.pixi/envs/default
+COPY --from=build --chmod=0755 /app/activate.sh /app/entrypoint.sh /app/
 
-USER $MAMBA_USER
-# create conda environment and configure matplotlib
-# bugfix for matplotlib, see here: https://stackoverflow.com/questions/37604289/tkinter-tclerror-no-display-name-and-no-display-environment-variable
-COPY --chown=$MAMBA_USER:$MAMBA_USER conda-lock.yml /tmp/conda-lock.yml
-RUN micromamba config set extract_threads 1 \
-    && micromamba install --name base --yes --file /tmp/conda-lock.yml \
-    && micromamba install --name base --yes -c conda-forge uv \
-    && micromamba clean --all --yes \
-    && mkdir -p ~/.config/matplotlib \
-    && echo "backend: Agg" > ~/.config/matplotlib/matplotlibrc \
-    && rm -f /tmp/conda-lock.yml
+# PATH fallback for runs that skip the entrypoint (singularity shell/exec, docker exec)
+# MPLBACKEND bugfix for matplotlib, see https://stackoverflow.com/questions/37604289
+ENV PATH=/app/.pixi/envs/default/bin:$PATH \
+    MPLBACKEND=Agg
 
-# active environment to install CEA
-ARG MAMBA_DOCKERFILE_ACTIVATE=1
-
-# Using --system for uv to install packages into the base environment
-# install cea-external-tools
-COPY --from=build --chown=$MAMBA_USER:$MAMBA_USER /tmp/external/dist /tmp/external_dist
-RUN uv pip install --system /tmp/external_dist/cea_external_tools-*.whl && rm -rf /tmp/external_dist
-
-# Copy only pyproject.toml first for better layer caching
-COPY --chown=$MAMBA_USER:$MAMBA_USER pyproject.toml /tmp/cea/pyproject.toml
-WORKDIR /tmp/cea
-
-# Install dependencies only (cached layer - only rebuilds if pyproject.toml changes)
-# Filter out cea-external-tools since it's already installed from the pre-built wheel above
-# This ensures we use the exact wheel from the build stage and avoid version resolution conflicts
-RUN uv pip install --system -r <(python3 -c "import tomllib; deps=tomllib.load(open('pyproject.toml','rb'))['project']['dependencies']; print('\n'.join([d for d in deps if not d.startswith('cea-external-tools')]))")
-
-# Copy full source code and install CEA without dependencies
-COPY --chown=$MAMBA_USER:$MAMBA_USER . /tmp/cea
-RUN uv pip install --system --no-deps /tmp/cea && rm -rf /tmp/cea
+USER cea
+WORKDIR /home/cea
 
 # write config files
 RUN cea-config write --general:project /project/reference-case-open \
-    && cea-config write --general:scenario-name baseline \
-    && cea-config write --server:host 0.0.0.0 \
-    # create dummy project folder
-    && mkdir -p /project/reference-case-open
+ && cea-config write --general:scenario-name baseline \
+ && cea-config write --server:host 0.0.0.0
 
 # Expose dashboard port
 EXPOSE 5050
 
 # Direct entrypoint - no tini needed (server has SIGCHLD handler for zombie reaping)
-# If you need tini, uncomment the line below and comment out the next ENTRYPOINT line
-# ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/_entrypoint.sh"]
-ENTRYPOINT ["/usr/local/bin/_entrypoint.sh"]
-CMD cea dashboard
+ENTRYPOINT ["/app/entrypoint.sh"]
+# exec form so signals reach uvicorn directly
+CMD ["cea", "dashboard"]

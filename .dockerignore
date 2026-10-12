@@ -46,9 +46,12 @@ scripts
 *.bak
 *.prof
 
-# external
-external/.pixi
-external/dist/
+# external (cea-external-tools is installed from the PyPI wheel pinned in pixi.lock)
+external
+
+# superseded environment files (the image is built from pixi.lock)
+conda-lock.yml
+environment.yml
 
 # Docker files
 Dockerfile

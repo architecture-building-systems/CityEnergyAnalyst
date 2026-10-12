@@ -97,8 +97,8 @@ Congratulations! You can start running CEA on Euler!
 ::
 
     $ SINGULARITY_HOME=/projects singularity shell -B $SCRATCH cea_latest.sif
-    Singularity> source /venv/bin/activate
-    (venv) Singularity> cea test
+    Singularity> source /app/activate.sh
+    Singularity> cea test
 
 
 Running the CEA

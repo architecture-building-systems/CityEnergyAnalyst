@@ -5,10 +5,64 @@ on:
   #   branches: [master]
   release:
     types: [published]
+  # build and verify the image (without pushing) when anything that goes into it changes
+  pull_request:
+    paths:
+      - 'Dockerfile'
+      - '.dockerignore'
+      - 'pyproject.toml'
+      - 'pixi.lock'
+      - '.github/workflows/docker.yml'
+      - '.github/scripts/check_image_lock_parity.py'
 
 
 jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true
+          push: false
+          tags: cea:test
+
+      - name: Check that the main dependencies can be imported
+        run: >-
+          docker run --rm cea:test python -c
+          "import cea, fiona, geopandas, numba, pyarrow, cea_external_tools; from OCC.Core import gp; print('ok')"
+
+      # The image must contain exactly what pixi.lock pins (this is what broke the demo endpoint in prod)
+      - name: Check installed packages match pixi.lock
+        run: >-
+          docker run --rm
+          -v "$PWD/pixi.lock:/tmp/pixi.lock:ro"
+          -v "$PWD/.github/scripts:/tmp/scripts:ro"
+          cea:test python /tmp/scripts/check_image_lock_parity.py /tmp/pixi.lock
+
+      - name: Check that the public routes are all registered
+        run: >-
+          docker run --rm cea:test bash -c
+          "uv pip install pytest && python -m pytest --pyargs cea.tests.test_dashboard_public_routes"
+
+      # Runs the example workflows end to end, including DAYSIM/CRAX from the cea-external-tools wheel
+      # in the lock (the image no longer builds that wheel itself). pytest is not part of the image.
+      - name: Run the integration tests in the image
+        run: >-
+          docker run --rm cea:test bash -c
+          "uv pip install pytest && cea test --type integration"
+
   docker:
+    needs: verify
+    if: github.event_name == 'release'
     runs-on: ubuntu-latest
     steps:
       - name: Set up QEMU
