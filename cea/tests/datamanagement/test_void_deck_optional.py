@@ -147,3 +147,185 @@ def test_input_editor_reads_every_shape(extra, tmp_path, monkeypatch):
 
     geojson, crs = df_to_json(zone_path, root=str(scenario))
     assert geojson is not None and len(geojson["features"]) == 2
+
+
+# --------------------------------------------------------------------------- input editor save
+
+
+class _NoChoices(dict):
+    def __missing__(self, key):
+        return "", []
+
+
+@pytest.fixture
+def editor(tmp_path, monkeypatch):
+    """A scenario on disk plus helpers that act as the input editor: GET, edit, PUT."""
+    import asyncio
+    import copy
+
+    from fastapi import HTTPException
+
+    from cea.inputlocator import InputLocator
+    from cea.interfaces.dashboard.api import inputs
+
+    # Choice lists come from the construction database, which is not what is under test.
+    monkeypatch.setattr(inputs, "_build_choices_cache", lambda locator: _NoChoices())
+
+    scenario = str(tmp_path / "scenario")
+    locator = InputLocator(scenario)
+
+    class Editor:
+        zone_path = locator.get_zone_geometry()
+
+        def write(self, extra=None):
+            locator.ensure_parent_folder_exists(self.zone_path)
+            zone = make_zone(extra)
+            zone["year"], zone["const_type"] = 2000, "MULTI_RES"
+            for i in (1, 2, 3):
+                zone[f"use_type{i}"] = "MULTI_RES" if i == 1 else "NONE"
+                zone[f"use_type{i}r"] = 1.0 if i == 1 else 0.0
+            zone.to_file(self.zone_path)
+
+        def load(self):
+            store = inputs.get_building_properties(scenario)
+            geojson, crs = inputs.df_to_json(self.zone_path, root=scenario)
+            return {"tables": {"zone": store["tables"]["zone"]},
+                    "geojsons": {"zone": geojson}, "crs": {"zone": crs}}
+
+        def save(self, form):
+            """Returns None on success, or the list of problems the 400 carried."""
+            try:
+                asyncio.run(inputs.save_all_inputs(scenario, inputs.InputForm(**copy.deepcopy(form))))
+            except HTTPException as e:
+                return e.detail["problems"]
+            return None
+
+        @staticmethod
+        def edit(form, name, **values):
+            """Change cells as the editor does: in the table and on the map feature."""
+            form["tables"]["zone"][name].update(values)
+            for feature in form["geojsons"]["zone"]["features"]:
+                if feature["properties"]["name"] == name:
+                    feature["properties"].update(values)
+
+        def stored(self):
+            return gpd.read_file(self.zone_path).drop(columns="geometry")
+
+    return Editor()
+
+
+def test_a_valid_zone_saves(editor):
+    editor.write()
+    form = editor.load()
+    editor.edit(form, "B1", floors_ag=3)
+
+    assert editor.save(form) is None
+    assert editor.stored().set_index("name").loc["B1", "floors_ag"] == 3
+
+
+@pytest.mark.parametrize("extra", [s[1] for s in VALID_SHAPES], ids=[s[0] for s in VALID_SHAPES])
+def test_every_valid_void_deck_shape_saves(editor, extra):
+    """#4109: a zone with no or blank void columns must not be refused, or rewritten wrongly."""
+    editor.write(extra)
+    form = editor.load()
+
+    assert editor.save(form) is None
+    assert set(editor.stored().columns) >= {"name", "floors_ag", "height_ag"}
+
+
+@pytest.mark.parametrize("edit, fragment", [
+    ({"floors_ag": 20}, "B1"),                       # 12 m over 20 storeys: 0.6 m each
+    ({"floors_ag": 0}, "floor"),
+    ({"floors_bg": 2}, "B1"),                        # basement floors without a depth
+    ({"height_ag": -3.0}, "negative"),
+], ids=["too many floors", "no floors", "basement without depth", "negative height"])
+def test_an_inconsistent_zone_is_refused_and_nothing_is_written(editor, edit, fragment):
+    editor.write()
+    before = editor.stored()
+    form = editor.load()
+    editor.edit(form, "B1", **edit)
+
+    problems = editor.save(form)
+
+    assert problems and any(fragment in p for p in problems), problems
+    pd.testing.assert_frame_equal(editor.stored(), before)
+
+
+@pytest.mark.parametrize("edit", [
+    {VOID_HEIGHT_COLUMN: 12.0},                       # void deck swallows the building
+    {VOID_HEIGHT_COLUMN: -1.0},
+    {VOID_FLOORS_COLUMN: 4},                          # void_deck == floors_ag
+    {VOID_FLOORS_COLUMN: 2.5},
+], ids=["metres swallow building", "negative metres", "legacy swallows building", "fractional legacy"])
+def test_a_bad_void_deck_is_refused(editor, edit):
+    editor.write({VOID_FLOORS_COLUMN: [0, 0], VOID_HEIGHT_COLUMN: [NAN, NAN]})
+    form = editor.load()
+    editor.edit(form, "B1", **edit)
+
+    assert editor.save(form)
+
+
+def test_clearing_a_void_deck_cell_saves(editor):
+    editor.write({VOID_FLOORS_COLUMN: [1, 1], VOID_HEIGHT_COLUMN: [3.0, 3.0]})
+    form = editor.load()
+    editor.edit(form, "B1", **{VOID_HEIGHT_COLUMN: None, VOID_FLOORS_COLUMN: None})
+
+    assert editor.save(form) is None
+    stored = editor.stored().set_index("name")
+    assert pd.isna(stored.loc["B1", VOID_HEIGHT_COLUMN]) and pd.isna(stored.loc["B1", VOID_FLOORS_COLUMN])
+
+
+def test_a_row_without_a_footprint_is_not_refused_for_it(editor):
+    """The editor keeps such rows so they can be fixed; attribute checks must not reject them."""
+    editor.write()
+    form = editor.load()
+    form["geojsons"]["zone"]["features"].pop(1)   # B2 drawn nowhere, still in the table
+
+    assert editor.save(form) is None
+    assert set(editor.stored()["name"]) == {"B1", "B2"}
+
+
+def test_attribute_verification_ignores_geometry():
+    from shapely.geometry import Point
+    from cea.datamanagement.databases_verification import verify_zone_attributes
+
+    zone = make_zone()
+    zone["geometry"] = [Point(0, 0), None]
+
+    verify_zone_attributes(zone)
+    with pytest.raises(Exception):
+        verify_input_geometry_zone(zone)
+
+
+# --------------------------------------------------------------------------- schema -> editor contract
+
+
+ALWAYS_SENT_KEYS = {"type", "description", "unit"}
+# Sent transformed (`choice` -> `path` + `choices`) or meaningless to the editor.
+NOT_FORWARDED_KEYS = {"choice", "primary", "foreign_key", "used_by"}
+
+
+def test_every_schema_column_key_is_classified():
+    """A rule added to schemas.yml reaches the input editor only if its key is forwarded.
+
+    Failing here means a new column key was added: decide whether the editor should enforce it
+    (add to `FORWARDED_COLUMN_KEYS`, and teach the GUI) or not (add to `NOT_FORWARDED_KEYS`).
+    """
+    from cea.interfaces.dashboard.api.inputs import FORWARDED_COLUMN_KEYS, INPUTS
+
+    used = {key for db in INPUTS.values() for column in db["columns"].values() for key in column}
+    unclassified = used - set(FORWARDED_COLUMN_KEYS) - ALWAYS_SENT_KEYS - NOT_FORWARDED_KEYS
+
+    assert not unclassified, f"schema keys the input editor never receives: {sorted(unclassified)}"
+
+
+def test_the_editor_receives_numeric_bounds(editor):
+    from cea.interfaces.dashboard.api import inputs
+
+    editor.write({VOID_FLOORS_COLUMN: [0, 0]})
+    columns = inputs.get_building_properties(str(editor.zone_path).split("/inputs")[0])["columns"]["zone"]
+
+    assert columns["floors_ag"]["min"] == 1
+    assert columns["height_ag"]["min"] == 2.0
+    assert columns["use_type1r"]["max"] == 1.0
+    assert columns[VOID_FLOORS_COLUMN]["nullable"] and columns[VOID_HEIGHT_COLUMN]["nullable"]

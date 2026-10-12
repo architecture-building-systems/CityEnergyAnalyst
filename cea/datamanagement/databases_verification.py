@@ -230,7 +230,12 @@ def check_void_height_values(df):
                          'lower than height_ag. Please check your zone geometry file.')
 
 
-def verify_input_geometry_zone(zone_df):
+def verify_zone_attributes(zone_df):
+    """Verify everything about a zone except its footprints.
+
+    Split from `verify_input_geometry_zone` so the input editor can run it on save: the editor
+    deliberately keeps rows that have no footprint, so the geometry checks cannot apply there.
+    """
     # Verification 1. verify if all the column names are correct
     assert_columns_names(zone_df, COLUMNS_ZONE_GEOMETRY)
 
@@ -244,13 +249,18 @@ def verify_input_geometry_zone(zone_df):
     check_building_names(zone_df)
     check_duplicated_names(zone_df)
 
-    # Verification 5. verify geometries are valid and only contain Polygon
+    # Verification 5. verify the optional void deck columns, where present
+    check_void_deck_values(zone_df)
+    check_void_height_values(zone_df)
+
+
+def verify_input_geometry_zone(zone_df):
+    verify_zone_attributes(zone_df)
+
+    # Verification 6. verify geometries are valid and only contain Polygon
     assert_input_geometry_valid(zone_df)
     assert_input_geometry_only_polygon(zone_df)
 
-    check_void_deck_values(zone_df)
-
-    check_void_height_values(zone_df)
 
 def verify_input_geometry_surroundings(surroundings_df):
     # Verification 1. verify if all the column names are correct

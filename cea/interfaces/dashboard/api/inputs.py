@@ -25,6 +25,11 @@ import cea.inputlocator
 from cea.datamanagement import archetype_lock
 from cea.datamanagement.archetypes_mapper import archetypes_mapper
 from cea.datamanagement.district_pathways.pathway_timeline import PathwayChildScenario
+from cea.datamanagement.databases_verification import (
+    COLUMNS_ZONE_GEOMETRY,
+    OPTIONAL_COLUMNS_ZONE_GEOMETRY,
+    verify_zone_attributes,
+)
 from cea.datamanagement.utils import VOID_FLOORS_COLUMN
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 import cea.schemas
@@ -86,6 +91,12 @@ def get_input_database_schemas():
         }
     return input_database_schemas
 
+
+# Schema column keys sent to the input editor as-is. The editor builds its cell validators from
+# these, so a validation rule added to schemas.yml reaches it only if its key is listed here
+# (`test_every_schema_column_key_is_classified` fails until it is). `choice` is sent
+# transformed, as `path` + `choices`; `type`, `description` and `unit` are always sent.
+FORWARDED_COLUMN_KEYS = ('constraints', 'regex', 'example', 'nullable', 'min', 'max', 'exclusive_min')
 
 INPUTS = get_input_database_schemas()
 INPUT_KEYS = INPUTS.keys()
@@ -324,6 +335,43 @@ def shapefile_payload_problems(db: str, table: Any, geojson: Any) -> list[str]:
     return problems
 
 
+def zone_attribute_problems(table: Any, geojson: Any) -> list[str]:
+    """Reasons the zone's attributes must not be written, as user-facing sentences.
+
+    Runs the same attribute rules as scenario creation and the simulation scripts, so an
+    inconsistent zone (too few metres per storey, a void deck taller than the building, ...)
+    is refused at save rather than failing later when a simulation starts. Footprints are not
+    judged here: the editor keeps rows without one, and `shapefile_payload_problems` covers
+    malformed ones.
+
+    :param table: the zone table as sent by the client, ``{name: {column: value}}``.
+    :param geojson: the matching geojson as sent by the client.
+    :return: problems found, empty when the zone is safe to write.
+    """
+    features = (geojson or {}).get('features')
+    if not features:
+        return []
+
+    try:
+        zone_df = geopandas.GeoDataFrame.from_features(
+            features, crs=get_geographic_coordinate_system())
+        zone_df = restore_rows_without_geometry(zone_df, table)
+    except Exception:
+        # Unreadable geometry is reported by `shapefile_payload_problems`.
+        return []
+
+    # Cells arrive as typed in the editor, so numbers may be strings.
+    numeric = [c for c in COLUMNS_ZONE_GEOMETRY + OPTIONAL_COLUMNS_ZONE_GEOMETRY
+               if c != 'name' and c in zone_df.columns]
+    zone_df[numeric] = zone_df[numeric].apply(pd.to_numeric, errors='coerce')
+
+    try:
+        verify_zone_attributes(zone_df)
+    except Exception as e:
+        return [f"zone: {e}"]
+    return []
+
+
 def restore_rows_without_geometry(table_df: geopandas.GeoDataFrame, table: Any) -> geopandas.GeoDataFrame:
     """Put back the rows the client could not send a footprint for.
 
@@ -411,12 +459,15 @@ async def save_all_inputs(scenario: CEAScenario, form: InputForm):
             if db_info['file_type'] == 'shp' and tables.get(db):
                 geometry_problems.extend(
                     shapefile_payload_problems(db, tables[db], geojsons.get(db)))
+        if tables.get('zone'):
+            geometry_problems.extend(
+                zone_attribute_problems(tables['zone'], geojsons.get('zone')))
         if geometry_problems:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail={
-                    'message': 'Nothing was saved: the geometry has problems that would '
-                               'corrupt the scenario.',
+                    'message': 'Nothing was saved: the inputs have problems that would '
+                               'corrupt the scenario or stop it simulating.',
                     'problems': geometry_problems,
                 },
             )
@@ -628,14 +679,9 @@ def get_building_properties(scenario: str):
                     path, choices = choices_cache[(lookup_path_method, lookup_col)]
                     columns[column_name]['path'] = path
                     columns[column_name]['choices'] = choices
-                if 'constraints' in column:
-                    columns[column_name]['constraints'] = column['constraints']
-                if 'regex' in column:
-                    columns[column_name]['regex'] = column['regex']
-                    if 'example' in column:
-                        columns[column_name]['example'] = column['example']
-                if 'nullable' in column:
-                    columns[column_name]['nullable'] = column['nullable']
+                for key in FORWARDED_COLUMN_KEYS:
+                    if key in column:
+                        columns[column_name][key] = column[key]
 
                 columns[column_name]['description'] = column["description"]
                 columns[column_name]['unit'] = column["unit"]
