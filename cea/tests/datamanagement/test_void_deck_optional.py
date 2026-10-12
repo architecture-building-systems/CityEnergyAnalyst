@@ -379,7 +379,7 @@ def uploaded_zone(tmp_path, extra=None):
 
 
 @pytest.fixture
-def create_scenario(tmp_path, monkeypatch):
+def create_scenario(tmp_path):
     """Drives the real `POST /project/scenario` handler with an uploaded zone.
 
     Surroundings and streets are empty, terrain comes from in-memory tiles and the weather
@@ -393,17 +393,6 @@ def create_scenario(tmp_path, monkeypatch):
 
     projects = tmp_path / "project"
     projects.mkdir()
-
-    # `copy_weather_file` copies into inputs/weather without creating it, which is not what is
-    # under test here.
-    from cea.datamanagement.weather_helper import weather_helper
-    original_copy = weather_helper.copy_weather_file
-
-    def copy_into_new_folder(source, locator):
-        locator.ensure_parent_folder_exists(locator.get_weather_file())
-        return original_copy(source, locator)
-
-    monkeypatch.setattr(weather_helper, "copy_weather_file", copy_into_new_folder)
 
     def run(extra=None, name="new"):
         import os

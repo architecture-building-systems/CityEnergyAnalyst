@@ -72,6 +72,7 @@ def copy_weather_file(source_weather_file, locator):
     if not os.path.exists(source_weather_file):
         raise ValueError(f"Could not find weather file: {source_weather_file}")
 
+    locator.ensure_parent_folder_exists(locator.get_weather_file())
     copyfile(source_weather_file, locator.get_weather_file())
     print(f"Weather for scenario [{os.path.basename(locator.scenario)}] has been set to "
           f"{os.path.basename(source_weather_file)}")
