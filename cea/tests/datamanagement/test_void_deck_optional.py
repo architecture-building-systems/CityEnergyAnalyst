@@ -354,3 +354,119 @@ def test_the_editor_receives_numeric_bounds(editor):
     assert columns["height_ag"]["min"] == 2.0
     assert columns["use_type1r"]["max"] == 1.0
     assert columns[VOID_FLOORS_COLUMN]["nullable"] and columns[VOID_HEIGHT_COLUMN]["nullable"]
+
+
+# --------------------------------------------------------------------------- scenario creation
+
+
+# Zug, in UTM 32N, so the bundled weather file and the fake terrain tiles both fit the site.
+ZUG_ORIGIN = (465500.0, 5224500.0)
+
+
+def uploaded_zone(tmp_path, extra=None):
+    """A user zone shapefile as the scenario-creation form receives it, typology included."""
+    x0, y0 = ZUG_ORIGIN
+    zone = make_zone(extra)
+    zone["geometry"] = [box(x0, y0, x0 + 20, y0 + 20), box(x0 + 40, y0, x0 + 60, y0 + 20)]
+    zone["year"], zone["const_type"] = 2000, "STANDARD1"
+    for i in (1, 2, 3):
+        zone[f"use_type{i}"] = "MULTI_RES" if i == 1 else "NONE"
+        zone[f"use_type{i}r"] = 1.0 if i == 1 else 0.0
+    path = tmp_path / "upload" / "zone.shp"
+    path.parent.mkdir()
+    zone.to_crs(4326).to_file(path)
+    return str(path)
+
+
+@pytest.fixture
+def create_scenario(tmp_path, monkeypatch):
+    """Drives the real `POST /project/scenario` handler with an uploaded zone.
+
+    Surroundings and streets are empty, terrain comes from in-memory tiles and the weather
+    file ships with CEA, so nothing touches the network.
+    """
+    import asyncio
+    from types import SimpleNamespace
+
+    from cea.interfaces.dashboard.api import project
+    from cea.tests.datamanagement.fakes import fake_terrain_tiles
+
+    projects = tmp_path / "project"
+    projects.mkdir()
+
+    # `copy_weather_file` copies into inputs/weather without creating it, which is not what is
+    # under test here.
+    from cea.datamanagement.weather_helper import weather_helper
+    original_copy = weather_helper.copy_weather_file
+
+    def copy_into_new_folder(source, locator):
+        locator.ensure_parent_folder_exists(locator.get_weather_file())
+        return original_copy(source, locator)
+
+    monkeypatch.setattr(weather_helper, "copy_weather_file", copy_into_new_folder)
+
+    def run(extra=None, name="new"):
+        import os
+        import cea.databases
+        weather = os.path.join(os.path.dirname(cea.databases.__file__), "weather",
+                               "Zug-inducity_1990_2010_TMY.epw")
+        form = project.CreateScenario(
+            scenario_name=name,
+            database="CH",
+            user_zone=uploaded_zone(_fresh(tmp_path, name), extra),
+            user_surroundings=project.EMTPY_GEOMETRY,
+            typology=None,
+            weather=weather,
+            terrain=project.GENERATE_TERRAIN_CEA,
+            street=project.EMTPY_GEOMETRY,
+        )
+        limits = SimpleNamespace(num_scenarios=None, num_buildings=None)
+        with fake_terrain_tiles():
+            asyncio.run(project.create_new_scenario(str(projects), form, limits))
+        return gpd.read_file(projects / name / "inputs" / "building-geometry" / "zone.shp")
+
+    return run
+
+
+def _fresh(tmp_path, name):
+    folder = tmp_path / f"upload_{name}"
+    folder.mkdir()
+    return folder
+
+
+CREATION_SHAPES = [s for s in VALID_SHAPES if s[0] in (
+    "neither column", "void_deck only", "void_deck all blank", "height_vd only", "both, void_deck blank",
+    "both, all blank")]
+
+
+@pytest.mark.parametrize("extra", [s[1] for s in CREATION_SHAPES], ids=[s[0] for s in CREATION_SHAPES])
+def test_a_scenario_can_be_created_from_every_void_deck_shape(create_scenario, extra):
+    """#4109 symptom 1: creating a scenario from a zone without (or with a blank) `void_deck`."""
+    zone = create_scenario(extra)
+
+    assert len(zone) == 2
+    assert VOID_HEIGHT_COLUMN in zone.columns or VOID_FLOORS_COLUMN in zone.columns, \
+        "the new scenario must carry a void deck column the editor can show"
+
+
+def test_creation_keeps_the_users_void_deck_values(create_scenario):
+    zone = create_scenario({VOID_FLOORS_COLUMN: [1, 0], VOID_HEIGHT_COLUMN: [3.0, NAN]})
+
+    assert zone[VOID_FLOORS_COLUMN].tolist() == [1, 0]
+    assert zone[VOID_HEIGHT_COLUMN].iloc[0] == 3.0 and pd.isna(zone[VOID_HEIGHT_COLUMN].iloc[1])
+
+
+def test_creation_without_void_columns_gives_the_editor_height_vd(create_scenario):
+    zone = create_scenario()
+
+    assert VOID_HEIGHT_COLUMN in zone.columns and VOID_FLOORS_COLUMN not in zone.columns
+    assert (zone[VOID_HEIGHT_COLUMN] == 0).all()
+
+
+def test_creation_refuses_a_bad_void_deck_with_a_message(create_scenario):
+    from fastapi import HTTPException
+
+    with pytest.raises(HTTPException) as error:
+        create_scenario({VOID_HEIGHT_COLUMN: [12.0, 0.0]})
+
+    assert "enclosed floor" in str(error.value.detail)
