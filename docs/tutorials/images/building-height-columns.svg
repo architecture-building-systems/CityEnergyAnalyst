@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 420" font-family="Helvetica, Arial, sans-serif" font-size="13">
+  <rect width="900" height="420" fill="#ffffff"/>
+  <defs>
+    <pattern id="open" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="8" stroke="#9aa5b1" stroke-width="2"/>
+    </pattern>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto-start-reverse">
+      <path d="M0,0 L8,4 L0,8 z" fill="#1f2933"/>
+    </marker>
+  </defs>
+
+  <!-- ground lines -->
+  <g stroke="#1f2933" stroke-width="2">
+    <line x1="10" y1="300" x2="290" y2="300"/>
+    <line x1="310" y1="300" x2="590" y2="300"/>
+    <line x1="610" y1="300" x2="890" y2="300"/>
+  </g>
+
+  <!-- A: no void deck (4 storeys) + basement -->
+  <g stroke="#1f2933" stroke-width="1.5">
+    <rect x="80" y="60" width="100" height="240" fill="#d6e4f0"/>
+    <line x1="80" y1="120" x2="180" y2="120"/>
+    <line x1="80" y1="180" x2="180" y2="180"/>
+    <line x1="80" y1="240" x2="180" y2="240"/>
+    <rect x="80" y="300" width="100" height="50" fill="#eadfd0"/>
+  </g>
+  <g stroke="#1f2933" stroke-width="1.2" marker-start="url(#arr)" marker-end="url(#arr)">
+    <line x1="210" y1="62" x2="210" y2="298"/>
+    <line x1="210" y1="302" x2="210" y2="348"/>
+  </g>
+  <text x="150" y="30" text-anchor="middle" font-weight="bold" font-size="15">A. No void deck</text>
+  <text x="220" y="185">height_ag</text>
+  <text x="220" y="330">height_bg</text>
+  <text x="130" y="375" text-anchor="middle">floors_ag = 4 (all enclosed)</text>
+  <text x="130" y="393" text-anchor="middle">floors_bg = 1</text>
+
+  <!-- B: height_vd form -->
+  <g stroke="#1f2933" stroke-width="1.5">
+    <rect x="380" y="60" width="100" height="180" fill="#d6e4f0"/>
+    <line x1="380" y1="120" x2="480" y2="120"/>
+    <line x1="380" y1="180" x2="480" y2="180"/>
+    <rect x="380" y="240" width="100" height="60" fill="url(#open)" stroke-dasharray="5,4"/>
+  </g>
+  <g stroke="#1f2933" stroke-width="1.2" marker-start="url(#arr)" marker-end="url(#arr)">
+    <line x1="510" y1="62" x2="510" y2="298"/>
+    <line x1="350" y1="242" x2="350" y2="298"/>
+    <line x1="365" y1="62" x2="365" y2="238"/>
+  </g>
+  <text x="450" y="30" text-anchor="middle" font-weight="bold" font-size="15">B. height_vd (metres)</text>
+  <text x="520" y="185">height_ag</text>
+  <text x="520" y="200" fill="#52606d" font-size="11">ground to roof</text>
+  <text x="340" y="275" text-anchor="end">height_vd</text>
+  <text x="355" y="140" text-anchor="end">enclosed =</text>
+  <text x="355" y="156" text-anchor="end">height_ag</text>
+  <text x="355" y="172" text-anchor="end">- height_vd</text>
+  <text x="450" y="375" text-anchor="middle">floors_ag = 3 (enclosed only)</text>
+  <text x="450" y="393" text-anchor="middle">void deck sits at ground level</text>
+
+  <!-- C: legacy void_deck -->
+  <g stroke="#1f2933" stroke-width="1.5">
+    <rect x="680" y="60" width="100" height="180" fill="#d6e4f0"/>
+    <line x1="680" y1="120" x2="780" y2="120"/>
+    <line x1="680" y1="180" x2="780" y2="180"/>
+    <rect x="680" y="240" width="100" height="60" fill="url(#open)" stroke-dasharray="5,4"/>
+  </g>
+  <g stroke="#1f2933" stroke-width="1.2" marker-start="url(#arr)" marker-end="url(#arr)">
+    <line x1="810" y1="62" x2="810" y2="298"/>
+  </g>
+  <text x="750" y="30" text-anchor="middle" font-weight="bold" font-size="15">C. void_deck (legacy floors)</text>
+  <text x="820" y="185">height_ag</text>
+  <text x="750" y="375" text-anchor="middle">floors_ag = 4 (every storey)</text>
+  <text x="750" y="393" text-anchor="middle">void_deck = 1 open storey</text>
+  <text x="670" y="275" text-anchor="end" fill="#52606d" font-size="11">enclosed floors =</text>
+  <text x="670" y="289" text-anchor="end" fill="#52606d" font-size="11">floors_ag - void_deck</text>
+
+  <text x="450" y="412" text-anchor="middle" fill="#52606d" font-size="11">Hatched = open void deck (no air volume, no facade). Blue = enclosed space.</text>
+</svg>
