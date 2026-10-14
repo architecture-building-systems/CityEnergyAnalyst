@@ -35,17 +35,17 @@ dependencies = [
 
     # Backend dependencies
     "aiofiles",
-    "aiocache[redis]",
-    "fastapi>=0.137.2,<0.142",
-    "pydantic-settings",
-    "uvicorn>=0.52.1,<0.53",
+    "aiocache[redis]>=0.12.3,<0.13",
+    "fastapi>=0.143.0,<0.144",
+    "pydantic-settings>=2.15.0,<3",
+    "uvicorn>=0.54.0,<0.55",
     "jinja2",
-    "python-socketio",
-    "python-multipart", # Required by fastapi for file uploads
-    "sqlalchemy[asyncio]>=2.0.0",
-    "sqlmodel", # Required by fastapi for database models
-    "asyncpg", # Required by sqlmodel for postgres
-    "aiosqlite", # Required for async sqlite adapter
+    "python-socketio>=5.17.0,<6",
+    "python-multipart>=0.0.32,<0.1", # Required by fastapi for file uploads
+    "sqlalchemy[asyncio]>=2.0.0,<2.2",
+    "sqlmodel>=0.0.48,<0.1", # Required by fastapi for database models
+    "asyncpg>=0.32.0,<0.33", # Required by sqlmodel for postgres
+    "aiosqlite>=0.22.1,<0.23", # Required for async sqlite adapter
     "pyjwt[crypto]", # Required by fastapi for JWT authentication
 
     # Other python dependencies
@@ -53,16 +53,16 @@ dependencies = [
     "ephem",
     "numpy-financial",
     "python-louvain",
-    "tzfpy[pytz]",
+    "tzfpy[pytz]>=2,<3",
     "salib",
     "openpyxl",
-    "plotly",
+    "plotly>=7,<8",
     "utm",
     "xlrd",
     "xlwt",
     "wntr==1.4.0", # Needs to be installed via pip since conda-forge does not provide osx-arm64 builds
     "py4design-cea",
-    "pyepwmorph>=1.0.5",
+    "pyepwmorph>=3,<4",
 
     # CEA external tools
     "cea-external-tools>=0.2.4"
@@ -190,4 +190,3 @@ gdal = "*"
 notebook = "*"
 pixi-pycharm = ">=0.0.8,<0.0.9" # for pycharm support
 uv = "*"
-timezonefinder = ">=8.1.0,<9" # to fix Windows installation due to pyepwmorpher
