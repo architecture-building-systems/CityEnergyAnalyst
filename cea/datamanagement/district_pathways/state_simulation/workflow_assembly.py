@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import json
-import os
 from copy import deepcopy
 from enum import Enum
 from typing import Any
@@ -91,13 +89,8 @@ def should_use_crax_radiation(state_locator: InputLocator) -> bool:
 
 
 def _load_connectivity(state_locator: InputLocator, year: int) -> dict[str, Any] | None:
-    """Load connectivity.json for a state year's network, or return None if absent."""
-    network_name = f"thermal_network_{year}"
-    path = state_locator.get_network_connectivity_file(network_name)
-    if not os.path.isfile(path):
-        return None
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    """Load the connectivity file (YAML, or legacy JSON) for a state year's network, or None if absent."""
+    return state_locator.read_network_connectivity(f"thermal_network_{year}")
 
 
 def _extract_connections(connectivity: dict[str, Any]) -> dict[str, list[str]]:
