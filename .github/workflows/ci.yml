@@ -59,16 +59,17 @@ jobs:
       - name: Run unit tests
         run: pixi run unittest
 
+      # PRs: full matrix. Push to master: ubuntu only as a post-merge safety net.
       - name: Run integration tests
-        if: github.event.pull_request.draft == false
+        if: ${{ (github.event_name == 'pull_request' && !github.event.pull_request.draft) || (github.event_name == 'push' && matrix.os == 'ubuntu-latest') }}
         run: pixi run integration
 
       - name: Collect radiation outputs for cross-OS comparison
-        if: ${{ !cancelled() && github.event.pull_request.draft == false }}
+        if: ${{ !cancelled() && github.event_name == 'pull_request' && !github.event.pull_request.draft }}
         run: pixi run python .github/scripts/compare_radiation.py collect radiation-artifacts
 
       - name: Upload radiation outputs
-        if: ${{ !cancelled() && github.event.pull_request.draft == false }}
+        if: ${{ !cancelled() && github.event_name == 'pull_request' && !github.event.pull_request.draft }}
         uses: actions/upload-artifact@v7
         with:
           name: radiation-${{ matrix.os }}
@@ -98,7 +99,7 @@ jobs:
   compare-radiation:
     # Advisory: report sensor mesh / PV selection differences between OSes in the job summary
     needs: tests
-    if: ${{ !cancelled() && github.event.pull_request.draft == false }}
+    if: ${{ !cancelled() && github.event_name == 'pull_request' && !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
