@@ -11,6 +11,7 @@ import functools
 import logging
 import os
 import shutil
+import threading
 
 # CEA import
 import cea.inputlocator
@@ -48,18 +49,21 @@ CMIP6_VARIABLE_LABELS = {
 
 @contextlib.contextmanager
 def _report_cmip6_progress(n_fetches):
-    """Replace the per-fetch progress bars and credential warnings of pyepwmorph with one status line per fetch.
+    """Replace the per-fetch progress bars and credential warnings of pyepwmorph with plain status lines.
 
     pyepwmorph downloads each (pathway, variable) pair separately and every download draws its own intake-esm
-    progress bar, which floods the job log. The patches are restored on exit.
+    progress bar, which floods the job log because each redraw is captured as a new line. Print one line per
+    download and one per climate model opened instead. The patches are restored on exit.
     """
     import intake_esm.core
 
     original_fetch = pyepwmorph_workflow.compile_climate_model_data
     original_to_dataset_dict = intake_esm.core.esm_datastore.to_dataset_dict
+    original_load_source = intake_esm.core._load_source
     gcsfs_logger = logging.getLogger("gcsfs")
     original_gcsfs_level = gcsfs_logger.level
-    counter = {"done": 0}
+    counter = {"done": 0, "models_total": 0, "models_done": 0}
+    lock = threading.Lock()
 
     @functools.wraps(original_fetch)
     def fetch_with_status(model_sources, pathway, variable, *args, **kwargs):
@@ -71,10 +75,22 @@ def _report_cmip6_progress(n_fetches):
     @functools.wraps(original_to_dataset_dict)
     def quiet_to_dataset_dict(self, *args, **kwargs):
         kwargs.setdefault("progressbar", False)
+        counter["models_total"] = len(self)
+        counter["models_done"] = 0
         return original_to_dataset_dict(self, *args, **kwargs)
+
+    @functools.wraps(original_load_source)
+    def load_source_with_status(key, source):
+        result = original_load_source(key, source)
+        # datasets are opened in worker threads
+        with lock:
+            counter["models_done"] += 1
+            print(f"  Opened climate model dataset {counter['models_done']}/{counter['models_total']}")
+        return result
 
     pyepwmorph_workflow.compile_climate_model_data = fetch_with_status
     intake_esm.core.esm_datastore.to_dataset_dict = quiet_to_dataset_dict
+    intake_esm.core._load_source = load_source_with_status
     # gcsfs warns that it cannot look up the bucket type without credentials, then falls back to anonymous access
     gcsfs_logger.setLevel(logging.ERROR)
     try:
@@ -82,6 +98,7 @@ def _report_cmip6_progress(n_fetches):
     finally:
         pyepwmorph_workflow.compile_climate_model_data = original_fetch
         intake_esm.core.esm_datastore.to_dataset_dict = original_to_dataset_dict
+        intake_esm.core._load_source = original_load_source
         gcsfs_logger.setLevel(original_gcsfs_level)
 
 def convert_scenario_names(name):
