@@ -185,10 +185,12 @@ def morphing_workflow(locator, config):
     print(f"Config variables are: {morph_config.model_variables}")
     
     # 2.1 get climate model data
-    n_fetches = len(morph_config.model_pathways) * len(morph_config.model_variables)
-    print(f"Fetching climate model data: {n_fetches} downloads, each covering {len(morph_config.model_sources)} "
-          f"climate models. The first run for a location can take several minutes; this is expected and not a "
-          f"problem. Results are cached per location, so repeat runs are fast.")
+    n_pathways = len(morph_config.model_pathways)
+    n_variables = len(morph_config.model_variables)
+    n_fetches = n_pathways * n_variables
+    print(f"Fetching climate model data: {n_fetches} downloads ({n_pathways} pathways x {n_variables} variables), "
+          f"each covering {len(morph_config.model_sources)} climate models. The first run for a location can take "
+          f"several minutes. Results are cached per location, so repeat runs are fast.")
     with _report_cmip6_progress(n_fetches):
         year_model_dict = pyepwmorph_workflow.iterate_compile_model_data(morph_config.model_pathways,
                                                                         morph_config.model_variables,
