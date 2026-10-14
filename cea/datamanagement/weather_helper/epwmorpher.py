@@ -6,8 +6,12 @@ Description: This module provides functions to morph EPW files using the pyepwmo
 """
 
 # general import
+import contextlib
+import functools
+import logging
 import os
 import shutil
+import threading
 
 # CEA import
 import cea.inputlocator
@@ -28,6 +32,74 @@ __version__ = "0.1"
 __maintainer__ = ["Justin McCarty"]
 __email__ = ["cea@arch.ethz.ch", "mccarty@arch.ethz.ch"]
 __status__ = "Production"
+
+# Plain-language names for the CMIP6 variables pyepwmorph fetches, so progress messages are meaningful
+CMIP6_VARIABLE_LABELS = {
+    'tas': 'near-surface air temperature',
+    'tasmax': 'daily maximum air temperature',
+    'tasmin': 'daily minimum air temperature',
+    'huss': 'near-surface specific humidity',
+    'psl': 'sea level pressure',
+    'uas': 'eastward wind',
+    'vas': 'northward wind',
+    'rsds': 'surface solar radiation',
+    'clt': 'cloud cover',
+}
+
+
+@contextlib.contextmanager
+def _report_cmip6_progress(n_steps):
+    """Replace the per-fetch progress bars and credential warnings of pyepwmorph with plain status lines.
+
+    pyepwmorph downloads each (pathway, variable) pair separately and every download draws its own intake-esm
+    progress bar, which floods the job log because each redraw is captured as a new line. Print one line per
+    download and one per climate model opened instead. The patches are restored on exit.
+    """
+    import intake_esm.core
+
+    original_fetch = pyepwmorph_workflow.compile_climate_model_data
+    original_to_dataset_dict = intake_esm.core.esm_datastore.to_dataset_dict
+    original_load_source = intake_esm.core._load_source
+    gcsfs_logger = logging.getLogger("gcsfs")
+    original_gcsfs_level = gcsfs_logger.level
+    counter = {"done": 0, "models_total": 0, "models_done": 0}
+    lock = threading.Lock()
+
+    @functools.wraps(original_fetch)
+    def fetch_with_status(model_sources, pathway, variable, *args, **kwargs):
+        counter["done"] += 1
+        label = CMIP6_VARIABLE_LABELS.get(variable, variable)
+        print(f"Processing climate model data [{counter['done']}/{n_steps}]: {pathway} / {variable} ({label})")
+        return original_fetch(model_sources, pathway, variable, *args, **kwargs)
+
+    @functools.wraps(original_to_dataset_dict)
+    def quiet_to_dataset_dict(self, *args, **kwargs):
+        kwargs.setdefault("progressbar", False)
+        counter["models_total"] = len(self)
+        counter["models_done"] = 0
+        return original_to_dataset_dict(self, *args, **kwargs)
+
+    @functools.wraps(original_load_source)
+    def load_source_with_status(key, source):
+        result = original_load_source(key, source)
+        # datasets are opened in worker threads
+        with lock:
+            counter["models_done"] += 1
+            print(f"  Opened climate model dataset {counter['models_done']}/{counter['models_total']}")
+        return result
+
+    pyepwmorph_workflow.compile_climate_model_data = fetch_with_status
+    intake_esm.core.esm_datastore.to_dataset_dict = quiet_to_dataset_dict
+    intake_esm.core._load_source = load_source_with_status
+    # gcsfs warns that it cannot look up the bucket type without credentials, then falls back to anonymous access
+    gcsfs_logger.setLevel(logging.ERROR)
+    try:
+        yield
+    finally:
+        pyepwmorph_workflow.compile_climate_model_data = original_fetch
+        intake_esm.core.esm_datastore.to_dataset_dict = original_to_dataset_dict
+        intake_esm.core._load_source = original_load_source
+        gcsfs_logger.setLevel(original_gcsfs_level)
 
 def convert_scenario_names(name):
     """
@@ -130,14 +202,21 @@ def morphing_workflow(locator, config):
     print(f"Config variables are: {morph_config.model_variables}")
     
     # 2.1 get climate model data
-    year_model_dict = pyepwmorph_workflow.iterate_compile_model_data(morph_config.model_pathways,
-                                                                    morph_config.model_variables,
-                                                                    morph_config.model_sources,
-                                                                    morph_config.epw.location['longitude'],
-                                                                    morph_config.epw.location['latitude'],
-                                                                    morph_config.percentiles)
-    
-    
+    n_pathways = len(morph_config.model_pathways)
+    n_variables = len(morph_config.model_variables)
+    n_steps = n_pathways * n_variables
+    print(f"Processing climate model data: {n_steps} steps ({n_pathways} pathways x {n_variables} variables). "
+          f"Each step not yet cached for this location downloads {len(morph_config.model_sources)} climate models, "
+          f"so the first run for a location can take several minutes. Results are cached per location, so repeat "
+          f"runs are fast.")
+    with _report_cmip6_progress(n_steps):
+        year_model_dict = pyepwmorph_workflow.iterate_compile_model_data(morph_config.model_pathways,
+                                                                        morph_config.model_variables,
+                                                                        morph_config.model_sources,
+                                                                        morph_config.epw.location['longitude'],
+                                                                        morph_config.epw.location['latitude'],
+                                                                        morph_config.percentiles)
+
     # write the new epw file to the output directory
     print("Morphing")
     pathways = [p for p in morph_config.model_pathways if p != "historical"]
