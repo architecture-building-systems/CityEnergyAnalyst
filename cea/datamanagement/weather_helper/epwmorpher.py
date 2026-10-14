@@ -48,7 +48,7 @@ CMIP6_VARIABLE_LABELS = {
 
 
 @contextlib.contextmanager
-def _report_cmip6_progress(n_fetches):
+def _report_cmip6_progress(n_steps):
     """Replace the per-fetch progress bars and credential warnings of pyepwmorph with plain status lines.
 
     pyepwmorph downloads each (pathway, variable) pair separately and every download draws its own intake-esm
@@ -69,7 +69,7 @@ def _report_cmip6_progress(n_fetches):
     def fetch_with_status(model_sources, pathway, variable, *args, **kwargs):
         counter["done"] += 1
         label = CMIP6_VARIABLE_LABELS.get(variable, variable)
-        print(f"Fetching climate model data [{counter['done']}/{n_fetches}]: {pathway} / {variable} ({label})")
+        print(f"Processing climate model data [{counter['done']}/{n_steps}]: {pathway} / {variable} ({label})")
         return original_fetch(model_sources, pathway, variable, *args, **kwargs)
 
     @functools.wraps(original_to_dataset_dict)
@@ -204,11 +204,12 @@ def morphing_workflow(locator, config):
     # 2.1 get climate model data
     n_pathways = len(morph_config.model_pathways)
     n_variables = len(morph_config.model_variables)
-    n_fetches = n_pathways * n_variables
-    print(f"Fetching climate model data: {n_fetches} downloads ({n_pathways} pathways x {n_variables} variables), "
-          f"each covering {len(morph_config.model_sources)} climate models. The first run for a location can take "
-          f"several minutes. Results are cached per location, so repeat runs are fast.")
-    with _report_cmip6_progress(n_fetches):
+    n_steps = n_pathways * n_variables
+    print(f"Processing climate model data: {n_steps} steps ({n_pathways} pathways x {n_variables} variables). "
+          f"Each step not yet cached for this location downloads {len(morph_config.model_sources)} climate models, "
+          f"so the first run for a location can take several minutes. Results are cached per location, so repeat "
+          f"runs are fast.")
+    with _report_cmip6_progress(n_steps):
         year_model_dict = pyepwmorph_workflow.iterate_compile_model_data(morph_config.model_pathways,
                                                                         morph_config.model_variables,
                                                                         morph_config.model_sources,
