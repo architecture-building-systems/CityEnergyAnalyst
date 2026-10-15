@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
     verify_input_typology, COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY, \
     OPTIONAL_COLUMNS_ZONE_GEOMETRY
-from cea.interfaces.dashboard.utils import secure_path
+from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 
 router = APIRouter()
 
@@ -56,6 +56,8 @@ async def fetch_buildings(generate: bool = False, polygon: str = None, path: str
             buildings = gpd.read_file(_path).to_crs("epsg:4326")
 
             return json.loads(buildings.to_json())
+        except OutsideProjectRootError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
         except Exception as e:
             print(e)
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
