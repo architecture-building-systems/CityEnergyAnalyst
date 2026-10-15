@@ -6,6 +6,7 @@ Discoverability hub for everything under `docs/tutorials/`. The Sphinx-built dev
 
 - **[CEA-4 App Training Guide](cea4-app-training/index.md)** — Feature-by-feature walkthrough of the dashboard (41 features across 10 categories).
 - **[Quick Reference](cea4-app-training/00-quick-reference.md)** — Single-page overview of every dashboard feature.
+- **[Building height columns](building-height-columns.md)** — What `height_ag`, `height_vd`, `floors_ag` and `void_deck` include, with diagrams.
 - **[Variable & File Glossary](glossary/index.md)** — All 179 input / intermediate / output files, grouped by feature, generated from `cea/schemas.yml`.
 
 ## For developers

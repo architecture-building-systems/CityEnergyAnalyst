@@ -21,6 +21,7 @@ import pandas as pd
 from scipy.optimize import minimize, OptimizeResult
 
 from cea.constants import KELVIN_CONVERSION
+from cea.datamanagement.utils import resolve_void_height_for_row
 from cea.demand import constants
 from cea.utilities.physics import calc_rho_air
 
@@ -43,20 +44,27 @@ SHIELDING_CLASS = constants.SHIELDING_CLASS
 
 def get_building_geometry_ventilation(gdf_building_geometry):
     """
-    :param gdf_building_geometry : GeoDataFrame contains single building
+    Geometry of the enclosed part of a building, for the natural ventilation calculation.
 
-    :returns: building properties for natural ventilation calculation
+    A void deck is open to the outside, so it contributes neither air volume nor leaking
+    facade. Only the part between `height_vd` and `height_ag` is the zone.
+
+    :param gdf_building_geometry : mapping with the geometry of a single building
+
+    :returns: facade area [m2], roof area [m2], enclosed zone height [m], roof slope, and the
+        elevation of the zone's underside above ground [m]
     """
 
     # TODO: get real slope of roof in the future
     slope_roof_default = 0
 
-    area_facade_zone = gdf_building_geometry['perimeter'] * gdf_building_geometry['height_ag']
+    height_base = resolve_void_height_for_row(gdf_building_geometry)
+    height_zone = gdf_building_geometry['height_ag'] - height_base
+    area_facade_zone = gdf_building_geometry['perimeter'] * height_zone
     area_roof_zone = gdf_building_geometry['footprint']
-    height_zone = gdf_building_geometry['height_ag']
     slope_roof = slope_roof_default
 
-    return area_facade_zone, area_roof_zone, height_zone, slope_roof
+    return area_facade_zone, area_roof_zone, height_zone, slope_roof, height_base
 
 
 def calc_air_flows(temp_zone, u_wind, temp_ext, dict_props_nat_vent):
@@ -114,9 +122,10 @@ def get_properties_natural_ventilation(bpr: BuildingPropertiesRow):
     """
 
     n50 = bpr.envelope.n50
-    vol_building = bpr.geometry['footprint'] * bpr.geometry['height_ag']
+    area_facade_zone, area_roof_zone, height_zone, slope_roof, height_base = get_building_geometry_ventilation(
+        bpr.geometry)
+    vol_building = bpr.geometry['footprint'] * height_zone
     qv_delta_p_lea_ref_zone = calc_qv_delta_p_ref(n50, vol_building)
-    area_facade_zone, area_roof_zone, height_zone, slope_roof = get_building_geometry_ventilation(bpr.geometry)
     class_shielding = SHIELDING_CLASS
     #    factor_cros = bpr.architecture.f_cros
     factor_cros = 0  # TODO write dict function to look up, ZERO is for office and industrial functions
@@ -126,6 +135,9 @@ def get_properties_natural_ventilation(bpr: BuildingPropertiesRow):
     # (a) LEAKAGES
     coeff_lea_path, height_lea_path, orientation_lea_path = allocate_default_leakage_paths(
         calc_coeff_lea_zone(qv_delta_p_lea_ref_zone), area_facade_zone, area_roof_zone, height_zone)
+    # paths sit at their real elevation: wind pressure coefficients are looked up by absolute
+    # height, and a zone above a void deck does not start at the ground
+    height_lea_path = height_lea_path + height_base
 
     coeff_wind_pressure_path_lea = lookup_coeff_wind_pressure(height_lea_path, class_shielding, orientation_lea_path,
                                                               slope_roof, factor_cros)
@@ -133,6 +145,7 @@ def get_properties_natural_ventilation(bpr: BuildingPropertiesRow):
     # (b) VENTILATION OPENINGS
     coeff_vent_path, height_vent_path, orientation_vent_path = allocate_default_ventilation_openings(
         calc_coeff_vent_zone(area_vent_zone), height_zone)
+    height_vent_path = height_vent_path + height_base
     coeff_wind_pressure_path_vent = lookup_coeff_wind_pressure(height_vent_path, class_shielding, orientation_vent_path,
                                                                slope_roof, factor_cros)
 

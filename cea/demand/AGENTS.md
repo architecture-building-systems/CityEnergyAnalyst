@@ -34,7 +34,10 @@ enclosed_storey_height(df)       # (height_ag - void height) / enclosed floors
 
 This bit twice already: `get_floor_height` returning `height_ag / floors_ag` inflated internal
 air volume by 67%, and `floors_ag x floor_height` for the DHW riser silently lost the void
-deck's height. Both now go through the resolvers.
+deck's height. Both now go through the resolvers. A third: dynamic infiltration sized volume and
+facade from the full `height_ag` (#4115); `ventilation_air_flows_detailed` now uses the enclosed
+height and offsets the leakage paths by the void height. The DHW riser deliberately keeps the full
+`height_ag`. Diagram and per-calculation table: `docs/tutorials/building-height-columns.md`.
 
 ## Main Patterns
 
