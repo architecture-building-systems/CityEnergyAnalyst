@@ -4,15 +4,17 @@ from typing import Literal, Optional
 
 import osmnx
 import pandas as pd
+import requests
 from fastapi import APIRouter, HTTPException, status
 
 import geopandas as gpd
+from osmnx._errors import ResponseStatusCodeError
 from pydantic import BaseModel
 
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings, \
     verify_input_typology, COLUMNS_ZONE_TYPOLOGY, COLUMNS_ZONE_GEOMETRY, \
     OPTIONAL_COLUMNS_ZONE_GEOMETRY
-from cea.interfaces.dashboard.utils import secure_path
+from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
 
 router = APIRouter()
 
@@ -21,7 +23,7 @@ router = APIRouter()
 async def fetch_buildings(generate: bool = False, polygon: str = None, path: str = None):
     if generate:
         if polygon is None:
-            return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing polygon")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing polygon")
         try:
             site_polygon = gpd.read_file(polygon, crs="epsg:4326")
 
@@ -35,9 +37,18 @@ async def fetch_buildings(generate: bool = False, polygon: str = None, path: str
 
             return json.loads(buildings.to_json())
 
+        except HTTPException:
+            raise
+        except (ResponseStatusCodeError, requests.RequestException) as e:
+            # The public Overpass API is shared infrastructure and is often overloaded (502/503/504, timeouts)
+            print(e)
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="The OpenStreetMap (Overpass) server is currently unavailable or overloaded. "
+                       "Please try again in a few minutes.")
         except Exception as e:
             print(e)
-            return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
     elif path is not None:
         try:
@@ -45,9 +56,11 @@ async def fetch_buildings(generate: bool = False, polygon: str = None, path: str
             buildings = gpd.read_file(_path).to_crs("epsg:4326")
 
             return json.loads(buildings.to_json())
+        except OutsideProjectRootError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
         except Exception as e:
             print(e)
-            return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 class ValidateGeometry(BaseModel):
