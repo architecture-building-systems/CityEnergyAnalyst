@@ -639,6 +639,7 @@ def calc_cool_loads_3for2(bpr: BuildingPropertiesRow, t, tsd: TimeSeriesData, co
 def rc_temperatures_to_tsd(rc_model_temperatures, tsd: TimeSeriesData, t):
     tsd.rc_model_temperatures.T_int[t] = rc_model_temperatures['T_int']
     tsd.rc_model_temperatures.theta_m[t] = rc_model_temperatures['theta_m']
+    tsd.rc_model_temperatures.theta_m_t[t] = rc_model_temperatures['theta_m_t']
     tsd.rc_model_temperatures.theta_c[t] = rc_model_temperatures['theta_c']
     tsd.rc_model_temperatures.theta_o[t] = rc_model_temperatures['theta_o']
 
@@ -811,6 +812,7 @@ def calc_rc_no_loads(bpr: BuildingPropertiesRow, tsd: TimeSeriesData, t, config)
     # write to tsd
     tsd.rc_model_temperatures.T_int[t] = rc_model_temperatures['T_int']
     tsd.rc_model_temperatures.theta_m[t] = rc_model_temperatures['theta_m']
+    tsd.rc_model_temperatures.theta_m_t[t] = rc_model_temperatures['theta_m_t']
     tsd.rc_model_temperatures.theta_c[t] = rc_model_temperatures['theta_c']
     tsd.rc_model_temperatures.theta_o[t] = rc_model_temperatures['theta_o']
     update_tsd_no_cooling(tsd, t)
