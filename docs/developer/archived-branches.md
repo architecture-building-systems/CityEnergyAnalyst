@@ -16,8 +16,9 @@ git push origin <name>               # optional: put the branch back on GitHub
 Links of the form `https://github.com/architecture-building-systems/CityEnergyAnalyst/tree/<name>` and
 `git clone -b <name>` also resolve to the tag, but leave you in a detached HEAD.
 
-If you have an old local branch with the same name as a tag, Git warns that the name is ambiguous. Delete the local
-branch (`git branch -D <name>`) or use the full ref (`refs/heads/<name>` / `refs/tags/<name>`).
+If you have an old local branch with the same name as a tag, Git warns that the name is ambiguous. Check that
+the local branch has no commits missing from the tag (`git log <name> --not refs/tags/<name>`), then delete it
+(`git branch -D <name>`) or use the full ref (`refs/heads/<name>` / `refs/tags/<name>`).
 
 ## Archived (branch deleted, tag kept)
 

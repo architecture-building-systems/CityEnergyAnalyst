@@ -68,8 +68,8 @@ Suggested actions are proposals, not decisions:
 | `3430-new-connectivity-vector-operations-for-ga` | Mathias Niffeler | 2024-07-17 | 40 | PR #3634 closed |
 | `i1657-GA-calibration` | Martín Mosteiro Romero | 2018-11-01 | 25 | |
 | `e002-ecocampus-optimization` | Bhargava Krishna Sreepathi | 2017-12-14 | 42 | |
-| `i2454-validation-tool` | Emanuel Riegelbauer | 2020-06-16 | 41 | Branch name has a doubled `origin/` prefix |
-| `i2454-validation-tool-updated` | lguilhermers | 2020-08-25 | 43 | PR #2823 closed. Branch name has a doubled `origin/` prefix |
+| `origin/i2454-validation-tool` | Emanuel Riegelbauer | 2020-06-16 | 41 | Branch name has a doubled `origin/` prefix |
+| `origin/i2454-validation-tool-updated` | lguilhermers | 2020-08-25 | 43 | PR #2823 closed. Branch name has a doubled `origin/` prefix |
 
 ## Archive or delete: old and small (2017-2021)
 
