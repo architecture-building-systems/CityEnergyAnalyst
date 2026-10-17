@@ -427,6 +427,50 @@ class TestAugmentNetwork:
     e.g. a pathway state reusing the previous state's layout)."""
 
     CRS = 'EPSG:32632'
+    # A 100 m square block of streets
+    SQUARE_STREETS = [
+        [(0.0, 0.0), (100.0, 0.0)],
+        [(100.0, 0.0), (100.0, 100.0)],
+        [(0.0, 0.0), (0.0, 100.0)],
+        [(0.0, 100.0), (100.0, 100.0)],
+    ]
+
+    def _augment(self, streets, nodes, pipes, buildings):
+        """Add every building missing from the existing network (``nodes`` as
+        ``(building, type, xy)``, ``pipes`` as coordinate lists) to it.
+
+        :param buildings: ``{name: centroid xy}`` of the zone
+        :return: ``(user_edges, augmented_nodes, augmented_edges, edge graph)``
+        """
+        user_nodes = gpd.GeoDataFrame(
+            [{'building': b, 'name': f'NODE{i}', 'type': t, 'geometry': Point(xy)}
+             for i, (b, t, xy) in enumerate(nodes)],
+            crs=self.CRS,
+        )
+        user_edges = gpd.GeoDataFrame(
+            [{'name': f'PIPE{i}', 'type_mat': 'T1', 'geometry': LineString(coords)}
+             for i, coords in enumerate(pipes)],
+            crs=self.CRS,
+        )
+        zone = gpd.GeoDataFrame(
+            {'name': list(buildings), 'geometry': [Point(xy).buffer(4) for xy in buildings.values()]},
+            crs=self.CRS,
+        )
+        nodes_out, edges_out = augment_user_network_with_buildings(
+            user_nodes_gdf=user_nodes,
+            user_edges_gdf=user_edges,
+            zone_gdf=zone,
+            missing_building_names=[b for b in buildings if b not in set(user_nodes['building'])],
+            street_network_gdf=gpd.GeoDataFrame(geometry=[LineString(c) for c in streets], crs=self.CRS),
+            locator=SimpleNamespace(get_total_demand=lambda: 'missing-total-demand.csv'),
+            snap_tolerance=0.1,
+            connection_candidates=1,
+            existing_max_pipe_number=len(pipes) - 1,
+        )
+        graph = nx.Graph()
+        for line in edges_out.geometry:
+            graph.add_edge(line.coords[0], line.coords[-1])
+        return user_edges, nodes_out, edges_out, graph
 
     def test_stray_street_fragments_do_not_block_augmentation(self):
         """Street data with isolated fragments must not make augmentation fail.
@@ -434,63 +478,49 @@ class TestAugmentNetwork:
         A fresh layout bridges or discards such fragments; augmentation used to pass the
         raw streets to the Steiner tree, which rejects any disconnected graph.
         """
-        streets = gpd.GeoDataFrame(
-            geometry=[
-                LineString([(0.0, 0.0), (100.0, 0.0)]),
-                LineString([(100.0, 0.0), (100.0, 100.0)]),
-                LineString([(0.0, 0.0), (0.0, 100.0)]),
-                LineString([(0.0, 100.0), (100.0, 100.0)]),
-                LineString([(120.0, 50.0), (130.0, 50.0)]),    # near fragment: bridged
-                LineString([(500.0, 500.0), (520.0, 500.0)]),  # far fragment: discarded
-            ],
-            crs=self.CRS,
-        )
+        streets = self.SQUARE_STREETS + [
+            [(120.0, 50.0), (130.0, 50.0)],    # near fragment: bridged
+            [(500.0, 500.0), (520.0, 500.0)],  # far fragment: discarded
+        ]
         # Existing network: B001 and a plant, both hanging off the bottom street.
-        user_nodes = gpd.GeoDataFrame(
-            [
-                {'building': 'B001', 'name': 'NODE0', 'type': 'CONSUMER', 'geometry': Point(0.0, -10.0)},
-                {'building': 'NONE', 'name': 'NODE1', 'type': 'NONE', 'geometry': Point(0.0, 0.0)},
-                {'building': 'NONE', 'name': 'NODE2', 'type': 'NONE', 'geometry': Point(100.0, 0.0)},
-                {'building': 'NONE', 'name': 'NODE3', 'type': 'PLANT', 'geometry': Point(100.0, -10.0)},
-            ],
-            crs=self.CRS,
-        )
-        user_edges = gpd.GeoDataFrame(
-            [
-                {'name': 'PIPE0', 'type_mat': 'T1', 'geometry': LineString([(0.0, -10.0), (0.0, 0.0)])},
-                {'name': 'PIPE1', 'type_mat': 'T1', 'geometry': LineString([(0.0, 0.0), (100.0, 0.0)])},
-                {'name': 'PIPE2', 'type_mat': 'T1', 'geometry': LineString([(100.0, 0.0), (100.0, -10.0)])},
-            ],
-            crs=self.CRS,
-        )
-        zone = gpd.GeoDataFrame(
-            {
-                'name': ['B001', 'B002'],
-                'geometry': [Point(0.0, -10.0).buffer(4), Point(50.0, 110.0).buffer(4)],
-            },
-            crs=self.CRS,
-        )
-        locator = SimpleNamespace(get_total_demand=lambda: 'missing-total-demand.csv')
-
-        nodes, edges = augment_user_network_with_buildings(
-            user_nodes_gdf=user_nodes,
-            user_edges_gdf=user_edges,
-            zone_gdf=zone,
-            missing_building_names=['B002'],
-            street_network_gdf=streets,
-            locator=locator,
-            snap_tolerance=0.1,
-            connection_candidates=1,
-            existing_max_pipe_number=2,
+        user_edges, nodes, edges, graph = self._augment(
+            streets,
+            nodes=[('B001', 'CONSUMER', (0.0, -10.0)), ('NONE', 'NONE', (0.0, 0.0)),
+                   ('NONE', 'NONE', (100.0, 0.0)), ('NONE', 'PLANT', (100.0, -10.0))],
+            pipes=[[(0.0, -10.0), (0.0, 0.0)], [(0.0, 0.0), (100.0, 0.0)], [(100.0, 0.0), (100.0, -10.0)]],
+            buildings={'B001': (0.0, -10.0), 'B002': (50.0, 110.0)},
         )
 
         assert {'B001', 'B002'} <= set(nodes['building'])
         assert {g.wkb for g in user_edges.geometry} <= {g.wkb for g in edges.geometry}
-        graph = nx.Graph()
-        for line in edges.geometry:
-            graph.add_edge(line.coords[0], line.coords[-1])
         assert nx.is_connected(graph)
         assert not any(500.0 <= x for x, _ in graph.nodes)  # far fragment not routed through
+
+    def test_new_pipes_do_not_duplicate_existing_pipes(self):
+        """New pipes join the existing network at its nodes, never alongside its pipes.
+
+        The layout invites every duplicate: B002 is nearest to B001's service pipe (a
+        connection onto it would split it); the trunk runs along a street from a node
+        partway along it, and B003 sits beside it (a new pipe could follow the street from
+        B003's street connection, beside the trunk); and the plant hangs off a node with
+        nothing branching (the trunk and plant pipe could be merged into one new pipe).
+        """
+        user_edges, nodes, edges, graph = self._augment(
+            self.SQUARE_STREETS,
+            nodes=[('B001', 'CONSUMER', (50.0, -30.0)), ('NONE', 'NONE', (50.0, 0.0)),
+                   ('NONE', 'NONE', (100.0, 0.0)), ('NONE', 'PLANT', (100.0, -10.0))],
+            pipes=[[(50.0, -30.0), (50.0, 0.0)], [(50.0, 0.0), (100.0, 0.0)], [(100.0, 0.0), (100.0, -10.0)]],
+            buildings={'B001': (50.0, -30.0), 'B002': (40.0, -20.0), 'B003': (70.0, -10.0)},
+        )
+
+        assert {'B001', 'B002', 'B003'} <= set(nodes['building'])
+        existing = {g.wkb for g in user_edges.geometry}
+        assert existing <= {g.wkb for g in edges.geometry}
+        new_edges = [g for g in edges.geometry if g.wkb not in existing]
+        assert all(user_edges.geometry.intersection(g).length.max() < 1e-6 for g in new_edges)
+        assert nx.is_tree(graph)
+        # B002 → street → NODE1 (30 m); B003 straight to NODE1, the trunk's nearer end
+        assert sum(g.length for g in new_edges) == pytest.approx(30.0 + (20.0 ** 2 + 10.0 ** 2) ** 0.5)
 
 
 if __name__ == '__main__':

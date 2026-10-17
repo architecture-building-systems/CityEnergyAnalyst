@@ -489,6 +489,57 @@ def near_analysis(building_centroids, street_network: gdf, k: int = 1):
     return gdf(results, crs=street_network.crs)
 
 
+def _split_line_at_points(line: LineString, points: list[Point]) -> list[LineString]:
+    """
+    Split ``line`` at the given (normalized) points lying on it, normalizing each piece.
+
+    Points at the line's own endpoints are ignored; without interior points the line is
+    returned unchanged.
+    """
+    coords = list(line.coords)
+    line_ends = {
+        normalize_coords([coords[0]], precision=SHAPEFILE_TOLERANCE)[0],
+        normalize_coords([coords[-1]], precision=SHAPEFILE_TOLERANCE)[0],
+    }
+    distances = sorted(
+        line.project(pt) for pt in points
+        if (round(pt.x, SHAPEFILE_TOLERANCE), round(pt.y, SHAPEFILE_TOLERANCE)) not in line_ends
+    )
+    if not distances:
+        return [line]
+
+    all_distances = [0, *distances, line.length]
+    # substring() produces raw float coordinates, so normalize immediately
+    return [
+        normalize_geometry(substring(line, start, end, normalized=False), precision=SHAPEFILE_TOLERANCE)
+        for start, end in zip(all_distances, all_distances[1:])
+        if end - start > 1e-10  # Skip zero-length segments
+    ]
+
+
+def split_streets_at_points(street_network: gdf, points: list[Point], tolerance: float = 1e-3) -> gdf:
+    """
+    Split street lines at the given points lying on them (within ``tolerance`` metres),
+    so each such point becomes a street node -- e.g. an existing network's nodes, so its
+    pipes join the street graph where they meet it.
+
+    :param points: Normalized Points; those not on any street are ignored
+    :return: Street GeoDataFrame (geometry only)
+    """
+    splits = defaultdict(list)
+    sindex = street_network.sindex
+    for pt in points:
+        for i in sindex.query(pt.buffer(tolerance)):
+            if street_network.geometry.iloc[i].distance(pt) <= tolerance:
+                splits[i].append(pt)
+    lines = [
+        piece
+        for i, line in enumerate(street_network.geometry)
+        for piece in _split_line_at_points(line, splits.get(i, []))
+    ]
+    return gdf(geometry=lines, crs=street_network.crs)
+
+
 def create_terminals(building_centroids: gdf, street_network: gdf, connection_candidates: int = 1) -> gdf:
     """
     Create terminal connection lines from building centroids to nearest points on street network.
@@ -545,52 +596,10 @@ def create_terminals(building_centroids: gdf, street_network: gdf, connection_ca
             lines_to_split[street_idx] = []
         lines_to_split[street_idx].append(Point(street_coord))
     
-    # Split street lines at terminal connection points using substring method
+    # Split street lines at terminal connection points
     for idx, line in street_network.iterrows():
-        if idx not in lines_to_split:
-            new_lines.append(line.geometry)
-            continue
+        new_lines.extend(_split_line_at_points(line.geometry, lines_to_split.get(idx, [])))
 
-        split_points = lines_to_split[idx]  # These are already normalized Points
-
-        # Normalize line endpoints for consistent comparison
-        coords = list(line.geometry.coords)
-        start_coord_normalized = normalize_coords([coords[0]], precision=SHAPEFILE_TOLERANCE)[0]
-        end_coord_normalized = normalize_coords([coords[-1]], precision=SHAPEFILE_TOLERANCE)[0]
-
-        valid_split_points = []
-        for pt in split_points:
-            # Skip if point is at start or end of line (using exact normalized coordinate comparison)
-            # Normalize point coordinates for exact comparison
-            pt_coord = (round(pt.x, SHAPEFILE_TOLERANCE), round(pt.y, SHAPEFILE_TOLERANCE))
-
-            # Use exact coordinate tuple comparison (more reliable than distance threshold)
-            if pt_coord == start_coord_normalized or pt_coord == end_coord_normalized:
-                continue
-            valid_split_points.append(pt)
-
-        if valid_split_points:
-            # Get distances along line for each split point and sort
-            distances = sorted([line.geometry.project(pt) for pt in valid_split_points])
-
-            # Create segments between start, split points, and end
-            all_distances = [0] + distances + [line.geometry.length]
-
-            # Generate segments using substring
-            # IMPORTANT: substring() produces raw float coordinates, so normalize immediately
-            for i in range(len(all_distances) - 1):
-                start_dist = all_distances[i]
-                end_dist = all_distances[i + 1]
-
-                if end_dist - start_dist > 1e-10:  # Skip zero-length segments
-                    segment = substring(line.geometry, start_dist, end_dist, normalized=False)
-                    # Normalize segment coordinates to prevent precision mismatches
-                    segment_normalized = normalize_geometry(segment, precision=SHAPEFILE_TOLERANCE)
-                    new_lines.append(segment_normalized)
-        else:
-            # No interior split points - keep original line
-            new_lines.append(line.geometry)
-    
     # Create GeoDataFrame with all network lines (streets + building terminals)
     combined_network = gdf(geometry=new_lines, crs=street_network.crs)
 
@@ -1044,7 +1053,7 @@ def repair_connectivity(
     (with per-building diagnostics) instead of being hidden.
 
     :param terminal_mapping: Dict mapping terminal name → (x, y) node coordinates; every
-        node that must stay reachable (buildings, plants, existing network nodes)
+        node that must stay reachable (buildings and plants)
     :param building_centroids_df: GeoDataFrame of the terminals (``name`` + Point geometry)
     :param streets_clean_df: Cleaned street network (without terminals), for diagnostics
     :raises ValueError: If terminals remain on separate components

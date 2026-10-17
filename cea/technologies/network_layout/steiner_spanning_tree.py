@@ -73,7 +73,8 @@ def calc_steiner_spanning_tree(crs_projected,
                                type_mat_default=TYPE_MAT_DEFAULT,
                                pipe_diameter_default=PIPE_DIAMETER_DEFAULT,
                                method: str = SteinerAlgorithm.Kou,
-                               connection_candidates: int = 3):
+                               connection_candidates: int = 3,
+                               fixed_nodes: set[tuple] | None = None):
     """
     Calculate the minimum spanning tree of the network. Note that this function can't be run in parallel in it's
     present form.
@@ -92,6 +93,9 @@ def calc_steiner_spanning_tree(crs_projected,
     :param int connection_candidates: Number of nearest street connection points to consider per building.
         Default is 3 (balanced quality/speed). Values of 1 (fastest greedy) to 5 (best quality) are supported.
         Only works with Kou algorithm - Mehlhorn will use greedy nearest regardless.
+    :param fixed_nodes: (x, y) coordinates the result keeps as nodes even where nothing
+        branches off -- e.g. the existing network's nodes when augmenting it, so its
+        pipes come out whole instead of merged into new ones.
     :return: ``(mst_edges, mst_nodes)``
     """
     steiner_algorithm = SteinerAlgorithm(method)
@@ -322,10 +326,11 @@ def calc_steiner_spanning_tree(crs_projected,
         length = merged.length
         return merged, length
 
-    def _contract_degree2_street_nodes(full_graph: nx.Graph, steiner_graph: nx.Graph, terminals: set[tuple], original_junctions: set[tuple] | None = None) -> nx.Graph:
+    def _contract_degree2_street_nodes(full_graph: nx.Graph, steiner_graph: nx.Graph, terminals: set[tuple], original_junctions: set[tuple] | None = None, fixed_nodes: set[tuple] | None = None) -> nx.Graph:
         sg = steiner_graph.copy()
         terminals = set(tuple(t) for t in terminals)
         original_junctions = set(tuple(j) for j in (original_junctions or set()))
+        fixed_nodes = set(tuple(f) for f in (fixed_nodes or set()))
 
         # Helper to decide if an edge is a service stub (touches a terminal)
         def is_service_edge(a, b):
@@ -336,7 +341,7 @@ def calc_steiner_spanning_tree(crs_projected,
             changed = False
             # Work on a snapshot of nodes to avoid iteration issues
             for n in list(sg.nodes()):
-                if n in terminals:
+                if n in terminals or n in fixed_nodes:
                     continue
                 if n not in sg:
                     continue
@@ -387,7 +392,7 @@ def calc_steiner_spanning_tree(crs_projected,
     # 1) prune dangling non-terminal leaves
     mst_non_directed = _prune_nonterminal_leaves(mst_non_directed, terminals_set)
     # 2) contract degree-2 street chains (while preserving original junctions)
-    mst_non_directed = _contract_degree2_street_nodes(G, mst_non_directed, terminals_set, original_junctions)
+    mst_non_directed = _contract_degree2_street_nodes(G, mst_non_directed, terminals_set, original_junctions, fixed_nodes)
 
     # Reporting helper: print network stats and total length
     def _report_network_stats(graph: nx.Graph, terminals: set[tuple], label: str = "Final"):
