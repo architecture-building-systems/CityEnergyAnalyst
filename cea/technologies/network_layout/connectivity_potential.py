@@ -745,20 +745,28 @@ def _prepare_network_inputs(streets_network_df: gdf, building_centroids_df: gdf,
         streets_network_df, original_crs, shapefile_name="streets shapefile"
     )
 
-    # Clean street network: split at intersections and snap near-miss endpoints
+    streets_network_df = prepare_street_network(streets_network_df, snap_tolerance)
+    normalize_gdf_geometries(building_centroids_df, precision=SHAPEFILE_TOLERANCE, inplace=True)
+
+    return streets_network_df, building_centroids_df, crs
+
+
+def prepare_street_network(streets_network_df: gdf, snap_tolerance: float) -> gdf:
+    """
+    Clean a (projected) street network for routing: snap near-miss endpoints, split at
+    intersections, merge degree-2 nodes, and normalise coordinates to SHAPEFILE_TOLERANCE.
+
+    :param snap_tolerance: Maximum distance to snap near-miss endpoints (meters)
+    :return: Cleaned street GeoDataFrame
+    """
     print("Cleaning street network...")
-    
-    # Validate snap_tolerance before cleaning
     _validate_snap_tolerance(streets_network_df, snap_tolerance)
-    
     streets_network_df = clean_street_network(streets_network_df, snap_tolerance)
 
     # Normalise all coordinates to consistent precision (prevents floating-point issues)
     print(f"\nNormalising coordinates to consistent precision ({SHAPEFILE_TOLERANCE} decimal places)...")
     normalize_gdf_geometries(streets_network_df, precision=SHAPEFILE_TOLERANCE, inplace=True)
-    normalize_gdf_geometries(building_centroids_df, precision=SHAPEFILE_TOLERANCE, inplace=True)
-
-    return streets_network_df, building_centroids_df, crs
+    return streets_network_df
 
 
 def _identify_original_junctions(graph: nx.Graph, terminal_nodes: set[tuple], coord_precision: int = SHAPEFILE_TOLERANCE) -> set[tuple]:
@@ -980,17 +988,12 @@ def calc_connectivity_network_with_geometry(
     # Preserve a copy of the cleaned street network (without terminals) for diagnostics and retries
     streets_clean_df = streets_network_df.copy()
 
-    # Extract terminal node coordinates (building centroids, normalized)
-    # These will be used for:
-    # 1. Protecting terminal nodes during orphan merging
-    # 2. Building terminal mapping for graph metadata
-    terminal_nodes = set()
+    # Terminal node coordinates (building centroids, normalized): protected during
+    # connectivity repair and stored as graph metadata
     terminal_mapping = {}  # building_id -> (x, y) normalized coords
     for idx, row in building_centroids_df.iterrows():
         building_id = row.get('name', idx)
-        bldg_coord = normalize_coords([row.geometry.coords[0]], precision=SHAPEFILE_TOLERANCE)[0]
-        terminal_nodes.add(bldg_coord)
-        terminal_mapping[building_id] = bldg_coord
+        terminal_mapping[building_id] = normalize_coords([row.geometry.coords[0]], precision=SHAPEFILE_TOLERANCE)[0]
 
     # Create terminals from building centroids
     if connection_candidates > 1:
@@ -1006,17 +1009,6 @@ def calc_connectivity_network_with_geometry(
         preserve_geometry=True
     )
 
-    # Clean orphan nodes: merge small isolated street fragments to main network
-    # This fixes disconnections from isolated street segments while protecting building terminals
-    graph = _merge_orphan_nodes_to_nearest(
-        graph,
-        terminal_nodes=terminal_nodes,
-        merge_threshold=50.0  # Max 50m to connect isolated street fragments
-    )
-    graph.graph['building_terminals'] = terminal_mapping
-    graph.graph['crs'] = crs
-    graph.graph['coord_precision'] = SHAPEFILE_TOLERANCE
-
     # Identify and store original street junctions (degree >= 3 nodes) from STREETS-ONLY network
     # IMPORTANT: Must use streets_clean_df (before adding building terminals) to avoid inflating junction count
     # If we use the combined graph, any street node connected to a building becomes degree >= 3 (junction),
@@ -1025,8 +1017,7 @@ def calc_connectivity_network_with_geometry(
     original_junctions = _identify_original_junctions(streets_only_graph, set(), SHAPEFILE_TOLERANCE)  # Empty terminal set for streets-only
     graph.graph['original_junctions'] = original_junctions
 
-    # Validate connectivity and fix issues
-    graph = _validate_and_fix_connectivity(
+    return repair_connectivity(
         graph=graph,
         terminal_mapping=terminal_mapping,
         building_centroids_df=building_centroids_df,
@@ -1035,4 +1026,39 @@ def calc_connectivity_network_with_geometry(
         crs=crs,
     )
 
-    return graph
+
+def repair_connectivity(
+    graph: nx.Graph,
+    terminal_mapping: dict,
+    building_centroids_df: gdf,
+    streets_clean_df: gdf,
+    connection_candidates: int,
+    crs: str,
+) -> nx.Graph:
+    """
+    Make a potential network graph one connected component, as the Steiner tree requires.
+
+    Street data usually holds isolated fragments. Small ones within 50 m are bridged to
+    the main network, and any remaining component without a terminal is discarded;
+    components holding terminals are never touched, so a real disconnection still raises
+    (with per-building diagnostics) instead of being hidden.
+
+    :param terminal_mapping: Dict mapping terminal name → (x, y) node coordinates; every
+        node that must stay reachable (buildings, plants, existing network nodes)
+    :param building_centroids_df: GeoDataFrame of the terminals (``name`` + Point geometry)
+    :param streets_clean_df: Cleaned street network (without terminals), for diagnostics
+    :raises ValueError: If terminals remain on separate components
+    """
+    graph = _merge_orphan_nodes_to_nearest(
+        graph,
+        terminal_nodes=set(terminal_mapping.values()),
+        merge_threshold=50.0,
+    )
+    return _validate_and_fix_connectivity(
+        graph=graph,
+        terminal_mapping=terminal_mapping,
+        building_centroids_df=building_centroids_df,
+        streets_clean_df=streets_clean_df,
+        connection_candidates=connection_candidates,
+        crs=crs,
+    )

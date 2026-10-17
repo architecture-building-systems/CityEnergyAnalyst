@@ -5,6 +5,8 @@ Tests the complete workflow: loading street/building data, creating connectivity
 and verifying coordinate precision handling.
 """
 
+from types import SimpleNamespace
+
 import pytest
 import geopandas as gpd
 import networkx as nx
@@ -13,6 +15,7 @@ from shapely.geometry import Point, LineString
 from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network_with_geometry
 from cea.technologies.network_layout.graph_utils import gdf_to_nx, nx_to_gdf
 from cea.optimization_new.user_network_loader import (
+    augment_user_network_with_buildings,
     filter_network_to_buildings,
     _prune_dangling_stubs,
 )
@@ -417,6 +420,77 @@ class TestFilterNetwork:
         out_nodes, out_edges = _prune_dangling_stubs(nodes, edges, protected)
         assert set(out_nodes['name']) == {'A'}
         assert len(out_edges) == 0
+
+
+class TestAugmentNetwork:
+    """Tests for augment_user_network_with_buildings (extending an existing network,
+    e.g. a pathway state reusing the previous state's layout)."""
+
+    CRS = 'EPSG:32632'
+
+    def test_stray_street_fragments_do_not_block_augmentation(self):
+        """Street data with isolated fragments must not make augmentation fail.
+
+        A fresh layout bridges or discards such fragments; augmentation used to pass the
+        raw streets to the Steiner tree, which rejects any disconnected graph.
+        """
+        streets = gpd.GeoDataFrame(
+            geometry=[
+                LineString([(0.0, 0.0), (100.0, 0.0)]),
+                LineString([(100.0, 0.0), (100.0, 100.0)]),
+                LineString([(0.0, 0.0), (0.0, 100.0)]),
+                LineString([(0.0, 100.0), (100.0, 100.0)]),
+                LineString([(120.0, 50.0), (130.0, 50.0)]),    # near fragment: bridged
+                LineString([(500.0, 500.0), (520.0, 500.0)]),  # far fragment: discarded
+            ],
+            crs=self.CRS,
+        )
+        # Existing network: B001 and a plant, both hanging off the bottom street.
+        user_nodes = gpd.GeoDataFrame(
+            [
+                {'building': 'B001', 'name': 'NODE0', 'type': 'CONSUMER', 'geometry': Point(0.0, -10.0)},
+                {'building': 'NONE', 'name': 'NODE1', 'type': 'NONE', 'geometry': Point(0.0, 0.0)},
+                {'building': 'NONE', 'name': 'NODE2', 'type': 'NONE', 'geometry': Point(100.0, 0.0)},
+                {'building': 'NONE', 'name': 'NODE3', 'type': 'PLANT', 'geometry': Point(100.0, -10.0)},
+            ],
+            crs=self.CRS,
+        )
+        user_edges = gpd.GeoDataFrame(
+            [
+                {'name': 'PIPE0', 'type_mat': 'T1', 'geometry': LineString([(0.0, -10.0), (0.0, 0.0)])},
+                {'name': 'PIPE1', 'type_mat': 'T1', 'geometry': LineString([(0.0, 0.0), (100.0, 0.0)])},
+                {'name': 'PIPE2', 'type_mat': 'T1', 'geometry': LineString([(100.0, 0.0), (100.0, -10.0)])},
+            ],
+            crs=self.CRS,
+        )
+        zone = gpd.GeoDataFrame(
+            {
+                'name': ['B001', 'B002'],
+                'geometry': [Point(0.0, -10.0).buffer(4), Point(50.0, 110.0).buffer(4)],
+            },
+            crs=self.CRS,
+        )
+        locator = SimpleNamespace(get_total_demand=lambda: 'missing-total-demand.csv')
+
+        nodes, edges = augment_user_network_with_buildings(
+            user_nodes_gdf=user_nodes,
+            user_edges_gdf=user_edges,
+            zone_gdf=zone,
+            missing_building_names=['B002'],
+            street_network_gdf=streets,
+            locator=locator,
+            snap_tolerance=0.1,
+            connection_candidates=1,
+            existing_max_pipe_number=2,
+        )
+
+        assert {'B001', 'B002'} <= set(nodes['building'])
+        assert {g.wkb for g in user_edges.geometry} <= {g.wkb for g in edges.geometry}
+        graph = nx.Graph()
+        for line in edges.geometry:
+            graph.add_edge(line.coords[0], line.coords[-1])
+        assert nx.is_connected(graph)
+        assert not any(500.0 <= x for x, _ in graph.nodes)  # far fragment not routed through
 
 
 if __name__ == '__main__':

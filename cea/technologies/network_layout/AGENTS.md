@@ -105,6 +105,8 @@ When users provide their own network layout (via `edges-shp-path`/`nodes-shp-pat
 **Augmentation function:** `augment_user_network_with_buildings()` in `user_network_loader.py`
 
 **Augmentation** (`augment_user_network_with_buildings()`): creates potential network (user edges + streets), runs Kou Steiner with existing + new buildings as terminals, merges result additively. User disk files never modified.
+- The streets must get the same preparation as a fresh layout — `prepare_street_network()` then `repair_connectivity()` (both in `connectivity_potential.py`) — or real street data's isolated fragments make the Steiner tree reject the graph ("Graph is not connected"). Pass every terminal (new, existing, plant) to `repair_connectivity()` so their components are never discarded.
+- Clean only the streets, never the user edges: `_merge_augmented_network()` recognises user edges in the Steiner result by their endpoints.
 
 **Filtering function:** `filter_network_to_buildings()` in `user_network_loader.py`
 
@@ -210,9 +212,9 @@ Terminal nodes (building connection points) are never used as bridge points — 
 
 ## Workflow
 
-1. **`_prepare_network_inputs()`** - CRS transformation, validation, cleaning (snap endpoints, split at intersections, simplify)
+1. **`_prepare_network_inputs()`** - CRS transformation, validation, then `prepare_street_network()` (snap endpoints, split at intersections, simplify, normalise)
 2. **`create_terminals(connection_candidates=k)`** - Connect each building to k-nearest street points with normalized coordinates
-3. **`calc_connectivity_network_with_geometry()`** - Build final graph with metadata
+3. **`calc_connectivity_network_with_geometry()`** - Build final graph with metadata; `repair_connectivity()` bridges/discards street fragments
 4. **`calc_steiner_spanning_tree(method, connection_candidates)`** - Optimize network layout
    - If `connection_candidates > 1` and `method='kou'`: Kou's metric closure automatically selects best connections
    - If `method='mehlhorn'`: Uses greedy nearest regardless of k
