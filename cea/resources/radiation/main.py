@@ -3,8 +3,11 @@ Radiation engine and geometry handler for CEA
 """
 
 import os
+import platform
 import shutil
+import sys
 import time
+from importlib import metadata
 from itertools import repeat
 
 import pandas as pd
@@ -74,6 +77,16 @@ def read_surface_properties(locator: cea.inputlocator.InputLocator) -> pd.DataFr
     surface_properties = pd.concat([building_names, df1, df2, df3], axis=1)
 
     return surface_properties.set_index('name').round(decimals=2)
+
+
+def print_build_info() -> None:
+    """Print the software used for this run. Sensor meshes and DAYSIM results can differ slightly between
+    OS / binary builds, so this lets differences between runs be traced from the logs."""
+    import OCC
+
+    print(f"Build info: CEA {cea.__version__}, {platform.system()} {platform.release()} ({platform.machine()}), "
+          f"Python {sys.version.split()[0]}, pythonocc {OCC.VERSION}, GDAL {gdal.__version__}, "
+          f"cea-external-tools {metadata.version('cea-external-tools')}")
 
 
 def buildings_to_simulate(settings, zone_building_names) -> list[str]:
@@ -163,6 +176,7 @@ def main(config: cea.config.Configuration):
 
     daysim_bin_path = daysim.check_daysim_bin_directory()
     print(f'Using Daysim binaries from path: {daysim_bin_path}')
+    print_build_info()
 
     print("verifying geometry files")
     zone_path = locator.get_zone_geometry()
