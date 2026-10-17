@@ -106,10 +106,12 @@ When users provide their own network layout (via `edges-shp-path`/`nodes-shp-pat
 
 **Augmentation** (`augment_user_network_with_buildings()`): creates potential network (user edges + streets), runs Kou Steiner with existing + new buildings as terminals, merges result additively. User disk files never modified.
 - The streets must get the same preparation as a fresh layout — `prepare_street_network()` then `repair_connectivity()` (both in `connectivity_potential.py`) — or real street data's isolated fragments make the Steiner tree reject the graph ("Graph is not connected"). Pass every terminal (new, existing, plant) to `repair_connectivity()` so their components are never discarded.
-- User edges are never split or merged (pipe names must stay stable across pathway phases), so new pipes may join them only at their nodes, and `_merge_augmented_network()` recognises reused user edges by their exact endpoints. Every way a user edge could come back altered becomes a duplicate pipe:
+- User edges are never split or merged (multi-phase tools match pipes by name across phases), so new pipes may join them only at their nodes, and `_merge_augmented_network()` recognises reused user edges by their exact endpoints. Every way a user edge could come back altered becomes a duplicate pipe:
   - connect new terminals to the streets only (`create_terminals` onto a user edge splits it)
   - pass the user nodes to `calc_steiner_spanning_tree(fixed_nodes=...)` (degree-2 contraction would merge a user edge into a new one)
-  - split streets at user nodes (`split_streets_at_points`) and drop street stretches a user edge runs along (`_remove_streets_covered_by_user_edges`), or the tree lays a new pipe beside an existing one
+  - split streets at user nodes (`split_streets_at_points`) so the network joins the streets there
+- Route user edges at zero weight (already built), so the tree reuses them instead of laying new pipe along the street beside them. **Never remove those streets** from the graph: user edges pass straight through street junctions without a node, so removing the street cuts every side street off and forces huge detours.
+- Accepted limitation: a route that must reach a user edge partway along runs beside it to its nearest node (joining mid-edge would split it).
 
 **Filtering function:** `filter_network_to_buildings()` in `user_network_loader.py`
 

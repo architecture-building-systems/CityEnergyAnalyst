@@ -403,18 +403,12 @@ def calc_steiner_spanning_tree(crs_projected,
         terminals_bad_degree = [n for n in terminals if n in graph and deg.get(n, 0) != 1]
         # B2B edges (should be none)
         b2b = [(u, v) for u, v in graph.edges() if u in terminals and v in terminals]
-        # Total length
-        total_len = 0.0
-        for u, v, data in graph.edges(data=True):
-            if 'weight' in data and isinstance(data['weight'], (int, float)):
-                total_len += float(data['weight'])
-            else:
-                try:
-                    from shapely import LineString as _LS
-                    total_len += _LS([u, v]).length
-                except Exception:
-                    # Fallback: ignore
-                    pass
+        # Total length, from geometry: an edge's weight is its routing cost, which need
+        # not be its length (augmentation routes existing pipes at zero cost)
+        total_len = sum(
+            data['geometry'].length if 'geometry' in data else LineString([u, v]).length
+            for u, v, data in graph.edges(data=True)
+        )
         print(f"\n{label} network stats:")
         print(f"  Nodes: {graph.number_of_nodes()}, Edges: {graph.number_of_edges()}")
         print(f"  Terminals: {len(terminals)} | Non-terminal leaves: {len(non_terminal_leaves)}")

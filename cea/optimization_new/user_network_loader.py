@@ -959,8 +959,7 @@ def augment_user_network_with_buildings(
     :param missing_building_names: List of building names to add to network
     :param street_network_gdf: Street network for routing (from locator.get_street_network())
     :param locator: InputLocator for file paths
-    :param snap_tolerance: Snap tolerance for street cleaning, and how close a street must
-        run to a user edge to count as covered by it (metres)
+    :param snap_tolerance: Tolerance for snapping near-miss street endpoints (metres)
     :param connection_candidates: Number of nearest streets to consider per building (1-5)
     :param existing_max_pipe_number: Highest ``PIPE{N}`` number already in use in the
         parent network (before any filter step). Steiner-added edges are renumbered
@@ -1456,41 +1455,6 @@ def _warn_if_plants_have_no_consumers(
             )
 
 
-def _remove_streets_covered_by_user_edges(
-    streets_gdf: gpd.GeoDataFrame,
-    user_edges_gdf: gpd.GeoDataFrame,
-    tolerance: float,
-) -> gpd.GeoDataFrame:
-    """
-    Drop the street stretches a user edge already runs along.
-
-    User edges are never split, so a new pipe can only join one at its nodes; a street
-    running beside a user edge would let the Steiner tree lay a new pipe parallel to the
-    existing one instead. Expects the streets already split at the user nodes
-    (``split_streets_at_points``), so a stretch between two nodes goes as a whole. Short
-    overlaps -- a user edge crossing a street -- leave the street intact.
-
-    :param tolerance: How far (metres) a street may lie from a user edge and still count
-        as running along it
-    """
-    from cea.technologies.network_layout.graph_utils import normalize_geometry
-
-    covered = user_edges_gdf.geometry.union_all().buffer(tolerance)
-    min_overlap = max(1.0, 4 * tolerance)
-    lines = []
-    for line in streets_gdf.geometry:
-        remainder = line.difference(covered)
-        if line.length - remainder.length < min_overlap:
-            lines.append(line)
-            continue
-        lines.extend(
-            normalize_geometry(part, SHAPEFILE_TOLERANCE)
-            for part in getattr(remainder, 'geoms', [remainder])
-            if part.length >= min_overlap
-        )
-    return gpd.GeoDataFrame(geometry=lines, crs=streets_gdf.crs)
-
-
 def _create_potential_graph_for_augmentation(
     user_edges_gdf: gpd.GeoDataFrame,
     user_node_coords: Set[Tuple[float, float]],
@@ -1502,15 +1466,20 @@ def _create_potential_graph_for_augmentation(
 ) -> nx.Graph:
     """
     Create the potential network graph for augmentation: user edges + cleaned street
-    network (minus the stretches user edges already run along), with connections from
-    each new terminal to its nearest streets.
+    network, with connections from each new terminal to its nearest streets.
 
     The streets get the same preparation as a freshly generated layout (cleaning, then
     bridging or discarding the isolated fragments street data usually holds), since the
-    Steiner tree needs one connected graph. User edges are kept whole --
-    ``_merge_augmented_network`` recognises them in the Steiner result by their endpoints --
-    so new terminals connect to the streets only: a connection onto a user edge would
-    split it, and the piece would come back as a new pipe duplicating the existing one.
+    Steiner tree needs one connected graph.
+
+    User edges are never split (multi-phase tools match pipes by name), so new pipes may
+    join them only at their nodes, and ``_merge_augmented_network`` recognises reused user
+    edges by their endpoints. Hence new terminals connect to streets only, and user edges
+    cost nothing to route along (they are already built), so the tree reuses them rather
+    than laying new pipe along the street beside them. Those streets stay in the graph:
+    user edges pass straight through street junctions without a node, and side streets
+    reach the network only along them. A route that has to reach a user edge partway
+    along still runs beside it to its nearest node -- joining there would split it.
 
     :param user_node_coords: Normalized (x, y) endpoints of the user edges
     :param new_terminals: ``name`` + Point rows that need connecting to the streets
@@ -1532,10 +1501,8 @@ def _create_potential_graph_for_augmentation(
     crs = user_edges_gdf.crs
     streets_clean_gdf = prepare_street_network(street_network_gdf.to_crs(crs), snap_tolerance)
     # A user node partway along a street (e.g. where an earlier layout branched off)
-    # becomes a street node, so the user network joins the streets there; otherwise a
-    # new pipe would have to run along the whole street segment, beside the user edge.
+    # becomes a street node, so the user network joins the streets there
     streets_clean_gdf = split_streets_at_points(streets_clean_gdf, [Point(c) for c in user_node_coords])
-    streets_clean_gdf = _remove_streets_covered_by_user_edges(streets_clean_gdf, user_edges_gdf, snap_tolerance)
 
     # Connect each new terminal to its k-nearest street points
     streets_with_terminals_gdf = create_terminals(
@@ -1544,14 +1511,17 @@ def _create_potential_graph_for_augmentation(
         connection_candidates=connection_candidates
     )
 
-    # User edges + streets are both potential routing options. Geometry only: a user
-    # edge column such as ``length_m`` would leave street rows NaN, and gdf_to_nx
-    # takes edge weights from such columns.
+    # Routing options, weighted by the length of new pipe they need. User edges come
+    # last, so where a street piece shares their endpoints, the user edge wins.
+    routing_gdf = gpd.GeoDataFrame(
+        pd.concat([
+            streets_with_terminals_gdf.assign(weight=streets_with_terminals_gdf.geometry.length),
+            user_edges_gdf[['geometry']].assign(weight=0.0),
+        ], ignore_index=True),
+        crs=crs,
+    )
     potential_graph = gdf_to_nx(
-        gpd.GeoDataFrame(
-            pd.concat([user_edges_gdf[['geometry']], streets_with_terminals_gdf], ignore_index=True),
-            crs=crs,
-        ),
+        routing_gdf,
         coord_precision=SHAPEFILE_TOLERANCE,
         preserve_geometry=True
     )
