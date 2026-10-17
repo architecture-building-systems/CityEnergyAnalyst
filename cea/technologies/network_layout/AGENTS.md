@@ -72,6 +72,8 @@ cooling-connected-buildings: B1003, B1004, B1005
 
 **When using `existing-network`**, `main()` resolves the edges + nodes shapefiles for that network and then passes them through the same `process_user_defined_network()` pipeline as any other user-defined input. The `network-layout-mode` parameter is applied to the loaded graph exactly as it would be for a user-provided shapefile — see the User-Defined Network Layout Modes section below.
 
+**An existing network's pipes are already built, so they are never removed** (`keep_pipes=True`): a building that left — demolished (no longer in `zone.shp`) or disconnected (filter mode's extras) — is detached by `detach_buildings_from_network()`: its node becomes a `NONE` junction, its pipes stay and carry on to later states. thermal-network skips the resulting dead-end branches (`common/geometry.py::remove_idle_branches`). User-provided shapefiles keep the old behaviour: filter prunes, and names not in the zone still fail validation (wrong-scenario guard).
+
 If the existing network has both DC and DH node files, they are merged into a temporary shapefile (deduplicated on `(building, geometry)`) so DH-only buildings are preserved. The helper is `_load_existing_network_node_paths()` in `main.py`.
 
 ## User-Defined Network Layout Modes
@@ -115,7 +117,7 @@ When users provide their own network layout (via `edges-shp-path`/`nodes-shp-pat
 
 **Filtering function:** `filter_network_to_buildings()` in `user_network_loader.py`
 
-**Filtering algorithm:**
+**Filtering algorithm** (user-provided networks; an existing network detaches instead, see Loading Existing Networks):
 1. Remove building nodes not in `buildings_to_keep` list
 2. Drop every edge incident to a removed building node
 3. Keep only connected components anchored by a surviving terminal (remaining building) or a plant node

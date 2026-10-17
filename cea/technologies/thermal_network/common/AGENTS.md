@@ -61,6 +61,11 @@ Consequences:
 - The cost engine already computes the union of edges, so no separate
   `installed_edges_gdf` is needed — the union via `get_all_edges_across_phases`
   is authoritative.
+- Single-phase runs see the same thing within one layout: a pathway state keeps a
+  departed building's pipes in `layout.shp` (network-layout `existing-network`),
+  ending in a `NONE` junction. `geometry.remove_idle_branches` drops such dead-end
+  branches before simulation, so they are neither sized nor simulated, and the
+  simulated `edges.shp` (what phasing reads) leaves them out.
 
 ## Per-Phase Action Vocabulary
 

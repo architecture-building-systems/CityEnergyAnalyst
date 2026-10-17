@@ -149,3 +149,32 @@ def extract_network_from_shapefile(edge_shapefile_df: gpd.GeoDataFrame, node_sha
             raise ValueError(f"The following edges do not have matching start and end nodes within the specified tolerance: {missing_edges}")
     
     return node_shapefile_df, edge_shapefile_df
+
+
+def remove_idle_branches(node_df: pd.DataFrame, edge_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, list[str]]:
+    """
+    Drop the branches that serve no consumer or plant -- they carry no flow.
+
+    A network kept from an earlier pathway state keeps the pipes of buildings since demolished
+    or disconnected (see network-layout's ``existing-network``); their nodes become plain
+    junctions at dead ends. Dead-end junctions are removed with their pipes, repeatedly, until
+    every remaining dead end is a consumer or plant.
+
+    :param node_df: Nodes indexed by name, with a ``type`` column (as from
+        ``extract_network_from_shapefile``)
+    :param edge_df: Edges indexed by name, with ``start node`` and ``end node`` columns
+    :return: ``(node_df, edge_df, idle_pipe_names)`` without the idle branches
+    """
+    active = set(node_df.index[(node_df['type'] == 'CONSUMER') | node_df['type'].str.contains('PLANT', na=False)])
+    edges = edge_df[['start node', 'end node']]
+    idle_pipes: list[str] = []
+    while True:
+        degree = pd.concat([edges['start node'], edges['end node']]).value_counts()
+        dead_ends = set(degree.index[degree == 1]) - active
+        if not dead_ends:
+            break
+        idle = edges['start node'].isin(dead_ends) | edges['end node'].isin(dead_ends)
+        idle_pipes.extend(edges.index[idle])
+        edges = edges[~idle]
+    connected = set(edges['start node']) | set(edges['end node'])
+    return node_df[node_df.index.isin(connected | active)], edge_df.loc[edges.index], idle_pipes

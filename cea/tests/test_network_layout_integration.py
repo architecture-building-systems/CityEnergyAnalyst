@@ -16,6 +16,7 @@ from cea.technologies.network_layout.connectivity_potential import calc_connecti
 from cea.technologies.network_layout.graph_utils import gdf_to_nx, nx_to_gdf
 from cea.optimization_new.user_network_loader import (
     augment_user_network_with_buildings,
+    detach_buildings_from_network,
     filter_network_to_buildings,
     _prune_dangling_stubs,
 )
@@ -391,6 +392,26 @@ class TestFilterNetwork:
         # Trunk junctions must all survive
         for jn in ('J1', 'J2', 'J3', 'J4'):
             assert jn in self._junction_names_in(out_nodes)
+
+    def test_detach_keeps_every_pipe_and_turns_buildings_into_junctions(self):
+        """An inherited network keeps a departed building's pipes; only the building goes."""
+        nodes_gdf, edges_gdf = self._build_network(include_plant=True)
+
+        out = detach_buildings_from_network(nodes_gdf, ['B004', 'B999'])
+
+        assert self._buildings_in(out) == {'B001', 'B002', 'B003'}
+        detached = out[out['name'] == 'N4'].iloc[0]
+        assert (detached['building'], detached['type']) == ('NONE', 'NONE')
+        assert len(out) == len(nodes_gdf)
+        assert nodes_gdf.loc[nodes_gdf['name'] == 'N4', 'building'].iloc[0] == 'B004'  # input untouched
+
+    def test_detach_may_leave_no_building(self):
+        """Every served building can go (e.g. all demolished): filter then adds the
+        replacements to the kept pipes, and only fails if none are added."""
+        nodes_gdf, _ = self._build_network()
+        out = detach_buildings_from_network(nodes_gdf, ['B001', 'B002', 'B003', 'B004'])
+        assert self._buildings_in(out) == set()
+        assert len(out) == len(nodes_gdf)
 
     def test_prune_dangling_stubs_protects_listed_coords(self):
         """Helper should not prune nodes whose coords are in protected_coords."""

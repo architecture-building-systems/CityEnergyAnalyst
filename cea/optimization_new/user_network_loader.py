@@ -1399,6 +1399,27 @@ def filter_network_to_buildings(
     )
 
 
+def detach_buildings_from_network(
+    nodes_gdf: gpd.GeoDataFrame,
+    buildings_to_detach: List[str],
+) -> gpd.GeoDataFrame:
+    """
+    Turn the given buildings' nodes into plain junctions, keeping every pipe.
+
+    For a network inherited from an earlier state (``existing-network``): the pipes of a
+    building since demolished or disconnected are still in the ground, so they stay in the
+    layout -- carried to later states, where a new building may join at their nodes.
+    thermal-network skips the dead-end branches they leave, which carry no flow
+    (``remove_idle_branches``).
+
+    :param buildings_to_detach: Building names; names not in the network are ignored
+    :return: nodes_gdf with those buildings' nodes relabelled ``building``/``type`` = 'NONE'
+    """
+    nodes_gdf = nodes_gdf.copy()
+    nodes_gdf.loc[nodes_gdf['building'].isin(buildings_to_detach), ['building', 'type']] = 'NONE'
+    return nodes_gdf
+
+
 def _warn_if_plants_have_no_consumers(
     nodes_gdf: gpd.GeoDataFrame,
     edges_gdf: gpd.GeoDataFrame,
