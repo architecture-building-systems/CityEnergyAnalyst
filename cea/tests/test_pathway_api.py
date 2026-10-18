@@ -22,6 +22,7 @@ from cea.datamanagement.district_pathways.pathway_state import (
 from cea.datamanagement.district_pathways.pathway_status import (
     read_state_status,
     record_baked_state,
+    record_custom_state,
     record_simulated_state,
 )
 from cea.datamanagement.district_pathways.state_simulation.main import simulate_all_states
@@ -148,6 +149,44 @@ def test_database_save_inside_a_state_marks_it_custom(pathway_api_fixture):
     # The same save on the parent scenario marks no state.
     assert client.post("/inputs/databases/components/materials", json={"source": "CH"}).status_code == 200
     assert not read_state_status(locator, pathway_name="demo", year=2020).get("custom")
+
+
+def test_custom_states_with_outputs_count_as_simulated(pathway_api_fixture):
+    """A custom (purple) state counts towards `all_simulated` -- which gates the Canvas
+    Builder's pathway picker -- and the emission timeline's pathways when it has outputs,
+    without a Simulate Pathway run: the user may have run the tools inside the state. Both
+    use `state_has_results`."""
+    client = pathway_api_fixture["client"]
+    locator = pathway_api_fixture["locator"]
+    pathway = DistrictEvolutionPathway(pathway_api_fixture["config"], pathway_name="demo")
+    for year in (2020, 2030, 2040):
+        _create_state_folder(locator, "demo", year, ["B1"])
+        os.makedirs(InputLocator(locator.get_state_in_time_scenario_folder("demo", year)).get_output_folder(),
+                    exist_ok=True)
+        source_hash = pathway.source_log_hash_for_year(year)
+        record_baked_state(locator, pathway_name="demo", year=year, built_at="2026-02-01T00:00:00",
+                           source_log_hash=source_hash)
+        record_simulated_state(locator, pathway_name="demo", year=year, simulated_at="2026-02-10T00:00:00",
+                               source_log_hash=source_hash, workflow=[])
+
+    def all_simulated():
+        return client.get("/pathways/overview").json()["pathways"][0]["all_simulated"]
+
+    def emission_timeline_choices():
+        section = pathway_api_fixture["config"].sections["plots-pathway-emission-timeline"]
+        return section.parameters["existing-pathway-names"]._choices
+
+    assert all_simulated() is True
+    assert emission_timeline_choices() == ["demo"]
+
+    record_custom_state(locator, pathway_name="demo", year=2030)  # edited, outputs on disk
+    assert all_simulated() is True
+    assert emission_timeline_choices() == ["demo"]
+
+    state_2030 = InputLocator(locator.get_state_in_time_scenario_folder("demo", 2030))
+    shutil.rmtree(state_2030.get_output_folder())  # nothing to show for that state
+    assert all_simulated() is False
+    assert emission_timeline_choices() == []
 
 
 def test_delete_pathway_route(pathway_api_fixture):

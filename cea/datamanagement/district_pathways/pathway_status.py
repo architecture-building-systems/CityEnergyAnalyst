@@ -217,6 +217,27 @@ def write_pathway_metadata(
     return current
 
 
+def state_has_results(
+    locator: InputLocator,
+    *,
+    pathway_name: str,
+    year: int,
+    primary_phase: str,
+) -> bool:
+    """Whether a state's results can feed pathway-wide views (canvas pathway columns, the
+    emission timeline): simulated, or custom with outputs on disk.
+
+    A custom (purple) state reports ``custom`` for every phase, so its status cannot say
+    whether it was simulated -- the user may have run the tools inside the state themselves.
+    Its outputs folder is the evidence there is anything to show.
+    """
+    if primary_phase == "simulated":
+        return True
+    return primary_phase == "custom" and state_outputs_folder_exists(
+        locator, pathway_name=pathway_name, year=year
+    )
+
+
 def record_custom_state(
     locator: InputLocator,
     *,
