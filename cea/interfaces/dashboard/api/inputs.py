@@ -591,25 +591,30 @@ async def save_all_inputs(scenario: CEAScenario, form: InputForm):
         return out
 
     result = await run_in_threadpool(fn)
-
-    # If the save happened inside a pathway state (sub-scenario), mark
-    # the state as custom so the pathway viewer shows it in purple and
-    # bake/simulate can handle it appropriately.
-    child_scenario = PathwayChildScenario.parse(scenario)
-    if child_scenario:
-        from cea.datamanagement.district_pathways.pathway_status import record_custom_state
-        parent_locator = cea.inputlocator.InputLocator(child_scenario.parent)
-        try:
-            await run_in_threadpool(
-                record_custom_state,
-                parent_locator,
-                pathway_name=child_scenario.pathway_name,
-                year=child_scenario.year,
-            )
-        except OSError:
-            pass
-
+    await _mark_state_custom_if_child(scenario)
     return result
+
+
+async def _mark_state_custom_if_child(scenario: str) -> None:
+    """Mark a pathway state as custom after a save inside it (inputs or database).
+
+    The pathway viewer then shows it in purple, bake leaves it alone instead of rebuilding it
+    from the parent scenario's inputs, and Simulate Pathway re-runs it.
+    """
+    child_scenario = PathwayChildScenario.parse(scenario)
+    if child_scenario is None:
+        return
+    from cea.datamanagement.district_pathways.pathway_status import record_custom_state
+    parent_locator = cea.inputlocator.InputLocator(child_scenario.parent)
+    try:
+        await run_in_threadpool(
+            record_custom_state,
+            parent_locator,
+            pathway_name=child_scenario.pathway_name,
+            year=child_scenario.year,
+        )
+    except OSError:
+        pass
 
 
 def _build_choices_cache(locator):
@@ -917,6 +922,7 @@ async def put_input_database_data(
                     'conflicts': conflicts,
                 },
             )
+        await _mark_state_custom_if_child(scenario)
         response = {'message': 'Database updated'}
         if result.get('remapped_buildings'):
             response['remapped_buildings'] = result['remapped_buildings']
@@ -972,6 +978,7 @@ async def seed_materials_database(scenario: CEAScenario, payload: SeedMaterialsD
         shutil.copyfile(source, destination)
 
     await run_in_threadpool(do_copy)
+    await _mark_state_custom_if_child(scenario)
 
     return {'source': payload.source}
 
@@ -1085,7 +1092,9 @@ async def upload_input_database(scenario: CEAScenario, file: UploadFile):
 
         return {'message': 'Database uploaded successfully'}
 
-    return await run_in_threadpool(do_upload)
+    result = await run_in_threadpool(do_upload)
+    await _mark_state_custom_if_child(scenario)
+    return result
 
 @router.get('/databases/download')
 async def download_input_database(scenario: CEAScenario):

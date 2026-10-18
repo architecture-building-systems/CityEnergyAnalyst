@@ -470,8 +470,24 @@ def get_effective_scenario_lenient(
     return _get_effective_scenario(config, project_root, require_exists=False, cea_headers=cea_headers)
 
 
+def get_parent_scenario(
+    config: CEAConfig,
+    project_root: CEAProjectRoot,
+    cea_headers: Annotated[CEAScenarioHeaders, Header()],
+) -> str:
+    """The scenario a request targets, ignoring any ``X-CEA-Child-Scenario``.
+
+    For routes that act on the parent of a pathway state (its pathways): the GUI sends the
+    inspected state's header with every request, and that state's folder has no pathways --
+    or no longer exists, if the state was just cleared.
+    """
+    parent_headers = cea_headers.model_copy(update={'x_cea_child_scenario': None})
+    return _get_effective_scenario(config, project_root, require_exists=True, cea_headers=parent_headers)
+
+
 CEAScenario = Annotated[str, Depends(get_effective_scenario)]
 CEAScenarioLenient = Annotated[str, Depends(get_effective_scenario_lenient)]
+CEAParentScenario = Annotated[str, Depends(get_parent_scenario)]
 
 
 def get_effective_scenario_optional(

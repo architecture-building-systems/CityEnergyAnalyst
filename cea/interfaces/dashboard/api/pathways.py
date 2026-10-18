@@ -31,10 +31,11 @@ from cea.datamanagement.district_pathways.pathway_timeline import (
     validate_pathway_log,
 )
 from cea.interfaces.dashboard.dependencies import CEAConfig
-from cea.interfaces.dashboard.api.utils import CEAScenario
+from cea.interfaces.dashboard.api.utils import CEAParentScenario
 
 
-async def _apply_parent_scenario(config: CEAConfig, scenario: CEAScenario):
+async def _apply_parent_scenario(config: CEAConfig, scenario: CEAParentScenario):
+    # Pathways belong to the parent scenario, whichever state the GUI is inspecting.
     config.scenario = scenario
 
 
