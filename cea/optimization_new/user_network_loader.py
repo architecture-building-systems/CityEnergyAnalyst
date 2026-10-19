@@ -1406,9 +1406,9 @@ def detach_buildings_from_network(
     """
     Turn the given buildings' nodes into plain junctions, keeping every pipe.
 
-    For a network inherited from an earlier state (``existing-network``): the pipes of a
-    building since demolished or disconnected are still in the ground, so they stay in the
-    layout -- carried to later states, where a new building may join at their nodes.
+    For an existing network whose pipes are already built (``keep-existing-pipes``): the
+    pipes of a building since demolished or disconnected stay in the layout, where a new
+    building may join at their nodes.
     thermal-network skips the dead-end branches they leave, which carry no flow
     (``remove_idle_branches``).
 

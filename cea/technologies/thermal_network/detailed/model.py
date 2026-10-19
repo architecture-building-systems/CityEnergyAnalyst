@@ -31,7 +31,11 @@ from cea.constants import (HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, HOUR
                            THERMAL_NETWORK_TEMPERATURE_CONVERGENCE_K)
 from cea.constants import PUR_lambda_WmK, STEEL_lambda_WmK, SOIL_lambda_WmK, KELVIN_CONVERSION
 from cea.optimization.constants import PUMP_ETA
-from cea.technologies.thermal_network.common.geometry import extract_network_from_shapefile, load_network_shapefiles
+from cea.technologies.thermal_network.common.geometry import (
+    extract_network_from_shapefile,
+    load_network_shapefiles,
+    remove_idle_branches,
+)
 from cea.technologies.thermal_network.common.utils import add_date_to_dataframe, calculate_ground_temperature
 from cea.technologies.constants import NETWORK_DEPTH, REDUCED_TIME_STEPS, MAX_INITIAL_DIAMETER_ITERATIONS, \
     MAX_NODE_FLOW
@@ -425,6 +429,10 @@ class ThermalNetwork(object):
         # filter_edges=True because layout.shp contains edges for all network types (DC+DH combined),
         # but nodes are network-specific, so we filter to only edges that match this network's nodes
         node_df, edge_df = extract_network_from_shapefile(network_edges_df, network_nodes_df, filter_edges=True)
+        node_df, edge_df, idle_pipes = remove_idle_branches(node_df, edge_df)
+        if idle_pipes:
+            print(f"  Skipping {len(idle_pipes)} idle pipe(s) that serve no building (kept in the layout): "
+                  f"{', '.join(idle_pipes[:10])}" + (" ..." if len(idle_pipes) > 10 else ""))
 
         # create node catalogue indicating which nodes are plants and which consumers
 

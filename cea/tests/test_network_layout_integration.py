@@ -394,7 +394,7 @@ class TestFilterNetwork:
             assert jn in self._junction_names_in(out_nodes)
 
     def test_detach_keeps_every_pipe_and_turns_buildings_into_junctions(self):
-        """An inherited network keeps a departed building's pipes; only the building goes."""
+        """An existing network with built pipes keeps a departed building's pipes; only the building goes."""
         nodes_gdf, edges_gdf = self._build_network(include_plant=True)
 
         out = detach_buildings_from_network(nodes_gdf, ['B004', 'B999'])
@@ -445,7 +445,7 @@ class TestFilterNetwork:
 
 class TestAugmentNetwork:
     """Tests for augment_user_network_with_buildings (extending an existing network,
-    e.g. a pathway state reusing the previous state's layout)."""
+    e.g. when re-using a previous layout)."""
 
     CRS = 'EPSG:32632'
     # A 100 m square block of streets

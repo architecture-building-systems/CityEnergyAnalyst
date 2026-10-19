@@ -1672,6 +1672,7 @@ class NetworkLayoutSection(Section):
     itemised_dh_services: list[str]
     number_of_components: int | None
     existing_network: str | None
+    keep_existing_pipes: bool
     edges_shp_path: str | None
     nodes_shp_path: str | None
     network_geojson_path: str | None
@@ -1702,6 +1703,8 @@ class NetworkLayoutSection(Section):
     def __getattr__(self, item: Literal["number_of_components"]) -> int | None: ...
     @overload
     def __getattr__(self, item: Literal["existing_network"]) -> str | None: ...
+    @overload
+    def __getattr__(self, item: Literal["keep_existing_pipes"]) -> bool: ...
     @overload
     def __getattr__(self, item: Literal["edges_shp_path"]) -> str | None: ...
     @overload

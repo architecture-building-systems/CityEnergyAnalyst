@@ -383,8 +383,8 @@ def apply_network_mode_to_user_network(nodes_gdf, edges_gdf, buildings_to_valida
         locator: InputLocator instance
         snap_tolerance: Snap tolerance for geometry operations
         keep_pipes: Filter mode detaches extra buildings (their nodes become junctions,
-            their pipes stay) instead of removing them with their pipes -- for a network
-            inherited from an earlier state, whose pipes are already built
+            their pipes stay) instead of removing them with their pipes -- for an existing
+            network whose pipes are already built (``keep-existing-pipes``)
 
     Returns:
         Tuple of (nodes_gdf, edges_gdf) after applying mode
@@ -2128,8 +2128,8 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     all_zone_buildings = locator.get_zone_building_names()
     zone_gdf = gpd.read_file(locator.get_zone_geometry())
 
-    # A network kept from an earlier state may serve buildings since demolished: their
-    # pipes stay (already built), only the buildings leave the network.
+    # A network with already-built pipes may serve buildings since demolished: their
+    # pipes stay, only the buildings leave the network.
     if keep_pipes:
         demolished = sorted(
             set(extract_building_nodes(nodes_gdf, exclude_plant_nodes=True)['building'])
@@ -2572,7 +2572,7 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
 
     # Write unified connectivity file — final-energy requires this file,
     # and skipping it here is what caused the "Network connectivity file
-    # not found" failure when state years re-used a prior network via
+    # not found" failure when re-using an existing network via
     # augment/filter.
     if network_metadata:
         unified_connectivity = {
@@ -2765,8 +2765,7 @@ def main(config: cea.config.Configuration):
                 edges_shp, nodes_shp, geojson_path,
                 cooling_plant_building, heating_plant_building,
                 snap_tolerance,
-                # An existing network's pipes are already built: kept when buildings leave
-                keep_pipes=inherited_network,
+                keep_pipes=inherited_network and config.network_layout.keep_existing_pipes,
             )
 
         # Generate network layout using Steiner tree (current behavior or fallback)

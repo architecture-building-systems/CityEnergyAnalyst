@@ -155,8 +155,8 @@ def remove_idle_branches(node_df: pd.DataFrame, edge_df: pd.DataFrame) -> tuple[
     """
     Drop the branches that serve no consumer or plant -- they carry no flow.
 
-    A network kept from an earlier pathway state keeps the pipes of buildings since demolished
-    or disconnected (see network-layout's ``existing-network``); their nodes become plain
+    A layout built with network-layout's ``keep-existing-pipes`` keeps the pipes of buildings
+    since demolished or disconnected; their nodes become plain
     junctions at dead ends. Dead-end junctions are removed with their pipes, repeatedly, until
     every remaining dead end is a consumer or plant.
 

@@ -735,3 +735,14 @@ def _read_log(locator: InputLocator, pathway_name: str) -> dict[int, dict]:
     with open(locator.get_district_pathway_log_file(pathway_name), "r", encoding="utf-8") as handle:
         data = yaml.safe_load(handle) or {}
     return {int(year): entry for year, entry in data.items()}
+
+
+def test_network_layout_step_keeps_previous_states_pipes():
+    from cea.datamanagement.district_pathways.state_simulation.workflow_assembly import (
+        build_network_layout_step,
+    )
+
+    step = build_network_layout_step(
+        year=2030, required_services=["DH"], previous_network_name="thermal_network_2025"
+    )
+    assert step["parameters"]["keep-existing-pipes"] is True
