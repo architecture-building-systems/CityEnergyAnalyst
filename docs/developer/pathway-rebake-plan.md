@@ -56,7 +56,8 @@ Two signals, each sized for where it runs. Designed for both the local tool and 
 - **Bake — master-inputs fingerprint (authoritative).** A stat walk of master `inputs/` — hash of
   `(relative path, size, mtime_ns)` — recorded per state at bake and compared on the next one. One
   walk per bake run, shared across years; negligible next to the bake itself. Not a content hash
-  (the status code dropped folder hashing over cloud-sync drift). Catches every edit, however made.
+  (the status code dropped folder hashing over cloud-sync drift). Catches edits however made, except a
+  same-size edit whose mtime is preserved or restored (some sync tools and `cp -p`).
 - **Timeline — "master edited" marker (display only).** A walk per overview request would be
   unbounded I/O in the deployed app (`inputs/` holds a schedule file per building, on network
   storage). Instead, the dashboard's save routes write
@@ -76,7 +77,8 @@ Two signals, each sized for where it runs. Designed for both the local tool and 
    clears `custom`/`custom_at` (a rebuilt custom state is no longer custom).
 2. Bake: `bake_states_from_log` rebuilds a non-custom state when its recorded fingerprint differs
    from the current one. Records without a fingerprint (baked before this change) count as fresh,
-   so upgrading doesn't rebuild or redden every pathway.
+   so upgrading doesn't rebuild or redden every pathway; when Bake skips such a state it records the
+   current fingerprint (a one-time migration), so later master edits are detected.
 3. Marker: an `InputLocator` method for `.master_edited.json`; a `record_master_edited(locator)`
    helper in `pathway_status.py`. In `api/inputs.py`, extend `_mark_state_custom_if_child` (rename,
    e.g. `_record_save`) so a master-scenario save writes the marker and a state save marks it

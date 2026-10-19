@@ -491,7 +491,8 @@ def near_analysis(building_centroids, street_network: gdf, k: int = 1):
 
 def _split_line_at_points(line: LineString, points: list[Point]) -> list[LineString]:
     """
-    Split ``line`` at the given (normalized) points lying on it, normalizing each piece.
+    Split ``line`` at the given (normalized) points lying on it, normalizing each piece
+    and ending the pieces at the points themselves.
 
     Points at the line's own endpoints are ignored; without interior points the line is
     returned unchanged.
@@ -501,20 +502,29 @@ def _split_line_at_points(line: LineString, points: list[Point]) -> list[LineStr
         normalize_coords([coords[0]], precision=SHAPEFILE_TOLERANCE)[0],
         normalize_coords([coords[-1]], precision=SHAPEFILE_TOLERANCE)[0],
     }
-    distances = sorted(
-        line.project(pt) for pt in points
+    cuts = sorted(
+        (line.project(pt), (round(pt.x, SHAPEFILE_TOLERANCE), round(pt.y, SHAPEFILE_TOLERANCE)))
+        for pt in points
         if (round(pt.x, SHAPEFILE_TOLERANCE), round(pt.y, SHAPEFILE_TOLERANCE)) not in line_ends
     )
-    if not distances:
+    if not cuts:
         return [line]
 
-    all_distances = [0, *distances, line.length]
-    # substring() produces raw float coordinates, so normalize immediately
-    return [
-        normalize_geometry(substring(line, start, end, normalized=False), precision=SHAPEFILE_TOLERANCE)
-        for start, end in zip(all_distances, all_distances[1:])
-        if end - start > 1e-10  # Skip zero-length segments
-    ]
+    stops = [(0, None), *cuts, (line.length, None)]
+    pieces = []
+    for (start, start_pt), (end, end_pt) in zip(stops, stops[1:]):
+        if end - start <= 1e-10:  # Skip zero-length segments
+            continue
+        # substring() produces raw float coordinates, so normalize immediately
+        coords = list(normalize_geometry(substring(line, start, end, normalized=False),
+                                         precision=SHAPEFILE_TOLERANCE).coords)
+        # Join at the point itself, not its projection onto the line (up to `tolerance` away)
+        if start_pt is not None:
+            coords[0] = start_pt
+        if end_pt is not None:
+            coords[-1] = end_pt
+        pieces.append(LineString(coords))
+    return pieces
 
 
 def split_streets_at_points(street_network: gdf, points: list[Point], tolerance: float = 1e-3) -> gdf:

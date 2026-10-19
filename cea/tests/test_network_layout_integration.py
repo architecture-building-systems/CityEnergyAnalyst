@@ -571,3 +571,13 @@ class TestAugmentNetwork:
 
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
+
+
+def test_detach_leaves_plant_nodes_alone():
+    nodes = gpd.GeoDataFrame(
+        [{'name': 'N1', 'building': 'B001', 'type': 'PLANT', 'geometry': Point(0, 0)},
+         {'name': 'N2', 'building': 'B001', 'type': 'CONSUMER', 'geometry': Point(1, 0)}],
+        crs='EPSG:32632',
+    )
+    out = detach_buildings_from_network(nodes, ['B001'])
+    assert list(out['type']) == ['PLANT', 'NONE']

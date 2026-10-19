@@ -192,7 +192,7 @@ Scenario context travels as `X-CEA-*` request headers. Falls back to `config.sce
 
 **Child scenario**: `X-CEA-Child-Scenario: <pathway_name>/<year>` is a logical token — the backend resolves it to a filesystem path via `InputLocator.get_state_in_time_scenario_folder(pathway_name, year)`. No filesystem path is sent by the client; the physical layout (`outputs/pathways/<name>/state_<year>`) stays an implementation detail.
 
-Routes that belong to the parent ignore the child header (`CEAParentScenario`): the whole `/pathways` router does, so inspecting a state -- even one whose folder was just cleared -- never empties the pathway overview. A save inside a state -- inputs or database (`PUT /inputs`, `PUT /inputs/databases`, upload, materials seed) -- marks it custom via `inputs._mark_state_custom_if_child`, so bake keeps it instead of rebuilding it from the parent's inputs.
+Routes that belong to the parent ignore the child header (`CEAParentScenario`): the whole `/pathways` router does, so inspecting a state -- even one whose folder was just cleared -- never empties the pathway overview. A save inside a state -- inputs or database (`PUT /inputs/all-inputs`, `PUT /inputs/databases`, upload, materials seed) -- marks it custom via `inputs._mark_state_custom_if_child`, so bake keeps it instead of rebuilding it from the parent's inputs.
 
 **Canvas compare mode**: send per-request `headers` on each Axios call to target different scenarios concurrently — one global header/cookie cannot express this, which is why headers (not cookies) were chosen.
 

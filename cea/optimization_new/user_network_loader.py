@@ -1412,11 +1412,12 @@ def detach_buildings_from_network(
     thermal-network skips the dead-end branches they leave, which carry no flow
     (``remove_idle_branches``).
 
-    :param buildings_to_detach: Building names; names not in the network are ignored
+    :param buildings_to_detach: Building names; names not in the network are ignored. Plant nodes are never detached.
     :return: nodes_gdf with those buildings' nodes relabelled ``building``/``type`` = 'NONE'
     """
     nodes_gdf = nodes_gdf.copy()
-    nodes_gdf.loc[nodes_gdf['building'].isin(buildings_to_detach), ['building', 'type']] = 'NONE'
+    is_plant = nodes_gdf['type'].fillna('').astype(str).str.upper().str.startswith('PLANT')
+    nodes_gdf.loc[nodes_gdf['building'].isin(buildings_to_detach) & ~is_plant, ['building', 'type']] = 'NONE'
     return nodes_gdf
 
 

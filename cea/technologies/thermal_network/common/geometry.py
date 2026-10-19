@@ -2,6 +2,7 @@ import os
 from typing import Tuple
 
 import geopandas as gpd
+import networkx as nx
 import pandas as pd
 import numpy as np
 
@@ -158,7 +159,9 @@ def remove_idle_branches(node_df: pd.DataFrame, edge_df: pd.DataFrame) -> tuple[
     A layout built with network-layout's ``keep-existing-pipes`` keeps the pipes of buildings
     since demolished or disconnected; their nodes become plain
     junctions at dead ends. Dead-end junctions are removed with their pipes, repeatedly, until
-    every remaining dead end is a consumer or plant.
+    every remaining dead end is a consumer or plant. Then any group of junctions joined to
+    consumers or plants through at most one pipe (e.g. an idle loop) is removed too; a group
+    joined through several may link active nodes, so it stays.
 
     :param node_df: Nodes indexed by name, with a ``type`` column (as from
         ``extract_network_from_shapefile``)
@@ -176,5 +179,17 @@ def remove_idle_branches(node_df: pd.DataFrame, edge_df: pd.DataFrame) -> tuple[
         idle = edges['start node'].isin(dead_ends) | edges['end node'].isin(dead_ends)
         idle_pipes.extend(edges.index[idle])
         edges = edges[~idle]
+
+    inactive = nx.Graph()
+    inactive.add_edges_from(
+        (start, end) for start, end in zip(edges['start node'], edges['end node'])
+        if start not in active and end not in active
+    )
+    for component in nx.connected_components(inactive):
+        touching = edges['start node'].isin(component) | edges['end node'].isin(component)
+        boundary = touching & ~(edges['start node'].isin(component) & edges['end node'].isin(component))
+        if boundary.sum() <= 1:
+            idle_pipes.extend(edges.index[touching])
+            edges = edges[~touching]
     connected = set(edges['start node']) | set(edges['end node'])
     return node_df[node_df.index.isin(connected | active)], edge_df.loc[edges.index], idle_pipes

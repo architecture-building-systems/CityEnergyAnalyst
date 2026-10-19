@@ -42,3 +42,21 @@ def test_networks_without_idle_branches_are_unchanged():
     assert idle == []
     pd.testing.assert_frame_equal(nodes, node_df)
     pd.testing.assert_frame_equal(edges, edge_df)
+
+
+def test_idle_loop_with_one_connection_is_removed_but_a_bridge_between_live_nodes_stays():
+    """A loop of junctions hanging off the network by one pipe serves nothing; junctions
+    that join two live nodes may carry flow and stay."""
+    node_df, edge_df = _network(
+        {'NODE0': 'PLANT', 'NODE1': 'CONSUMER', 'NODE2': 'CONSUMER',
+         'NODE3': 'NONE', 'NODE4': 'NONE', 'NODE5': 'NONE', 'NODE6': 'NONE'},
+        {'PIPE0': ('NODE0', 'NODE1'), 'PIPE1': ('NODE0', 'NODE3'), 'PIPE2': ('NODE3', 'NODE4'),
+         'PIPE3': ('NODE4', 'NODE5'), 'PIPE4': ('NODE5', 'NODE3'),
+         'PIPE5': ('NODE0', 'NODE6'), 'PIPE6': ('NODE6', 'NODE2')},
+    )
+
+    nodes, edges, idle = remove_idle_branches(node_df, edge_df)
+
+    assert set(idle) == {'PIPE1', 'PIPE2', 'PIPE3', 'PIPE4'}
+    assert set(edges.index) == {'PIPE0', 'PIPE5', 'PIPE6'}
+    assert set(nodes.index) == {'NODE0', 'NODE1', 'NODE2', 'NODE6'}
