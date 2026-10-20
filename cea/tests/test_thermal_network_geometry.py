@@ -60,3 +60,16 @@ def test_idle_loop_with_one_connection_is_removed_but_a_bridge_between_live_node
     assert set(idle) == {'PIPE1', 'PIPE2', 'PIPE3', 'PIPE4'}
     assert set(edges.index) == {'PIPE0', 'PIPE5', 'PIPE6'}
     assert set(nodes.index) == {'NODE0', 'NODE1', 'NODE2', 'NODE6'}
+
+
+def test_idle_loop_joined_twice_to_the_same_live_node_is_removed():
+    node_df, edge_df = _network(
+        {'NODE0': 'PLANT', 'NODE1': 'CONSUMER', 'NODE2': 'NONE', 'NODE3': 'NONE'},
+        {'PIPE0': ('NODE0', 'NODE1'), 'PIPE1': ('NODE0', 'NODE2'),
+         'PIPE2': ('NODE2', 'NODE3'), 'PIPE3': ('NODE3', 'NODE0')},
+    )
+
+    _, edges, idle = remove_idle_branches(node_df, edge_df)
+
+    assert set(idle) == {'PIPE1', 'PIPE2', 'PIPE3'}
+    assert set(edges.index) == {'PIPE0'}

@@ -187,8 +187,9 @@ def remove_idle_branches(node_df: pd.DataFrame, edge_df: pd.DataFrame) -> tuple[
     )
     for component in nx.connected_components(inactive):
         touching = edges['start node'].isin(component) | edges['end node'].isin(component)
-        boundary = touching & ~(edges['start node'].isin(component) & edges['end node'].isin(component))
-        if boundary.sum() <= 1:
+        boundary = edges[touching & ~(edges['start node'].isin(component) & edges['end node'].isin(component))]
+        live_ends = set(boundary['start node']) | set(boundary['end node'])
+        if len(live_ends - component) <= 1:  # distinct live nodes it joins
             idle_pipes.extend(edges.index[touching])
             edges = edges[~touching]
     connected = set(edges['start node']) | set(edges['end node'])
