@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import time
 from pathlib import Path
 from uuid import uuid4
 
@@ -155,7 +156,7 @@ def test_custom_states_with_outputs_count_as_simulated(pathway_api_fixture):
     """A custom (purple) state counts towards `all_simulated` -- which gates the Canvas
     Builder's pathway picker -- and the emission timeline's pathways when it has outputs,
     without a Simulate Pathway run: the user may have run the tools inside the state. Both
-    use `state_has_results`."""
+    use `state_has_results`, which drops a custom state edited after its outputs were made."""
     client = pathway_api_fixture["client"]
     locator = pathway_api_fixture["locator"]
     pathway = DistrictEvolutionPathway(pathway_api_fixture["config"], pathway_name="demo")
@@ -179,11 +180,17 @@ def test_custom_states_with_outputs_count_as_simulated(pathway_api_fixture):
     assert all_simulated() is True
     assert emission_timeline_choices() == ["demo"]
 
-    record_custom_state(locator, pathway_name="demo", year=2030)  # edited, outputs on disk
+    state_2030 = InputLocator(locator.get_state_in_time_scenario_folder("demo", 2030))
+    time.sleep(0.05)
+    record_custom_state(locator, pathway_name="demo", year=2030)  # edited after the outputs were made
+    assert all_simulated() is False
+    assert emission_timeline_choices() == []
+
+    later = time.time() + 10  # tools re-run inside the state: outputs now newer than the edit
+    os.utime(state_2030.get_output_folder(), (later, later))
     assert all_simulated() is True
     assert emission_timeline_choices() == ["demo"]
 
-    state_2030 = InputLocator(locator.get_state_in_time_scenario_folder("demo", 2030))
     shutil.rmtree(state_2030.get_output_folder())  # nothing to show for that state
     assert all_simulated() is False
     assert emission_timeline_choices() == []

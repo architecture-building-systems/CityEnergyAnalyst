@@ -2625,7 +2625,7 @@ class SubfolderMultiChoiceParameter(MultiChoiceParameter):
 
 class SimulatedPathwayMultiChoiceParameter(SubfolderMultiChoiceParameter):
     """Select multiple pathways, but only show those whose every state has results:
-    simulated, or custom with outputs on disk (`state_has_results`)."""
+    simulated, or custom with outputs newer than its last edit (`state_has_results`)."""
 
     @property
     def _choices(self):

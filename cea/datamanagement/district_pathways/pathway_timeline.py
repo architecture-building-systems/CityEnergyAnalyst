@@ -123,7 +123,7 @@ def get_pathway_overview(config: Configuration) -> dict[str, Any]:
         #                        (``baked`` / ``simulated`` / ``custom``).
         # ``all_simulated``   — every state year has results
         #                        (`state_has_results`: simulated, or custom
-        #                        with outputs on disk -- the emission
+        #                        with outputs newer than its last edit -- the emission
         #                        timeline's rule too). Drives the Canvas
         #                        Builder's Pathway picker, which needs
         #                        results in every column.
