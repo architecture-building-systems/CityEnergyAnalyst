@@ -72,6 +72,8 @@ cooling-connected-buildings: B1003, B1004, B1005
 
 **When using `existing-network`**, `main()` resolves the edges + nodes shapefiles for that network and then passes them through the same `process_user_defined_network()` pipeline as any other user-defined input. The `network-layout-mode` parameter is applied to the loaded graph exactly as it would be for a user-provided shapefile — see the User-Defined Network Layout Modes section below.
 
+**`keep-existing-pipes`** (opt-in, default false; only with `existing-network`) treats the existing network's pipes as already built, so they are never removed (`keep_pipes=True`): a building that left — no longer in `zone.shp`, or disconnected (filter mode's extras) — is detached by `detach_buildings_from_network()`: its node becomes a `NONE` junction and its pipes stay. thermal-network skips the resulting dead-end branches (`common/geometry.py::remove_idle_branches`). Without it, filter prunes, and names not in the zone fail validation (wrong-scenario guard).
+
 If the existing network has both DC and DH node files, they are merged into a temporary shapefile (deduplicated on `(building, geometry)`) so DH-only buildings are preserved. The helper is `_load_existing_network_node_paths()` in `main.py`.
 
 ## User-Defined Network Layout Modes
@@ -105,10 +107,17 @@ When users provide their own network layout (via `edges-shp-path`/`nodes-shp-pat
 **Augmentation function:** `augment_user_network_with_buildings()` in `user_network_loader.py`
 
 **Augmentation** (`augment_user_network_with_buildings()`): creates potential network (user edges + streets), runs Kou Steiner with existing + new buildings as terminals, merges result additively. User disk files never modified.
+- The streets must get the same preparation as a fresh layout — `prepare_street_network()` then `repair_connectivity()` (both in `connectivity_potential.py`) — or real street data's isolated fragments make the Steiner tree reject the graph ("Graph is not connected"). Pass every terminal (new, existing, plant) to `repair_connectivity()` so their components are never discarded.
+- User edges are never split or merged (multi-phase tools match pipes by name across phases), so new pipes may join them only at their nodes, and `_merge_augmented_network()` recognises reused user edges by their exact endpoints. Every way a user edge could come back altered becomes a duplicate pipe:
+  - connect new terminals to the streets only (`create_terminals` onto a user edge splits it)
+  - pass the user nodes to `calc_steiner_spanning_tree(fixed_nodes=...)` (degree-2 contraction would merge a user edge into a new one)
+  - split streets at user nodes (`split_streets_at_points`) so the network joins the streets there
+- Route user edges at zero weight (already built), so the tree reuses them instead of laying new pipe along the street beside them. **Never remove those streets** from the graph: user edges pass straight through street junctions without a node, so removing the street cuts every side street off and forces huge detours.
+- Accepted limitation: a route that must reach a user edge partway along runs beside it to its nearest node (joining mid-edge would split it).
 
 **Filtering function:** `filter_network_to_buildings()` in `user_network_loader.py`
 
-**Filtering algorithm:**
+**Filtering algorithm** (user-provided networks; an existing network detaches instead, see Loading Existing Networks):
 1. Remove building nodes not in `buildings_to_keep` list
 2. Drop every edge incident to a removed building node
 3. Keep only connected components anchored by a surviving terminal (remaining building) or a plant node
@@ -210,9 +219,9 @@ Terminal nodes (building connection points) are never used as bridge points — 
 
 ## Workflow
 
-1. **`_prepare_network_inputs()`** - CRS transformation, validation, cleaning (snap endpoints, split at intersections, simplify)
+1. **`_prepare_network_inputs()`** - CRS transformation, validation, then `prepare_street_network()` (snap endpoints, split at intersections, simplify, normalise)
 2. **`create_terminals(connection_candidates=k)`** - Connect each building to k-nearest street points with normalized coordinates
-3. **`calc_connectivity_network_with_geometry()`** - Build final graph with metadata
+3. **`calc_connectivity_network_with_geometry()`** - Build final graph with metadata; `repair_connectivity()` bridges/discards street fragments
 4. **`calc_steiner_spanning_tree(method, connection_candidates)`** - Optimize network layout
    - If `connection_candidates > 1` and `method='kou'`: Kou's metric closure automatically selects best connections
    - If `method='mehlhorn'`: Uses greedy nearest regardless of k

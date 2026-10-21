@@ -2624,8 +2624,8 @@ class SubfolderMultiChoiceParameter(MultiChoiceParameter):
 
 
 class SimulatedPathwayMultiChoiceParameter(SubfolderMultiChoiceParameter):
-    """Select multiple pathways, but only show those where Simulate
-    Pathway ran after all edits (including custom-state input edits)."""
+    """Select multiple pathways, but only show those whose every state has results:
+    simulated, or custom with outputs newer than its last edit (`state_has_results`)."""
 
     @property
     def _choices(self):
@@ -2635,8 +2635,7 @@ class SimulatedPathwayMultiChoiceParameter(SubfolderMultiChoiceParameter):
 
         from cea.datamanagement.district_pathways.pathway_status import (
             collect_state_phase_status,
-            read_pathway_metadata,
-            read_state_status,
+            state_has_results,
         )
         from cea.datamanagement.district_pathways.pathway_state import (
             DistrictEvolutionPathway,
@@ -2651,7 +2650,7 @@ class SimulatedPathwayMultiChoiceParameter(SubfolderMultiChoiceParameter):
                 if not years:
                     continue
 
-                # Every state must be simulated or custom
+                # Every state must have results
                 all_ok = True
                 for year in years:
                     state = DistrictStateYear(
@@ -2668,34 +2667,16 @@ class SimulatedPathwayMultiChoiceParameter(SubfolderMultiChoiceParameter):
                         source_log_hash=pathway.source_log_hash_for_year(int(year)),
                         signature=signature,
                     )
-                    phase = status.get("primary_phase")
-                    if phase not in ("simulated", "custom"):
+                    if not state_has_results(
+                        pathway.main_locator,
+                        pathway_name=pname,
+                        year=int(year),
+                        primary_phase=status.get("primary_phase"),
+                    ):
                         all_ok = False
                         break
-                if not all_ok:
-                    continue
-
-                # Simulate Pathway must have run after all custom edits
-                metadata = read_pathway_metadata(
-                    pathway.main_locator, pathway_name=pname
-                )
-                pathway_sim_at = metadata.get("pathway_simulated_at")
-                if not pathway_sim_at:
-                    continue
-
-                has_stale_custom = False
-                for year in years:
-                    sr = read_state_status(
-                        pathway.main_locator, pathway_name=pname, year=int(year)
-                    )
-                    custom_at = sr.get("custom_at")
-                    if custom_at and custom_at > pathway_sim_at:
-                        has_stale_custom = True
-                        break
-                if has_stale_custom:
-                    continue
-
-                valid.append(pname)
+                if all_ok:
+                    valid.append(pname)
             except (FileNotFoundError, ValueError):
                 continue
         return valid

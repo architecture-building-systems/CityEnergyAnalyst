@@ -14,7 +14,11 @@ from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_P
     KELVIN_CONVERSION
 from cea.optimization.constants import PUMP_ETA
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
-from cea.technologies.thermal_network.common.geometry import extract_network_from_shapefile, load_network_shapefiles
+from cea.technologies.thermal_network.common.geometry import (
+    extract_network_from_shapefile,
+    load_network_shapefiles,
+    remove_idle_branches,
+)
 from cea.technologies.thermal_network.common.utils import add_date_to_dataframe, calculate_ground_temperature
 from cea.technologies.thermal_network.physics import calc_temperature_out_per_pipe
 from cea.technologies.network_layout.plant_node_operations import PlantServices
@@ -500,6 +504,10 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
     # GET INFORMATION ABOUT THE NETWORK
     network_nodes_df, network_edges_df = load_network_shapefiles(locator, network_type, network_name)
     node_df, edge_df = extract_network_from_shapefile(network_edges_df, network_nodes_df, filter_edges=True)
+    node_df, edge_df, idle_pipes = remove_idle_branches(node_df, edge_df)
+    if idle_pipes:
+        print(f"  Skipping {len(idle_pipes)} idle pipe(s) that serve no building (kept in the layout): "
+              f"{', '.join(idle_pipes[:10])}" + (" ..." if len(idle_pipes) > 10 else ""))
 
     # Determine DH service configuration from dh-temperature-mode config parameter
     itemised_dh_services = None

@@ -19,7 +19,7 @@ from cea.technologies.network_layout.plant_node_operations import (
 )
 from cea.technologies.network_layout.substations_location import calc_building_centroids
 from cea.technologies.network_layout.graph_utils import normalize_gdf_geometries, normalize_geometry
-from cea.optimization_new.user_network_loader import load_user_defined_network
+from cea.optimization_new.user_network_loader import detach_buildings_from_network, load_user_defined_network
 from cea.scripts import by_name, tool_ref
 
 # Single source of truth mapping a DH sub-service to the column in
@@ -365,7 +365,8 @@ def _max_pipe_number(edges_gdf) -> int:
 
 
 def apply_network_mode_to_user_network(nodes_gdf, edges_gdf, buildings_to_validate, zone_gdf,
-                                       network_types_to_generate, config, locator, snap_tolerance):
+                                       network_types_to_generate, config, locator, snap_tolerance,
+                                       keep_pipes=False):
     """
     Apply network-layout-mode (validate/augment/filter) to user-defined network.
 
@@ -381,6 +382,9 @@ def apply_network_mode_to_user_network(nodes_gdf, edges_gdf, buildings_to_valida
         config: Configuration instance
         locator: InputLocator instance
         snap_tolerance: Snap tolerance for geometry operations
+        keep_pipes: Filter mode detaches extra buildings (their nodes become junctions,
+            their pipes stay) instead of removing them with their pipes -- for an existing
+            network whose pipes are already built (``keep-existing-pipes``)
 
     Returns:
         Tuple of (nodes_gdf, edges_gdf) after applying mode
@@ -498,7 +502,8 @@ def apply_network_mode_to_user_network(nodes_gdf, edges_gdf, buildings_to_valida
             print("WARNING: FILTER MODE - Network will be modified!")
             print("="*60)
             if extra_buildings:
-                print(f"  Removing {len(extra_buildings)} building(s): {', '.join(list(extra_buildings)[:5])}")
+                action = "Detaching (pipes kept)" if keep_pipes else "Removing"
+                print(f"  {action} {len(extra_buildings)} building(s): {', '.join(list(extra_buildings)[:5])}")
                 if len(extra_buildings) > 5:
                     print(f"    ... and {len(extra_buildings) - 5} more")
             if missing_buildings:
@@ -508,8 +513,11 @@ def apply_network_mode_to_user_network(nodes_gdf, edges_gdf, buildings_to_valida
             print("  Original network files on disk will NOT be changed.")
             print("="*60 + "\n")
 
-            # Step 1: Remove extra buildings
-            if extra_buildings:
+            # Step 1: Remove (or detach) extra buildings. Detaching may leave no building
+            # until step 2 adds the missing ones (all served buildings were replaced).
+            if extra_buildings and keep_pipes:
+                nodes_gdf = detach_buildings_from_network(nodes_gdf, sorted(extra_buildings))
+            elif extra_buildings:
                 nodes_gdf, edges_gdf = filter_network_to_buildings(
                     nodes_gdf, edges_gdf, buildings_to_validate
                 )
@@ -530,6 +538,8 @@ def apply_network_mode_to_user_network(nodes_gdf, edges_gdf, buildings_to_valida
                     existing_max_pipe_number=input_max_pipe_number,
                 )
 
+            if extract_building_nodes(nodes_gdf, exclude_plant_nodes=True).empty:
+                raise ValueError("Filter removed all building nodes - no terminals left!")
             print("  Filter complete - network now matches parameter exactly")
         else:
             print("  All specified buildings have valid nodes in network")
@@ -2071,7 +2081,7 @@ class NetworkLayout:
         return network_name
 
 
-def process_user_defined_network(config, locator, network_layout, edges_shp, nodes_shp, geojson_path, cooling_plant_building, heating_plant_building, snap_tolerance=SNAP_TOLERANCE):
+def process_user_defined_network(config, locator, network_layout, edges_shp, nodes_shp, geojson_path, cooling_plant_building, heating_plant_building, snap_tolerance=SNAP_TOLERANCE, keep_pipes=False):
     """
     Process user-defined network layout from shapefiles or GeoJSON.
 
@@ -2115,15 +2125,27 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     if not list_include_services:
         raise ValueError("No thermal services selected. Please specify at least one service in 'include-services' (DC and/or DH).")
 
+    all_zone_buildings = locator.get_zone_building_names()
+    zone_gdf = gpd.read_file(locator.get_zone_geometry())
+
+    # A network with already-built pipes may serve buildings since demolished: their
+    # pipes stay, only the buildings leave the network.
+    if keep_pipes:
+        demolished = sorted(
+            set(extract_building_nodes(nodes_gdf, exclude_plant_nodes=True)['building'])
+            - set(all_zone_buildings)
+        )
+        if demolished:
+            print(f"  - Detaching {len(demolished)} building(s) no longer in the zone (pipes kept): "
+                  f"{', '.join(demolished[:10])}" + (" ..." if len(demolished) > 10 else ""))
+            nodes_gdf = detach_buildings_from_network(nodes_gdf, demolished)
+
     # Get building nodes from user-provided network (exclude PLANT nodes)
     building_nodes = extract_building_nodes(nodes_gdf, exclude_plant_nodes=True)
     network_building_names = sorted(building_nodes['building'].unique())
 
     # ALWAYS validate that network building names exist in zone geometry
     # This prevents accidentally loading a network from a different scenario (e.g., Jakarta network for Singapore scenario)
-    all_zone_buildings = locator.get_zone_building_names()
-    zone_gdf = gpd.read_file(locator.get_zone_geometry())
-
     # Check if ALL network buildings exist in the scenario's zone geometry
     invalid_buildings = [b for b in network_building_names if b not in all_zone_buildings]
     if invalid_buildings:
@@ -2299,7 +2321,8 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         network_types_to_generate=network_types_to_generate,
         config=config,
         locator=locator,
-        snap_tolerance=snap_tolerance
+        snap_tolerance=snap_tolerance,
+        keep_pipes=keep_pipes,
     )
 
     # After validate/augment/filter, sync the per-service lists with nodes_gdf:
@@ -2549,7 +2572,7 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
 
     # Write unified connectivity file — final-energy requires this file,
     # and skipping it here is what caused the "Network connectivity file
-    # not found" failure when state years re-used a prior network via
+    # not found" failure when re-using an existing network via
     # augment/filter.
     if network_metadata:
         unified_connectivity = {
@@ -2714,7 +2737,8 @@ def main(config: cea.config.Configuration):
     # downstream flow then treats them as any other user-defined network —
     # process_user_defined_network re-reads config and re-applies the
     # network-layout-mode to the loaded graph.
-    if existing_network and existing_network not in ['', '(none)']:
+    inherited_network = existing_network not in (None, '', '(none)')
+    if inherited_network:
         print(f"\n  Loading existing network: {existing_network}")
         edges_shp, nodes_shp = _load_existing_network_node_paths(locator, existing_network)
         print(f"    Edges: {edges_shp}")
@@ -2740,7 +2764,8 @@ def main(config: cea.config.Configuration):
                 config, locator, network_layout,
                 edges_shp, nodes_shp, geojson_path,
                 cooling_plant_building, heating_plant_building,
-                snap_tolerance
+                snap_tolerance,
+                keep_pipes=inherited_network and config.network_layout.keep_existing_pipes,
             )
 
         # Generate network layout using Steiner tree (current behavior or fallback)

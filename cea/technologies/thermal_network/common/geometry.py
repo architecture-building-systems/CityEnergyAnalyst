@@ -2,6 +2,7 @@ import os
 from typing import Tuple
 
 import geopandas as gpd
+import networkx as nx
 import pandas as pd
 import numpy as np
 
@@ -149,3 +150,47 @@ def extract_network_from_shapefile(edge_shapefile_df: gpd.GeoDataFrame, node_sha
             raise ValueError(f"The following edges do not have matching start and end nodes within the specified tolerance: {missing_edges}")
     
     return node_shapefile_df, edge_shapefile_df
+
+
+def remove_idle_branches(node_df: pd.DataFrame, edge_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, list[str]]:
+    """
+    Drop the branches that serve no consumer or plant -- they carry no flow.
+
+    A layout built with network-layout's ``keep-existing-pipes`` keeps the pipes of buildings
+    since demolished or disconnected; their nodes become plain
+    junctions at dead ends. Dead-end junctions are removed with their pipes, repeatedly, until
+    every remaining dead end is a consumer or plant. Then any group of junctions joined to
+    consumers or plants through at most one pipe (e.g. an idle loop) is removed too; a group
+    joined through several may link active nodes, so it stays.
+
+    :param node_df: Nodes indexed by name, with a ``type`` column (as from
+        ``extract_network_from_shapefile``)
+    :param edge_df: Edges indexed by name, with ``start node`` and ``end node`` columns
+    :return: ``(node_df, edge_df, idle_pipe_names)`` without the idle branches
+    """
+    active = set(node_df.index[(node_df['type'] == 'CONSUMER') | node_df['type'].str.contains('PLANT', na=False)])
+    edges = edge_df[['start node', 'end node']]
+    idle_pipes: list[str] = []
+    while True:
+        degree = pd.concat([edges['start node'], edges['end node']]).value_counts()
+        dead_ends = set(degree.index[degree == 1]) - active
+        if not dead_ends:
+            break
+        idle = edges['start node'].isin(dead_ends) | edges['end node'].isin(dead_ends)
+        idle_pipes.extend(edges.index[idle])
+        edges = edges[~idle]
+
+    inactive = nx.Graph()
+    inactive.add_edges_from(
+        (start, end) for start, end in zip(edges['start node'], edges['end node'])
+        if start not in active and end not in active
+    )
+    for component in nx.connected_components(inactive):
+        touching = edges['start node'].isin(component) | edges['end node'].isin(component)
+        boundary = edges[touching & ~(edges['start node'].isin(component) & edges['end node'].isin(component))]
+        live_ends = set(boundary['start node']) | set(boundary['end node'])
+        if len(live_ends - component) <= 1:  # distinct live nodes it joins
+            idle_pipes.extend(edges.index[touching])
+            edges = edges[~touching]
+    connected = set(edges['start node']) | set(edges['end node'])
+    return node_df[node_df.index.isin(connected | active)], edge_df.loc[edges.index], idle_pipes

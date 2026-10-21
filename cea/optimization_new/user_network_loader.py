@@ -948,7 +948,8 @@ def augment_user_network_with_buildings(
     but are missing from the user-provided network.
 
     Algorithm:
-    1. Create potential network graph combining user edges + street network
+    1. Create potential network graph combining user edges + cleaned street network
+       (see ``_create_potential_graph_for_augmentation``)
     2. Use Steiner tree optimisation to find optimal paths connecting missing buildings
     3. Merge new edges/nodes with user network (additive-only, never modifies existing)
 
@@ -958,7 +959,7 @@ def augment_user_network_with_buildings(
     :param missing_building_names: List of building names to add to network
     :param street_network_gdf: Street network for routing (from locator.get_street_network())
     :param locator: InputLocator for file paths
-    :param snap_tolerance: Tolerance for snapping terminal connections (metres)
+    :param snap_tolerance: Tolerance for snapping near-miss street endpoints (metres)
     :param connection_candidates: Number of nearest streets to consider per building (1-5)
     :param existing_max_pipe_number: Highest ``PIPE{N}`` number already in use in the
         parent network (before any filter step). Steiner-added edges are renumbered
@@ -968,6 +969,7 @@ def augment_user_network_with_buildings(
         the filter step. ``None`` or ``-1`` disables the offset.
     :return: Tuple of (augmented_nodes_gdf, augmented_edges_gdf) with new buildings added
     """
+    from cea.technologies.network_layout.graph_utils import normalize_coords
     from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
 
     # Ensure building names are strings (may be floats from validation)
@@ -996,27 +998,6 @@ def augment_user_network_with_buildings(
         else None
     )
 
-    # Step 1: Create potential network combining user network + streets for routing
-    print("  Step 1/3: Creating potential network graph...")
-    potential_graph, building_terminals = _create_terminal_connections_for_buildings(
-        user_nodes_gdf=user_nodes_gdf,
-        user_edges_gdf=user_edges_gdf,
-        zone_gdf=zone_gdf,
-        missing_building_names=missing_building_names,
-        street_network_gdf=street_network_gdf,
-        snap_tolerance=snap_tolerance,
-        connection_candidates=connection_candidates,
-        extra_terminal_points=plant_terminals,
-    )
-
-    # Step 2: Use Steiner tree to find optimal subset of edges connecting missing buildings to existing network
-    print("  Step 2/3: Optimising network layout using Steiner tree algorithm...")
-    print("    - Ensuring new buildings connect to existing user network (user edges will not be modified)")
-
-    import tempfile
-    import os
-    import shutil
-
     # Get building geometries and convert to centroids
     missing_buildings_gdf = zone_gdf[zone_gdf['name'].isin(missing_building_names)].copy()
     missing_buildings_centroids = missing_buildings_gdf.copy()
@@ -1040,22 +1021,45 @@ def augment_user_network_with_buildings(
     )
 
     # Combine missing buildings + existing user buildings (+ plants) as terminals.
-    # Plants were extracted above and fed into the potential graph so Steiner
-    # has a reachable node at every plant coord — including the case where the
-    # filter step pruned the plant's original pipes. Treating plants as
-    # mandatory terminals guarantees the augmented network is one connected
-    # component containing plant + all consumers.
-    # Steiner tree will find optimal path connecting ALL terminals
-    terminal_frames = [
-        missing_buildings_centroids[['name', 'geometry']].reset_index(drop=True),
-        existing_terminals[['name', 'geometry']].reset_index(drop=True),
-    ]
-    if plant_terminals is not None:
-        terminal_frames.append(plant_terminals[['name', 'geometry']].reset_index(drop=True))
+    # Plants are fed into the potential graph so Steiner has a reachable node at
+    # every plant coord — including the case where the filter step pruned the
+    # plant's original pipes. Treating plants as mandatory terminals guarantees
+    # the augmented network is one connected component containing plant + all
+    # consumers. Steiner tree will find optimal path connecting ALL terminals.
+    terminals_crs = missing_buildings_centroids.crs
+    missing_frame = missing_buildings_centroids[['name', 'geometry']].reset_index(drop=True)
+    plant_frames = [] if plant_terminals is None else [plant_terminals[['name', 'geometry']].reset_index(drop=True)]
     all_terminals = gpd.GeoDataFrame(
-        pd.concat(terminal_frames, ignore_index=True),
-        crs=missing_buildings_centroids.crs
+        pd.concat([missing_frame, existing_terminals[['name', 'geometry']].reset_index(drop=True), *plant_frames],
+                  ignore_index=True),
+        crs=terminals_crs
     )
+    # New buildings and plants get connections to the nearest streets; existing
+    # buildings are already reachable through the user edges.
+    new_terminals = gpd.GeoDataFrame(pd.concat([missing_frame, *plant_frames], ignore_index=True), crs=terminals_crs)
+
+    # Step 1: Create potential network combining user network + streets for routing
+    print("  Step 1/3: Creating potential network graph...")
+    # User edges are never split or merged, so new pipes may join the user network only
+    # at these nodes, and _merge_augmented_network recognises reused user edges by them
+    user_node_coords = {
+        normalize_coords([coord], SHAPEFILE_TOLERANCE)[0]
+        for line in user_edges_gdf.geometry
+        for coord in (line.coords[0], line.coords[-1])
+    }
+    potential_graph = _create_potential_graph_for_augmentation(
+        user_edges_gdf=user_edges_gdf,
+        user_node_coords=user_node_coords,
+        street_network_gdf=street_network_gdf,
+        new_terminals=new_terminals,
+        all_terminals=all_terminals,
+        snap_tolerance=snap_tolerance,
+        connection_candidates=connection_candidates,
+    )
+
+    # Step 2: Use Steiner tree to find optimal subset of edges connecting missing buildings to existing network
+    print("  Step 2/3: Optimising network layout using Steiner tree algorithm...")
+    print("    - Ensuring new buildings connect to existing user network (user edges will not be modified)")
 
     plant_count = 0 if plant_terminals is None else len(plant_terminals)
     if plant_count > 0:
@@ -1065,6 +1069,10 @@ def augment_user_network_with_buildings(
     else:
         print(f"    - Terminals: {len(missing_buildings_centroids)} new + "
               f"{len(existing_terminals)} existing = {len(all_terminals)} total")
+
+    import tempfile
+    import os
+    import shutil
 
     # Create temporary output paths for Steiner tree results
     temp_dir = tempfile.mkdtemp()
@@ -1088,7 +1096,8 @@ def augment_user_network_with_buildings(
             plant_building_names=None,  # Explicitly disable plant creation for augmentation
             disconnected_building_names=[],
             method='kou',  # High-quality algorithm
-            connection_candidates=connection_candidates
+            connection_candidates=connection_candidates,
+            fixed_nodes=user_node_coords,  # so user edges come out whole, not merged into new pipes
         )
 
         # Read back the optimised network
@@ -1390,6 +1399,28 @@ def filter_network_to_buildings(
     )
 
 
+def detach_buildings_from_network(
+    nodes_gdf: gpd.GeoDataFrame,
+    buildings_to_detach: List[str],
+) -> gpd.GeoDataFrame:
+    """
+    Turn the given buildings' nodes into plain junctions, keeping every pipe.
+
+    For an existing network whose pipes are already built (``keep-existing-pipes``): the
+    pipes of a building since demolished or disconnected stay in the layout, where a new
+    building may join at their nodes.
+    thermal-network skips the dead-end branches they leave, which carry no flow
+    (``remove_idle_branches``).
+
+    :param buildings_to_detach: Building names; names not in the network are ignored. Plant nodes are never detached.
+    :return: nodes_gdf with those buildings' nodes relabelled ``building``/``type`` = 'NONE'
+    """
+    nodes_gdf = nodes_gdf.copy()
+    is_plant = nodes_gdf['type'].fillna('').astype(str).str.upper().str.startswith('PLANT')
+    nodes_gdf.loc[nodes_gdf['building'].isin(buildings_to_detach) & ~is_plant, ['building', 'type']] = 'NONE'
+    return nodes_gdf
+
+
 def _warn_if_plants_have_no_consumers(
     nodes_gdf: gpd.GeoDataFrame,
     edges_gdf: gpd.GeoDataFrame,
@@ -1446,93 +1477,89 @@ def _warn_if_plants_have_no_consumers(
             )
 
 
-def _create_terminal_connections_for_buildings(
-    user_nodes_gdf: gpd.GeoDataFrame,
+def _create_potential_graph_for_augmentation(
     user_edges_gdf: gpd.GeoDataFrame,
-    zone_gdf: gpd.GeoDataFrame,
-    missing_building_names: List[str],
+    user_node_coords: Set[Tuple[float, float]],
     street_network_gdf: gpd.GeoDataFrame,
+    new_terminals: gpd.GeoDataFrame,
+    all_terminals: gpd.GeoDataFrame,
     snap_tolerance: float,
     connection_candidates: int,
-    extra_terminal_points: Optional[gpd.GeoDataFrame] = None,
-) -> Tuple[nx.Graph, dict]:
+) -> nx.Graph:
     """
-    Create potential network graph combining user edges + street network with terminal connections
-    to missing buildings.
+    Create the potential network graph for augmentation: user edges + cleaned street
+    network, with connections from each new terminal to its nearest streets.
 
-    :param extra_terminal_points: Optional GeoDataFrame with ``name`` + ``geometry``
-        (Point) rows for non-building terminals (e.g. plant nodes) whose
-        coordinates must be present in the potential graph. They get the same
-        nearest-street connection treatment as missing buildings — necessary
-        when a plant's pipes were pruned by the filter step and its coord is
-        no longer reachable via user edges.
+    The streets get the same preparation as a freshly generated layout (cleaning, then
+    bridging or discarding the isolated fragments street data usually holds), since the
+    Steiner tree needs one connected graph.
 
-    Returns:
-    - NetworkX graph with all potential edges (user + streets + terminals)
-    - Building terminals dict mapping building_name -> (x, y) node coordinate
+    User edges are never split (multi-phase tools match pipes by name), so new pipes may
+    join them only at their nodes, and ``_merge_augmented_network`` recognises reused user
+    edges by their endpoints. Hence new terminals connect to streets only, and user edges
+    cost nothing to route along (they are already built), so the tree reuses them rather
+    than laying new pipe along the street beside them. Those streets stay in the graph:
+    user edges pass straight through street junctions without a node, and side streets
+    reach the network only along them. A route that has to reach a user edge partway
+    along still runs beside it to its nearest node -- joining there would split it.
+
+    :param user_node_coords: Normalized (x, y) endpoints of the user edges
+    :param new_terminals: ``name`` + Point rows that need connecting to the streets
+        (missing buildings, and plants -- a plant's pipes may have been pruned by the
+        filter step, leaving its coord otherwise unreachable)
+    :param all_terminals: ``name`` + Point rows of every Steiner terminal (new, existing
+        and plant); their components are never discarded during connectivity repair
+    :return: Connected NetworkX graph with all potential edges (user + streets + terminals)
+    :raises ValueError: If terminals remain on separate components after repair
     """
-    from cea.technologies.network_layout.connectivity_potential import create_terminals
+    from cea.technologies.network_layout.connectivity_potential import (
+        create_terminals,
+        prepare_street_network,
+        repair_connectivity,
+        split_streets_at_points,
+    )
     from cea.technologies.network_layout.graph_utils import gdf_to_nx, normalize_coords
 
-    # Get building geometries for missing buildings
-    missing_buildings_gdf = zone_gdf[zone_gdf['name'].isin(missing_building_names)].copy()
+    crs = user_edges_gdf.crs
+    streets_clean_gdf = prepare_street_network(street_network_gdf.to_crs(crs), snap_tolerance)
+    # A user node partway along a street (e.g. where an earlier layout branched off)
+    # becomes a street node, so the user network joins the streets there
+    streets_clean_gdf = split_streets_at_points(streets_clean_gdf, [Point(c) for c in user_node_coords])
 
-    # Convert building polygons to centroids (create_terminals expects Point geometries)
-    missing_buildings_centroids_gdf = missing_buildings_gdf.copy()
-    missing_buildings_centroids_gdf['geometry'] = missing_buildings_gdf.geometry.centroid
-
-    # Attach non-building terminals (e.g. plants) so ``create_terminals`` gives
-    # each one a connection to the nearest street. Without this, a plant whose
-    # pipes were pruned by the filter step has no coord in the potential graph
-    # and Steiner can't route through it.
-    if extra_terminal_points is not None and not extra_terminal_points.empty:
-        extra = extra_terminal_points[['name', 'geometry']].copy()
-        combined_centroids_gdf = gpd.GeoDataFrame(
-            pd.concat(
-                [missing_buildings_centroids_gdf[['name', 'geometry']], extra],
-                ignore_index=True,
-            ),
-            crs=missing_buildings_centroids_gdf.crs,
-        )
-    else:
-        combined_centroids_gdf = missing_buildings_centroids_gdf
-
-    # Combine user edges + street network (both are potential routing options)
-    combined_network_gdf = gpd.GeoDataFrame(
-        pd.concat([user_edges_gdf, street_network_gdf], ignore_index=True),
-        crs=user_edges_gdf.crs
-    )
-
-    # Create terminal connections for missing buildings (and extra points) to combined network
-    # This connects each terminal to k-nearest street/edge points
-    network_with_terminals_gdf = create_terminals(
-        building_centroids=combined_centroids_gdf,
-        street_network=combined_network_gdf,
+    # Connect each new terminal to its k-nearest street points
+    streets_with_terminals_gdf = create_terminals(
+        building_centroids=new_terminals,
+        street_network=streets_clean_gdf,
         connection_candidates=connection_candidates
     )
 
-    # Convert to NetworkX graph
+    # Routing options, weighted by the length of new pipe they need. User edges come
+    # last, so where a street piece shares their endpoints, the user edge wins.
+    routing_gdf = gpd.GeoDataFrame(
+        pd.concat([
+            streets_with_terminals_gdf.assign(weight=streets_with_terminals_gdf.geometry.length),
+            user_edges_gdf[['geometry']].assign(weight=0.0),
+        ], ignore_index=True),
+        crs=crs,
+    )
     potential_graph = gdf_to_nx(
-        network_with_terminals_gdf,
+        routing_gdf,
         coord_precision=SHAPEFILE_TOLERANCE,
         preserve_geometry=True
     )
 
-    # Extract building terminal coordinates (normalized to SHAPEFILE_TOLERANCE precision)
-    building_terminals = {}
-    for building_name in missing_building_names:
-        building_row = missing_buildings_centroids_gdf[missing_buildings_centroids_gdf['name'] == building_name]
-        if len(building_row) > 0:
-            building_geom = building_row.iloc[0].geometry  # Already a Point (centroid)
-            # Normalize terminal point coordinates
-            coord = normalize_coords([building_geom.coords[0]], SHAPEFILE_TOLERANCE)[0]
-            building_terminals[building_name] = coord
-
-    # Store terminal mapping in graph metadata
-    potential_graph.graph['building_terminals'] = building_terminals
-    potential_graph.graph['crs'] = user_edges_gdf.crs
-
-    return potential_graph, building_terminals
+    terminal_mapping = {
+        row['name']: normalize_coords([row.geometry.coords[0]], SHAPEFILE_TOLERANCE)[0]
+        for _, row in all_terminals.iterrows()
+    }
+    return repair_connectivity(
+        graph=potential_graph,
+        terminal_mapping=terminal_mapping,
+        building_centroids_df=all_terminals,
+        streets_clean_df=streets_clean_gdf,
+        connection_candidates=connection_candidates,
+        crs=crs,
+    )
 
 
 def _merge_augmented_network(

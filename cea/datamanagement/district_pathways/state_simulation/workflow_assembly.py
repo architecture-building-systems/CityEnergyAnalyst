@@ -235,6 +235,8 @@ def build_network_layout_step(
         "network-layout-mode": network_layout_mode,
         "auto-modify-network": True,
         "existing-network": previous_network_name,
+        # The previous state's pipes are already built: keep those of departed buildings
+        "keep-existing-pipes": True,
     }
 
     return {

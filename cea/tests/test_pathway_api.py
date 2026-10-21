@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import time
 from pathlib import Path
 from uuid import uuid4
 
@@ -20,11 +21,14 @@ from cea.datamanagement.district_pathways.pathway_state import (
     DistrictStateYear,
 )
 from cea.datamanagement.district_pathways.pathway_status import (
+    read_state_status,
     record_baked_state,
+    record_custom_state,
     record_simulated_state,
 )
 from cea.datamanagement.district_pathways.state_simulation.main import simulate_all_states
 from cea.inputlocator import InputLocator
+from cea.interfaces.dashboard.api.inputs import router as inputs_router
 from cea.interfaces.dashboard.api.pathways import router as pathways_router
 import cea.interfaces.dashboard.utils as dashboard_utils
 from cea.interfaces.dashboard.dependencies import CEALocalConfig, require_authenticated, get_cea_config
@@ -70,6 +74,7 @@ def pathway_api_fixture(monkeypatch):
 
     app = FastAPI(dependencies=[Depends(require_authenticated)])
     app.include_router(pathways_router, prefix="/pathways")
+    app.include_router(inputs_router, prefix="/inputs")
     app.dependency_overrides[get_cea_config] = lambda: config
     app.dependency_overrides[require_authenticated] = lambda: None
     app.dependency_overrides[get_settings] = lambda: test_settings
@@ -105,6 +110,90 @@ def test_list_create_and_overview_pathways(pathway_api_fixture):
         json={"pathway_name": "new-pathway"},
     )
     assert create_response.status_code == 200
+
+
+def test_pathway_routes_use_the_parent_while_a_state_is_inspected(pathway_api_fixture):
+    """Inspecting a state sends its X-CEA-Child-Scenario header with every request. The
+    state's folder has no pathways of its own, so pathway routes resolve to the parent --
+    otherwise the overview comes back empty and the GUI timeline disappears."""
+    client = pathway_api_fixture["client"]
+    _create_state_folder(pathway_api_fixture["locator"], "demo", 2030, ["B1"])
+    in_state = {"X-CEA-Child-Scenario": "demo/2030"}
+
+    assert client.get("/pathways/", headers=in_state).json() == {"pathways": ["demo"]}
+    overview = client.get("/pathways/overview", headers=in_state)
+    assert overview.status_code == 200
+    assert [p["pathway_name"] for p in overview.json()["pathways"]] == ["demo"]
+
+    # Also while inspecting a state whose folder is gone (e.g. its inputs were just cleared).
+    cleared = client.get("/pathways/overview", headers={"X-CEA-Child-Scenario": "demo/2040"})
+    assert cleared.status_code == 200
+    assert [p["pathway_name"] for p in cleared.json()["pathways"]] == ["demo"]
+
+
+def test_database_save_inside_a_state_marks_it_custom(pathway_api_fixture):
+    """Like an input save, a database save inside a state marks it custom, so bake keeps it
+    instead of rebuilding it from the parent's inputs."""
+    client = pathway_api_fixture["client"]
+    locator = pathway_api_fixture["locator"]
+    _create_state_folder(locator, "demo", 2030, ["B1"])
+    state_locator = InputLocator(locator.get_state_in_time_scenario_folder("demo", 2030))
+    for loc in (locator, state_locator):
+        if os.path.exists(loc.get_database_components_materials()):
+            os.remove(loc.get_database_components_materials())
+
+    seeded = client.post("/inputs/databases/components/materials", json={"source": "CH"},
+                         headers={"X-CEA-Child-Scenario": "demo/2030"})
+    assert seeded.status_code == 200
+    assert read_state_status(locator, pathway_name="demo", year=2030).get("custom") is True
+
+    # The same save on the parent scenario marks no state.
+    assert client.post("/inputs/databases/components/materials", json={"source": "CH"}).status_code == 200
+    assert not read_state_status(locator, pathway_name="demo", year=2020).get("custom")
+
+
+def test_custom_states_with_outputs_count_as_simulated(pathway_api_fixture):
+    """A custom (purple) state counts towards `all_simulated` -- which gates the Canvas
+    Builder's pathway picker -- and the emission timeline's pathways when it has outputs,
+    without a Simulate Pathway run: the user may have run the tools inside the state. Both
+    use `state_has_results`, which drops a custom state edited after its outputs were made."""
+    client = pathway_api_fixture["client"]
+    locator = pathway_api_fixture["locator"]
+    pathway = DistrictEvolutionPathway(pathway_api_fixture["config"], pathway_name="demo")
+    for year in (2020, 2030, 2040):
+        _create_state_folder(locator, "demo", year, ["B1"])
+        os.makedirs(InputLocator(locator.get_state_in_time_scenario_folder("demo", year)).get_output_folder(),
+                    exist_ok=True)
+        source_hash = pathway.source_log_hash_for_year(year)
+        record_baked_state(locator, pathway_name="demo", year=year, built_at="2026-02-01T00:00:00",
+                           source_log_hash=source_hash)
+        record_simulated_state(locator, pathway_name="demo", year=year, simulated_at="2026-02-10T00:00:00",
+                               source_log_hash=source_hash, workflow=[])
+
+    def all_simulated():
+        return client.get("/pathways/overview").json()["pathways"][0]["all_simulated"]
+
+    def emission_timeline_choices():
+        section = pathway_api_fixture["config"].sections["plots-pathway-emission-timeline"]
+        return section.parameters["existing-pathway-names"]._choices
+
+    assert all_simulated() is True
+    assert emission_timeline_choices() == ["demo"]
+
+    state_2030 = InputLocator(locator.get_state_in_time_scenario_folder("demo", 2030))
+    time.sleep(0.05)
+    record_custom_state(locator, pathway_name="demo", year=2030)  # edited after the outputs were made
+    assert all_simulated() is False
+    assert emission_timeline_choices() == []
+
+    later = time.time() + 10  # tools re-run inside the state: outputs now newer than the edit
+    os.utime(state_2030.get_output_folder(), (later, later))
+    assert all_simulated() is True
+    assert emission_timeline_choices() == ["demo"]
+
+    shutil.rmtree(state_2030.get_output_folder())  # nothing to show for that state
+    assert all_simulated() is False
+    assert emission_timeline_choices() == []
 
 
 def test_delete_pathway_route(pathway_api_fixture):
@@ -653,3 +742,14 @@ def _read_log(locator: InputLocator, pathway_name: str) -> dict[int, dict]:
     with open(locator.get_district_pathway_log_file(pathway_name), "r", encoding="utf-8") as handle:
         data = yaml.safe_load(handle) or {}
     return {int(year): entry for year, entry in data.items()}
+
+
+def test_network_layout_step_keeps_previous_states_pipes():
+    from cea.datamanagement.district_pathways.state_simulation.workflow_assembly import (
+        build_network_layout_step,
+    )
+
+    step = build_network_layout_step(
+        year=2030, required_services=["DH"], previous_network_name="thermal_network_2025"
+    )
+    assert step["parameters"]["keep-existing-pipes"] is True

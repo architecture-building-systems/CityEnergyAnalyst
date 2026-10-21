@@ -217,6 +217,59 @@ def write_pathway_metadata(
     return current
 
 
+def _latest_outputs_mtime(outputs_folder: str, max_depth: int = 3) -> float | None:
+    """Latest modification time among the outputs folder and its subfolders (to `max_depth`).
+
+    Folders only, never files: a state's outputs can hold a file per building, and this runs
+    for every state on each overview request. A tool that creates or deletes files bumps its
+    folder, but overwriting an existing file in place does not.
+    """
+    latest = os.path.getmtime(outputs_folder)
+    if max_depth <= 0:
+        return latest
+    with os.scandir(outputs_folder) as entries:
+        for entry in entries:
+            if entry.is_dir(follow_symlinks=False):
+                latest = max(latest, _latest_outputs_mtime(entry.path, max_depth - 1) or latest)
+    return latest
+
+
+def state_has_results(
+    locator: InputLocator,
+    *,
+    pathway_name: str,
+    year: int,
+    primary_phase: str,
+) -> bool:
+    """Whether a state's results can feed pathway-wide views (canvas pathway columns, the
+    emission timeline): simulated, or custom with outputs that are newer than its last edit.
+
+    A custom (purple) state reports ``custom`` for every phase, so its status cannot say
+    whether it was simulated -- the user may have run the tools inside the state themselves.
+    Its outputs folder is the evidence there is anything to show, and an edit recorded after
+    the outputs last changed (``custom_at``) means they no longer match the state's inputs.
+    """
+    if primary_phase == "simulated":
+        return True
+    if primary_phase != "custom" or not state_outputs_folder_exists(
+        locator, pathway_name=pathway_name, year=year
+    ):
+        return False
+
+    import pandas as pd
+
+    custom_at = read_state_status(locator, pathway_name=pathway_name, year=year).get("custom_at")
+    if not custom_at:
+        return True
+    state_folder = locator.get_state_in_time_scenario_folder(pathway_name, int(year))
+    outputs_mtime = _latest_outputs_mtime(InputLocator(state_folder).get_output_folder())
+    try:
+        # Both are local naive times (`record_custom_state` stamps `Timestamp.now()`)
+        return pd.Timestamp.fromtimestamp(outputs_mtime) >= pd.Timestamp(custom_at)
+    except (TypeError, ValueError):
+        return True
+
+
 def record_custom_state(
     locator: InputLocator,
     *,

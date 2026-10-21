@@ -61,6 +61,11 @@ Consequences:
 - The cost engine already computes the union of edges, so no separate
   `installed_edges_gdf` is needed — the union via `get_all_edges_across_phases`
   is authoritative.
+- Single-phase runs see the same thing within one layout: with network-layout
+  `keep-existing-pipes`, a departed building's pipes stay in `layout.shp`, ending in a
+  `NONE` junction. Both models call `geometry.remove_idle_branches` to drop such dead-end
+  branches before simulation, so they are neither sized nor simulated, and the
+  simulated `edges.shp` (what phasing reads) leaves them out.
 
 ## Per-Phase Action Vocabulary
 

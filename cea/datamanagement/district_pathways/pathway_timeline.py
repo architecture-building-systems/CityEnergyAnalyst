@@ -25,6 +25,7 @@ from cea.datamanagement.district_pathways.pathway_state import (
 from cea.datamanagement.district_pathways.pathway_status import (
     collect_state_phase_status,
     record_validated_state,
+    state_has_results,
 )
 from cea.datamanagement.district_pathways.pathway_summary import build_pathway_year_row
 from cea.datamanagement.district_pathways.pathway_validation import (
@@ -120,12 +121,12 @@ def get_pathway_overview(config: Configuration) -> dict[str, Any]:
 
         # ``all_baked``       — every state year sits in a usable phase
         #                        (``baked`` / ``simulated`` / ``custom``).
-        # ``all_simulated``   — every state year is specifically in
-        #                        ``simulated`` (no merely-baked or
-        #                        custom-edited rows). Drives the Canvas
-        #                        Builder's Pathway picker, which only
-        #                        accepts pathways with full simulation
-        #                        results so every column has data.
+        # ``all_simulated``   — every state year has results
+        #                        (`state_has_results`: simulated, or custom
+        #                        with outputs newer than its last edit -- the emission
+        #                        timeline's rule too). Drives the Canvas
+        #                        Builder's Pathway picker, which needs
+        #                        results in every column.
         # Both gate on ``stale`` so a stale-since-edited state breaks
         # both flags.
         all_baked = bool(years)
@@ -152,7 +153,12 @@ def get_pathway_overview(config: Configuration) -> dict[str, Any]:
                 year_phases[year] = phase
                 if phase not in ("baked", "simulated", "custom") or stale:
                     all_baked = False
-                if phase != "simulated" or stale:
+                if stale or not state_has_results(
+                    pathway.main_locator,
+                    pathway_name=pathway_name,
+                    year=int(year),
+                    primary_phase=phase,
+                ):
                     all_simulated = False
             except Exception:
                 all_baked = False
