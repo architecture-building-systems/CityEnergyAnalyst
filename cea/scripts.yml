@@ -748,6 +748,18 @@ Utilities:
     module: cea.datamanagement.format_helper.format_helper
     parameters: ['general:scenario',format-helper]
 
+  - name: zone-surrounding-exchanger
+    label: Zone-Surrounding Exchanger
+    short_description: Move buildings between the zone and the surroundings
+    description: |
+      This Feature moves buildings between the zone and the surroundings. Existing results are
+      deleted because they no longer match the zone.
+    interfaces: [cli, dashboard]
+    module: cea.datamanagement.zone_surrounding_exchanger
+    parameters: ['general:scenario', zone-surrounding-exchanger]
+    input-files:
+      - [get_zone_geometry]
+
   - name: cea4-migrate
     label: CEA-4 Format Helper - Migrate
     short_description: Migrate Late-CEA-3 inputs to CEA-4 format
@@ -772,7 +784,7 @@ Utilities:
     label: Generate Samples for Sensitivity Analysis (SA)
     short_description: Generate samples for sensitivity analysis using Sobol method
     description: This Feature generates samples for sensitivity analysis using Sobol Method.
-    interfaces: [ cli, dashboard ]
+    interfaces: [ cli ]
     module: cea.utilities.sensitivity_analysis_sampler
     parameters: [ 'general:scenario', sensitivity-analysis-tools]
 
