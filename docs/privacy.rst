@@ -32,9 +32,8 @@ been in place if it's removed. This bookkeeping is stored only on your
 machine and is deleted on success or removal — only the derived
 counts/buckets are sent, as part of an already-anonymous event.
 
-No telemetry is sent when running the CEA application itself, only during
-installation and removal. Builds from source, or forks that do not embed a
-telemetry key, send no telemetry at all.
+Builds from source, or forks that do not embed a telemetry key, send no
+telemetry at all.
 
 CEA Desktop (the app the installer sets up) also reports its own anonymous
 install/update outcome and a short internal code identifying which step
@@ -46,3 +45,29 @@ log of its own install/update steps on your machine, at
 when an install fails, only the name of the last step it reached (one of a
 fixed list, such as ``extracted``) is included in the telemetry event. The
 file stays on your machine unless you choose to attach it to a bug report.
+
+Application error reporting
+---------------------------
+
+Official CEA Desktop builds also report anonymous error and job-outcome
+events while the application is running, to help us find and fix crashes and
+failing tools:
+
+* ``ui_error``: sent when the user interface hits an unexpected error. It
+  contains diagnostic information about the error, not your data.
+* ``job_finished``: sent when a tool finishes. It contains the tool name,
+  whether it succeeded, failed or was cancelled, how long it ran, and the
+  platform. For a failed job only the exception class (for example
+  ``ValueError``) is sent, never the error message.
+* ``app_startup_failed``: sent when CEA Desktop cannot start, for example if
+  the CEA environment cannot be set up or the CEA backend exits or does not
+  respond. It contains a fixed step name (such as ``env_create`` or
+  ``backend_exit``), an exit code or error class name, the CEA version, and
+  the operating system and architecture. Error messages, logs and file paths
+  are never sent.
+
+These events carry no project, scenario, file, parameter or user
+information. They are sent to the same PostHog project described above, with
+cookies and local storage disabled, so no identifier is stored on your
+machine and events cannot be linked to a person. Autocapture, session
+recording and page-view tracking are turned off.
