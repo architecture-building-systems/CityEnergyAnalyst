@@ -105,6 +105,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GUI_GH_TOKEN }}
           POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
+          VITE_POSTHOG_KEY: ${{ secrets.POSTHOG_API_KEY }}
         run: |
           cd $GITHUB_WORKSPACE/gui
           yarn install
