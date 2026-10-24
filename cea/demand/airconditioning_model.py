@@ -231,28 +231,37 @@ def local_air_recirculation_unit_cooling(qc_sen_demand_aru, g_dhu_demand_aru, t_
 
     Gabriel Happle, Feb. 2018
 
-    :param qc_sen_demand_aru:
-    :param g_dhu_demand_aru:
-    :param t_int_prev:
-    :param x_int_prev:
-    :param bpr:
-    :param t_control:
-    :param x_control:
-    :return:
+    :param qc_sen_demand_aru: sensible cooling demand of the air recirculation unit (ARU), negative for cooling [W]
+    :param g_dhu_demand_aru: required moisture removal, positive for dehumidification [kg/s]
+    :param t_int_prev: zone air temperature at the previous time step [C]
+    :param x_int_prev: zone humidity ratio at the previous time step [kg water/kg dry air]
+    :param bpr: building properties providing ARU supply/coil temperatures [C], conditioned area [m2] and floor height [m]
+    :param t_control: enable airflow control according to sensible cooling demand [bool]
+    :param x_control: enable airflow control according to moisture removal demand [bool]
+    :return: dictionary with sensible/latent cooling rates (qc_sen_aru, qc_lat_aru) [W],
+             moisture removal (g_dhu_aru, negative for dehumidification) [kg/s],
+             supply airflow (ma_sup_cs_aru) [kg/s] and supply/return temperatures
+             (ta_sup_cs_aru, ta_re_cs_aru) [C]
     """
 
     # get supply air temperature from system properties
-    t_sup_c_aru = bpr.hvac['Tc_sup_air_aru_C']  # (C) supply temperature of central ahu
-    t_coil_c_aru = bpr.hvac['Tscs0_aru_C']  # (C) coil temperature of central ahu
+    t_sup_c_aru = bpr.hvac['Tc_sup_air_aru_C']  # (C) supply air temperature of local aru
+    t_coil_c_aru = bpr.hvac['Tscs0_aru_C']  # (C) coil temperature of local aru
 
     # calculate air mass flow to attain sensible demand
-    m_ve_rec_req_sen = qc_sen_demand_aru / (C_A * (t_sup_c_aru - t_int_prev))  # TODO: take zone temp of t ???? how?
+    # no sensible airflow requirement when control is disabled or demand is zero; avoid 0/0
+    m_ve_rec_req_sen = 0.0
+    if t_control and qc_sen_demand_aru != 0.0:
+        m_ve_rec_req_sen = qc_sen_demand_aru / (C_A * (t_sup_c_aru - t_int_prev))  # TODO: take zone temp of t ???? how?
 
     # calculate the max moisture content at the coil temperature
     x_sup_c_aru_max = convert_rh_to_moisture_content(100.0, t_coil_c_aru)
 
     # calculate air mass flow to attain latent load
-    m_ve_rec_req_lat = -g_dhu_demand_aru / (x_sup_c_aru_max - x_int_prev)  # TODO: take zone x of t ??? how?
+    # no latent airflow requirement when control is disabled or demand is zero; avoid 0/0
+    m_ve_rec_req_lat = 0.0
+    if x_control and g_dhu_demand_aru != 0.0:
+        m_ve_rec_req_lat = -g_dhu_demand_aru / (x_sup_c_aru_max - x_int_prev)  # TODO: take zone x of t ??? how?
 
     # determine recirculation air mass flow according to control type
     if t_control and not x_control:
