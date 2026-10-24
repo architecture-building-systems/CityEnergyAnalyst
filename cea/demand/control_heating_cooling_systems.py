@@ -229,12 +229,21 @@ def cooling_system_is_active(bpr: BuildingPropertiesRow, tsd: TimeSeriesData, t:
     :rtype: bool
     """
 
-    if not np.isnan(tsd.rc_model_temperatures.ta_cs_set[t]) and not tsd.rc_model_temperatures.T_int[t - 1] <= np.max([bpr.hvac['Tc_sup_air_ahu_C'],
-                                                                               bpr.hvac['Tc_sup_air_aru_C']]):
-        # system has set point according to schedule of operation & internal temperature is not below the set point
-        return True
-    else:
+    if np.isnan(tsd.rc_model_temperatures.ta_cs_set[t]) or not has_cooling_system(bpr.hvac['class_cs']):
         return False
+
+    # check supply temperatures of installed air subsystems only
+    if has_local_ac_cooling_system(bpr):
+        supply_temperatures = [bpr.hvac['Tc_sup_air_aru_C']]
+    elif has_central_ac_cooling_system(bpr) or has_3for2_cooling_system(bpr):
+        supply_temperatures = [bpr.hvac['Tc_sup_air_ahu_C'], bpr.hvac['Tc_sup_air_aru_C']]
+    else:
+        # radiant cooling has no supply air temperature
+        return True
+
+    if not np.all(np.isfinite(supply_temperatures)):
+        raise ValueError(f"Invalid supply air temperature for cooling system {bpr.hvac['class_cs']}")
+    return bool(tsd.rc_model_temperatures.T_int[t - 1] > max(supply_temperatures))
 
 
 def heating_system_is_active(tsd: TimeSeriesData, t: int) -> bool:
