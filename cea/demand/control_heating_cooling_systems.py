@@ -241,8 +241,7 @@ def cooling_system_is_active(bpr: BuildingPropertiesRow, tsd: TimeSeriesData, t:
         # radiant cooling has no supply air temperature
         return True
 
-    if not np.all(np.isfinite(supply_temperatures)):
-        raise ValueError(f"Invalid supply air temperature for cooling system {bpr.hvac['class_cs']}")
+    # supply temperatures are checked for NaN when the building HVAC properties are loaded
     return bool(tsd.rc_model_temperatures.T_int[t - 1] > max(supply_temperatures))
 
 

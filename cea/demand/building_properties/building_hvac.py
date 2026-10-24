@@ -129,6 +129,7 @@ class BuildingHVAC(BuildingPropertiesDatabase):
 
         # verify hvac and ventilation combination
         verify_hvac_system_combination(result, locator)
+        verify_cooling_supply_temperatures(result)
         # read region-specific control parameters (identical for all buildings), i.e. heating and cooling season
         result['has-heating-season'] = result.apply(lambda x: verify_has_season(x.index,
                                                                                 x['hvac_heat_starts'],
@@ -236,3 +237,37 @@ def verify_hvac_system_combination(result, locator):
         'Please check the following buildings:\n' + '\n'.join(error_messages)
     )
 
+
+
+# air-side parameters that the demand calculation reads for each air-based cooling system
+REQUIRED_COOLING_AIR_FIELDS = {
+    'DECENTRALIZED_AC': ['Tc_sup_air_aru_C', 'Tscs0_aru_C'],
+    'CENTRAL_AC': ['Tc_sup_air_ahu_C', 'Tscs0_ahu_C', 'Tc_sup_air_aru_C', 'Tscs0_aru_C'],
+    'HYBRID_AC': ['Tc_sup_air_ahu_C', 'Tscs0_ahu_C', 'Tc_sup_air_aru_C', 'Tscs0_aru_C'],
+}
+
+
+def verify_cooling_supply_temperatures(result):
+    """
+    Verify that air-based cooling systems define the supply and coil temperatures they need.
+
+    Radiant systems (CEILING_COOLING, FLOOR_COOLING) and NONE have no air-side parameters.
+    Raises a single ValueError listing every affected building.
+    """
+    error_messages = []
+    for class_cs, fields in REQUIRED_COOLING_AIR_FIELDS.items():
+        # only the cooling classes in the mapping are checked, so the loop is a few passes regardless of building count
+        rows = result[result['class_cs'] == class_cs]
+        missing = rows[fields].isna()
+        for building_name in missing.index[missing.any(axis=1)]:
+            missing_fields = missing.columns[missing.loc[building_name]].tolist()
+            error_messages.append(
+                f'\nBuilding {building_name} has cooling system {class_cs} '
+                f'({rows.at[building_name, "hvac_type_cs"]}) with missing {missing_fields}.'
+            )
+
+    if error_messages:
+        raise ValueError(
+            'Incomplete cooling system parameters. Please fill them in the HVAC_COOLING database:\n'
+            + '\n'.join(error_messages)
+        )

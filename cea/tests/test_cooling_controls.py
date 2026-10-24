@@ -2,9 +2,11 @@
 from types import SimpleNamespace
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from cea.demand.airconditioning_model import C_A, local_air_recirculation_unit_cooling
+from cea.demand.building_properties.building_hvac import verify_cooling_supply_temperatures
 from cea.demand.control_heating_cooling_systems import cooling_system_is_active
 from cea.demand.latent_loads import convert_rh_to_moisture_content
 
@@ -46,18 +48,36 @@ def test_cooling_without_setpoint_is_off(bpr):
     assert not cooling_system_is_active(bpr, tsd, 0)
 
 
+def _hvac_row(system, **overrides):
+    row = {'class_cs': system, 'hvac_type_cs': 'HVAC_COOLING_ASX', 'Tc_sup_air_ahu_C': 16.0,
+           'Tscs0_ahu_C': 7.5, 'Tc_sup_air_aru_C': 16.0, 'Tscs0_aru_C': 7.5}
+    row.update(overrides)
+    return row
+
+
+@pytest.mark.parametrize('system', ['NONE', 'CEILING_COOLING', 'FLOOR_COOLING'])
+def test_radiant_and_no_cooling_need_no_air_parameters(system):
+    row = _hvac_row(system, Tc_sup_air_ahu_C=np.nan, Tscs0_ahu_C=np.nan,
+                    Tc_sup_air_aru_C=np.nan, Tscs0_aru_C=np.nan)
+    verify_cooling_supply_temperatures(pd.DataFrame([row], index=['B001']))
+
+
+def test_mini_split_does_not_need_ahu_parameters():
+    row = _hvac_row('DECENTRALIZED_AC', Tc_sup_air_ahu_C=np.nan, Tscs0_ahu_C=np.nan)
+    verify_cooling_supply_temperatures(pd.DataFrame([row], index=['B001']))
+
+
 @pytest.mark.parametrize('system,field', [
     ('DECENTRALIZED_AC', 'Tc_sup_air_aru_C'),
     ('CENTRAL_AC', 'Tc_sup_air_ahu_C'),
+    ('CENTRAL_AC', 'Tc_sup_air_aru_C'),
+    ('HYBRID_AC', 'Tscs0_ahu_C'),
     ('HYBRID_AC', 'Tc_sup_air_aru_C'),
 ])
-def test_missing_active_supply_temperature_is_rejected(bpr, system, field):
-    bpr.hvac.update(class_cs=system, Tc_sup_air_ahu_C=16.0)
-    bpr.hvac[field] = np.nan
-    tsd = SimpleNamespace(rc_model_temperatures=SimpleNamespace(
-        ta_cs_set=np.array([26.0]), T_int=np.array([28.0])))
-    with pytest.raises(ValueError, match='supply air temperature'):
-        cooling_system_is_active(bpr, tsd, 0)
+def test_missing_air_parameter_is_rejected_naming_the_building(system, field):
+    row = _hvac_row(system, **{field: np.nan})
+    with pytest.raises(ValueError, match=f'B001.*{system}.*{field}'):
+        verify_cooling_supply_temperatures(pd.DataFrame([row], index=['B001']))
 
 
 @pytest.mark.parametrize('t_control,x_control', [(True, False), (False, True), (True, True)])
