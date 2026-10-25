@@ -16,6 +16,14 @@ import cea.config
 import cea.datamanagement.district_pathways.pathway_state as pathway_state
 from cea.datamanagement.database.envelope_lookup import EnvelopeLookup
 from cea.inputlocator import InputLocator
+from cea.datamanagement.district_pathways.intervention_templates import (
+    load_intervention_templates,
+    save_intervention_templates,
+)
+from cea.datamanagement.district_pathways.pathway_log import (
+    load_pathway_log_yaml,
+    save_pathway_log_yaml,
+)
 
 PATHWAY_NAME = "demo"
 YEAR = 2029
@@ -77,6 +85,12 @@ def baked_state(monkeypatch):
             "type_roof": "ROOF_A",
             "type_base": "FLOOR_A",
             "type_floor": "FLOOR_A",
+            "Hs": 1,
+            "Ns": 0.9,
+            "Es": 0.75,
+            "occupied_bg": False,
+            "year_start": 2000,
+            "type_win": "WINDOW_OLD",
         }],
     )
     _write_csv(
@@ -142,6 +156,67 @@ def _baked_roof_row(state: InputLocator) -> pd.Series:
     baked = [code for code in df.index if "YEAR" in str(code)]
     assert len(baked) == 1, f"expected one baked roof row, found {baked}"
     return df.loc[baked[0]]
+
+
+@pytest.mark.parametrize("initial_hs", [1, 0.9])
+def test_saved_recipe_bakes_numeric_boolean_and_text_values(baked_state, initial_hs):
+    state, apply = baked_state
+    path = state.get_database_archetypes_construction_type()
+    initial = pd.read_csv(path)
+    initial["Hs"] = initial_hs
+    initial.to_csv(path, index=False)
+    values = {
+        "Hs": 0.82,
+        "Ns": 1,
+        "Es": None,
+        "occupied_bg": True,
+        "year_start": 2035,
+        "type_win": "WINDOW_NEW",
+    }
+    recipe = {ARCHETYPE: {"construction_type": values}}
+    save_intervention_templates(state, {"demo": {"modifications": recipe}})
+    saved_recipe = load_intervention_templates(state)["demo"]["modifications"]
+    save_pathway_log_yaml(state, {YEAR: {"modifications": saved_recipe}}, pathway_name=PATHWAY_NAME)
+    loaded_recipe = load_pathway_log_yaml(state, pathway_name=PATHWAY_NAME)[YEAR]["modifications"]
+    loaded_values = loaded_recipe[ARCHETYPE]["construction_type"]
+    for field, value in values.items():
+        assert loaded_values[field] == value
+        assert type(loaded_values[field]) is type(value)
+
+    assert apply(loaded_recipe) is True
+
+    row = pd.read_csv(state.get_database_archetypes_construction_type(), index_col="const_type").loc[ARCHETYPE]
+    assert row[list(values)].to_dict() == {**values, "Es": 0.75}
+    assert row["type_roof"] == "ROOF_A"
+
+
+@pytest.mark.parametrize("field,value,expected_type", [
+    ("Hs", "0.82", "float"),
+    ("Hs", True, "float"),
+    ("occupied_bg", "False", "boolean"),
+    ("year_start", 2035.5, "int"),
+    ("type_win", 82, "string"),
+])
+def test_invalid_recipe_type_reports_field_and_leaves_csv_unchanged(baked_state, field, value, expected_type):
+    state, apply = baked_state
+    recipe = {ARCHETYPE: {"construction_type": {field: value}}}
+    save_intervention_templates(state, {"demo": {"modifications": recipe}})
+    loaded_recipe = load_intervention_templates(state)["demo"]["modifications"]
+    assert type(loaded_recipe[ARCHETYPE]["construction_type"][field]) is type(value)
+    path = state.get_database_archetypes_construction_type()
+    with open(path, "rb") as f:
+        original = f.read()
+
+    with pytest.raises(ValueError) as exc:
+        apply(loaded_recipe)
+
+    message = str(exc.value)
+    assert f"archetype '{ARCHETYPE}'" in message
+    assert f"field '{field}'" in message
+    assert f"state_{YEAR}" in message
+    assert f"expected {expected_type}, got {value!r} ({type(value).__name__})" in message
+    with open(path, "rb") as f:
+        assert f.read() == original
 
 
 def test_editing_layers_clears_the_stale_cache(baked_state):

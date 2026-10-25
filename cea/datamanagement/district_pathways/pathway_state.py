@@ -37,6 +37,7 @@ from cea.datamanagement.district_pathways.pathway_status import (
     record_baked_state,
 )
 from cea.inputlocator import InputLocator
+from cea.schemas import schemas
 from cea.utilities.fingerprint import hash_payload
 from cea.utilities.standardize_coordinates import shapefile_to_WSG_and_UTM
 
@@ -1060,9 +1061,17 @@ def _apply_state_construction_changes(
     state_locator = InputLocator(state_scenario_folder)
 
     try:
+        column_schema: dict[str, dict[str, Any]] = (
+            schemas(config.plugins)["get_database_archetypes_construction_type"]["schema"]["columns"]
+        )
+        column_dtypes: dict[str, str] = {"float": "float64", "int": "Int64", "boolean": "boolean", "string": "str"}
+        # A schema type may accept multiple Python types: Hs: 1 and Hs: 1.0 are both valid floats.
+        # Compare exact types below so bool is not accepted as int, despite being its subclass.
+        value_types: dict[str, tuple[type, ...]] = {"float": (float, int), "int": (int,), "boolean": (bool,), "string": (str,)}
         archetype_df = pd.read_csv(
             state_locator.get_database_archetypes_construction_type(),
             index_col="const_type",
+            dtype={field: column_dtypes[cast(str, definition["type"])] for field, definition in column_schema.items()},
         )
         envelope_lookup = EnvelopeLookup.from_locator(state_locator)
         dbs_overall_modified = 0
@@ -1082,7 +1091,19 @@ def _apply_state_construction_changes(
                             raise ValueError(
                                 f"Construction types database has no column '{field}' (archetype '{archetype}')."
                             )
-                        archetype_df.at[archetype, field] = str(new_value)
+                        if field not in column_schema:
+                            raise ValueError(
+                                f"Construction type field '{field}' has no schema definition "
+                                f"(archetype '{archetype}', state_{year_of_state})."
+                            )
+                        expected_type = cast(str, column_schema[field]["type"])
+                        if type(new_value) not in value_types[expected_type]:
+                            raise ValueError(
+                                f"Invalid construction type value for archetype '{archetype}', "
+                                f"field '{field}' in state_{year_of_state}: expected {expected_type}, "
+                                f"got {new_value!r} ({type(new_value).__name__})."
+                            )
+                        archetype_df.at[archetype, field] = new_value
                         db_modified += 1
                     dbs_overall_modified += db_modified
                     continue
