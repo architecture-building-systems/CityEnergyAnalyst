@@ -23,7 +23,9 @@ from __future__ import annotations
 
 import glob
 import os
-from typing import Any, Callable, Dict, List, Mapping, Optional
+from collections.abc import Callable, Mapping
+from inspect import signature
+from typing import Any
 
 from cea.inputlocator import InputLocator
 from cea.kpi.exceptions import KPIDefinitionError
@@ -48,11 +50,12 @@ __status__ = "Production"
 # (e.g. ``phases_for_plan`` reads the picked ``plan_name``) opt
 # in. Frontend re-fetches the parameter spec whenever any draft
 # value changes, so dependent generators see the latest picks.
-ChoiceList = List[Dict[str, str]]
+ChoiceList = list[dict[str, str]]
 ParamContext = Mapping[str, Any]
 GeneratorFn = Callable[..., ChoiceList]
 
-_GENERATORS: Dict[str, GeneratorFn] = {}
+_GENERATORS: dict[str, GeneratorFn] = {}
+_GENERATOR_ACCEPTS_PARAMETERS: dict[str, bool] = {}
 
 
 def register(name: str) -> Callable[[GeneratorFn], GeneratorFn]:
@@ -60,6 +63,12 @@ def register(name: str) -> Callable[[GeneratorFn], GeneratorFn]:
     from yml ``options_generator`` fields."""
 
     def decorator(fn: GeneratorFn) -> GeneratorFn:
+        try:
+            signature(fn).bind(None, {})
+        except TypeError:
+            _GENERATOR_ACCEPTS_PARAMETERS[name] = False
+        else:
+            _GENERATOR_ACCEPTS_PARAMETERS[name] = True
         _GENERATORS[name] = fn
         return fn
 
@@ -69,17 +78,18 @@ def register(name: str) -> Callable[[GeneratorFn], GeneratorFn]:
 def run_generator(
     name: str,
     locator: InputLocator,
-    parameters: Optional[ParamContext] = None,
+    parameters: ParamContext | None = None,
 ) -> ChoiceList:
     """Dispatch entry point. Raises :class:`KPIDefinitionError` for
     unregistered names so a typo in a yml fails loudly.
 
     ``parameters`` is the user's current draft of parameter values
     (a dict like ``{"plan_name": "MyPlan"}``). Forwarded to
-    generators that opted into a 2-arg signature so they can
-    filter their choices by what's already picked. Single-arg
-    generators (the common case) ignore it via the introspection
-    fallback.
+    generators that accept a second positional argument so they can
+    filter their choices by what's already picked. Signature
+    compatibility is recorded once by :func:`register`; generator
+    errors, including ``TypeError``, are never mistaken for an arity
+    mismatch or retried.
     """
     fn = _GENERATORS.get(name)
     if fn is None:
@@ -87,12 +97,9 @@ def run_generator(
             f"unknown options_generator '{name}'. "
             f"Known: {sorted(_GENERATORS)}"
         )
-    # Try the 2-arg call first; fall back to the legacy 1-arg
-    # form so existing generators don't need to be touched.
-    try:
+    if _GENERATOR_ACCEPTS_PARAMETERS[name]:
         return fn(locator, parameters or {})
-    except TypeError:
-        return fn(locator)
+    return fn(locator)
 
 
 # ── Generators ──────────────────────────────────────────────────────
