@@ -37,7 +37,7 @@ from cea.datamanagement.district_pathways.pathway_status import (
     record_baked_state,
 )
 from cea.inputlocator import InputLocator
-from cea.schemas import schemas
+from cea.schemas import SCHEMA_PYTHON_TYPES, get_pandas_dtypes, schemas
 from cea.utilities.fingerprint import hash_payload
 from cea.utilities.standardize_coordinates import shapefile_to_WSG_and_UTM
 
@@ -1064,14 +1064,10 @@ def _apply_state_construction_changes(
         column_schema: dict[str, dict[str, Any]] = (
             schemas(config.plugins)["get_database_archetypes_construction_type"]["schema"]["columns"]
         )
-        column_dtypes: dict[str, str] = {"float": "float64", "int": "Int64", "boolean": "boolean", "string": "str"}
-        # A schema type may accept multiple Python types: Hs: 1 and Hs: 1.0 are both valid floats.
-        # Compare exact types below so bool is not accepted as int, despite being its subclass.
-        value_types: dict[str, tuple[type, ...]] = {"float": (float, int), "int": (int,), "boolean": (bool,), "string": (str,)}
         archetype_df = pd.read_csv(
             state_locator.get_database_archetypes_construction_type(),
             index_col="const_type",
-            dtype={field: column_dtypes[cast(str, definition["type"])] for field, definition in column_schema.items()},
+            dtype=get_pandas_dtypes(column_schema),
         )
         envelope_lookup = EnvelopeLookup.from_locator(state_locator)
         dbs_overall_modified = 0
@@ -1097,7 +1093,7 @@ def _apply_state_construction_changes(
                                 f"(archetype '{archetype}', state_{year_of_state})."
                             )
                         expected_type = cast(str, column_schema[field]["type"])
-                        if type(new_value) not in value_types[expected_type]:
+                        if type(new_value) not in SCHEMA_PYTHON_TYPES[expected_type]:
                             raise ValueError(
                                 f"Invalid construction type value for archetype '{archetype}', "
                                 f"field '{field}' in state_{year_of_state}: expected {expected_type}, "

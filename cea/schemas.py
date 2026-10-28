@@ -54,6 +54,19 @@ def schemas(plugins: Optional[List] = None) -> Dict:
     return __schemas[key]
 
 
+# pandas dtypes used to read CSVs whose columns are described by a schema ``type``
+_PANDAS_DTYPES = {"float": "float64", "int": "Int64", "boolean": "boolean", "string": "str"}
+
+# A schema type may accept multiple Python types: 1 and 1.0 are both valid floats.
+# Types are compared exactly so bool is not accepted as int, despite being its subclass.
+SCHEMA_PYTHON_TYPES = {"float": (float, int), "int": (int,), "boolean": (bool,), "string": (str,)}
+
+
+def get_pandas_dtypes(columns_schema: Dict[str, Dict[str, Any]]) -> Dict[str, str]:
+    """Map each column of a schema's ``columns`` section to the pandas dtype to read it with."""
+    return {column: _PANDAS_DTYPES[definition["type"]] for column, definition in columns_schema.items()}
+
+
 def get_schema_variables(schema):
     """
     This method returns a set of all variables within the schemas.yml. The set is organised by:
