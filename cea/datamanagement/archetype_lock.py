@@ -260,6 +260,32 @@ def write_lock(
     return state
 
 
+def remap_and_relock(locator: InputLocator, buildings: list[str]) -> LockState:
+    """Re-derive the archetype-owned tables for `buildings` and advance the lock timestamp.
+
+    Shared by every path that upholds Archetype Lock's guarantee: (re-)locking the whole
+    district, an auto-remap after `zone.shp` moved a building's archetype key or gained a
+    building (the input editor's save, the zone-surroundings exchanger), and an auto-remap after
+    the archetype database itself changed. All run the same six-flag mapper call and then stamp
+    `mapped_at` to now -- the mapper just ran, so the lock file's record of "last mapped" needs
+    to say so.
+    """
+    # Imported here: `archetypes_mapper` pulls in the whole mapper, which a lock read never needs.
+    from cea.datamanagement.archetypes_mapper import archetypes_mapper
+
+    archetypes_mapper(
+        locator=locator,
+        update_architecture_dbf=True,
+        update_air_conditioning_systems_dbf=True,
+        update_indoor_comfort_dbf=True,
+        update_internal_loads_dbf=True,
+        update_supply_systems_dbf=True,
+        update_schedule_operation_cea=True,
+        list_buildings=buildings,
+    )
+    return write_lock(locator, locked=True)
+
+
 def is_drifted(locator: InputLocator, state: LockState | None = None) -> bool:
     """A cheap, coarse drift signal for a caller with no tables loaded.
 
