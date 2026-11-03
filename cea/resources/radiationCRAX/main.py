@@ -122,7 +122,7 @@ def add_terrain_elevation(tif_path, building_data_csv, building_crs=None):
     box of each building's base. The elevation is then added to the CSV.
 
     `building_crs` (WKT) is the CRS of the footprint coordinates in the CSV. If it differs from the CRS of the
-    tif, the footprint bounds are transformed to the tif's CRS before sampling.
+    tif, the footprint is transformed to the tif's CRS before sampling. A tif without a CRS is sampled as-is.
     """
     df = pd.read_csv(building_data_csv)
 
@@ -131,7 +131,9 @@ def add_terrain_elevation(tif_path, building_data_csv, building_crs=None):
         dem_array = src.read(1)  # Read the first band of the DEM
         nodata = src.nodata  # Get the nodata value
         transform = src.transform  # Get the affine transform
-        reproject_bounds = building_crs is not None and RasterioCRS.from_wkt(building_crs) != src.crs
+        # an untagged tif is sampled as-is, there is nothing to transform to
+        reproject_bounds = (building_crs is not None and src.crs is not None
+                            and RasterioCRS.from_wkt(building_crs) != src.crs)
 
         terrain_elevations = []
         for idx, row_data in df.iterrows():

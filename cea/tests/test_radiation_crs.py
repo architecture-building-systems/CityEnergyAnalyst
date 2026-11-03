@@ -81,7 +81,11 @@ def test_crax_terrain_elevation_matches_across_crs(tmp_path):
     # the 20 m footprint covers columns 20-24 and rows 36-40: mean of (column + 10 * row)
     expected_elevation = 22 + 10 * 38
 
-    for tif in (matching_tif, mismatched_tif):
+    # a terrain without a CRS cannot be transformed to, so it is sampled as-is
+    untagged_tif = str(tmp_path / "untagged.tif")
+    _write_terrain(untagged_tif, None, origin_x, origin_y)
+
+    for tif in (matching_tif, mismatched_tif, untagged_tif):
         pd.DataFrame({"BuildingBase": [str(list(_footprint(X0, Y0).exterior.coords))]}).to_csv(building_csv,
                                                                                                index=False)
         add_terrain_elevation(tif, str(building_csv), crs)
