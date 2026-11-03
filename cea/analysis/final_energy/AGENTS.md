@@ -86,15 +86,6 @@ final_energy_kWh = demand_kWh / efficiency
 - `HEX*` → passive, carrier=None, efficiency=None (no energy consumption)
 - `PU*` → HYDRAULIC_PUMPS — **cost only, no energy conversion**. Pumping load comes from thermal-network simulation (`pressure_loss_total_kW`), not from component efficiency. Currently treated as 1:1 (electricity in = work out). TODO: add COP to HYDRAULIC_PUMPS.csv so pumping electricity = pressure_loss / COP.
 
-### ✅ DO: Read carriers from columns with `classify_carrier_column`
-
-Both summaries (`final_energy_buildings.csv`, `final_energy.csv`) take carriers from a
-building's hourly columns through `classify_carrier_column` -- never by splitting the name.
-Only `<service>_(sys|booster)_<CARRIER>_kWh` is consumption; `PV_{facade}_kWh`, `PVT_*_E/_Q`
-and `SC_*` are generation (PV / SOLAR); `*_radiation_kWh`, `*_dumped_kWh` and booster heat
-demand (`Qhs_booster_kWh`) are not carriers. `TOTAL` sums consumption only. A new column
-pattern goes into the classifier (and `test_final_energy_carrier_columns.py`).
-
 ### ✅ DO: Read district consumption from thermal-network
 
 ```python

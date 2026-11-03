@@ -22,7 +22,6 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 import os
-import re
 import pandas as pd
 import numpy as np
 from typing import Dict, Optional, Tuple
@@ -54,41 +53,6 @@ _DECLARED_CARRIER_CODES = frozenset({
     'SOLAR',
     'PV',
 })
-
-
-# A carrier delivered to a service: `<service>_(sys|booster)_<CARRIER>_kWh`, e.g.
-# `Qhs_sys_NATURALGAS_kWh`, `Qww_booster_GRID_kWh`. Demand totals (`Qhs_sys_kWh`) and booster
-# heat demand (`Qhs_booster_kWh`) name no carrier, so they don't match.
-_SERVICE_CARRIER_COLUMN = re.compile(r'^(?:Qhs|Qww|Qcs|E)_(?:sys|booster)_([^_]+)_kWh$')
-
-
-def classify_carrier_column(col: str) -> Optional[Tuple[str, bool]]:
-    """
-    ``(carrier, is_consumption)`` for a column of a building's hourly final-energy table, or
-    ``None`` for a column that is not a carrier.
-
-    - Consumption: a carrier delivered to a service (see ``_SERVICE_CARRIER_COLUMN``).
-    - Generation: on-site solar per facade -- ``PV_{facade}_kWh`` and ``PVT_*_E_kWh`` are PV,
-      ``PVT_*_Q_kWh`` and ``SC_*_kWh`` are SOLAR.
-    - Never a carrier: demand totals, booster heat demand, raw irradiation
-      (``*_radiation_kWh``) and SC tank surplus (``*_dumped_kWh``).
-    """
-    if '_radiation_' in col or col.endswith('_dumped_kWh'):
-        return None
-    match = _SERVICE_CARRIER_COLUMN.match(col)
-    if match:
-        return match.group(1), True
-    if col.startswith('PVT_'):
-        if col.endswith('_E_kWh'):
-            return 'PV', False
-        if col.endswith('_Q_kWh'):
-            return 'SOLAR', False
-        return None
-    if col.startswith('PV_') and col.endswith('_kWh'):
-        return 'PV', False
-    if col.startswith('SC_') and col.endswith('_kWh'):
-        return 'SOLAR', False
-    return None
 
 
 def calculate_building_final_energy(
@@ -288,7 +252,7 @@ def calculate_building_final_energy(
             pass
 
     # Step 5: Add solar energy generation (broken down by facade)
-    # Only for buildings in solar-technology:buildings (left blank, that is every building)
+    # Only for buildings listed in solar-technology:buildings (empty = no solar)
     solar_buildings = config.solar_technology.buildings
     if solar_buildings and building_name in solar_buildings:
         try:
@@ -1194,18 +1158,23 @@ def aggregate_buildings_summary(
         Qcs_sys_MWh = df['Qcs_sys_kWh'].sum() / 1000.0
         E_sys_MWh = df['E_sys_kWh'].sum() / 1000.0
 
-        # Sum carrier columns by carrier (kWh -> MWh); TOTAL counts consumption only.
+        # Sum carrier columns by type
         carrier_totals = {}
-        consumption_MWh = 0.0
         for col in df.columns:
-            classified = classify_carrier_column(col)
-            if classified is None:
-                continue
-            carrier, is_consumption = classified
-            col_MWh = df[col].sum() / 1000.0
-            carrier_totals[carrier] = carrier_totals.get(carrier, 0.0) + col_MWh
-            if is_consumption:
-                consumption_MWh += col_MWh
+            if col.endswith('_kWh') and col not in ['Qhs_sys_kWh', 'Qww_sys_kWh', 'Qcs_sys_kWh', 'E_sys_kWh']:
+                # Skip diagnostic *_dumped_kWh columns — they record heat
+                # dumped at the SC tank pressure-relief cap, not carrier
+                # consumption delivered to a service.
+                if col.endswith('_dumped_kWh'):
+                    continue
+                # Extract carrier from column name
+                # Format: Qhs_sys_NATURALGAS_kWh -> NATURALGAS
+                parts = col.split('_')
+                if len(parts) >= 3:
+                    carrier = parts[2]  # Get carrier part
+                    if carrier not in carrier_totals:
+                        carrier_totals[carrier] = 0.0
+                    carrier_totals[carrier] += df[col].sum() / 1000.0  # kWh -> MWh
 
         # Calculate peak demand
         total_demand_kW = df['Qhs_sys_kWh'] + df['Qww_sys_kWh'] + df['Qcs_sys_kWh'] + df['E_sys_kWh']
@@ -1255,9 +1224,11 @@ def aggregate_buildings_summary(
         for carrier in sorted(all_carriers):
             row[f'{carrier}_MWh'] = carrier_totals.get(carrier, 0.0)
 
-        # The total declared in `cea/schemas.yml`: final energy *consumed*. On-site
-        # generation (PV, SOLAR from panels) has its own columns and is not added in.
-        row['TOTAL_MWh'] = consumption_MWh
+        # Roll up the per-carrier columns into the total declared in
+        # `cea/schemas.yml` for this file. Without this, downstream
+        # consumers (e.g. KPIs that read TOTAL_MWh) hit a missing-column
+        # error even though the schema promises the column.
+        row['TOTAL_MWh'] = sum(carrier_totals.values())
 
         row['peak_demand_kW'] = peak_demand_kW
         row['peak_datetime'] = peak_datetime
@@ -1407,8 +1378,8 @@ def create_hourly_timeseries_aggregation(
     for col in demand_columns:
         aggregated[col] = 0.0
 
-    # Final energy consumed, hour by hour (on-site generation excluded)
-    consumption_kWh = pd.Series(0.0, index=aggregated.index)
+    # Track all carrier types found
+    all_carriers = set()
 
     # Aggregate building data
     for building_name, df in building_dfs.items():
@@ -1417,19 +1388,49 @@ def create_hourly_timeseries_aggregation(
             if col in df.columns:
                 aggregated[col] += df[col].fillna(0)
 
-        # Sum carrier columns by carrier type (not by service)
+        # Sum carrier columns
         for col in df.columns:
-            classified = classify_carrier_column(col)
-            if classified is None:
-                continue
-            carrier, is_consumption = classified
-            carrier_col = f'{carrier}_kWh'
-            if carrier_col not in aggregated.columns:
-                aggregated[carrier_col] = 0.0
-            hourly = df[col].fillna(0)
-            aggregated[carrier_col] += hourly
-            if is_consumption:
-                consumption_kWh += hourly
+            if col.endswith('_kWh') and col not in demand_columns and col != 'date':
+                # Skip raw-irradiation columns — they record incident solar
+                # energy, not useful delivered energy, and must NEVER be
+                # counted as a delivered carrier. Matches the filter in
+                # cea.analysis.lca.emission_time_dependent.
+                if '_radiation_' in col:
+                    continue
+                # Skip diagnostic *_dumped_kWh columns — SC tank surplus
+                # dumped at the T_MAX cap, not a delivered carrier.
+                if col.endswith('_dumped_kWh'):
+                    continue
+
+                # Extract carrier from column name
+                # Formats:
+                #   Qhs_sys_NATURALGAS_kWh          -> NATURALGAS
+                #   PV_{facade}_kWh                 -> PV
+                #   PVT_{collector}_{facade}_E_kWh  -> PV  (electrical)
+                #   PVT_{collector}_{facade}_Q_kWh  -> SOLAR  (thermal)
+                #   SC_{collector}_{facade}_Q_kWh   -> SOLAR
+                if '_sys_' in col or '_booster_' in col:
+                    # Service/booster carrier: Qhs_sys_NATURALGAS_kWh -> NATURALGAS
+                    parts = col.split('_')
+                    carrier = parts[2] if len(parts) >= 3 else col
+                elif col.startswith('PV_'):
+                    carrier = 'PV'
+                elif col.startswith('PVT_') and col.endswith('_E_kWh'):
+                    carrier = 'PV'
+                elif col.startswith('PVT_') and col.endswith('_Q_kWh'):
+                    carrier = 'SOLAR'
+                elif col.startswith('SC_'):
+                    carrier = 'SOLAR'
+                else:
+                    continue
+
+                # Aggregate by carrier type (not by service)
+                carrier_col = f'{carrier}_kWh'
+                if carrier_col not in aggregated.columns:
+                    aggregated[carrier_col] = 0.0
+                    all_carriers.add(carrier)
+
+                aggregated[carrier_col] += df[col].fillna(0)
 
     # Aggregate plant data
     for plant_name, df in plant_dfs.items():
@@ -1451,13 +1452,13 @@ def create_hourly_timeseries_aggregation(
                 carrier_col = f'{carrier}_kWh'
                 if carrier_col not in aggregated.columns:
                     aggregated[carrier_col] = 0.0
+                    all_carriers.add(carrier)
 
-                hourly = df[col].fillna(0)
-                aggregated[carrier_col] += hourly
-                consumption_kWh += hourly  # plants consume their fuel
+                aggregated[carrier_col] += df[col].fillna(0)
 
-    # Total final energy consumed (schema: TOTAL_kWh); on-site generation is not added in
-    aggregated['TOTAL_kWh'] = consumption_kWh
+    # Calculate total final energy (sum of all carriers)
+    carrier_cols = [f'{carrier}_kWh' for carrier in all_carriers]
+    aggregated['TOTAL_kWh'] = aggregated[carrier_cols].sum(axis=1)
 
     return aggregated
 
