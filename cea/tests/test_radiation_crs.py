@@ -16,6 +16,7 @@ from cea.utilities.standardize_coordinates import get_projected_coordinate_syste
 
 # a footprint near Zurich (47.18N, 8.51E) in UTM 32N, wrongly tagged as UTM 32S as seen in some scenarios
 NORTH_CRS = "EPSG:32632"
+NORTH_CRS_WKT = get_projected_coordinate_system(47.18, 8.51)
 SOUTH_CRS = "EPSG:32732"
 X0, Y0 = 463100.0, 5224800.0
 
@@ -43,8 +44,21 @@ def test_crax_building_data_follows_requested_crs(tmp_path):
     assert min(xs) == pytest.approx(X0, abs=0.5)
 
 
-def _write_terrain(path, crs, x_left, y_top, elevation):
-    data = np.full((60, 60), elevation, dtype="float32")
+def test_crax_building_data_rejects_shapefile_without_crs(tmp_path):
+    zone_path = str(tmp_path / "zone.shp")
+    gpd.GeoDataFrame({"name": ["B1"], "height_ag": [10.0], "floors_ag": [3]},
+                     geometry=[_footprint(X0, Y0)], crs=NORTH_CRS).to_file(zone_path)
+    os.remove(str(tmp_path / "zone.prj"))
+
+    with pytest.raises(ValueError, match="no coordinate reference system"):
+        generate_general_building_data_for_CRAX(zone_path, str(tmp_path), "zone.csv", NORTH_CRS_WKT)
+
+
+def _write_terrain(path, crs, x_left, y_top):
+    """Write a 60 x 60 DEM of 5 m cells whose value is `column + 10 * row`, so the elevation identifies the cells
+    that were sampled."""
+    cols, rows = np.meshgrid(np.arange(60), np.arange(60))
+    data = (cols + 10 * rows).astype("float32")
     with rasterio.open(path, "w", driver="GTiff", height=60, width=60, count=1, dtype="float32", crs=crs,
                        transform=from_origin(x_left, y_top, 5, 5), nodata=-9999) as dst:
         dst.write(data, 1)
@@ -54,19 +68,24 @@ def test_crax_terrain_elevation_matches_across_crs(tmp_path):
     crs = get_projected_coordinate_system(47.18, 8.51)
     building_csv = tmp_path / "buildings.csv"
 
-    # same terrain in the matching CRS, and re-tagged in the wrong-hemisphere CRS
+    # same terrain in the matching CRS, and in the wrong-hemisphere CRS. The origin is offset by half a cell so the
+    # footprint does not sit exactly on a cell boundary
+    origin_x, origin_y = X0 - 102.5, Y0 + 202.5
     matching_tif = str(tmp_path / "matching.tif")
-    _write_terrain(matching_tif, NORTH_CRS, X0 - 100, Y0 + 200, 400.0)
+    _write_terrain(matching_tif, NORTH_CRS, origin_x, origin_y)
     transformer = Transformer.from_crs(NORTH_CRS, SOUTH_CRS, always_xy=True)
-    x_south, y_south = transformer.transform(X0 - 100, Y0 + 200)
+    x_south, y_south = transformer.transform(origin_x, origin_y)
     mismatched_tif = str(tmp_path / "mismatched.tif")
-    _write_terrain(mismatched_tif, SOUTH_CRS, x_south, y_south, 400.0)
+    _write_terrain(mismatched_tif, SOUTH_CRS, x_south, y_south)
+
+    # the 20 m footprint covers columns 20-24 and rows 36-40: mean of (column + 10 * row)
+    expected_elevation = 22 + 10 * 38
 
     for tif in (matching_tif, mismatched_tif):
         pd.DataFrame({"BuildingBase": [str(list(_footprint(X0, Y0).exterior.coords))]}).to_csv(building_csv,
                                                                                                index=False)
         add_terrain_elevation(tif, str(building_csv), crs)
-        assert pd.read_csv(building_csv).loc[0, "TerrainElevation"] == pytest.approx(400.0)
+        assert pd.read_csv(building_csv).loc[0, "TerrainElevation"] == pytest.approx(expected_elevation)
 
 
 class _DummyLayer(MapLayer):
