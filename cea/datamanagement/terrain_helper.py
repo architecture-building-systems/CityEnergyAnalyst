@@ -19,6 +19,7 @@ from shapely import box
 
 import cea.config
 import cea.inputlocator
+from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
 
 URL_FORMAT = "https://s3.amazonaws.com/elevation-tiles-prod/geotiff/{zoom}/{x}/{y}.tif"
 TILE_CRS = CRS.from_epsg(3857)
@@ -228,7 +229,9 @@ def main(config: cea.config.Configuration):
     total_bounds = total_df.total_bounds
 
     # Add buffer to bounds in meters (using projected crs), to ensure overlap
-    projected_crs = total_df.estimate_utm_crs()
+    # Use the same zone-derived UTM as the rest of CEA; estimate_utm_crs depends on the extent of the data passed in
+    lat, lon = get_lat_lon_projected_shapefile(zone_df)
+    projected_crs = CRS.from_wkt(get_projected_coordinate_system(lat, lon))
     reprojected_bounds_df = gpd.GeoDataFrame(geometry=[box(*total_bounds)], crs=zone_df.crs).to_crs(projected_crs)
     buffer_df = reprojected_bounds_df.buffer(buffer)
     min_x, min_y, max_x, max_y = buffer_df.total_bounds
