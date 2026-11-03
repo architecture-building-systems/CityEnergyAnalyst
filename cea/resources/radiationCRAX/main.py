@@ -13,7 +13,9 @@ import json
 import geopandas as gpd
 
 from osgeo import gdal
+from rasterio.crs import CRS as RasterioCRS
 from rasterio.transform import rowcol
+from rasterio.warp import transform as transform_coordinates
 from shapely.geometry import Polygon
 from shapely import wkt
 from typing import Dict, Optional
@@ -28,6 +30,7 @@ from cea.resources.radiation.geometry_generator import BuildingGeometry
 from cea.resources.radiation.main import buildings_to_simulate, read_surface_properties
 from cea.resources.radiationCRAX import CRAXModel
 from cea.utilities.parallel import vectorize
+from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
 
 __author__ = "Xiaoyu Wang"
 __copyright__ = ["Copyright 2025, Architecture and Building Systems - ETH Zurich"], \
@@ -40,12 +43,14 @@ __email__ = ["cea@arch.ethz.ch", "wanglittlerain@163.com"]
 __status__ = "Production"
 
 
-def generate_general_building_data_for_CRAX(shapefile_path, output_folder, output_file_name):
+def generate_general_building_data_for_CRAX(shapefile_path, output_folder, output_file_name, crs=None):
     """
     Reads a shapefile using GeoPandas to avoid issues with special characters in field names.
     Extracts the 'name', 'height_ag', and 'floors_ag' fields along with geometry data (building footprint).
     Saves the extracted information into a CSV file in the specified output folder.
     If the shapefile is not found, creates an empty CSV with the appropriate headers.
+    If `crs` is given (WKT), the geometries are reprojected to it first, so CRAX works in the same
+    coordinate system as the Daysim radiation workflow.
     """
     # Ensure the output directory exists
     os.makedirs(output_folder, exist_ok=True)
@@ -64,6 +69,12 @@ def generate_general_building_data_for_CRAX(shapefile_path, output_folder, outpu
         gdf = gpd.read_file(shapefile_path)
     except Exception as e:
         raise Exception(f"Error reading shapefile with GeoPandas: {e}")
+
+    if crs is not None:
+        if gdf.crs is None:
+            raise ValueError(f"{os.path.basename(shapefile_path)} has no coordinate reference system defined. "
+                             f"Define one before running CRAX.")
+        gdf = gdf.to_crs(crs)
 
     # Convert all column names to lowercase to avoid case sensitivity issues
     gdf.columns = gdf.columns.str.lower()
@@ -105,10 +116,13 @@ def generate_general_building_data_for_CRAX(shapefile_path, output_folder, outpu
     return output_csv
 
 
-def add_terrain_elevation(tif_path, building_data_csv):
+def add_terrain_elevation(tif_path, building_data_csv, building_crs=None):
     """
     Reads DEM data from a TIFF file and calculates the average elevation over the bounding
     box of each building's base. The elevation is then added to the CSV.
+
+    `building_crs` (WKT) is the CRS of the footprint coordinates in the CSV. If it differs from the CRS of the
+    tif, the footprint is transformed to the tif's CRS before sampling. A tif without a CRS is sampled as-is.
     """
     df = pd.read_csv(building_data_csv)
 
@@ -117,6 +131,9 @@ def add_terrain_elevation(tif_path, building_data_csv):
         dem_array = src.read(1)  # Read the first band of the DEM
         nodata = src.nodata  # Get the nodata value
         transform = src.transform  # Get the affine transform
+        # an untagged tif is sampled as-is, there is nothing to transform to
+        reproject_bounds = (building_crs is not None and src.crs is not None
+                            and RasterioCRS.from_wkt(building_crs) != src.crs)
 
         terrain_elevations = []
         for idx, row_data in df.iterrows():
@@ -135,6 +152,12 @@ def add_terrain_elevation(tif_path, building_data_csv):
 
                 # Use the bounding box of the building base
                 minx, miny, maxx, maxy = polygon.bounds
+                if reproject_bounds:
+                    # transform the vertices rather than the bounds, a rotated footprint would otherwise get a
+                    # wider sampling window than it covers
+                    xs, ys = zip(*polygon.exterior.coords)
+                    xs, ys = transform_coordinates(RasterioCRS.from_wkt(building_crs), src.crs, xs, ys)
+                    minx, miny, maxx, maxy = min(xs), min(ys), max(xs), max(ys)
 
                 # Convert bounding box coordinates to DEM row and column indices
                 row_min, col_min = rowcol(transform, minx, maxy)  # Top-left corner
@@ -480,27 +503,36 @@ def main(config):
     envelope_csv = locator.get_building_architecture()
     tif_path = locator.get_terrain()
 
+    # Use the zone-derived UTM, the same coordinate system as the Daysim radiation workflow, regardless of the CRS
+    # stored in the input files
+    lat, lon = get_lat_lon_projected_shapefile(gpd.read_file(zone_shapefile_path))
+    crs = get_projected_coordinate_system(lat, lon)
+
     # Step 1: Automatically generate building geometry data CSV
     zone_building_geometry_csv = generate_general_building_data_for_CRAX(zone_shapefile_path, input_folder,
-                                                                         'zone_building_geometry.csv')
+                                                                         'zone_building_geometry.csv', crs)
     
     # Step 2: Add terrain elevation data to the generated CSV
-    add_terrain_elevation(tif_path, zone_building_geometry_csv)
+    add_terrain_elevation(tif_path, zone_building_geometry_csv, crs)
 
     # Step 3: Add window wall ratio (WWR) data to the same CSV
     add_window_wall_ratio(envelope_csv, zone_building_geometry_csv)
 
     # Step 4: repeat step 1-3 for surrounding buildings if there's any.
+    gdf_surroundings = None
     try:
         gdf_surroundings = gpd.read_file(surroundings_shapefile_path)
-        if not gdf_surroundings.empty:
-            surroundings_building_geometry_csv = generate_general_building_data_for_CRAX(surroundings_shapefile_path,
-                                                                                         input_folder,
-                                                                                         'surroundings_building_geometry.csv')
-            add_terrain_elevation(tif_path, surroundings_building_geometry_csv)
-            add_window_wall_ratio(envelope_csv, surroundings_building_geometry_csv)
     except Exception as e:
         print(f"Could not read surroundings shapefile: {e}")
+
+    # Outside the try block above so a failure here stops the run instead of silently dropping the surroundings
+    if gdf_surroundings is not None and not gdf_surroundings.empty:
+        surroundings_building_geometry_csv = generate_general_building_data_for_CRAX(surroundings_shapefile_path,
+                                                                                     input_folder,
+                                                                                     'surroundings_building_geometry.csv',
+                                                                                     crs)
+        add_terrain_elevation(tif_path, surroundings_building_geometry_csv, crs)
+        add_window_wall_ratio(envelope_csv, surroundings_building_geometry_csv)
 
     # import material properties of buildings
     print("Getting geometry materials")

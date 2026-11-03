@@ -3,6 +3,7 @@ import functools
 import hashlib
 import json
 import os
+import sys
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from functools import wraps
@@ -168,6 +169,8 @@ class MapLayer(abc.ABC):
     name: str
     label: str
     description: str
+    # Bump when a dependency outside the layer's module changes what it outputs, to invalidate cached results
+    cache_version: str = ""
 
     def __init__(self, project: str, scenario_name: str):
         self.project = project
@@ -298,6 +301,17 @@ class MapLayer(abc.ABC):
         return data
 
 
+@functools.lru_cache(maxsize=None)
+def _layer_code_hash(layer_class: type) -> str:
+    """Hash of the source file defining the layer, so editing a layer invalidates its cached output."""
+    module_file = getattr(sys.modules.get(layer_class.__module__), "__file__", None)
+    try:
+        with open(module_file, "rb") as f:
+            return hashlib.sha256(f.read()).hexdigest()
+    except (TypeError, OSError):
+        return layer_class.__qualname__
+
+
 # TODO: Add support for caching the output if the input files are not stored locally
 def cache_output(method):
     """
@@ -339,7 +353,9 @@ def cache_output(method):
         # Combine file states and parameters into a single cache key
         cache_key_data = {
             "files": file_states,
-            "parameters": parameters
+            "parameters": parameters,
+            "code_hash": _layer_code_hash(type(self)),
+            "cache_version": self.cache_version
         }
         cache_key = hashlib.sha256(json.dumps(cache_key_data, sort_keys=True).encode()).hexdigest()
 

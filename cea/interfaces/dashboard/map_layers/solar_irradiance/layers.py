@@ -1,13 +1,14 @@
 import itertools
 from concurrent.futures import ThreadPoolExecutor
 
+import geopandas as gpd
 import pandas as pd
-import rasterio
 from pyproj import CRS, Transformer
 
 from cea.interfaces.dashboard.map_layers import day_range_to_hour_range
 from cea.interfaces.dashboard.map_layers.base import MapLayer, cache_output, ParameterDefinition, FileRequirement
 from cea.interfaces.dashboard.map_layers.solar_irradiance import SolarIrradiationCategory
+from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
 
 
 class SolarIrradiationMapLayer(MapLayer):
@@ -90,9 +91,10 @@ class SolarIrradiationMapLayer(MapLayer):
             }
         }
 
-        # Convert coordinates to WGS84 based on terrain (sensor crs are based on terrain)
-        with rasterio.open(self.locator.get_terrain()) as src:
-            src_crs = src.crs
+        # Sensor coordinates are written in the UTM zone the radiation simulation derives from the zone location.
+        # Derive it the same way rather than reading the terrain CRS, which can differ (e.g. wrong UTM hemisphere).
+        lat, lon = get_lat_lon_projected_shapefile(gpd.read_file(self.locator.get_zone_geometry()))
+        src_crs = get_projected_coordinate_system(lat, lon)
         transformer = Transformer.from_crs(src_crs, CRS.from_epsg(4326), always_xy=True)
 
         def get_building_sensors(building):
