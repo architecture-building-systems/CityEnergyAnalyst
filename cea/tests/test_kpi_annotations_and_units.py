@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 
 from cea.inputlocator import InputLocator
-from cea.interfaces.dashboard.api.kpis import get_kpi_parameters, get_kpi_value, get_kpis
+from cea.interfaces.dashboard.api.kpis import get_kpi_parameters, get_kpi_registry, get_kpi_value, get_kpis
 from cea.kpi import pv_panels, registry
 from cea.kpi.annotations import annotate
 from cea.kpi.exceptions import KPIDefinitionError, KPINotAvailable
@@ -212,14 +212,10 @@ def _validate(raw):
                            locator_methods=registry._locator_method_names())
 
 
-def test_registry_rejects_an_unknown_annotation_and_a_unit_parameter():
+def test_registry_rejects_an_unknown_annotation():
     raw = registry.load_registry()[PV_GENERATION].model_dump(mode="python")
     with pytest.raises(KPIDefinitionError, match="annotation"):
         _validate({**raw, "annotation": "nope"})
-
-    raw["source"]["parameters"]["unit"] = {"label": "Unit"}
-    with pytest.raises(KPIDefinitionError, match="reserved"):
-        _validate(raw)
 
 
 # --------------------------------------------------------------------------- API
@@ -230,18 +226,25 @@ def _value(locator, kpi_id, **args):
                                      locator_args=json.dumps(args) if args else None, whatif=None))
 
 
-def test_value_converts_the_unit_and_carries_annotations(locator):
+def test_value_is_in_the_base_unit_and_carries_annotations(locator):
     _write_pv_totals(locator, "PV1", 1500.0)
 
-    base = _value(locator, PV_GENERATION)
-    converted = _value(locator, PV_GENERATION, unit="MWh/yr")
+    result = _value(locator, PV_GENERATION)
 
-    assert (base["value"], base["unit"]) == (3000.0, "kWh/yr")
-    assert (converted["value"], converted["unit"]) == (pytest.approx(3.0), "MWh/yr")
-    assert (base["unit_scale"], converted["unit_scale"]) == (1.0, pytest.approx(1e-3))
-    assert converted["annotations"] == [{"label": "Panel", "value": "PV1 · typical csi 2024 (BIPV)"}]
-    # The unit is applied to the cached base value, not cached separately.
-    assert converted["computed_at"] == base["computed_at"]
+    assert (result["value"], result["unit"]) == (3000.0, "kWh/yr")
+    assert "unit_scale" not in result
+    assert result["annotations"] == [{"label": "Panel", "value": "PV1 · typical csi 2024 (BIPV)"}]
+
+
+def test_registry_lists_the_display_units_as_factors_from_the_base_unit():
+    kpis = {k["id"]: k for k in asyncio.run(get_kpi_registry())["kpis"]}
+
+    assert kpis[PV_GENERATION]["display_units"] == [
+        {"unit": "kWh/yr", "factor": 1.0},
+        {"unit": "MWh/yr", "factor": pytest.approx(1e-3)},
+        {"unit": "GWh/yr", "factor": pytest.approx(1e-6)},
+    ]
+    assert kpis["demand.eui_kwh_m2"]["display_units"] == []
 
 
 def test_energy_by_carrier_value_lists_installed_panels(locator):
@@ -250,9 +253,9 @@ def test_energy_by_carrier_value_lists_installed_panels(locator):
     pd.DataFrame({"name": ["B1"], "PV_MWh": [2.0]}).to_csv(summary, index=False)
     _write_whatif(locator, {"B1": {"roof": "PV_PV1"}})
 
-    result = _value(locator, FE_PV_GENERATION, whatif_name="w1", unit="kWh/yr")
+    result = _value(locator, FE_PV_GENERATION, whatif_name="w1")
 
-    assert (result["value"], result["unit"]) == (pytest.approx(2000.0), "kWh/yr")
+    assert (result["value"], result["unit"]) == (pytest.approx(2.0), "MWh/yr")
     assert result["annotations"] == [{"label": "Roof", "value": "PV1 · typical csi 2024 (BIPV)"}]
 
 
@@ -268,12 +271,11 @@ def test_a_broken_configuration_drops_the_annotation_not_the_value(locator):
     assert (result["available"], result["value"], result["annotations"]) == (True, 2.0, [])
 
 
-def test_parameters_offer_described_panels_and_units(locator):
+def test_parameters_offer_described_panels(locator):
     _write_pv_totals(locator, "PV1", 1.0)
 
     params = asyncio.run(get_kpi_parameters(PV_GENERATION, scenario_path=locator.scenario))["parameters"]
 
     assert params["panel_type"]["default"] == "PV1"
     assert params["panel_type"]["choices"] == [{"value": "PV1", "label": "PV1 · typical csi 2024 (BIPV)"}]
-    assert params["unit"]["default"] == "kWh/yr"
-    assert [c["value"] for c in params["unit"]["choices"]] == ["kWh/yr", "MWh/yr", "GWh/yr"]
+    assert "unit" not in params

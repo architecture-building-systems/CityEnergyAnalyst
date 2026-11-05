@@ -36,7 +36,7 @@ from cea.kpi.exceptions import KPIDefinitionError, KPINotAvailable
 from cea.kpi.option_generators import run_generator
 from cea.kpi.registry import kpis_for_feature, load_registry
 from cea.kpi.resolver import effective_locator_args
-from cea.kpi.units import UNIT_PARAMETER, convert, unit_choices
+from cea.kpi.units import convert, unit_choices
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2026, UUEN PTE. LTD."
@@ -71,6 +71,12 @@ async def get_kpi_registry():
             "label": kpi.label,
             "category": kpi.category,
             "unit": kpi.unit,
+            # Units the value can be shown in, as factors from the base unit
+            # (itself included, factor 1). Empty when there is no choice.
+            "display_units": [
+                {"unit": u, "factor": convert(1.0, kpi.unit, u)}
+                for u in unit_choices(kpi.unit)
+            ],
             "headline": kpi.headline,
             "better_direction": kpi.better_direction,
             "info_note": kpi.info_note,
@@ -290,17 +296,6 @@ def _get_kpi_parameters(kpi_id: str, scenario_path: str, args: Optional[str]):
             "depends_on": list(param.depends_on or []),
         }
 
-    units = unit_choices(kpi.unit)
-    if units:
-        out[UNIT_PARAMETER] = {
-            "label": "Unit",
-            "type": "string",
-            "default": kpi.unit,
-            "description": "Unit to show the value in.",
-            "choices": [{"value": u, "label": u} for u in units],
-            "depends_on": [],
-        }
-
     return {"parameters": out, "kpi_id": kpi_id}
 
 
@@ -325,9 +320,6 @@ async def get_kpi_value(
 
 def _get_kpi_value(kpi_id: str, scenario_path: str, locator_args: Optional[str], whatif: Optional[str]):
     args_override = _parse_locator_args(locator_args) or {}
-    # The display unit is applied to the cached base value below; it is
-    # not a locator argument and must not split the cache.
-    display_unit = args_override.pop(UNIT_PARAMETER, None)
 
     registry = load_registry()
     if kpi_id not in registry:
@@ -374,19 +366,11 @@ def _get_kpi_value(kpi_id: str, scenario_path: str, locator_args: Optional[str],
             detail=f"KPI definition error for '{kpi_id}': {exc}",
         )
 
-    value, unit, unit_scale = result.value, result.unit, 1.0
-    if display_unit and display_unit in unit_choices(unit):
-        unit_scale = convert(1.0, unit, display_unit)
-        value, unit = value * unit_scale, display_unit
-
     return {
         **base_payload,
         "available": True,
-        "value": value,
-        "unit": unit,
-        # Base-unit -> display-unit factor, for values fetched elsewhere in the
-        # base unit (the pathway sparkline reads the bulk endpoint).
-        "unit_scale": unit_scale,
+        "value": result.value,
+        "unit": result.unit,
         "annotations": _annotations(kpi, locator, effective_args),
         "computed_at": result.computed_at,
     }
