@@ -271,6 +271,25 @@ def test_a_broken_configuration_drops_the_annotation_not_the_value(locator):
     assert (result["available"], result["value"], result["annotations"]) == (True, 2.0, [])
 
 
+def _des_default(locator):
+    params = asyncio.run(get_kpi_parameters("optimisation.pareto_best_lcc_usd",
+                                            scenario_path=locator.scenario))["parameters"]
+    return params["district_energy_system_id"]["default"]
+
+
+def test_a_default_among_the_choices_is_preselected(locator):
+    os.makedirs(os.path.join(locator.get_centralized_optimization_results_folder(), "current_DES"))
+    os.makedirs(os.path.join(locator.get_centralized_optimization_results_folder(), "DHS_000"))
+
+    assert _des_default(locator) == "current_DES"
+
+
+def test_a_default_missing_from_the_choices_falls_back_to_the_first_choice(locator):
+    os.makedirs(os.path.join(locator.get_centralized_optimization_results_folder(), "DHS_000"))
+
+    assert _des_default(locator) == "DHS_000"
+
+
 def test_parameters_offer_described_panels(locator):
     _write_pv_totals(locator, "PV1", 1.0)
 

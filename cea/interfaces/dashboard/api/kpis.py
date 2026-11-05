@@ -189,11 +189,15 @@ def _get_kpis(scenario_path: str, feature: str, whatif: Optional[str]):
 
 
 def _default_for(param, choices):
-    """The value the picker pre-selects: the yml default, else the generator's first
-    choice -- the same fallback `effective_locator_args` applies at fetch time."""
-    if param.default is not None or not choices:
+    """The value the picker pre-selects: the yml default when it is one of the choices,
+    else the generator's first choice. Without choices the yml default is returned as is.
+
+    A default the picker cannot select (e.g. `current_DES` when the optimisation
+    results have no such folder) would be dropped and re-added on every render."""
+    if not choices:
         return param.default
-    return choices[0]["value"]
+    values = [choice["value"] for choice in choices]
+    return param.default if param.default in values else values[0]
 
 
 def _parse_locator_args(raw: Optional[str]) -> Optional[dict]:
