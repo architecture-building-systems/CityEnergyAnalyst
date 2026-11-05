@@ -84,3 +84,37 @@ def test_force_recomputes(locator, computes):
     _compute(locator)
     _compute(locator, force=True)
     assert len(computes) == 2
+
+
+def _record(definition_hash="d1", computed_at="2026-01-01T00:00:00+00:00"):
+    return {"value": 1.0, "kpi_definition_hash": definition_hash, "computed_at": computed_at}
+
+
+def _keys(locator):
+    return set(status.read_status(locator.scenario)["kpis"])
+
+
+def test_a_write_drops_variants_of_an_older_definition(locator):
+    status.write_kpi(locator.scenario, "a.kpi::old", _record("d0"))
+    status.write_kpi(locator.scenario, "a.kpi::kept", _record("d1"))
+    status.write_kpi(locator.scenario, "b.kpi::other", _record("d0"))
+
+    status.write_kpi(locator.scenario, "a.kpi::new", _record("d1"))
+
+    assert _keys(locator) == {"a.kpi::kept", "a.kpi::new", "b.kpi::other"}
+
+
+def test_the_oldest_variants_go_past_the_cap(locator, monkeypatch):
+    monkeypatch.setattr(status, "MAX_VARIANTS_PER_KPI", 3)
+    for day in range(1, 5):
+        status.write_kpi(locator.scenario, f"a.kpi::v{day}", _record(computed_at=f"2026-01-0{day}"))
+
+    assert _keys(locator) == {"a.kpi::v2", "a.kpi::v3", "a.kpi::v4"}
+
+
+def test_the_record_just_written_survives_the_cap(locator, monkeypatch):
+    monkeypatch.setattr(status, "MAX_VARIANTS_PER_KPI", 1)
+    status.write_kpi(locator.scenario, "a.kpi::new", _record(computed_at="2026-01-01"))
+    status.write_kpi(locator.scenario, "a.kpi::older", _record(computed_at="2025-01-01"))
+
+    assert _keys(locator) == {"a.kpi::older"}

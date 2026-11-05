@@ -69,6 +69,11 @@ __status__ = "Production"
 
 SCHEMA_VERSION = 1
 
+# Most per-card variants (``<kpi_id>::<args_hash>``) kept for one KPI. A KPI whose
+# effective args change leaves its old variants unreadable, and nothing else
+# removes them; the oldest are dropped once a KPI passes this.
+MAX_VARIANTS_PER_KPI = 32
+
 # `FileLock` serialises processes; this serialises the threads of one process
 # (the dashboard runs KPI requests in a threadpool).
 _WRITE_LOCK = threading.Lock()
@@ -114,7 +119,9 @@ def write_kpi(scenario: str, kpi_id: str, payload: dict[str, Any]) -> None:
             # would have us round-trip its update right back out.
             current = read_status(scenario)
             current.setdefault("schema_version", SCHEMA_VERSION)
-            current.setdefault("kpis", {})[kpi_id] = payload
+            kpis = current.setdefault("kpis", {})
+            kpis[kpi_id] = payload
+            _prune_orphans(kpis, kpi_id)
             _atomic_write_json(path, current)
     except OSError:
         logger.warning(
@@ -190,6 +197,27 @@ def clear_kpi(
             feature,
             exc_info=True,
         )
+
+
+def _prune_orphans(kpis: dict[str, Any], written_key: str) -> None:
+    """Drop records of the same logical KPI as ``written_key`` that can no longer hit.
+
+    A variant recorded under another ``kpi_definition_hash`` never matches again.
+    Past :data:`MAX_VARIANTS_PER_KPI`, the oldest by ``computed_at`` go too, which
+    also catches variants whose args stopped being produced. The record just
+    written is always kept."""
+    base = written_key.split("::", 1)[0]
+    definition_hash = kpis[written_key].get("kpi_definition_hash")
+    siblings = {k: v for k, v in kpis.items() if k.split("::", 1)[0] == base}
+
+    for key, record in siblings.items():
+        if key != written_key and record.get("kpi_definition_hash") != definition_hash:
+            del kpis[key]
+
+    live = [k for k in siblings if k in kpis and k != written_key]
+    live.sort(key=lambda k: str(kpis[k].get("computed_at", "")))
+    for key in live[: max(0, len(live) + 1 - MAX_VARIANTS_PER_KPI)]:
+        del kpis[key]
 
 
 def _atomic_write_json(path: str, payload: dict[str, Any]) -> None:
