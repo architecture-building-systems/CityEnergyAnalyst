@@ -14,7 +14,6 @@ record per KPI:
           "value": 78.4,
           "unit": "kWh/m\u00b2/yr",
           "computed_at": "2026-05-05T18:42:00+00:00",
-          "scenario_inputs_hash": "...",
           "upstream_outputs_hash": "...",
           "kpi_definition_hash": "...",
           "sources_read": ["..."]

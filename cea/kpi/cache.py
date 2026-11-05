@@ -4,14 +4,21 @@ three-hash freshness check so identical state never recomputes.
 
 Hashes:
 
-* ``scenario_inputs_hash`` — folder hash of the scenario's
-  ``inputs/`` (``hash_folder``). Catches user input edits.
 * ``upstream_outputs_hash`` — file hash of the source CSV(s) the
   KPI's formula reads (``hash_files``). Catches "did the upstream
   CEA tool re-run since I last computed this KPI?".
 * ``kpi_definition_hash`` — attached to the
   :class:`KPIDefinition` at registry load (canonical-JSON SHA256 of
   the yml entry). Catches "did the formula or unit change?".
+* ``args_hash`` — hash of the effective locator args. Catches "is this
+  the same per-card configuration?".
+
+The scenario's ``inputs/`` are deliberately not hashed: a KPI value is a
+function of its source file, formula and args only, so an input edit
+changes it only once the upstream tool re-runs and rewrites the source.
+Hashing the whole folder would read every input file on every request.
+A KPI whose source lives under ``inputs/`` is still covered, because
+its source file is what ``upstream_outputs_hash`` hashes.
 
 A cache hit returns the stored value when *all three* hashes match
 the live ones; any mismatch triggers a recompute and the new record
@@ -42,7 +49,7 @@ from cea.kpi.resolver import (
     effective_locator_args,
 )
 from cea.kpi.status import read_kpi, write_kpi, clear_kpi as _clear_kpi
-from cea.utilities.fingerprint import hash_files, hash_folder, hash_payload
+from cea.utilities.fingerprint import hash_files, hash_payload
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2026, UUEN PTE. LTD."
@@ -64,7 +71,7 @@ def compute_kpi_cached(
 ) -> KPIResult:
     """Cache-aware wrapper around :func:`compute_kpi`.
 
-    Returns the stored value if all four hashes match what's on
+    Returns the stored value if all three hashes match what's on
     disk; otherwise recomputes via the resolver, writes the new
     record to ``kpi_status.json``, and returns the fresh result.
 
@@ -92,15 +99,12 @@ def compute_kpi_cached(
     source_path = _resolve_source_path(kpi, locator, merged_args)
     sources = [source_path]
 
-    inputs_hash = _safe_hash_folder(locator.get_input_folder())
     upstream_hash = hash_files(sources)
     definition_hash = getattr(kpi, "definition_hash", "")
 
     if not force:
         cached = read_kpi(scenario, cache_key)
-        if _hashes_match(
-            cached, inputs_hash, upstream_hash, definition_hash, args_hash
-        ):
+        if _hashes_match(cached, upstream_hash, definition_hash, args_hash):
             return KPIResult(
                 kpi_id=kpi_id,
                 value=float(cached["value"]),
@@ -130,7 +134,6 @@ def compute_kpi_cached(
             "unit": result.unit,
             "computed_at": result.computed_at,
             "sources_read": list(result.sources_read),
-            "scenario_inputs_hash": inputs_hash,
             "upstream_outputs_hash": final_upstream_hash,
             "kpi_definition_hash": definition_hash,
             "args_hash": args_hash,
@@ -163,7 +166,6 @@ def invalidate(
 
 def _hashes_match(
     cached: Optional[dict],
-    inputs_hash: str,
     upstream_hash: str,
     definition_hash: str,
     args_hash: str,
@@ -177,9 +179,10 @@ def _hashes_match(
     # already separates variants, so this fallback only fires on
     # the no-args path.
     cached_args = cached.get("args_hash", args_hash)
+    # Records written before the inputs hash was dropped still carry
+    # ``scenario_inputs_hash``; it is ignored, so they stay valid hits.
     return (
-        cached.get("scenario_inputs_hash") == inputs_hash
-        and cached.get("upstream_outputs_hash") == upstream_hash
+        cached.get("upstream_outputs_hash") == upstream_hash
         and cached.get("kpi_definition_hash") == definition_hash
         and cached_args == args_hash
     )
@@ -208,15 +211,3 @@ def _cache_key(kpi_id: str, merged_args: Mapping[str, Any]) -> str:
     if not merged_args:
         return kpi_id
     return f"{kpi_id}::{hash_payload(dict(merged_args))}"
-
-
-def _safe_hash_folder(path: str) -> str:
-    """Hash the folder if it exists, else return a stable
-    "missing" marker. A scenario without an ``inputs/`` folder is
-    pathological but shouldn't crash the cache layer — the
-    resolver will raise :class:`KPINotAvailable` shortly after."""
-    import os
-
-    if not os.path.isdir(path):
-        return "missing"
-    return hash_folder(path)
