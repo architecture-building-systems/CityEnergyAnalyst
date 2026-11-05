@@ -22,6 +22,7 @@ Adding a new generator:
 from __future__ import annotations
 
 import glob
+import inspect
 import os
 from typing import Any, Callable, Dict, List, Mapping, Optional
 
@@ -52,7 +53,8 @@ ChoiceList = List[Dict[str, str]]
 ParamContext = Mapping[str, Any]
 GeneratorFn = Callable[..., ChoiceList]
 
-_GENERATORS: Dict[str, GeneratorFn] = {}
+# name -> (generator, whether it takes the parameter context as a second argument)
+_GENERATORS: Dict[str, tuple[GeneratorFn, bool]] = {}
 
 
 def register(name: str) -> Callable[[GeneratorFn], GeneratorFn]:
@@ -60,7 +62,13 @@ def register(name: str) -> Callable[[GeneratorFn], GeneratorFn]:
     from yml ``options_generator`` fields."""
 
     def decorator(fn: GeneratorFn) -> GeneratorFn:
-        _GENERATORS[name] = fn
+        # Inspected once here, so a ``TypeError`` raised inside a generator is
+        # never mistaken for a signature mismatch at call time.
+        signature = inspect.signature(fn).parameters.values()
+        takes_parameters = len(signature) >= 2 or any(
+            p.kind is inspect.Parameter.VAR_POSITIONAL for p in signature
+        )
+        _GENERATORS[name] = (fn, takes_parameters)
         return fn
 
     return decorator
@@ -78,21 +86,16 @@ def run_generator(
     (a dict like ``{"plan_name": "MyPlan"}``). Forwarded to
     generators that opted into a 2-arg signature so they can
     filter their choices by what's already picked. Single-arg
-    generators (the common case) ignore it via the introspection
-    fallback.
+    generators (the common case) are called with the locator only.
     """
-    fn = _GENERATORS.get(name)
-    if fn is None:
+    entry = _GENERATORS.get(name)
+    if entry is None:
         raise KPIDefinitionError(
             f"unknown options_generator '{name}'. "
             f"Known: {sorted(_GENERATORS)}"
         )
-    # Try the 2-arg call first; fall back to the legacy 1-arg
-    # form so existing generators don't need to be touched.
-    try:
-        return fn(locator, parameters or {})
-    except TypeError:
-        return fn(locator)
+    fn, takes_parameters = entry
+    return fn(locator, parameters or {}) if takes_parameters else fn(locator)
 
 
 # ── Generators ──────────────────────────────────────────────────────
