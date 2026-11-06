@@ -58,7 +58,7 @@ def epw_reader(weather_path):
     if len(epw_data) != HOURS_IN_YEAR:
         # Check for missing dates from expected date range
         expected_date_index = get_date_range_hours_from_year(year)
-        difference = expected_date_index.difference(epw_data.index)
+        difference = expected_date_index.difference(pd.DatetimeIndex(epw_data['date']))
         if len(difference):
             print(f"Dates missing: {difference}")
         raise ValueError(f'Incorrect number of rows. Expected {HOURS_IN_YEAR}, got {len(epw_data)}')
