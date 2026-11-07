@@ -181,9 +181,15 @@ app.include_router(
 # interfaces includes "dashboard", and module is under cea.visualisation.* —
 # so an anonymous caller can only ever dispatch a genuine plot script, never
 # an arbitrary registered CEA script.
+# /builders routes excluded: the Report Builder runs report scripts as jobs,
+# which the demo surface cannot, and a report is a multi-MB file read from disk.
 
 app.include_router(
-    _filter_routes(reports_module.router, allowed_methods={"GET", "POST"}),
+    _filter_routes(
+        reports_module.router,
+        allowed_methods={"GET", "POST"},
+        exclude_paths={"/builders", "/builders/{script_name}/html"},
+    ),
     prefix="/scenarios/{demo_id}/reports",
     dependencies=_demo_guard,
 )

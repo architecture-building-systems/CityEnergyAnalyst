@@ -5,6 +5,8 @@ Endpoints:
   GET /reports/whatifs         — list what-if names available in a scenario
   GET /reports/summary        — KPI summary for a scenario + what-if + feature
   GET /reports/plot           — plot HTML div for a scenario + what-if + feature
+  GET /reports/builders       — scripts (CEA's and plugins') that write an HTML report, for the Report Builder
+  GET /reports/builders/{script_name}/html — the HTML report a script wrote for a scenario
 """
 
 import os
@@ -13,7 +15,7 @@ from typing import Optional
 import geopandas
 import pandas as pd
 from fastapi import APIRouter, HTTPException, status
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 
 import cea.config
 import cea.inputlocator
@@ -515,3 +517,47 @@ async def get_features():
             for k, v in feature_labels.items()
         ]
     }
+
+
+@router.get("/builders")
+async def get_report_builders(config: CEAConfig):
+    """List the dashboard scripts that write an HTML report (the `report` key in scripts.yml)."""
+    builders = [script for script in cea.scripts.for_interface("dashboard", plugins=config.plugins)
+                if script.report]
+    return {
+        "builders": [
+            {
+                "name": script.name,
+                "label": script.label,
+                "short_description": script.short_description,
+            }
+            for script in builders
+        ]
+    }
+
+
+@router.get("/builders/{script_name}/html")
+async def get_report_builder_html(config: CEAConfig, scenario: CEAScenario, script_name: str):
+    """Return the HTML report the script wrote for the scenario."""
+    try:
+        script = cea.scripts.by_name(script_name, plugins=config.plugins)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Script not found: {script_name}",
+        )
+    if not script.report:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"'{script.label}' does not write a report.",
+        )
+
+    locator = cea.inputlocator.InputLocator(scenario, config.plugins)
+    report_path = getattr(locator, script.report)()
+    if not os.path.isfile(report_path):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Report not found. Run '{script.label}' first.",
+        )
+
+    return FileResponse(report_path, media_type="text/html")

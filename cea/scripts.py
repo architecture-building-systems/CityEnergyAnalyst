@@ -29,6 +29,8 @@ class CeaScript(object):
         self.category = category
         self.parameters = self._ensure_parameters_order(script_dict.get('parameters', []))
         self.input_files = script_dict.get('input-files', [])
+        # Locator method of the HTML report the script writes, if any - lists it in the dashboard's Report Builder
+        self.report = script_dict.get('report')
 
     def __repr__(self):
         return '<cea %s>' % self.name

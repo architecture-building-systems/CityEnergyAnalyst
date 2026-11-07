@@ -10,6 +10,8 @@
 - `PUT /pathways/{pathway_name}/years/{year}/yaml` - Expert-mode YAML save.
 - `POST /pathways/{pathway_name}/years/{year}/validate-state` - Manual baked-state validation.
 - `DELETE /pathways/{pathway_name}/years/{year}` - Clear a state year's data (`delete_inputs`, `delete_outputs` query params, both default `true`). See the 409 note below — this route does not raise one.
+- `GET /reports/builders` - Scripts (CEA's and plugins') whose `scripts.yml` entry has a `report` locator method, for the Report Builder.
+- `GET /reports/builders/{script_name}/html` - The HTML report that script wrote for the scenario (404 until it has run).
 
 ## Route Design Principles
 
