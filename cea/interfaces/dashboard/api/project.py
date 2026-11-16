@@ -745,24 +745,22 @@ async def duplicate_scenario(project: CEAProject, scenario: str, new_scenario_in
         )
 
 EXAMPLE_PROJECT_NAME = "reference-case-open"
+EXAMPLE_PROJECT_FALLBACK_REF = "main"
 # Refs that are immutable and safe to cache: commit SHAs and version tags (e.g. v4.0.0-beta.3).
 # Anything else is treated as a branch (e.g. main), which moves, so it is never cached.
 _IMMUTABLE_REF = re.compile(r"^([0-9a-f]{7,40}|v?\d+(\.\d+)*([-.+\w]*))$")
 
 
-def fetch_example_project(project_path, ref=None, example_project_name=EXAMPLE_PROJECT_NAME):
-    """Fetch example project into the given project folder.
+def _download_example_project(project_path, ref, example_project_name):
+    """Copy ``example_project_name`` from cea-examples at ``ref`` into ``project_path``.
 
-    ``ref`` is a cea-examples tag, branch or commit SHA and defaults to ``Settings.example_project_ref``
-    (env ``CEA_EXAMPLE_PROJECT_REF``). Tags and SHAs are cached in the temp dir; branches are
-    downloaded fresh every time.
+    Tags and SHAs are cached in the temp dir; branches are downloaded fresh every time.
+    Raises ``requests.HTTPError`` (404 if the ref does not exist) or ``zipfile.BadZipFile``.
     """
-    # TODO: Replace this with a more robust method of fetching example projects
     import zipfile
     import requests
     from io import BytesIO
 
-    ref = ref or get_settings().example_project_ref
     cacheable = bool(_IMMUTABLE_REF.match(ref))
     project_repo = "cea-examples"
     # generic archive URL resolves tags, branches and SHAs
@@ -796,15 +794,41 @@ def fetch_example_project(project_path, ref=None, example_project_name=EXAMPLE_P
             shutil.copytree(cache_dir, project_path)
         else:
             shutil.copytree(extracted, project_path)
+    finally:
+        shutil.rmtree(extract_path, ignore_errors=True)
 
+
+def fetch_example_project(project_path, ref=None, example_project_name=EXAMPLE_PROJECT_NAME):
+    """Fetch example project into the given project folder.
+
+    ``ref`` is a cea-examples tag, branch or commit SHA. If not given, ``Settings.example_project_ref``
+    (env ``CEA_EXAMPLE_PROJECT_REF``) is used. If that is unset too, the tag for the running CEA version
+    (``v{cea.__version__}``) is tried first, falling back to ``main`` when that tag does not exist.
+    An explicitly configured ref never falls back.
+    """
+    # TODO: Replace this with a more robust method of fetching example projects
+    import zipfile
+    import requests
+
+    explicit = ref or get_settings().example_project_ref
+    refs = [explicit] if explicit else [f"v{cea.__version__}", EXAMPLE_PROJECT_FALLBACK_REF]
+
+    try:
+        for i, candidate in enumerate(refs):
+            try:
+                _download_example_project(project_path, candidate, example_project_name)
+                return
+            except requests.HTTPError as e:
+                is_last = i == len(refs) - 1
+                if is_last or e.response is None or e.response.status_code != 404:
+                    raise
+                logger.info(f"cea-examples ref '{candidate}' not found, falling back to '{refs[i + 1]}'")
     except requests.RequestException as e:
         logger.error(f"Failed to download example project: {e}")
     except zipfile.BadZipFile as e:
         logger.error(f"Downloaded file is not a valid zip file: {e}")
     except Exception as e:
         logger.error(f"An error occurred while fetching the example project: {e}")
-    finally:
-        shutil.rmtree(extract_path, ignore_errors=True)
 
 
 class ZoneFileNotFound(ValueError):
