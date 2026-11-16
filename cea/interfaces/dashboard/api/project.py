@@ -262,13 +262,11 @@ async def create_new_project(project_root: CEAProjectRoot, new_project: NewProje
         )
     try:
         if new_project.example_project:
-            existed = os.path.exists(project)
             try:
                 await run_in_threadpool(lambda: fetch_example_project(project))
+            except ExampleProjectExistsError as e:
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
             except ExampleProjectError as e:
-                if not existed:
-                    # Remove a partially copied folder, but never one that was already there
-                    shutil.rmtree(project, ignore_errors=True)
                 raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
         else:
             os.makedirs(project, exist_ok=True)
@@ -762,6 +760,10 @@ class ExampleProjectError(Exception):
     """Raised when the example project cannot be fetched from cea-examples."""
 
 
+class ExampleProjectExistsError(ExampleProjectError):
+    """Raised when the destination project folder already exists."""
+
+
 def _download_example_project(project_path, ref, example_project_name):
     """Copy ``example_project_name`` from cea-examples at ``ref`` into ``project_path``.
 
@@ -824,25 +826,45 @@ def fetch_example_project(project_path, ref=None, example_project_name=EXAMPLE_P
     (``v{cea.__version__}``) is tried first, falling back to ``main`` when that tag does not exist.
     An explicitly configured ref never falls back.
 
+    :raises ExampleProjectExistsError: if ``project_path`` already exists (it is never overwritten)
     :raises ExampleProjectError: if the example project could not be downloaded or extracted
     """
     # TODO: Replace this with a more robust method of fetching example projects
     import zipfile
     import requests
 
+    if os.path.exists(project_path):
+        raise ExampleProjectExistsError(f"Project folder already exists: {os.path.basename(project_path)}")
+
     explicit = ref or get_settings().example_project_ref
     refs = [explicit] if explicit else [f"v{cea.__version__}", EXAMPLE_PROJECT_FALLBACK_REF]
 
+    # Stage in a request-owned folder next to the destination (same filesystem), then publish with a
+    # non-overwriting rename. Cleanup only ever touches the staging folder, never project_path, so a
+    # concurrent request that created project_path first is left intact.
+    parent = os.path.dirname(os.path.abspath(project_path))
+    os.makedirs(parent, exist_ok=True)
+    staging = tempfile.mkdtemp(prefix=".cea_example_", dir=parent)
     try:
+        staged_project = os.path.join(staging, "project")
         for i, candidate in enumerate(refs):
             try:
-                _download_example_project(project_path, candidate, example_project_name)
-                return
+                _download_example_project(staged_project, candidate, example_project_name)
+                break
             except requests.HTTPError as e:
                 is_last = i == len(refs) - 1
                 if is_last or e.response is None or e.response.status_code != 404:
                     raise
                 logger.info(f"cea-examples ref '{candidate}' not found, falling back to '{refs[i + 1]}'")
+        try:
+            os.rename(staged_project, project_path)
+        except OSError as e:
+            if os.path.exists(project_path):
+                raise ExampleProjectExistsError(
+                    f"Project folder already exists: {os.path.basename(project_path)}") from e
+            raise
+    except ExampleProjectError:
+        raise
     except requests.RequestException as e:
         logger.error(f"Failed to download example project: {e}")
         raise ExampleProjectError(f"Failed to download example project (ref: {', '.join(refs)}): {e}") from e
@@ -852,6 +874,8 @@ def fetch_example_project(project_path, ref=None, example_project_name=EXAMPLE_P
     except (OSError, ValueError) as e:
         logger.error(f"An error occurred while fetching the example project: {e}")
         raise ExampleProjectError(f"Unable to fetch example project: {e}") from e
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
 
 
 class ZoneFileNotFound(ValueError):
