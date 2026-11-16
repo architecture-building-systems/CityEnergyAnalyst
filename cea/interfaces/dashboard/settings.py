@@ -58,11 +58,12 @@ class Settings(BaseSettings):
     config_path: Optional[str] = "~/cea.config"
 
     example_project_ref: str = Field(
-        default="v4.0.0-beta.3",
+        default="main",
         description=(
             "cea-examples tag, branch or commit SHA used when creating a project from the example template. "
             "Tags and SHAs are cached; branches (e.g. 'main') are re-downloaded each time and may differ "
-            "between containers. Env: CEA_EXAMPLE_PROJECT_REF='v4.0.0-beta.3'."
+            "between containers. Pin a tag or SHA for reproducible deployments. "
+            "Env: CEA_EXAMPLE_PROJECT_REF='v4.0.0-beta.3'."
         ),
     )
 
