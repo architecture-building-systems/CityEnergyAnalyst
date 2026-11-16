@@ -171,11 +171,17 @@ class ConfigProjectInfo(BaseModel):
 class NewScenarioInfo(BaseModel):
     name: str
 
+# Prefix of transient staging folders created in the project root while fetching the example project
+EXAMPLE_STAGING_PREFIX = ".cea_example_"
+
+
 async def get_project_choices(project_root):
     try:
         projects = []
         for _path in os.listdir(project_root):
             full_path = os.path.join(project_root, _path)
+            if _path.startswith(EXAMPLE_STAGING_PREFIX):
+                continue  # in-flight example project staging folder, not a project
             if os.path.isdir(full_path) and os.access(full_path, os.R_OK):
                 # Optionally: Add validation that this is a valid project directory
                 projects.append(_path)
@@ -844,7 +850,7 @@ def fetch_example_project(project_path, ref=None, example_project_name=EXAMPLE_P
     # concurrent request that created project_path first is left intact.
     parent = os.path.dirname(os.path.abspath(project_path))
     os.makedirs(parent, exist_ok=True)
-    staging = tempfile.mkdtemp(prefix=".cea_example_", dir=parent)
+    staging = tempfile.mkdtemp(prefix=EXAMPLE_STAGING_PREFIX, dir=parent)
     try:
         staged_project = os.path.join(staging, "project")
         for i, candidate in enumerate(refs):
