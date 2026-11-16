@@ -262,7 +262,14 @@ async def create_new_project(project_root: CEAProjectRoot, new_project: NewProje
         )
     try:
         if new_project.example_project:
-            await run_in_threadpool(lambda: fetch_example_project(project))
+            existed = os.path.exists(project)
+            try:
+                await run_in_threadpool(lambda: fetch_example_project(project))
+            except ExampleProjectError as e:
+                if not existed:
+                    # Remove a partially copied folder, but never one that was already there
+                    shutil.rmtree(project, ignore_errors=True)
+                raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
         else:
             os.makedirs(project, exist_ok=True)
         try:
@@ -751,6 +758,10 @@ EXAMPLE_PROJECT_FALLBACK_REF = "main"
 _IMMUTABLE_REF = re.compile(r"^([0-9a-f]{7,40}|v?\d+(\.\d+)*([-.+\w]*))$")
 
 
+class ExampleProjectError(Exception):
+    """Raised when the example project cannot be fetched from cea-examples."""
+
+
 def _download_example_project(project_path, ref, example_project_name):
     """Copy ``example_project_name`` from cea-examples at ``ref`` into ``project_path``.
 
@@ -790,7 +801,14 @@ def _download_example_project(project_path, ref, example_project_name):
         extracted = os.path.join(extract_path, example_path)
         if cacheable:
             logger.info(f"Moving example project from {extracted} to {cache_dir}")
-            shutil.move(extracted, cache_dir)
+            try:
+                # rename is atomic and fails if cache_dir already exists (unlike shutil.move, which
+                # would nest the folder inside it), so concurrent downloads cannot corrupt the cache
+                os.rename(extracted, cache_dir)
+            except OSError:
+                if not os.path.exists(cache_dir):
+                    raise
+                logger.info(f"Example project cache {cache_dir} was published by another request")
             shutil.copytree(cache_dir, project_path)
         else:
             shutil.copytree(extracted, project_path)
@@ -805,6 +823,8 @@ def fetch_example_project(project_path, ref=None, example_project_name=EXAMPLE_P
     (env ``CEA_EXAMPLE_PROJECT_REF``) is used. If that is unset too, the tag for the running CEA version
     (``v{cea.__version__}``) is tried first, falling back to ``main`` when that tag does not exist.
     An explicitly configured ref never falls back.
+
+    :raises ExampleProjectError: if the example project could not be downloaded or extracted
     """
     # TODO: Replace this with a more robust method of fetching example projects
     import zipfile
@@ -825,10 +845,13 @@ def fetch_example_project(project_path, ref=None, example_project_name=EXAMPLE_P
                 logger.info(f"cea-examples ref '{candidate}' not found, falling back to '{refs[i + 1]}'")
     except requests.RequestException as e:
         logger.error(f"Failed to download example project: {e}")
+        raise ExampleProjectError(f"Failed to download example project (ref: {', '.join(refs)}): {e}") from e
     except zipfile.BadZipFile as e:
         logger.error(f"Downloaded file is not a valid zip file: {e}")
-    except Exception as e:
+        raise ExampleProjectError("Downloaded example project is not a valid zip file") from e
+    except (OSError, ValueError) as e:
         logger.error(f"An error occurred while fetching the example project: {e}")
+        raise ExampleProjectError(f"Unable to fetch example project: {e}") from e
 
 
 class ZoneFileNotFound(ValueError):
