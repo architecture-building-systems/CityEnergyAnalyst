@@ -258,6 +258,12 @@ async def create_new_project(project_root: CEAProjectRoot, new_project: NewProje
             detail="Project root not defined",
         )
 
+    if new_project.project_name.startswith(EXAMPLE_STAGING_PREFIX):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Project names cannot start with '{EXAMPLE_STAGING_PREFIX}'",
+        )
+
     _root = new_project.project_root or project_root
     try:
         project = secure_path(os.path.join(_root, new_project.project_name))
