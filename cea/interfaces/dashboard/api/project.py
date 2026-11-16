@@ -1,6 +1,7 @@
 import glob
 import json
 import os
+import re
 import shutil
 import tempfile
 import traceback
@@ -743,41 +744,58 @@ async def duplicate_scenario(project: CEAProject, scenario: str, new_scenario_in
             detail='Unable to duplicate scenario.',
         )
 
-EXAMPLE_PROJECT_TAG = "v4.0.0-beta.3"
 EXAMPLE_PROJECT_NAME = "reference-case-open"
-def fetch_example_project(project_path, tag=EXAMPLE_PROJECT_TAG, example_project_name=EXAMPLE_PROJECT_NAME):
-    """Fetch example project into the given project folder"""
+# Refs that are immutable and safe to cache: commit SHAs and version tags (e.g. v4.0.0-beta.3).
+# Anything else is treated as a branch (e.g. main), which moves, so it is never cached.
+_IMMUTABLE_REF = re.compile(r"^([0-9a-f]{7,40}|v?\d+(\.\d+)*([-.+\w]*))$")
+
+
+def fetch_example_project(project_path, ref=None, example_project_name=EXAMPLE_PROJECT_NAME):
+    """Fetch example project into the given project folder.
+
+    ``ref`` is a cea-examples tag, branch or commit SHA and defaults to ``Settings.example_project_ref``
+    (env ``CEA_EXAMPLE_PROJECT_REF``). Tags and SHAs are cached in the temp dir; branches are
+    downloaded fresh every time.
+    """
     # TODO: Replace this with a more robust method of fetching example projects
     import zipfile
     import requests
     from io import BytesIO
 
+    ref = ref or get_settings().example_project_ref
+    cacheable = bool(_IMMUTABLE_REF.match(ref))
     project_repo = "cea-examples"
-    url = f"https://github.com/architecture-building-systems/{project_repo}/archive/refs/tags/{EXAMPLE_PROJECT_TAG}.zip"
-    # Save to temp directory and return if already exists
-    temp_dir = os.path.join(tempfile.gettempdir(), "cea_example_project")
-    if os.path.exists(temp_dir):
-        logger.info(f"Using cached example project from {temp_dir} to {project_path}")
-        shutil.copytree(temp_dir, project_path)
+    # generic archive URL resolves tags, branches and SHAs
+    url = f"https://github.com/architecture-building-systems/{project_repo}/archive/{ref}.zip"
+
+    cache_dir = os.path.join(tempfile.gettempdir(), f"cea_example_project_{ref.replace('/', '_')}")
+    if cacheable and os.path.exists(cache_dir):
+        logger.info(f"Using cached example project from {cache_dir} to {project_path}")
+        shutil.copytree(cache_dir, project_path)
         return
 
-    extract_path = os.path.join(tempfile.gettempdir(), "cea_example_project_temp")
-    os.makedirs(extract_path, exist_ok=True)
-
+    extract_path = tempfile.mkdtemp(prefix="cea_example_project_")
     try:
-        response = requests.get(url)
+        response = requests.get(url, timeout=60)
         response.raise_for_status()  # Raise an error for bad status codes
 
         with zipfile.ZipFile(BytesIO(response.content)) as zf:
-            # Extract only the contents of the example project folder
-            suffix = tag if not tag.startswith('v') else tag[1:]
-            example_path = os.path.join(f"{project_repo}-{suffix}", example_project_name)
-            members = [m for m in zf.namelist() if m.startswith(example_path) and not m.endswith('/')]
+            # GitHub names the top-level folder after the ref (tag "v" prefix stripped, "/" -> "-"),
+            # so read it from the archive instead of guessing
+            root = zf.namelist()[0].split('/')[0]
+            example_path = f"{root}/{example_project_name}"
+            members = [m for m in zf.namelist() if m.startswith(example_path + '/') and not m.endswith('/')]
+            if not members:
+                raise FileNotFoundError(f"'{example_project_name}' not found in {project_repo}@{ref}")
             zf.extractall(path=extract_path, members=members)
-        logger.info(f"Moving example project from {extract_path} to {temp_dir}")
-        shutil.move(os.path.join(extract_path, example_path), temp_dir)
-        shutil.copytree(temp_dir, project_path)
-        shutil.rmtree(extract_path)
+
+        extracted = os.path.join(extract_path, example_path)
+        if cacheable:
+            logger.info(f"Moving example project from {extracted} to {cache_dir}")
+            shutil.move(extracted, cache_dir)
+            shutil.copytree(cache_dir, project_path)
+        else:
+            shutil.copytree(extracted, project_path)
 
     except requests.RequestException as e:
         logger.error(f"Failed to download example project: {e}")
@@ -785,6 +803,9 @@ def fetch_example_project(project_path, tag=EXAMPLE_PROJECT_TAG, example_project
         logger.error(f"Downloaded file is not a valid zip file: {e}")
     except Exception as e:
         logger.error(f"An error occurred while fetching the example project: {e}")
+    finally:
+        shutil.rmtree(extract_path, ignore_errors=True)
+
 
 class ZoneFileNotFound(ValueError):
     """Raised when a zone file is not found."""
