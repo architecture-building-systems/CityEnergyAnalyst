@@ -82,7 +82,7 @@ class TestConfiguration(unittest.TestCase):
         config = cea.config.Configuration()
 
         thermal_network_parameter = config.get_parameter('thermal-network:network-name')
-        whatif_parameter = config.get_parameter('result-summary:what-if-name-final-energy')
+        whatif_parameter = config.get_parameter('result-summary:what-if-name')
 
         self.assertIsInstance(thermal_network_parameter, cea.config.NetworkLayoutMultiChoiceParameter)
         self.assertIsInstance(thermal_network_parameter, cea.config.MultiChoiceParameter)
@@ -143,19 +143,19 @@ class TestConfiguration(unittest.TestCase):
             open(path, 'w').close()
         os.makedirs(locator.get_analysis_folder('partial'), exist_ok=True)
 
-        # [result-summary] declares one WhatIfNameMultiChoiceParameter per mode; reuse
-        # those section:name pairs to construct the singular class directly -- `.mode`
+        # The plot sections declare one what-if parameter per mode; reuse those
+        # section:name pairs to construct the singular class directly -- `.mode`
         # resolves from `{section}:{name}.mode` in default.config regardless of the
         # `.type` that was actually declared there.
-        section = config.sections['result-summary']
-        mode_by_param_name = {
-            'what-if-name-final-energy': 'final_energy',
-            'what-if-name-emissions': 'emissions',
-            'what-if-name-costs': 'costs',
-            'what-if-name-heat-rejection': 'heat_rejection',
+        mode_by_section = {
+            'plots-final-energy': 'final_energy',
+            'plots-lifecycle-emissions': 'emissions',
+            'plots-cost-breakdown': 'costs',
+            'plots-heat-rejection': 'heat_rejection',
         }
-        for param_name, expected_mode in mode_by_param_name.items():
-            parameter = cea.config.WhatIfNameChoiceParameter(param_name, section, config)
+        for section_name, expected_mode in mode_by_section.items():
+            section = config.sections[section_name]
+            parameter = cea.config.WhatIfNameChoiceParameter('what-if-name', section, config)
             self.assertEqual(parameter.mode, expected_mode)
             self.assertEqual(parameter._choices, ['complete'], f"mode={expected_mode}")
 

@@ -2628,16 +2628,39 @@ def replace_hyphens_with_underscores(string_list):
 
 # ── What-if feature export ────────────────────────────────────────────────────
 
+def _whatif_result_files(locator):
+    """Per what-if feature, the locator method of the file that proves it has results."""
+    return {
+        'final energy': locator.get_final_energy_buildings_file,
+        'emissions': locator.get_emissions_whatif_buildings_file,
+        'heat rejection': locator.get_heat_rejection_whatif_buildings_file,
+        'costs': locator.get_costs_whatif_buildings_file,
+    }
+
+
+def _whatifs_with_results(config, locator, feature):
+    """The selected what-ifs that have `feature`'s results; the others are skipped."""
+    result_file = _whatif_result_files(locator)[feature]
+    return [name for name in config.result_summary.what_if_name or [] if os.path.exists(result_file(name))]
+
+
 def _export_whatif_features(config, locator, summary_folder, list_buildings, errors_encountered):
-    """Export what-if-aware features (final-energy, emissions, heat-rejection, costs) to summary folder."""
+    """Export what-if-aware features (final-energy, emissions, heat-rejection, costs) to summary
+    folder, each for the selected what-ifs that have its results."""
 
     include_entities = list(config.plots_include_plants_buildings.include)
     hour_start, hour_end = get_hours_start_end(config)
     list_selected_time_period = config.result_summary.aggregate_by_time_period
     bool_aggregate_by_building = config.result_summary.aggregate_by_building
 
+    for whatif_name in config.result_summary.what_if_name or []:
+        skipped = [feature for feature, result_file in _whatif_result_files(locator).items()
+                   if not os.path.exists(result_file(whatif_name))]
+        if skipped:
+            print(f"What-if '{whatif_name}': no {', '.join(skipped)} results, skipped.")
+
     # ── Final energy ──────────────────────────────────────────────────────────
-    whatif_final_energy = config.result_summary.what_if_name_final_energy or []
+    whatif_final_energy = _whatifs_with_results(config, locator, 'final energy')
     for whatif_name in whatif_final_energy:
         try:
             _export_whatif_final_energy(locator, summary_folder, whatif_name, list_buildings,
@@ -2649,7 +2672,7 @@ def _export_whatif_features(config, locator, summary_folder, list_buildings, err
             print(f"Warning: {error_msg}")
 
     # ── Lifecycle emissions ───────────────────────────────────────────────────
-    whatif_emissions = config.result_summary.what_if_name_emissions or []
+    whatif_emissions = _whatifs_with_results(config, locator, 'emissions')
     for whatif_name in whatif_emissions:
         try:
             _export_whatif_lifecycle_emissions(locator, summary_folder, whatif_name, list_buildings,
@@ -2671,7 +2694,7 @@ def _export_whatif_features(config, locator, summary_folder, list_buildings, err
             print(f"Warning: {error_msg}")
 
     # ── Heat rejection ────────────────────────────────────────────────────────
-    whatif_heat = config.result_summary.what_if_name_heat_rejection or []
+    whatif_heat = _whatifs_with_results(config, locator, 'heat rejection')
     for whatif_name in whatif_heat:
         try:
             _export_whatif_heat_rejection(locator, summary_folder, whatif_name, list_buildings,
@@ -2683,7 +2706,7 @@ def _export_whatif_features(config, locator, summary_folder, list_buildings, err
             print(f"Warning: {error_msg}")
 
     # ── Costs ─────────────────────────────────────────────────────────────────
-    whatif_costs = config.result_summary.what_if_name_costs or []
+    whatif_costs = _whatifs_with_results(config, locator, 'costs')
     for whatif_name in whatif_costs:
         try:
             _export_whatif_costs(locator, summary_folder, whatif_name, list_buildings, include_entities)
@@ -3138,8 +3161,8 @@ def process_building_summary(config, locator,
                     print(f"Warning: {error_msg}")
                     print("         Continuing with remaining analytics...")
 
-            # PV analytics for the PV installed in each selected final-energy what-if
-            for whatif_name in config.result_summary.what_if_name_final_energy or []:
+            # PV analytics for the PV installed in each selected what-if with final energy
+            for whatif_name in _whatifs_with_results(config, locator, 'final energy'):
                 appendix = f"pv_installed_{whatif_name}"
                 try:
                     district = read_district_pv_series(locator, whatif_name, hour_start, hour_end)
@@ -3153,7 +3176,7 @@ def process_building_summary(config, locator,
                     print(f"Warning: {error_msg}")
                     print("         Continuing with remaining analytics...")
 
-            if config.result_summary.what_if_name_emissions:
+            if _whatifs_with_results(config, locator, 'emissions'):
                 try:
                     calc_ubem_analytics_normalised(locator, hour_start, hour_end, "operational_emissions", summary_folder,
                                                    list_selected_time_period, bool_aggregate_by_building, bool_use_acronym,
@@ -3164,7 +3187,7 @@ def process_building_summary(config, locator,
                     print(f"Warning: {error_msg}")
                     print("         Continuing with remaining analytics...")
 
-            if config.result_summary.what_if_name_heat_rejection:
+            if _whatifs_with_results(config, locator, 'heat rejection'):
                 try:
                     calc_ubem_analytics_normalised(locator, hour_start, hour_end, "heat-rejection", summary_folder,
                                                    list_selected_time_period, bool_aggregate_by_building, bool_use_acronym,

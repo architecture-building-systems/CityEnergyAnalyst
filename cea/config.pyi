@@ -1170,10 +1170,7 @@ class ResultSummarySection(Section):
     solar_irradiation: bool
     solar_energy_potentials: bool
     network_name: list[str] | None
-    what_if_name_final_energy: list[str] | None
-    what_if_name_emissions: list[str] | None
-    what_if_name_costs: list[str] | None
-    what_if_name_heat_rejection: list[str] | None
+    what_if_name: list[str] | None
     include_advanced_analytics: bool
     use_cea_acronym_format_column_names: bool
     use_conditioned_floor_area_for_normalisation: bool
@@ -1197,13 +1194,7 @@ class ResultSummarySection(Section):
     @overload
     def __getattr__(self, item: Literal["network_name"]) -> list[str] | None: ...
     @overload
-    def __getattr__(self, item: Literal["what_if_name_final_energy"]) -> list[str] | None: ...
-    @overload
-    def __getattr__(self, item: Literal["what_if_name_emissions"]) -> list[str] | None: ...
-    @overload
-    def __getattr__(self, item: Literal["what_if_name_costs"]) -> list[str] | None: ...
-    @overload
-    def __getattr__(self, item: Literal["what_if_name_heat_rejection"]) -> list[str] | None: ...
+    def __getattr__(self, item: Literal["what_if_name"]) -> list[str] | None: ...
     @overload
     def __getattr__(self, item: Literal["include_advanced_analytics"]) -> bool: ...
     @overload

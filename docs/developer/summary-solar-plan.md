@@ -54,7 +54,7 @@ what is installed, the summary only reports.**
 ### B. Re-enable PV analytics, for installed PV
 
 Same three analytics, per building and district, at every selected reporting period (daily,
-monthly, seasonally, annually), for each what-if in `what-if-name-final-energy` that has PV.
+monthly, seasonally, annually), for each what-if in `what-if-name` (one dropdown since 2026-11-17; was `what-if-name-final-energy`) that has PV.
 Gated on `include-advanced-analytics`.
 
 - Hourly, per building, from final-energy `B####.csv`: generation = PV and PVT-electric
