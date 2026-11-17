@@ -34,7 +34,7 @@ from cea.kpi.annotations import annotate
 from cea.kpi.cache import compute_kpi_cached
 from cea.kpi.exceptions import KPIDefinitionError, KPINotAvailable
 from cea.kpi.option_generators import run_generator
-from cea.kpi.registry import kpis_for_feature, load_registry
+from cea.kpi.registry import KPI_ALIASES, kpis_for_feature, load_registry
 from cea.kpi.resolver import effective_locator_args
 from cea.kpi.units import UNIT_PARAMETER, convert, unit_choices
 
@@ -254,6 +254,7 @@ async def get_kpi_parameters(
 
 
 def _get_kpi_parameters(kpi_id: str, scenario_path: str, args: Optional[str]):
+    kpi_id = KPI_ALIASES.get(kpi_id, kpi_id)
     registry = load_registry()
     if kpi_id not in registry:
         raise HTTPException(
@@ -329,6 +330,7 @@ def _get_kpi_value(kpi_id: str, scenario_path: str, locator_args: Optional[str],
     # not a locator argument and must not split the cache.
     display_unit = args_override.pop(UNIT_PARAMETER, None)
 
+    kpi_id = KPI_ALIASES.get(kpi_id, kpi_id)
     registry = load_registry()
     if kpi_id not in registry:
         raise HTTPException(

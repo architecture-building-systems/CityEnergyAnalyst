@@ -98,6 +98,14 @@ class _ShareOfNode(_StrictBase):
     # already; the unit on the KPI entry should be ``%``.
 
 
+class _PVAnalyticsNode(_StrictBase):
+    kind: Literal["pv_analytics"]
+    # One of the summary's annual PV analytics, as a percentage. Reads the hourly ``date`` /
+    # ``PV_kWh`` / ``GRID_kWh`` of a final-energy what-if's ``final_energy.csv`` and delegates
+    # to ``cea.analysis.final_energy.pv_analytics`` so the card equals the summary's value.
+    metric: Literal["generation_to_load", "self_consumption", "self_sufficiency"]
+
+
 # Discriminated union over `kind` — pydantic picks the right node
 # class by inspecting the literal field, so yml typos surface as
 # crisp validation errors instead of silently picking the wrong
@@ -109,6 +117,7 @@ FormulaNode = Annotated[
         _AggregateNode,
         _DivideNode,
         _ShareOfNode,
+        _PVAnalyticsNode,
     ],
     Field(discriminator="kind"),
 ]

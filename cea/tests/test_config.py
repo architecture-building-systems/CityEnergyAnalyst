@@ -82,11 +82,12 @@ class TestConfiguration(unittest.TestCase):
         config = cea.config.Configuration()
 
         thermal_network_parameter = config.get_parameter('thermal-network:network-name')
-        solar_parameter = config.get_parameter('result-summary:solar-technologies')
+        whatif_parameter = config.get_parameter('result-summary:what-if-name-final-energy')
 
         self.assertIsInstance(thermal_network_parameter, cea.config.NetworkLayoutMultiChoiceParameter)
         self.assertIsInstance(thermal_network_parameter, cea.config.MultiChoiceParameter)
-        self.assertIsInstance(solar_parameter, cea.config.MultiChoiceParameter)
+        self.assertIsInstance(whatif_parameter, cea.config.WhatIfNameMultiChoiceParameter)
+        self.assertIsInstance(whatif_parameter, cea.config.MultiChoiceParameter)
 
     def test_export_folder_name_rejects_path_traversal(self):
         # The value is joined into scenario/export/results/{name}-{timestamp}

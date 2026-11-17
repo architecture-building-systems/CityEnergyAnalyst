@@ -31,10 +31,10 @@ import pandas as pd
 
 import cea.scripts
 from cea.inputlocator import InputLocator
-from cea.kpi.calculators import evaluate
+from cea.kpi.calculators import columns_referenced, evaluate
 from cea.kpi.exceptions import KPIDefinitionError, KPINotAvailable
 from cea.kpi.option_generators import run_generator
-from cea.kpi.registry import load_registry
+from cea.kpi.registry import KPI_ALIASES, load_registry
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2026, UUEN PTE. LTD."
@@ -78,6 +78,7 @@ def compute_kpi(
     through to the yml. Pass ``None`` (the default) to use only the
     yml's defaults.
     """
+    kpi_id = KPI_ALIASES.get(kpi_id, kpi_id)
     registry = load_registry()
     if kpi_id not in registry:
         raise KPIDefinitionError(f"unknown KPI id '{kpi_id}'")
@@ -95,6 +96,15 @@ def compute_kpi(
         )
 
     df = pd.read_csv(file_path)
+    missing = [c for c in columns_referenced(kpi.source.formula) if c not in df.columns]
+    if missing:
+        # The schema declares these columns, so the file predates the tool's current output:
+        # re-running the tool that writes it fixes this.
+        raise KPINotAvailable(
+            kpi_id,
+            reason=f"source file is missing column '{missing[0]}': {file_path}",
+            upstream_tool=_upstream_tool_for(kpi.source.locator),
+        )
     value = evaluate(kpi.source.formula, df, kpi_id=kpi_id)
     if isinstance(value, pd.Series):
         # Schema's resolver enforces scalar output; if a Series

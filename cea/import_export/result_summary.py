@@ -10,13 +10,21 @@ import numpy as np
 import cea.config
 import time
 from datetime import datetime, UTC
+from typing import Optional
 import cea.inputlocator
 import geopandas as gpd
 from cea.analysis.lca.emission_timeline import _MAPPING_DICT
 from cea.utilities import validate_path_within_root
+from cea.utilities.date import month_names, season_mapping, season_names
 
 from cea.demand.building_properties.useful_areas import calc_useful_areas
 from cea.scripts import tool_ref
+from cea.analysis.final_energy.pv_analytics import (
+    PV_ANALYTICS,
+    PV_ANALYTICS_PERIODS,
+    calc_pv_analytics_by_period,
+    district_pv_series,
+)
 
 
 __author__ = "Zhongming Shi, Reynold Mok, Justin McCarty"
@@ -28,15 +36,6 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-
-season_names = ['Spring', 'Summer', 'Autumn', 'Winter']
-month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-season_mapping = {
-            3: 'Spring', 4: 'Spring', 5: 'Spring',
-            6: 'Summer', 7: 'Summer', 8: 'Summer',
-            9: 'Autumn', 10: 'Autumn', 11: 'Autumn',
-            12: 'Winter', 1: 'Winter', 2: 'Winter'
-}
 
 # Define nominal hours for each month (non-leap year)
 month_hours = {
@@ -276,7 +275,13 @@ def get_hours_start_end(config):
     return hour_start, hour_end
 
 
+def _any_exists(paths) -> bool:
+    return any(os.path.exists(path) for path in paths)
+
+
 def get_results_path(locator: cea.inputlocator.InputLocator, cea_feature: str, list_buildings: list, network_name: str = '')-> tuple[list[str], list[str]]:
+    """Result files for `cea_feature`, and their appendix labels. Solar potential families list
+    only the panel / collector types with a result file for at least one building."""
 
     list_paths = []
     list_appendix = []
@@ -319,50 +324,38 @@ def get_results_path(locator: cea.inputlocator.InputLocator, cea_feature: str, l
         database_pv = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'))
         list_panel_type = database_pv['code'].dropna().unique().tolist()
         for panel_type in list_panel_type:
-            pv_paths = []
-            for building in list_buildings:
-                path = locator.PV_results(building, panel_type)
-                pv_paths.append(path)
-            list_paths.append(pv_paths)
-            list_appendix.append(f"{cea_feature}_{panel_type}")
+            pv_paths = [locator.PV_results(building, panel_type) for building in list_buildings]
+            if _any_exists(pv_paths):
+                list_paths.append(pv_paths)
+                list_appendix.append(f"{cea_feature}_{panel_type}")
 
     if cea_feature == 'pvt_ET':
         database_pv = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'))
         list_panel_type = database_pv['code'].dropna().unique().tolist()
         for panel_type, sc_panel_type in itertools.product(list_panel_type, ['ET']):
-            pv_paths = []
-            for building in list_buildings:
-                path = locator.PVT_results(building, panel_type, sc_panel_type)
-                pv_paths.append(path)
-            list_paths.append(pv_paths)
-            list_appendix.append(f"{cea_feature}_{panel_type}")
+            pv_paths = [locator.PVT_results(building, panel_type, sc_panel_type) for building in list_buildings]
+            if _any_exists(pv_paths):
+                list_paths.append(pv_paths)
+                list_appendix.append(f"{cea_feature}_{panel_type}")
 
     if cea_feature == 'pvt_FP':
         database_pv = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'))
         list_panel_type = database_pv['code'].dropna().unique().tolist()
         for panel_type, sc_panel_type in itertools.product(list_panel_type, ['FP']):
-            pv_paths = []
-            for building in list_buildings:
-                path = locator.PVT_results(building, panel_type, sc_panel_type)
-                pv_paths.append(path)
-            list_paths.append(pv_paths)
-            list_appendix.append(f"{cea_feature}_{panel_type}")
+            pv_paths = [locator.PVT_results(building, panel_type, sc_panel_type) for building in list_buildings]
+            if _any_exists(pv_paths):
+                list_paths.append(pv_paths)
+                list_appendix.append(f"{cea_feature}_{panel_type}")
 
     if cea_feature == 'sc_ET':
-        for sc_panel_type in ['ET']:
-            sc_paths = []
-            for building in list_buildings:
-                path = locator.SC_results(building, sc_panel_type)
-                sc_paths.append(path)
+        sc_paths = [locator.SC_results(building, 'ET') for building in list_buildings]
+        if _any_exists(sc_paths):
             list_paths.append(sc_paths)
             list_appendix.append(f"{cea_feature}")
 
     if cea_feature == 'sc_FP':
-        for sc_panel_type in ['FP']:
-            sc_paths = []
-            for building in list_buildings:
-                path = locator.SC_results(building, sc_panel_type)
-                sc_paths.append(path)
+        sc_paths = [locator.SC_results(building, 'FP') for building in list_buildings]
+        if _any_exists(sc_paths):
             list_paths.append(sc_paths)
             list_appendix.append(f"{cea_feature}")
 
@@ -447,88 +440,88 @@ def map_metrics_cea_features(list_metrics_or_features, direction="metrics_to_fea
             "irradiation_wall_west[kWh]",
         ],
         "pv": [
-            "PV_installed_area_total[m2]",
+            "PV_potential_area_total[m2]",
             "PV_electricity_total[kWh]",
-            "PV_installed_area_roof[m2]",
+            "PV_potential_area_roof[m2]",
             "PV_electricity_roof[kWh]",
-            "PV_installed_area_north[m2]",
+            "PV_potential_area_north[m2]",
             "PV_electricity_north[kWh]",
-            "PV_installed_area_south[m2]",
+            "PV_potential_area_south[m2]",
             "PV_electricity_south[kWh]",
-            "PV_installed_area_east[m2]",
+            "PV_potential_area_east[m2]",
             "PV_electricity_east[kWh]",
-            "PV_installed_area_west[m2]",
+            "PV_potential_area_west[m2]",
             "PV_electricity_west[kWh]",
             "PV_generation_to_load[-]",
             "PV_self_consumption[-]",
             "PV_self_sufficiency[-]",
         ],
         "pvt_ET": [
-            "PVT_ET_installed_area_total[m2]",
+            "PVT_ET_potential_area_total[m2]",
             "PVT_ET_electricity_total[kWh]",
             "PVT_ET_heat_total[kWh]",
-            "PVT_ET_installed_area_roof[m2]",
+            "PVT_ET_potential_area_roof[m2]",
             "PVT_ET_electricity_roof[kWh]",
             "PVT_ET_heat_roof[kWh]",
-            "PVT_ET_installed_area_north[m2]",
+            "PVT_ET_potential_area_north[m2]",
             "PVT_ET_electricity_north[kWh]",
             "PVT_ET_heat_north[kWh]",
-            "PVT_ET_installed_area_south[m2]",
+            "PVT_ET_potential_area_south[m2]",
             "PVT_ET_electricity_south[kWh]",
             "PVT_ET_heat_south[kWh]",
-            "PVT_ET_installed_area_east[m2]",
+            "PVT_ET_potential_area_east[m2]",
             "PVT_ET_electricity_east[kWh]",
             "PVT_ET_heat_east[kWh]",
-            "PVT_ET_installed_area_west[m2]",
+            "PVT_ET_potential_area_west[m2]",
             "PVT_ET_electricity_west[kWh]",
             "PVT_ET_heat_west[kWh]",
         ],
         "pvt_FP": [
-            "PVT_FP_installed_area_total[m2]",
+            "PVT_FP_potential_area_total[m2]",
             "PVT_FP_electricity_total[kWh]",
             "PVT_FP_heat_total[kWh]",
-            "PVT_FP_installed_area_roof[m2]",
+            "PVT_FP_potential_area_roof[m2]",
             "PVT_FP_electricity_roof[kWh]",
             "PVT_FP_heat_roof[kWh]",
-            "PVT_FP_installed_area_north[m2]",
+            "PVT_FP_potential_area_north[m2]",
             "PVT_FP_electricity_north[kWh]",
             "PVT_FP_heat_north[kWh]",
-            "PVT_FP_installed_area_south[m2]",
+            "PVT_FP_potential_area_south[m2]",
             "PVT_FP_electricity_south[kWh]",
             "PVT_FP_heat_south[kWh]",
-            "PVT_FP_installed_area_east[m2]",
+            "PVT_FP_potential_area_east[m2]",
             "PVT_FP_electricity_east[kWh]",
             "PVT_FP_heat_east[kWh]",
-            "PVT_FP_installed_area_west[m2]",
+            "PVT_FP_potential_area_west[m2]",
             "PVT_FP_electricity_west[kWh]",
             "PVT_FP_heat_west[kWh]",
         ],
         "sc_ET": [
-            "SC_ET_installed_area_total[m2]",
+            "SC_ET_potential_area_total[m2]",
             "SC_ET_heat_total[kWh]",
-            "SC_ET_installed_area_roof[m2]",
+            "SC_ET_potential_area_roof[m2]",
             "SC_ET_heat_roof[kWh]",
-            "SC_ET_installed_area_north[m2]",
+            "SC_ET_potential_area_north[m2]",
             "SC_ET_heat_north[kWh]",
-            "SC_ET_installed_area_south[m2]",
+            "SC_ET_potential_area_south[m2]",
             "SC_ET_heat_south[kWh]",
-            "SC_ET_installed_area_east[m2]",
+            "SC_ET_potential_area_east[m2]",
             "SC_ET_heat_east[kWh]",
-            "SC_ET_installed_area_west[m2]",
+            "SC_ET_potential_area_west[m2]",
             "SC_ET_heat_west[kWh]",
         ],
         "sc_FP": [
-            "SC_FP_installed_area_total[m2]",
+            "SC_FP_potential_area_total[m2]",
             "SC_FP_heat_total[kWh]",
-            "SC_FP_installed_area_roof[m2]",
+            "SC_FP_potential_area_roof[m2]",
             "SC_FP_heat_roof[kWh]",
-            "SC_FP_installed_area_north[m2]",
+            "SC_FP_potential_area_north[m2]",
             "SC_FP_heat_north[kWh]",
-            "SC_FP_installed_area_south[m2]",
+            "SC_FP_potential_area_south[m2]",
             "SC_FP_heat_south[kWh]",
-            "SC_FP_installed_area_east[m2]",
+            "SC_FP_potential_area_east[m2]",
             "SC_FP_heat_east[kWh]",
-            "SC_FP_installed_area_west[m2]",
+            "SC_FP_potential_area_west[m2]",
             "SC_FP_heat_west[kWh]",
         ],
         "other_renewables": [
@@ -632,77 +625,77 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
         "irradiation_wall_east[kWh]": ["walls_east_kW"],
         "irradiation_window_west[kWh]": ["windows_west_kW"],
         "irradiation_wall_west[kWh]": ["walls_west_kW"],
-        "PV_installed_area_total[m2]": ["area_PV_m2"],
+        "PV_potential_area_total[m2]": ["area_PV_m2"],
         "PV_electricity_total[kWh]": ["E_PV_gen_kWh"],
-        "PV_installed_area_roof[m2]": ["PV_roofs_top_m2"],
+        "PV_potential_area_roof[m2]": ["PV_roofs_top_m2"],
         "PV_electricity_roof[kWh]": ["PV_roofs_top_E_kWh"],
-        "PV_installed_area_north[m2]": ["PV_walls_north_m2"],
+        "PV_potential_area_north[m2]": ["PV_walls_north_m2"],
         "PV_electricity_north[kWh]": ["PV_walls_north_E_kWh"],
-        "PV_installed_area_south[m2]": ["PV_walls_south_m2"],
+        "PV_potential_area_south[m2]": ["PV_walls_south_m2"],
         "PV_electricity_south[kWh]": ["PV_walls_south_E_kWh"],
-        "PV_installed_area_east[m2]": ["PV_walls_east_m2"],
+        "PV_potential_area_east[m2]": ["PV_walls_east_m2"],
         "PV_electricity_east[kWh]": ["PV_walls_east_E_kWh"],
-        "PV_installed_area_west[m2]": ["PV_walls_west_m2"],
+        "PV_potential_area_west[m2]": ["PV_walls_west_m2"],
         "PV_electricity_west[kWh]": ["PV_walls_west_E_kWh"],
-        "PVT_ET_installed_area_total[m2]": ["area_PVT_m2"],
+        "PVT_ET_potential_area_total[m2]": ["area_PVT_m2"],
         "PVT_ET_electricity_total[kWh]": ["E_PVT_gen_kWh"],
         "PVT_ET_heat_total[kWh]": ["Q_PVT_gen_kWh"],
-        "PVT_ET_installed_area_roof[m2]": ["PVT_ET_roofs_top_m2"],
+        "PVT_ET_potential_area_roof[m2]": ["PVT_ET_roofs_top_m2"],
         "PVT_ET_electricity_roof[kWh]": ["PVT_ET_roofs_top_E_kWh"],
         "PVT_ET_heat_roof[kWh]": ["PVT_ET_roofs_top_Q_kWh"],
-        "PVT_ET_installed_area_north[m2]": ["PVT_ET_walls_north_m2"],
+        "PVT_ET_potential_area_north[m2]": ["PVT_ET_walls_north_m2"],
         "PVT_ET_electricity_north[kWh]": ["PVT_ET_walls_north_E_kWh"],
         "PVT_ET_heat_north[kWh]": ["PVT_ET_walls_north_Q_kWh"],
-        "PVT_ET_installed_area_south[m2]": ["PVT_ET_walls_south_m2"],
+        "PVT_ET_potential_area_south[m2]": ["PVT_ET_walls_south_m2"],
         "PVT_ET_electricity_south[kWh]": ["PVT_ET_walls_south_E_kWh"],
         "PVT_ET_heat_south[kWh]": ["PVT_ET_walls_south_Q_kWh"],
-        "PVT_ET_installed_area_east[m2]": ["PVT_ET_walls_east_m2"],
+        "PVT_ET_potential_area_east[m2]": ["PVT_ET_walls_east_m2"],
         "PVT_ET_electricity_east[kWh]": ["PVT_ET_walls_east_E_kWh"],
         "PVT_ET_heat_east[kWh]": ["PVT_ET_walls_east_Q_kWh"],
-        "PVT_ET_installed_area_west[m2]": ["PVT_ET_walls_west_m2"],
+        "PVT_ET_potential_area_west[m2]": ["PVT_ET_walls_west_m2"],
         "PVT_ET_electricity_west[kWh]": ["PVT_ET_walls_west_E_kWh"],
         "PVT_ET_heat_west[kWh]": ["PVT_ET_walls_west_Q_kWh"],
-        "PVT_FP_installed_area_total[m2]": ["area_PVT_m2"],
+        "PVT_FP_potential_area_total[m2]": ["area_PVT_m2"],
         "PVT_FP_electricity_total[kWh]": ["E_PVT_gen_kWh"],
         "PVT_FP_heat_total[kWh]": ["Q_PVT_gen_kWh"],
-        "PVT_FP_installed_area_roof[m2]": ["PVT_FP_roofs_top_m2"],
+        "PVT_FP_potential_area_roof[m2]": ["PVT_FP_roofs_top_m2"],
         "PVT_FP_electricity_roof[kWh]": ["PVT_FP_roofs_top_E_kWh"],
         "PVT_FP_heat_roof[kWh]": ["PVT_FP_roofs_top_Q_kWh"],
-        "PVT_FP_installed_area_north[m2]": ["PVT_FP_walls_north_m2"],
+        "PVT_FP_potential_area_north[m2]": ["PVT_FP_walls_north_m2"],
         "PVT_FP_electricity_north[kWh]": ["PVT_FP_walls_north_E_kWh"],
         "PVT_FP_heat_north[kWh]": ["PVT_FP_walls_north_Q_kWh"],
-        "PVT_FP_installed_area_south[m2]": ["PVT_FP_walls_south_m2"],
+        "PVT_FP_potential_area_south[m2]": ["PVT_FP_walls_south_m2"],
         "PVT_FP_electricity_south[kWh]": ["PVT_FP_walls_south_E_kWh"],
         "PVT_FP_heat_south[kWh]": ["PVT_FP_walls_south_Q_kWh"],
-        "PVT_FP_installed_area_east[m2]": ["PVT_FP_walls_east_m2"],
+        "PVT_FP_potential_area_east[m2]": ["PVT_FP_walls_east_m2"],
         "PVT_FP_electricity_east[kWh]": ["PVT_FP_walls_east_E_kWh"],
         "PVT_FP_heat_east[kWh]": ["PVT_FP_walls_east_Q_kWh"],
-        "PVT_FP_installed_area_west[m2]": ["PVT_FP_walls_west_m2"],
+        "PVT_FP_potential_area_west[m2]": ["PVT_FP_walls_west_m2"],
         "PVT_FP_electricity_west[kWh]": ["PVT_FP_walls_west_E_kWh"],
         "PVT_FP_heat_west[kWh]": ["PVT_FP_walls_west_Q_kWh"],
-        "SC_ET_installed_area_total[m2]": ["area_SC_m2"],
+        "SC_ET_potential_area_total[m2]": ["area_SC_m2"],
         "SC_ET_heat_total[kWh]": ["Q_SC_gen_kWh"],
-        "SC_ET_installed_area_roof[m2]": ["SC_ET_roofs_top_m2"],
+        "SC_ET_potential_area_roof[m2]": ["SC_ET_roofs_top_m2"],
         "SC_ET_heat_roof[kWh]": ["SC_ET_roofs_top_Q_kWh"],
-        "SC_ET_installed_area_north[m2]": ["SC_ET_walls_north_m2"],
+        "SC_ET_potential_area_north[m2]": ["SC_ET_walls_north_m2"],
         "SC_ET_heat_north[kWh]": ["SC_ET_walls_north_Q_kWh"],
-        "SC_ET_installed_area_south[m2]": ["SC_ET_walls_south_m2"],
+        "SC_ET_potential_area_south[m2]": ["SC_ET_walls_south_m2"],
         "SC_ET_heat_south[kWh]": ["SC_ET_walls_south_Q_kWh"],
-        "SC_ET_installed_area_east[m2]": ["SC_ET_walls_east_m2"],
+        "SC_ET_potential_area_east[m2]": ["SC_ET_walls_east_m2"],
         "SC_ET_heat_east[kWh]": ["SC_ET_walls_east_Q_kWh"],
-        "SC_ET_installed_area_west[m2]": ["SC_ET_walls_west_m2"],
+        "SC_ET_potential_area_west[m2]": ["SC_ET_walls_west_m2"],
         "SC_ET_heat_west[kWh]": ["SC_ET_walls_west_Q_kWh"],
-        "SC_FP_installed_area_total[m2]": ["area_SC_m2"],
+        "SC_FP_potential_area_total[m2]": ["area_SC_m2"],
         "SC_FP_heat_total[kWh]": ["Q_FP_gen_kWh"],
-        "SC_FP_installed_area_roof[m2]": ["SC_FP_roofs_top_m2"],
+        "SC_FP_potential_area_roof[m2]": ["SC_FP_roofs_top_m2"],
         "SC_FP_heat_roof[kWh]": ["SC_FP_roofs_top_Q_kWh"],
-        "SC_FP_installed_area_north[m2]": ["SC_FP_walls_north_m2"],
+        "SC_FP_potential_area_north[m2]": ["SC_FP_walls_north_m2"],
         "SC_FP_heat_north[kWh]": ["SC_FP_walls_north_Q_kWh"],
-        "SC_FP_installed_area_south[m2]": ["SC_FP_walls_south_m2"],
+        "SC_FP_potential_area_south[m2]": ["SC_FP_walls_south_m2"],
         "SC_FP_heat_south[kWh]": ["SC_FP_walls_south_Q_kWh"],
-        "SC_FP_installed_area_east[m2]": ["SC_FP_walls_east_m2"],
+        "SC_FP_potential_area_east[m2]": ["SC_FP_walls_east_m2"],
         "SC_FP_heat_east[kWh]": ["SC_FP_walls_east_Q_kWh"],
-        "SC_FP_installed_area_west[m2]": ["SC_FP_walls_west_m2"],
+        "SC_FP_potential_area_west[m2]": ["SC_FP_walls_west_m2"],
         "SC_FP_heat_west[kWh]": ["SC_FP_walls_west_Q_kWh"],
         "geothermal_heat_potential[kWh]": ["QGHP_kW"],
         "area_for_ground_source_heat_pump[m2]": ["Area_avail_m2"],
@@ -740,73 +733,6 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
         else:
             # If no mapping found, keep the original item
             output_list.append(item)
-
-    return output_list
-
-
-def map_analytics_and_cea_columns(input_list, direction="analytics_to_columns"):
-    """
-    Maps between analytics metrics and CEA column names.
-
-    Parameters
-    ----------
-    input_list : list
-        A list of metrics or CEA column names to map.
-    direction : str, optional
-        Direction of mapping:
-        - "analytics_to_columns": Maps metrics to CEA column names.
-        - "columns_to_analytics": Maps CEA column names to metrics.
-
-    Returns
-    -------
-    list
-        A list of mapped values (CEA column names or metrics), with unique items in order.
-    """
-    mapping_dict = {
-        'PV_generation_to_load[-]': [
-            'E_PV_gen_kWh', 'PV_roofs_top_E_kWh',
-            'PV_walls_north_E_kWh', 'PV_walls_south_E_kWh',
-            'PV_walls_east_E_kWh', 'PV_walls_west_E_kWh'
-        ],
-        'PV_self_consumption[-]': [
-            'E_PV_gen_kWh', 'PV_roofs_top_E_kWh',
-            'PV_walls_north_E_kWh', 'PV_walls_south_E_kWh',
-            'PV_walls_east_E_kWh', 'PV_walls_west_E_kWh'
-        ],
-        'PV_self_sufficiency[-]': [
-            'E_PV_gen_kWh', 'PV_roofs_top_E_kWh',
-            'PV_walls_north_E_kWh', 'PV_walls_south_E_kWh',
-            'PV_walls_east_E_kWh', 'PV_walls_west_E_kWh'
-        ],
-    }
-
-    # Reverse mapping for columns_to_analytics
-    if direction == "columns_to_analytics":
-        mapping_dict = {
-            cea_col: metric
-            for metric, cea_cols in mapping_dict.items()
-            for cea_col in cea_cols
-        }
-
-    output_list = []
-    seen = set()
-
-    for item in input_list:
-        if item in mapping_dict:
-            mapped = mapping_dict[item]
-            if isinstance(mapped, list):
-                for m in mapped:
-                    if m not in seen:
-                        seen.add(m)
-                        output_list.append(m)
-            else:
-                if mapped not in seen:
-                    seen.add(mapped)
-                    output_list.append(mapped)
-        else:
-            if item not in seen:
-                seen.add(item)
-                output_list.append(item)
 
     return output_list
 
@@ -1162,7 +1088,7 @@ def slice_hourly_results_for_custom_time_period(hour_start, hour_end, df):
     return sliced_df
 
 
-def exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings, bool_analytics=False, network_name=''):
+def exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings, network_name=''):
     """Locate, read, and hour-slice the CEA result files for `list_metrics`, or (for the
     `architecture` feature) compute per-building areas from zone geometry + architecture
     instead of reading a time series.
@@ -1177,10 +1103,7 @@ def exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildi
     list_paths, list_appendix = get_results_path(locator, cea_feature, list_buildings, network_name)
 
     # get the relevant CEA column names based on selected metrics
-    if not bool_analytics:
-        list_cea_column_names = map_metrics_and_cea_columns(list_metrics, direction="metrics_to_columns")
-    else:
-        list_cea_column_names = map_analytics_and_cea_columns(list_metrics, direction="analytics_to_columns")
+    list_cea_column_names = map_metrics_and_cea_columns(list_metrics, direction="metrics_to_columns")
 
     list_list_useful_cea_results = []
     # check if list_paths is nested, for example, for PV, the lists can be nested as there are different types of PV
@@ -1238,7 +1161,7 @@ def aggregate_solar_data_properly_temporal(df, groupby_cols=None):
     - Sum energy columns (E_kWh, Q_kWh) across time periods
     - Keep area columns (_m2) as the SAME CONSTANT VALUE across all time periods
     
-    For district-level summaries, area columns represent total district installed area.
+    For district-level summaries, area columns represent the total district potential panel area.
     This value should be IDENTICAL in annual, monthly, seasonal, daily, and hourly summaries.
     
     For example: 'PVT_ET_walls_north_m2' = total PVT area on north walls for ALL buildings combined.
@@ -2200,384 +2123,79 @@ def filter_by_building_names(df_typology, list_buildings):
 # ----------------------------------------------------------------------------------------------------------------------
 # Execute advanced UBEM analytics
 
-def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings, list_selected_time_period, bool_aggregate_by_building, bool_use_acronym, plot=False):
-    list_pv_analytics = ['PV_generation_to_load[-]', 'PV_self_consumption[-]', 'PV_self_sufficiency[-]']
-    list_demand_metrics = ['grid_electricity_consumption[kWh]']
-    list_list_useful_cea_results_pv, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_pv_analytics, list_buildings, bool_analytics=True)
-    list_list_useful_cea_results_demand, _ = exec_read_and_slice(hour_start, hour_end, locator, list_demand_metrics, list_buildings)
+# PV analytics (computed in cea.analysis.final_energy.pv_analytics) for the PV installed in a
+# final-energy what-if. Not for potentials: they assume every surface the potential tool
+# considers is installed, so how that PV meets the load is a deployment question.
 
-    def replace_kwh_with_pv_analytic(string, pv_analytic):
-        """
-        Replaces the end of a string with 'a' if it ends with '_kWh'.
+def read_building_pv_series(locator, whatif_name: str, list_buildings: list, hour_start: int, hour_end: int) -> dict:
+    """
+    Hourly ``generation_kWh`` / ``load_kWh`` per building for the PV installed in a final-energy
+    what-if: PV and PVT electricity against all the building's grid consumption (services,
+    boosters, heat pumps). Columns are classified with ``classify_carrier_column``.
+    """
+    from cea.analysis.final_energy.calculation import classify_carrier_column
 
-        Parameters:
-        - string (str): The input string.
+    series = {}
+    for building in list_buildings:
+        path = locator.get_final_energy_building_file(building, whatif_name)
+        if not os.path.exists(path):
+            continue
+        df = get_standardized_date_column(pd.read_csv(path))
+        generation_cols = [c for c in df.columns if classify_carrier_column(c) == ('PV', False)]
+        grid_cols = [c for c in df.columns if classify_carrier_column(c) == ('GRID', True)]
+        df = df[['date'] + generation_cols + grid_cols]
+        df['date'] = pd.to_datetime(df['date'], errors='coerce')
+        df = slice_hourly_results_for_custom_time_period(hour_start, hour_end, df)
+        series[building] = pd.DataFrame({
+            'date': df['date'],
+            'generation_kWh': df[generation_cols].fillna(0.0).sum(axis=1),
+            'load_kWh': df[grid_cols].fillna(0.0).sum(axis=1),
+        })
+    return series
 
-        Returns:
-        - str: The modified string.
-        """
-        if string.startswith('E_PV_gen_kWh'):
-            return pv_analytic
-        if string.endswith('_E_kWh'):
-            return string[:-5] + pv_analytic
-        return string  # Return the string unchanged if condition not met
 
-    def calc_pv_analytics_by_period(df_pv, df_demand, period, list_pv_analytics, bool_use_acronym, date_column='date'):
-        """
-        Calculates the three pv analytics for a given time period and
-        adds 'hour_start' and 'hour_end' columns for group start and end hour information.
+def read_district_pv_series(locator, whatif_name: str, hour_start: int, hour_end: int) -> Optional[pd.DataFrame]:
+    """
+    Hourly ``generation_kWh`` / ``load_kWh`` for a final-energy what-if's whole district, plants
+    included, from its ``final_energy.csv`` -- the same series the Canvas KPI cards read.
+    """
+    path = locator.get_final_energy_file(whatif_name)
+    if not os.path.exists(path):
+        return None
+    df = get_standardized_date_column(pd.read_csv(path))
+    df['date'] = pd.to_datetime(df['date'], errors='coerce')
+    return district_pv_series(slice_hourly_results_for_custom_time_period(hour_start, hour_end, df))
 
-        Parameters:
-        - df (pd.DataFrame): The input DataFrame.
-        - period (str): Aggregation period ('hourly', 'daily', 'monthly', 'seasonally', 'annually').
-        - date_column (str): name of the date column.
 
-        Returns:
-        - pd.DataFrame: Aggregated DataFrame.
+def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, district: Optional[pd.DataFrame],
+                      series_by_building: dict, appendix: str, list_selected_time_period,
+                      bool_aggregate_by_building, bool_use_acronym):
+    """
+    Write the PV analytics for one what-if (``appendix``, e.g. ``pv_installed_with_pv``): the
+    district (``district``, so buildings share surplus) and, if enabled, each building on its
+    own. Nothing is written when the district has no generation.
+    """
+    periods = [p for p in PV_ANALYTICS_PERIODS if p in list_selected_time_period]
+    if district is None or not periods or district['generation_kWh'].sum() == 0:
+        return
 
-        """
-        if df_pv is None or df_demand is None or df_pv.empty or df_demand.empty:
-            return None
-
-        # Merge df_pv and df_demand
-        # Check what columns are actually available and adapt accordingly
-        if 'GRID_kWh' in df_demand.columns:
-            demand_column = 'GRID_kWh'
-        elif 'grid_electricity_consumption[kWh]' in df_demand.columns:
-            demand_column = 'grid_electricity_consumption[kWh]'
-        else:
-            raise ValueError(f"Neither 'GRID_kWh' nor 'grid_electricity_consumption[kWh]' found in df_demand columns: {list(df_demand.columns)}")
-        
-        df = pd.concat([df_pv, df_demand[demand_column]], axis=1)   # Concatenate the DataFrames horizontally
-        df = df.loc[:, ~df.columns.duplicated()]    # Remove duplicate columns, keeping the first occurrence
-
-        # # Remove 'PV_' in the strings of PV analytics
-        # list_analytics = [item[3:] if item.startswith('PV_') else item for item in list_pv_analytics]
-        list_analytics = list_pv_analytics
-
-        # Ensure the date column is in datetime format
-        if date_column not in df.columns:
-            raise KeyError(f"The specified date_column '{date_column}' is not in the DataFrame.")
-        if not pd.api.types.is_datetime64_any_dtype(df[date_column]):
-            df[date_column] = pd.to_datetime(df[date_column], errors='coerce')
-            if df[date_column].isnull().all():
-                raise ValueError(f"Failed to convert '{date_column}' to datetime format. Check the input data.")
-
-        # Add sequential hour labels (0-based) — immune to leap year gaps
-        df['period_hour'] = list(range(len(df)))
-
-        # Handle different periods
-        if period == 'daily':
-            # Use sequential day index derived from date, not dayofyear (leap-year safe)
-            day_dates = df[date_column].dt.date
-            unique_days = sorted(day_dates.unique())
-            day_map = {d: f"D_{i:03d}" for i, d in enumerate(unique_days)}
-            df['period'] = day_dates.map(day_map)
-        elif period == 'monthly':
-            df['period'] = df[date_column].dt.month.apply(lambda x: month_names[x - 1])
-            df['period'] = pd.Categorical(df['period'], categories=month_names, ordered=True)
-        elif period == 'seasonally':
-            df['period'] = df[date_column].dt.month.map(season_mapping)
-            df['period'] = pd.Categorical(df['period'], categories=season_names, ordered=True)
-        elif period == 'annually':
-            df['period'] = 'Y_' + df[date_column].dt.year.astype(str)
-        else:
-            raise ValueError(f"Invalid period: '{period}'. Must be one of ['hourly', 'daily', 'monthly', 'seasonally', 'annually'].")
-
-        # Initialize an aggregated DataFrame
-        pv_analytics_df = pd.DataFrame()
-
-        # Process columns based on their naming
-        for col in df.columns:
-            if col in [date_column, demand_column, 'period', 'period_hour']:
-                continue
-            else:
-                for pv_analytic in list_analytics:
-                    col_new = replace_kwh_with_pv_analytic(col, pv_analytic)
-                    if pv_analytic == 'PV_generation_to_load[-]':
-                        pv_analytic_df = calc_solar_energy_penetration_by_period(df, col, demand_column)
-                        pv_analytics_df[col_new] = pv_analytic_df[col]
-                        pv_analytics_df['period'] = pv_analytic_df['period']
-                    elif pv_analytic == 'PV_self_consumption[-]':
-                        pv_analytic_df = calc_self_consumption_by_period(df, col, demand_column)
-                        pv_analytics_df[col_new] = pv_analytic_df[col]
-                        pv_analytics_df['period'] = pv_analytic_df['period']
-                    elif pv_analytic == 'PV_self_sufficiency[-]':
-                        pv_analytic_df = calc_self_sufficiency_by_period(df, col, demand_column)
-                        pv_analytics_df[col_new] = pv_analytic_df[col]
-                        pv_analytics_df['period'] = pv_analytic_df['period']
-
-        # Convert 'period_hour' to numeric (if it's not already)
-        df['period_hour'] = pd.to_numeric(df['period_hour'], errors='coerce')
-
-        # Add hour_start and hour_end columns
-        period_groups = df.groupby('period', observed=True)
-        pv_analytics_df['hour_start'] = period_groups['period_hour'].first().values
-        pv_analytics_df['hour_end'] = period_groups['period_hour'].last().values
-
-        # Handle wrap-around for periods like "Winter"
-        if period == 'seasonally':
-            for season in ['Winter']:
-                indices = pv_analytics_df['period'] == season
-                if indices.any():
-                    winter_hours = df[df['period'] == season]['period_hour'].values
-                    # Check for gaps in winter_hours
-                    winter_diff = winter_hours[1:] - winter_hours[:-1]
-                    gap_indices = (winter_diff > 1).nonzero()[0]  # Find indices of gaps
-
-                    if len(gap_indices) > 0:  # Winter is non-consecutive
-                        first_chunk_end = winter_hours[gap_indices[0]]  # End of the first chunk
-                        second_chunk_start = winter_hours[gap_indices[0] + 1]  # Start of the second chunk
-                        pv_analytics_df.loc[indices, 'hour_start'] = second_chunk_start
-                        pv_analytics_df.loc[indices, 'hour_end'] = first_chunk_end
-                    # If winter_hours is consecutive, no change is needed
-
-        # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
-        pv_analytics_df = add_nominal_actual_and_coverage(pv_analytics_df)
-
-        # Drop temporary 'period_hour' column
-        if 'period_hour' in pv_analytics_df.columns:
-            pv_analytics_df.drop(columns=['period_hour'], inplace=True)
-
-        # Move the period column to the first column
-        cols = ['period'] + [col for col in pv_analytics_df.columns if col != 'period']
-        pv_analytics_df = pv_analytics_df[cols]
-
-        return pv_analytics_df
-
-    list_list_df = []
-    list_list_time_period = []
-
-    # For the district
-    for list_useful_cea_results_pv in list_list_useful_cea_results_pv:
-        df_pv = aggregate_or_combine_dataframes(True, list_useful_cea_results_pv)   #hourly DataFrame for all selected buildings - pv
-        df_demand = aggregate_or_combine_dataframes(bool_use_acronym, list_list_useful_cea_results_demand[0])   #hourly DataFrame for all selected buildings - demand
-
-        list_df = []
-        list_time_period = []
-
-        if 'daily' in list_selected_time_period:
-            df_daily = calc_pv_analytics_by_period(df_pv, df_demand, 'daily', list_pv_analytics, bool_use_acronym, date_column='date')
-            # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
-            df_daily = add_nominal_actual_and_coverage(df_daily)
-            list_df.append(df_daily)
-            list_time_period.append('daily')
-
-        if 'monthly' in list_selected_time_period:
-            df_monthly = calc_pv_analytics_by_period(df_pv, df_demand, 'monthly', list_pv_analytics, bool_use_acronym, date_column='date')
-            if df_monthly is not None and not df_monthly.empty:
-                df_monthly = df_monthly[~(df_monthly['hour_start'].isnull() & df_monthly['hour_end'].isnull())]
-            # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
-            df_monthly = add_nominal_actual_and_coverage(df_monthly)
-            list_df.append(df_monthly)
-            list_time_period.append('monthly')
-
-        if 'seasonally' in list_selected_time_period:
-            df_seasonally = calc_pv_analytics_by_period(df_pv, df_demand, 'seasonally', list_pv_analytics, bool_use_acronym, date_column='date')
-            if df_seasonally is not None and not df_seasonally.empty:
-                df_seasonally = df_seasonally[~(df_seasonally['hour_start'].isnull() & df_seasonally['hour_end'].isnull())]  # Remove rows with both hour_start and hour_end empty
-            # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
-            df_seasonally = add_nominal_actual_and_coverage(df_seasonally)
-            list_df.append(df_seasonally)
-            list_time_period.append('seasonally')
-
-        if 'annually' in list_selected_time_period:
-            df_annually = calc_pv_analytics_by_period(df_pv, df_demand, 'annually', list_pv_analytics, bool_use_acronym, date_column='date')
-            # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
-            df_annually = add_nominal_actual_and_coverage(df_annually)
-            list_df.append(df_annually)
-            list_time_period.append('annually')
-
-        list_list_df.append(list_df)
-        list_list_time_period.append(list_time_period)
-
-    # Write to disk - district
-    results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_pv_analytics, list_list_df, list_list_time_period, list_appendix, bool_analytics=True, plot=plot)
+    results_writer_time_period(locator, hour_start, hour_end, summary_folder, PV_ANALYTICS,
+                               [[add_nominal_actual_and_coverage(calc_pv_analytics_by_period(district, p))
+                                 for p in periods]],
+                               [periods], [appendix], bool_analytics=True)
 
     if bool_aggregate_by_building:
-        # For each building
-        for pv_type in range(len(list_list_useful_cea_results_pv)):
-
-            annually_results = []
-            seasonally_results = []
-            monthly_results = []
-
-            appendix = list_appendix[pv_type]
-            list_useful_cea_results_pv = list_list_useful_cea_results_pv[pv_type]
-
-            annually_rows = []
-            monthly_rows = []
-            seasonally_rows = []
-
-            for df_pv, df_demand in zip(list_useful_cea_results_pv, list_list_useful_cea_results_demand[0]):
-
-                # Clean the unnecessary columns
-                columns_to_drop = ['period_hour', 'period_season', 'period_month']
-                df_pv_cleaned = df_pv.drop(columns=[col for col in columns_to_drop if col in df_pv.columns], errors='ignore')
-
-                if 'monthly' in list_selected_time_period:
-                    df_monthly = calc_pv_analytics_by_period(df_pv_cleaned, df_demand, 'monthly', list_pv_analytics, bool_use_acronym, date_column='date')
-                    if df_monthly is not None and not df_monthly.empty:
-                        df_monthly = df_monthly[~(df_monthly['hour_start'].isnull() & df_monthly['hour_end'].isnull())]
-                    # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
-                    df_monthly = add_nominal_actual_and_coverage(df_monthly)
-                    monthly_rows.extend(df_monthly.reset_index(drop=True).to_dict(orient='records'))
-
-                if 'seasonally' in list_selected_time_period:
-                    df_seasonally = calc_pv_analytics_by_period(df_pv_cleaned, df_demand, 'seasonally', list_pv_analytics, bool_use_acronym, date_column='date')
-                    if df_seasonally is not None and not df_seasonally.empty:
-                        df_seasonally = df_seasonally[~(df_seasonally['hour_start'].isnull() & df_seasonally['hour_end'].isnull())]  # Remove rows with both hour_start and hour_end empty
-                    # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
-                    df_seasonally = add_nominal_actual_and_coverage(df_seasonally)
-                    seasonally_rows.extend(df_seasonally.reset_index(drop=True).to_dict(orient='records'))
-
-                if 'annually' in list_selected_time_period:
-                    df_annually = calc_pv_analytics_by_period(df_pv_cleaned, df_demand, 'annually', list_pv_analytics, bool_use_acronym, date_column='date')
-                    # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
-                    df_annually = add_nominal_actual_and_coverage(df_annually)
-                    annually_rows.extend(df_annually.reset_index(drop=True).to_dict(orient='records'))
-
-            # Create DataFrames for each time period
-            if annually_rows:
-                annually_df = pd.DataFrame(annually_rows)
-                if not annually_df.empty:
-                    # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
-                    annually_df = add_nominal_actual_and_coverage(annually_df)
-                    annually_df.insert(0, 'name', list_buildings)
-                    annually_results.append(annually_df.reset_index(drop=True))
-
-            if monthly_rows:
-                monthly_df = pd.DataFrame(monthly_rows)
-                if not monthly_df.empty:
-                    monthly_df = monthly_df[~(monthly_df['hour_start'].isnull() & monthly_df['hour_end'].isnull())]  # Remove rows with both hour_start and hour_end empty
-                    # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
-                    monthly_df = add_nominal_actual_and_coverage(monthly_df)
-                    list_buildings_repeated = [item for item in list_buildings for _ in range(len(monthly_df['period'].unique()))]
-                    list_buildings_series = pd.Series(list_buildings_repeated, index=monthly_df.index)
-                    monthly_df.insert(0, 'name', list_buildings_series)
-                    monthly_results.append(monthly_df.reset_index(drop=True))
-
-            if seasonally_rows:
-                seasonally_df = pd.DataFrame(seasonally_rows)
-                if not seasonally_df.empty:
-                    seasonally_df = seasonally_df[~(seasonally_df['hour_start'].isnull() & seasonally_df['hour_end'].isnull())]  # Remove rows with both hour_start and hour_end empty
-                    # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
-                    seasonally_df = add_nominal_actual_and_coverage(seasonally_df)
-                    list_buildings_repeated = [item for item in list_buildings for _ in range(len(seasonally_df['period'].unique()))]
-                    list_buildings_series = pd.Series(list_buildings_repeated, index=seasonally_df.index)
-                    seasonally_df.insert(0, 'name', list_buildings_series)
-                    seasonally_results.append(seasonally_df.reset_index(drop=True))
-
-            list_list_df = [annually_results, monthly_results, seasonally_results]
-            list_time_period = ['annually', 'monthly', 'seasonally']
-
-            # Write to disk
-            results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_pv_analytics, list_list_df, [appendix], list_time_period, bool_analytics=True, plot=plot, bool_use_acronym=bool_use_acronym)
-
-
-def calc_solar_energy_penetration_by_period(df, col, demand_col='GRID_kWh'):
-    """
-    Calculate solar energy penetration by period.
-
-    Parameters:
-    - df (pd.DataFrame): Input DataFrame with columns `col` (hourly PV yield),
-                         `demand_col` (hourly energy demand),
-                         and `period` (grouping period such as seasons or days).
-    - col (str): Column name for hourly PV yield.
-    - demand_col (str): Column name for grid electricity consumption.
-
-    Returns:
-    - pd.DataFrame: A DataFrame with the penetration calculation for each unique period.
-    """
-    # Ensure the required columns are present in the DataFrame
-    required_columns = [col, demand_col, 'period']
-    missing_columns = [c for c in required_columns if c not in df.columns]
-    if missing_columns:
-        raise ValueError(f"Missing required columns: {missing_columns}")
-
-    # Group by the 'period' column and calculate the penetration ratio
-    grouped = df.groupby('period', observed=True).apply(
-        lambda group: group[col].sum() / group[demand_col].sum()
-        if group[demand_col].sum() != 0 else 0,
-        include_groups=False
-    )
-
-    # Format the result into a new DataFrame
-    df_new = grouped.reset_index(name=col)
-    df_new[col] = df_new[col].round(2)  # Round to two decimal places
-
-    return df_new
-
-
-def calc_self_sufficiency_by_period(df, col, demand_col='GRID_kWh'):
-    """
-    Calculate self-sufficiency of solar energy by period.
-
-    Parameters:
-    - df (pd.DataFrame): Input DataFrame with columns `col` (hourly PV yield),
-                         `demand_col` (hourly energy demand),
-                         and `period` (grouping period such as seasons or days).
-    - col (str): Column name for hourly PV yield.
-    - demand_col (str): Column name for grid electricity consumption.
-
-    Returns:
-    - pd.DataFrame: A DataFrame with the self-sufficiency calculation for each unique period.
-    """
-    # Ensure the required columns are present in the DataFrame
-    required_columns = [col, demand_col, 'period']
-    missing_columns = [c for c in required_columns if c not in df.columns]
-    if missing_columns:
-        raise ValueError(f"Missing required columns: {missing_columns}")
-
-    # Group by the 'period' column and calculate the self-sufficiency ratio
-    grouped = df.groupby('period', observed=True).apply(
-        lambda group: (
-            min(group[col].sum(), group[demand_col].sum()) /
-            group[demand_col].sum()
-            if group[demand_col].sum() != 0 else 0
-        ),
-        include_groups=False
-    )
-
-    # Format the result into a new DataFrame
-    df_new = grouped.reset_index(name=col)
-    df_new[col] = df_new[col].round(2)  # Round to two decimal places
-
-    return df_new
-
-
-def calc_self_consumption_by_period(df, col, demand_col='GRID_kWh'):
-    """
-    Calculate self-consumption of solar energy by period.
-
-    Parameters:
-    - df (pd.DataFrame): Input DataFrame with columns `col` (hourly PV yield),
-                         `demand_col` (hourly energy demand),
-                         and `period` (grouping period such as seasons or days).
-    - col (str): Column name for hourly PV yield.
-    - demand_col (str): Column name for grid electricity consumption.
-
-    Returns:
-    - pd.DataFrame: A DataFrame with the self-consumption calculation for each unique period.
-    """
-    # Ensure the required columns are present in the DataFrame
-    required_columns = [col, demand_col, 'period']
-    missing_columns = [c for c in required_columns if c not in df.columns]
-    if missing_columns:
-        raise ValueError(f"Missing required columns: {missing_columns}")
-
-    # Group by the 'period' column and calculate the self-consumption ratio
-    grouped = df.groupby('period', observed=True).apply(
-        lambda group: (
-    min(group[col].sum(), group[demand_col].sum()) /
-    group[col].sum()
-    if group[col].sum() != 0 else 0
-    ), include_groups=False)
-    # Format the result into a new DataFrame
-    df_new = grouped.reset_index(name=col)
-    df_new[col] = df_new[col].round(2)  # Round to two decimal places
-
-    return df_new
+        for period in periods:
+            rows = []
+            for building, series in series_by_building.items():
+                df = add_nominal_actual_and_coverage(calc_pv_analytics_by_period(series, period))
+                if df is not None:
+                    df.insert(0, 'name', building)
+                    rows.append(df)
+            if rows:
+                results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, PV_ANALYTICS,
+                                                    [[pd.concat(rows, ignore_index=True)]], [appendix], [period],
+                                                    bool_analytics=True, bool_use_acronym=bool_use_acronym)
 
 
 def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, summary_folder, list_time_period,
@@ -2685,11 +2303,11 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
 
 list_metrics_building_energy_demand = ['enduse_electricity_demand[kWh]','enduse_cooling_demand[kWh]','enduse_space_cooling_demand[kWh]','enduse_heating_demand[kWh]','enduse_space_heating_demand[kWh]','enduse_dhw_demand[kWh]']
 list_metrics_solar_irradiation = ['irradiation_roof[kWh]', 'irradiation_window_north[kWh]', 'irradiation_wall_north[kWh]', 'irradiation_window_south[kWh]', 'irradiation_wall_south[kWh]', 'irradiation_window_east[kWh]', 'irradiation_wall_east[kWh]', 'irradiation_window_west[kWh]', 'irradiation_wall_west[kWh]']
-list_metrics_photovoltaic_panels = ['PV_installed_area_total[m2]', 'PV_electricity_total[kWh]', 'PV_installed_area_roof[m2]', 'PV_electricity_roof[kWh]', 'PV_installed_area_north[m2]', 'PV_electricity_north[kWh]', 'PV_installed_area_south[m2]', 'PV_electricity_south[kWh]', 'PV_installed_area_east[m2]', 'PV_electricity_east[kWh]', 'PV_installed_area_west[m2]', 'PV_electricity_west[kWh]']
-list_metrics_photovoltaic_thermal_panels_et = ['PVT_ET_installed_area_total[m2]', 'PVT_ET_electricity_total[kWh]', 'PVT_ET_heat_total[kWh]', 'PVT_ET_installed_area_roof[m2]', 'PVT_ET_electricity_roof[kWh]', 'PVT_ET_heat_roof[kWh]', 'PVT_ET_installed_area_north[m2]', 'PVT_ET_electricity_north[kWh]', 'PVT_ET_heat_north[kWh]', 'PVT_ET_installed_area_south[m2]', 'PVT_ET_electricity_south[kWh]', 'PVT_ET_heat_south[kWh]', 'PVT_ET_installed_area_east[m2]', 'PVT_ET_electricity_east[kWh]', 'PVT_ET_heat_east[kWh]', 'PVT_ET_installed_area_west[m2]', 'PVT_ET_electricity_west[kWh]', 'PVT_ET_heat_west[kWh]']
-list_metrics_photovoltaic_thermal_panels_fp = ['PVT_FP_installed_area_total[m2]', 'PVT_FP_electricity_total[kWh]', 'PVT_FP_heat_total[kWh]', 'PVT_FP_installed_area_roof[m2]', 'PVT_FP_electricity_roof[kWh]', 'PVT_FP_heat_roof[kWh]', 'PVT_FP_installed_area_north[m2]', 'PVT_FP_electricity_north[kWh]', 'PVT_FP_heat_north[kWh]', 'PVT_FP_installed_area_south[m2]', 'PVT_FP_electricity_south[kWh]', 'PVT_FP_heat_south[kWh]', 'PVT_FP_installed_area_east[m2]', 'PVT_FP_electricity_east[kWh]', 'PVT_FP_heat_east[kWh]', 'PVT_FP_installed_area_west[m2]', 'PVT_FP_electricity_west[kWh]', 'PVT_FP_heat_west[kWh]']
-list_metrics_solar_collectors_et = ['SC_ET_installed_area_total[m2]', 'SC_ET_heat_total[kWh]', 'SC_ET_installed_area_roof[m2]', 'SC_ET_heat_roof[kWh]', 'SC_ET_installed_area_north[m2]', 'SC_ET_heat_north[kWh]', 'SC_ET_installed_area_south[m2]', 'SC_ET_heat_south[kWh]', 'SC_ET_installed_area_east[m2]', 'SC_ET_heat_east[kWh]', 'SC_ET_installed_area_west[m2]', 'SC_ET_heat_west[kWh]']
-list_metrics_solar_collectors_fp = ['SC_FP_installed_area_total[m2]','SC_FP_heat_total[kWh]','SC_FP_installed_area_roof[m2]','SC_FP_heat_roof[kWh]','SC_FP_installed_area_north[m2]','SC_FP_heat_north[kWh]','SC_FP_installed_area_south[m2]','SC_FP_heat_south[kWh]','SC_FP_installed_area_east[m2]','SC_FP_heat_east[kWh]','SC_FP_installed_area_west[m2]','SC_FP_heat_west[kWh]']
+list_metrics_photovoltaic_panels = ['PV_potential_area_total[m2]', 'PV_electricity_total[kWh]', 'PV_potential_area_roof[m2]', 'PV_electricity_roof[kWh]', 'PV_potential_area_north[m2]', 'PV_electricity_north[kWh]', 'PV_potential_area_south[m2]', 'PV_electricity_south[kWh]', 'PV_potential_area_east[m2]', 'PV_electricity_east[kWh]', 'PV_potential_area_west[m2]', 'PV_electricity_west[kWh]']
+list_metrics_photovoltaic_thermal_panels_et = ['PVT_ET_potential_area_total[m2]', 'PVT_ET_electricity_total[kWh]', 'PVT_ET_heat_total[kWh]', 'PVT_ET_potential_area_roof[m2]', 'PVT_ET_electricity_roof[kWh]', 'PVT_ET_heat_roof[kWh]', 'PVT_ET_potential_area_north[m2]', 'PVT_ET_electricity_north[kWh]', 'PVT_ET_heat_north[kWh]', 'PVT_ET_potential_area_south[m2]', 'PVT_ET_electricity_south[kWh]', 'PVT_ET_heat_south[kWh]', 'PVT_ET_potential_area_east[m2]', 'PVT_ET_electricity_east[kWh]', 'PVT_ET_heat_east[kWh]', 'PVT_ET_potential_area_west[m2]', 'PVT_ET_electricity_west[kWh]', 'PVT_ET_heat_west[kWh]']
+list_metrics_photovoltaic_thermal_panels_fp = ['PVT_FP_potential_area_total[m2]', 'PVT_FP_electricity_total[kWh]', 'PVT_FP_heat_total[kWh]', 'PVT_FP_potential_area_roof[m2]', 'PVT_FP_electricity_roof[kWh]', 'PVT_FP_heat_roof[kWh]', 'PVT_FP_potential_area_north[m2]', 'PVT_FP_electricity_north[kWh]', 'PVT_FP_heat_north[kWh]', 'PVT_FP_potential_area_south[m2]', 'PVT_FP_electricity_south[kWh]', 'PVT_FP_heat_south[kWh]', 'PVT_FP_potential_area_east[m2]', 'PVT_FP_electricity_east[kWh]', 'PVT_FP_heat_east[kWh]', 'PVT_FP_potential_area_west[m2]', 'PVT_FP_electricity_west[kWh]', 'PVT_FP_heat_west[kWh]']
+list_metrics_solar_collectors_et = ['SC_ET_potential_area_total[m2]', 'SC_ET_heat_total[kWh]', 'SC_ET_potential_area_roof[m2]', 'SC_ET_heat_roof[kWh]', 'SC_ET_potential_area_north[m2]', 'SC_ET_heat_north[kWh]', 'SC_ET_potential_area_south[m2]', 'SC_ET_heat_south[kWh]', 'SC_ET_potential_area_east[m2]', 'SC_ET_heat_east[kWh]', 'SC_ET_potential_area_west[m2]', 'SC_ET_heat_west[kWh]']
+list_metrics_solar_collectors_fp = ['SC_FP_potential_area_total[m2]','SC_FP_heat_total[kWh]','SC_FP_potential_area_roof[m2]','SC_FP_heat_roof[kWh]','SC_FP_potential_area_north[m2]','SC_FP_heat_north[kWh]','SC_FP_potential_area_south[m2]','SC_FP_heat_south[kWh]','SC_FP_potential_area_east[m2]','SC_FP_heat_east[kWh]','SC_FP_potential_area_west[m2]','SC_FP_heat_west[kWh]']
 list_metrics_other_renewables = ['geothermal_heat_potential[kWh]','area_for_ground_source_heat_pump[m2]', 'sewage_heat_potential[kWh]', 'water_body_heat_potential[kWh]']
 list_metrics_district_heating = ['DH_plant_thermal_load[kWh]','DH_electricity_consumption_for_pressure_loss[kWh]']
 list_metrics_district_cooling = ['DC_plant_thermal_load[kWh]','DC_electricity_consumption_for_pressure_loss[kWh]']
@@ -2699,43 +2317,30 @@ list_metrics_lifecycle_emissions = []  # populated via get_emission_context()["l
 list_metrics_operational_emissions = []  # populated via get_emission_context()["list_metrics_operational_emissions"]
 list_metrics_heat_rejection = ['heat_rejection[kWh]']
 
-def _get_solar_metric_lists(solar_technologies):
-    """Given a list of solar technology codes (e.g. ['PV_PV1', 'SC_ET']),
-    return the corresponding metric lists."""
-    result = []
-    if not solar_technologies:
-        return result
-    for tech in solar_technologies:
-        if tech.startswith('PV_') and not tech.startswith('PVT_'):
-            if list_metrics_photovoltaic_panels not in result:
-                result.append(list_metrics_photovoltaic_panels)
-        elif tech.startswith('PVT_'):
-            if '_ET' in tech or '_ET_' in tech:
-                if list_metrics_photovoltaic_thermal_panels_et not in result:
-                    result.append(list_metrics_photovoltaic_thermal_panels_et)
-            if '_FP' in tech or '_FP_' in tech:
-                if list_metrics_photovoltaic_thermal_panels_fp not in result:
-                    result.append(list_metrics_photovoltaic_thermal_panels_fp)
-        elif tech.startswith('SC_'):
-            if '_ET' in tech:
-                if list_metrics_solar_collectors_et not in result:
-                    result.append(list_metrics_solar_collectors_et)
-            if '_FP' in tech:
-                if list_metrics_solar_collectors_fp not in result:
-                    result.append(list_metrics_solar_collectors_fp)
-    return result
+# Solar potential families, in summary order.
+list_list_metrics_solar_potentials = [
+    list_metrics_photovoltaic_panels,
+    list_metrics_photovoltaic_thermal_panels_et,
+    list_metrics_photovoltaic_thermal_panels_fp,
+    list_metrics_solar_collectors_et,
+    list_metrics_solar_collectors_fp,
+]
 
 
-def get_list_list_metrics_with_date(config):
+def _get_solar_potential_metric_lists(locator, list_buildings):
+    """The solar potential families (PV, PVT, SC) with a result file for at least one building."""
+    return [list_metrics for list_metrics in list_list_metrics_solar_potentials
+            if get_results_path(locator, map_metrics_cea_features(list_metrics), list_buildings)[0]]
+
+
+def get_list_list_metrics_with_date(config, locator, list_buildings):
     list_list_metrics_with_date = []
     if config.result_summary.building_energy_demand:
         list_list_metrics_with_date.append(list_metrics_building_energy_demand)
     if config.result_summary.solar_irradiation:
         list_list_metrics_with_date.append(list_metrics_solar_irradiation)
-
-    # Solar technologies (multi-choice: e.g. ['PV_PV1', 'SC_ET', 'PVT_PV1_FP'])
-    solar_technologies = config.result_summary.solar_technologies or []
-    list_list_metrics_with_date.extend(_get_solar_metric_lists(solar_technologies))
+    if config.result_summary.solar_energy_potentials:
+        list_list_metrics_with_date.extend(_get_solar_potential_metric_lists(locator, list_buildings))
 
     # Network metrics are handled separately per network in process_building_summary
     return list_list_metrics_with_date
@@ -2800,15 +2405,14 @@ def get_list_list_metrics_without_date_plot(list_cea_feature_to_plot):
     return list_list_metrics_without_date
 
 
-def get_list_list_metrics_building(config):
+def get_list_list_metrics_building(config, locator, list_buildings):
     list_list_metrics_building = []
     if config.result_summary.building_energy_demand:
         list_list_metrics_building.append(list_metrics_building_energy_demand)
     if config.result_summary.solar_irradiation:
         list_list_metrics_building.append(list_metrics_solar_irradiation)
-
-    solar_technologies = config.result_summary.solar_technologies or []
-    list_list_metrics_building.extend(_get_solar_metric_lists(solar_technologies))
+    if config.result_summary.solar_energy_potentials:
+        list_list_metrics_building.extend(_get_solar_potential_metric_lists(locator, list_buildings))
 
     return list_list_metrics_building
 
@@ -3399,9 +3003,9 @@ def process_building_summary(config, locator,
 
     # Step 1: Get Selected Metrics
     if not plot:
-        list_list_metrics_with_date = get_list_list_metrics_with_date(config)
+        list_list_metrics_with_date = get_list_list_metrics_with_date(config, locator, list_buildings)
         list_list_metrics_without_date = get_list_list_metrics_without_date(config)
-        list_list_metrics_building = get_list_list_metrics_building(config)
+        list_list_metrics_building = get_list_list_metrics_building(config, locator, list_buildings)
 
     else:
         if list_cea_feature_to_plot is not None:
@@ -3511,8 +3115,7 @@ def process_building_summary(config, locator,
                     errors_encountered.append(error_msg)
                     print(f"Warning: {error_msg}")
                     print("         Continuing with remaining analytics...")
-            # PV analytics skipped — requires grid consumption from what-if final-energy
-            # TODO: re-enable with what-if-aware PV analytics
+            # PV analytics are written by the summary only (see the non-plot branch below)
             if any(item in list_cea_feature_to_plot for item in ['operational_emissions']):
                 try:
                     calc_ubem_analytics_normalised(locator, hour_start, hour_end, "operational_emissions", summary_folder,
@@ -3535,8 +3138,20 @@ def process_building_summary(config, locator,
                     print(f"Warning: {error_msg}")
                     print("         Continuing with remaining analytics...")
 
-            # PV analytics skipped — requires grid consumption from what-if final-energy
-            # TODO: re-enable with what-if-aware PV analytics
+            # PV analytics for the PV installed in each selected final-energy what-if
+            for whatif_name in config.result_summary.what_if_name_final_energy or []:
+                appendix = f"pv_installed_{whatif_name}"
+                try:
+                    district = read_district_pv_series(locator, whatif_name, hour_start, hour_end)
+                    series_by_building = read_building_pv_series(locator, whatif_name, list_buildings, hour_start, hour_end)
+                    calc_pv_analytics(locator, hour_start, hour_end, summary_folder, district, series_by_building,
+                                      appendix, list_selected_time_period, bool_aggregate_by_building,
+                                      bool_use_acronym)
+                except Exception as e:
+                    error_msg = f"Step 9 (Advanced Analytics - {appendix}): {str(e)}"
+                    errors_encountered.append(error_msg)
+                    print(f"Warning: {error_msg}")
+                    print("         Continuing with remaining analytics...")
 
             if config.result_summary.what_if_name_emissions:
                 try:

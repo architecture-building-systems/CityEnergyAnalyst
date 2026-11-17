@@ -34,7 +34,7 @@ from typing import Any, Mapping, Optional
 
 from cea.inputlocator import InputLocator
 from cea.kpi.exceptions import KPIDefinitionError
-from cea.kpi.registry import load_registry
+from cea.kpi.registry import KPI_ALIASES, load_registry
 from cea.kpi.resolver import (
     KPIResult,
     _resolve_source_path,
@@ -74,6 +74,7 @@ def compute_kpi_cached(
     shared single-record-per-id slot — see ``_cache_key`` below for
     the encoding.
     """
+    kpi_id = KPI_ALIASES.get(kpi_id, kpi_id)
     registry = load_registry()
     if kpi_id not in registry:
         raise KPIDefinitionError(f"unknown KPI id '{kpi_id}'")

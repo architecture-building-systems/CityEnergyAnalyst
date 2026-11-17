@@ -16,8 +16,9 @@ Adding a new node kind is a four-step change:
 4. document the new shape in ``schema.py``'s module docstring.
 
 Keep the set small — every new kind is forever, every yml author
-has to learn it. v1 ships with five (``column``, ``sum_columns``,
-``aggregate``, ``divide``, ``share_of``).
+has to learn it. v1 ships with ``column``, ``sum_columns``,
+``aggregate``, ``divide``, ``share_of`` and ``pv_analytics`` (the
+summary's annual PV analytics, computed by the summary's code).
 """
 
 from __future__ import annotations
@@ -26,6 +27,7 @@ from typing import Iterable
 
 import pandas as pd
 
+from cea.analysis.final_energy.pv_analytics import calc_pv_analytics_by_period, district_pv_series
 from cea.kpi.exceptions import KPIDefinitionError, KPINotAvailable
 
 __author__ = "Zhongming Shi"
@@ -102,6 +104,9 @@ def evaluate(node, df: pd.DataFrame, *, kpi_id: str):
             raise KPINotAvailable(kpi_id, reason="zero whole in share_of")
         return float(part / whole) * 100.0
 
+    if kind == "pv_analytics":
+        return _pv_analytics(node.metric, df, kpi_id=kpi_id)
+
     raise KPIDefinitionError(f"{kpi_id}: unknown formula kind '{kind}'")
 
 
@@ -122,6 +127,8 @@ def columns_referenced(node) -> Iterable[str]:
     elif kind == "share_of":
         yield from columns_referenced(node.part)
         yield from columns_referenced(node.whole)
+    elif kind == "pv_analytics":
+        yield from _PV_ANALYTICS_COLUMNS
     else:
         raise KPIDefinitionError(f"unknown formula kind '{kind}'")
 
@@ -129,13 +136,31 @@ def columns_referenced(node) -> Iterable[str]:
 # ── Helpers ─────────────────────────────────────────────────────────
 
 
+_PV_ANALYTICS_COLUMNS = ("date", "PV_kWh", "GRID_kWh")
+# metric -> (summary column, the series whose total is its denominator)
+_PV_ANALYTICS_METRICS = {
+    "generation_to_load": ("PV_generation_to_load[-]", "load_kWh"),
+    "self_consumption": ("PV_self_consumption[-]", "generation_kWh"),
+    "self_sufficiency": ("PV_self_sufficiency[-]", "load_kWh"),
+}
+
+
+def _pv_analytics(metric: str, df: pd.DataFrame, *, kpi_id: str) -> float:
+    series = district_pv_series(df)
+    column, denominator = _PV_ANALYTICS_METRICS[metric]
+    if series[denominator].sum() == 0:
+        what = "PV generation" if denominator == "generation_kWh" else "grid electricity"
+        raise KPINotAvailable(kpi_id, reason=f"no {what} in this what-if")
+    annual = calc_pv_analytics_by_period(series, "annually")
+    # A what-if covers one weather year, so "annually" is a single row.
+    return float(annual[column].iloc[0]) * 100.0
+
+
 def _read_column(df: pd.DataFrame, name: str, *, kpi_id: str) -> pd.Series:
     if name not in df.columns:
-        # The registry validates column references against
-        # schemas.yml at load time; the only way a missing column
-        # reaches the evaluator is if the upstream tool emitted a
-        # CSV that doesn't match its declared schema (rare, but
-        # worth surfacing as KPINotAvailable rather than 500).
+        # `compute_kpi` checks every referenced column first (and
+        # names the tool to re-run); this is the backstop for
+        # callers of `evaluate` that skip that check.
         raise KPINotAvailable(
             kpi_id,
             reason=f"source CSV is missing column '{name}'",

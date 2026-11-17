@@ -2396,8 +2396,8 @@ class SolarPanelChoicesMixin:
                 return candidate
 
         # SC: SC1 -> look up `type` column in SOLAR_COLLECTORS.csv -> SC_{type}.
-        # One DB read per resolve is cheap; cache the DataFrame on the
-        # class to avoid re-reading for multi-choice lists.
+        # One DB read per resolve is cheap; cache the mapping on the
+        # class to avoid re-reading it for every value.
         if value.startswith('SC') and not value.startswith('SC_'):
             sc_type = self._sc_type_for_code(value)
             if sc_type:
@@ -2492,16 +2492,6 @@ class SolarPanelChoiceParameter(SolarPanelChoicesMixin, ChoiceParameter):
 
     def decode(self, value):
         return self._decode_solar_single(value)
-
-
-class SolarPanelMultiChoiceParameter(SolarPanelChoicesMixin, MultiChoiceParameter):
-    """
-    Multi-choice version of SolarPanelChoiceParameter.
-    Allows selecting multiple solar technology types from available results.
-    """
-
-    empty_means_all = False
-    strict_validation = True
 
 
 class StandardMultiChoiceParameter(ColumnMultiChoiceParameter):

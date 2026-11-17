@@ -18288,7 +18288,7 @@ get_final_energy_buildings_file:
         unit: '[MWh/yr]'
         min: 0.0
       TOTAL_MWh:
-        description: Total annual final energy consumption (sum of all carriers)
+        description: Total annual final energy consumption of this building or plant (sum of all carriers, including district heating and cooling bought). Do not sum across buildings and plants -- network heat and cold would be counted twice; use TOTAL_kWh in final_energy.csv
         type: float
         unit: '[MWh/yr]'
         min: 0.0
@@ -18389,7 +18389,7 @@ get_final_energy_file:
         min: 0.0
         nullable: true
       TOTAL_kWh:
-        description: Hourly total final energy consumption (sum of all carriers)
+        description: Hourly final energy entering the district (buildings' carriers plus plants' fuel and electricity; heat and cold a plant supplies are counted once, at the plant)
         type: float
         unit: '[kWh]'
         min: 0.0

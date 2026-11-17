@@ -2829,7 +2829,7 @@ Supply system types per building. Derived from each building's archetype by the 
 
 - **Path**: `inputs/tree-geometry/trees.shp`
 - **File type**: `shp`
-- **Created by**: `tree_helper`
+- **Created by**: `trees_helper`
 - **Used by**: `radiation`
 
 | Variable | Description | Type | Unit | Values |

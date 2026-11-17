@@ -56,7 +56,7 @@ Files in this category: **6**
 |----------|-------------|------|------|--------|
 | `floors_ag` | Number of floors above ground (incl. ground floor, Minimum one floor is needed) | int | `[-]` | {1...n} |
 | `geometry` | Shapefile POLYGON | Polygon | `NA` |  |
-| `height_ag` | Height above ground (incl. ground floor, Minimum one floor is needed) | float | `[m]` | {2.0...n} |
+| `height_ag` | Height above ground, must be greater than 0. Surroundings only cast shadows on the zone | float | `[m]` | {0.0...n} |
 | `name` | Unique building ID. It must start with a letter. | string | `NA` | alphanumeric |
 | `REFERENCE` | Reference to data (if any) | string | `NA` | alphanumeric |
 
@@ -146,7 +146,7 @@ Files in this category: **6**
 | `use_type2r` | Fraction of gross floor area for second Use Type | float | `[m2/m2]` | {0.0...1.0} |
 | `use_type3` | Third Use type of the building | string | `[-]` | alphanumeric |
 | `use_type3r` | Fraction of gross floor area for third Use Type | float | `[m2/m2]` | {0.0...1.0} |
-| `void_deck` | Legacy column - number of floors (from the ground up) with an open envelope (default = 0, should be lower than floors_ag). Here floors_ag spans the whole above-ground height, void storeys included, so the enclosed storey count is floors_ag minus void_deck. Superseded by height_vd, which records the void in metres and is not tied to whole storeys. Still fully supported - CEA-3 scenarios are migrated onto this column unchanged. Where both are present, height_vd is used. | int | `[-]` | {0...n} |
+| `void_deck` | Legacy column - number of floors (from the ground up) with an open envelope (default = 0, should be lower than floors_ag). Here floors_ag spans the whole above-ground height, void storeys included, so the enclosed storey count is floors_ag minus void_deck. Superseded by height_vd, which records the void in metres and is not tied to whole storeys. Still fully supported - CEA-3 scenarios are migrated onto this column unchanged. Where both are present, height_vd is used. Optional - a blank cell means no void deck. | int | `[-]` | {0...n} |
 | `year` | Construction year | int | `[-]` | {0...n} |
 
 ---
