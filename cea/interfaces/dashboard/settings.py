@@ -57,6 +57,17 @@ class Settings(BaseSettings):
     # Local only settings
     config_path: Optional[str] = "~/cea.config"
 
+    example_project_ref: Optional[str] = Field(
+        default=None,
+        description=(
+            "cea-examples tag, branch or commit SHA used when creating a project from the example template. "
+            "Unset (default) uses the tag matching the running CEA version and falls back to 'main' if that "
+            "tag does not exist. A configured ref never falls back. Tags and SHAs are cached; branches "
+            "(e.g. 'main') are re-downloaded each time and may differ between containers. "
+            "Env: CEA_EXAMPLE_PROJECT_REF='v4.0.0-beta.3'."
+        ),
+    )
+
     public_demo_scenarios: Annotated[Dict[str, str], NoDecode] = Field(
         default_factory=dict,
         description=(

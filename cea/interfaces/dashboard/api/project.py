@@ -1,6 +1,7 @@
 import glob
 import json
 import os
+import re
 import shutil
 import tempfile
 import traceback
@@ -170,11 +171,17 @@ class ConfigProjectInfo(BaseModel):
 class NewScenarioInfo(BaseModel):
     name: str
 
+# Prefix of transient staging folders created in the project root while fetching the example project
+EXAMPLE_STAGING_PREFIX = ".cea_example_"
+
+
 async def get_project_choices(project_root):
     try:
         projects = []
         for _path in os.listdir(project_root):
             full_path = os.path.join(project_root, _path)
+            if _path.startswith(EXAMPLE_STAGING_PREFIX):
+                continue  # in-flight example project staging folder, not a project
             if os.path.isdir(full_path) and os.access(full_path, os.R_OK):
                 # Optionally: Add validation that this is a valid project directory
                 projects.append(_path)
@@ -259,9 +266,22 @@ async def create_new_project(project_root: CEAProjectRoot, new_project: NewProje
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
+
+    # Check the normalised path (not the raw name, which "x/../.cea_example_y" would slip past):
+    # folders with this prefix are hidden from project discovery
+    if any(part.startswith(EXAMPLE_STAGING_PREFIX) for part in os.path.relpath(project, _root).split(os.sep)):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Project names cannot start with '{EXAMPLE_STAGING_PREFIX}'",
+        )
     try:
         if new_project.example_project:
-            await run_in_threadpool(lambda: fetch_example_project(project))
+            try:
+                await run_in_threadpool(lambda: fetch_example_project(project))
+            except ExampleProjectExistsError as e:
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+            except ExampleProjectError as e:
+                raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
         else:
             os.makedirs(project, exist_ok=True)
         try:
@@ -743,48 +763,134 @@ async def duplicate_scenario(project: CEAProject, scenario: str, new_scenario_in
             detail='Unable to duplicate scenario.',
         )
 
-EXAMPLE_PROJECT_TAG = "v4.0.0-beta.3"
 EXAMPLE_PROJECT_NAME = "reference-case-open"
-def fetch_example_project(project_path, tag=EXAMPLE_PROJECT_TAG, example_project_name=EXAMPLE_PROJECT_NAME):
-    """Fetch example project into the given project folder"""
-    # TODO: Replace this with a more robust method of fetching example projects
+EXAMPLE_PROJECT_FALLBACK_REF = "main"
+# Refs that are immutable and safe to cache: commit SHAs and version tags (e.g. v4.0.0-beta.3).
+# Anything else is treated as a branch (e.g. main), which moves, so it is never cached.
+_IMMUTABLE_REF = re.compile(r"^([0-9a-f]{7,40}|v?\d+(\.\d+)*([-.+\w]*))$")
+
+
+class ExampleProjectError(Exception):
+    """Raised when the example project cannot be fetched from cea-examples."""
+
+
+class ExampleProjectExistsError(ExampleProjectError):
+    """Raised when the destination project folder already exists."""
+
+
+def _download_example_project(project_path, ref, example_project_name):
+    """Copy ``example_project_name`` from cea-examples at ``ref`` into ``project_path``.
+
+    Tags and SHAs are cached in the temp dir; branches are downloaded fresh every time.
+    Raises ``requests.HTTPError`` (404 if the ref does not exist) or ``zipfile.BadZipFile``.
+    """
     import zipfile
     import requests
     from io import BytesIO
 
+    cacheable = bool(_IMMUTABLE_REF.match(ref))
     project_repo = "cea-examples"
-    url = f"https://github.com/architecture-building-systems/{project_repo}/archive/refs/tags/{EXAMPLE_PROJECT_TAG}.zip"
-    # Save to temp directory and return if already exists
-    temp_dir = os.path.join(tempfile.gettempdir(), "cea_example_project")
-    if os.path.exists(temp_dir):
-        logger.info(f"Using cached example project from {temp_dir} to {project_path}")
-        shutil.copytree(temp_dir, project_path)
+    # generic archive URL resolves tags, branches and SHAs
+    url = f"https://github.com/architecture-building-systems/{project_repo}/archive/{ref}.zip"
+
+    cache_dir = os.path.join(tempfile.gettempdir(), f"cea_example_project_{ref.replace('/', '_')}")
+    if cacheable and os.path.exists(cache_dir):
+        logger.info(f"Using cached example project from {cache_dir} to {project_path}")
+        shutil.copytree(cache_dir, project_path)
         return
 
-    extract_path = os.path.join(tempfile.gettempdir(), "cea_example_project_temp")
-    os.makedirs(extract_path, exist_ok=True)
-
+    extract_path = tempfile.mkdtemp(prefix="cea_example_project_")
     try:
-        response = requests.get(url)
+        response = requests.get(url, timeout=60)
         response.raise_for_status()  # Raise an error for bad status codes
 
         with zipfile.ZipFile(BytesIO(response.content)) as zf:
-            # Extract only the contents of the example project folder
-            suffix = tag if not tag.startswith('v') else tag[1:]
-            example_path = os.path.join(f"{project_repo}-{suffix}", example_project_name)
-            members = [m for m in zf.namelist() if m.startswith(example_path) and not m.endswith('/')]
+            # GitHub names the top-level folder after the ref (tag "v" prefix stripped, "/" -> "-"),
+            # so read it from the archive instead of guessing
+            root = zf.namelist()[0].split('/')[0]
+            example_path = f"{root}/{example_project_name}"
+            members = [m for m in zf.namelist() if m.startswith(example_path + '/') and not m.endswith('/')]
+            if not members:
+                raise FileNotFoundError(f"'{example_project_name}' not found in {project_repo}@{ref}")
             zf.extractall(path=extract_path, members=members)
-        logger.info(f"Moving example project from {extract_path} to {temp_dir}")
-        shutil.move(os.path.join(extract_path, example_path), temp_dir)
-        shutil.copytree(temp_dir, project_path)
-        shutil.rmtree(extract_path)
 
+        extracted = os.path.join(extract_path, example_path)
+        if cacheable:
+            logger.info(f"Moving example project from {extracted} to {cache_dir}")
+            try:
+                # rename is atomic and fails if cache_dir already exists (unlike shutil.move, which
+                # would nest the folder inside it), so concurrent downloads cannot corrupt the cache
+                os.rename(extracted, cache_dir)
+            except OSError:
+                if not os.path.exists(cache_dir):
+                    raise
+                logger.info(f"Example project cache {cache_dir} was published by another request")
+            shutil.copytree(cache_dir, project_path)
+        else:
+            shutil.copytree(extracted, project_path)
+    finally:
+        shutil.rmtree(extract_path, ignore_errors=True)
+
+
+def fetch_example_project(project_path, ref=None, example_project_name=EXAMPLE_PROJECT_NAME):
+    """Fetch example project into the given project folder.
+
+    ``ref`` is a cea-examples tag, branch or commit SHA. If not given, ``Settings.example_project_ref``
+    (env ``CEA_EXAMPLE_PROJECT_REF``) is used. If that is unset too, the tag for the running CEA version
+    (``v{cea.__version__}``) is tried first, falling back to ``main`` when that tag does not exist.
+    An explicitly configured ref never falls back.
+
+    :raises ExampleProjectExistsError: if ``project_path`` already exists (it is never overwritten)
+    :raises ExampleProjectError: if the example project could not be downloaded or extracted
+    """
+    # TODO: Replace this with a more robust method of fetching example projects
+    import zipfile
+    import requests
+
+    if os.path.exists(project_path):
+        raise ExampleProjectExistsError(f"Project folder already exists: {os.path.basename(project_path)}")
+
+    explicit = ref or get_settings().example_project_ref
+    refs = [explicit] if explicit else [f"v{cea.__version__}", EXAMPLE_PROJECT_FALLBACK_REF]
+
+    # Stage in a request-owned folder next to the destination (same filesystem), then publish with a
+    # non-overwriting rename. Cleanup only ever touches the staging folder, never project_path, so a
+    # concurrent request that created project_path first is left intact.
+    parent = os.path.dirname(os.path.abspath(project_path))
+    os.makedirs(parent, exist_ok=True)
+    staging = tempfile.mkdtemp(prefix=EXAMPLE_STAGING_PREFIX, dir=parent)
+    try:
+        staged_project = os.path.join(staging, "project")
+        for i, candidate in enumerate(refs):
+            try:
+                _download_example_project(staged_project, candidate, example_project_name)
+                break
+            except requests.HTTPError as e:
+                is_last = i == len(refs) - 1
+                if is_last or e.response is None or e.response.status_code != 404:
+                    raise
+                logger.info(f"cea-examples ref '{candidate}' not found, falling back to '{refs[i + 1]}'")
+        try:
+            os.rename(staged_project, project_path)
+        except OSError as e:
+            if os.path.exists(project_path):
+                raise ExampleProjectExistsError(
+                    f"Project folder already exists: {os.path.basename(project_path)}") from e
+            raise
+    except ExampleProjectError:
+        raise
     except requests.RequestException as e:
         logger.error(f"Failed to download example project: {e}")
+        raise ExampleProjectError(f"Failed to download example project (ref: {', '.join(refs)}): {e}") from e
     except zipfile.BadZipFile as e:
         logger.error(f"Downloaded file is not a valid zip file: {e}")
-    except Exception as e:
+        raise ExampleProjectError("Downloaded example project is not a valid zip file") from e
+    except (OSError, ValueError) as e:
         logger.error(f"An error occurred while fetching the example project: {e}")
+        raise ExampleProjectError(f"Unable to fetch example project: {e}") from e
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
+
 
 class ZoneFileNotFound(ValueError):
     """Raised when a zone file is not found."""
