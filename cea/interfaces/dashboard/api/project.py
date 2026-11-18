@@ -258,12 +258,6 @@ async def create_new_project(project_root: CEAProjectRoot, new_project: NewProje
             detail="Project root not defined",
         )
 
-    if new_project.project_name.startswith(EXAMPLE_STAGING_PREFIX):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Project names cannot start with '{EXAMPLE_STAGING_PREFIX}'",
-        )
-
     _root = new_project.project_root or project_root
     try:
         project = secure_path(os.path.join(_root, new_project.project_name))
@@ -271,6 +265,14 @@ async def create_new_project(project_root: CEAProjectRoot, new_project: NewProje
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
+        )
+
+    # Check the normalised path (not the raw name, which "x/../.cea_example_y" would slip past):
+    # folders with this prefix are hidden from project discovery
+    if any(part.startswith(EXAMPLE_STAGING_PREFIX) for part in os.path.relpath(project, _root).split(os.sep)):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Project names cannot start with '{EXAMPLE_STAGING_PREFIX}'",
         )
     try:
         if new_project.example_project:
