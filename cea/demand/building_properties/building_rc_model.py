@@ -116,8 +116,6 @@ class BuildingRCModel:
 
         df = pd.DataFrame(index=geometry.index)
 
-        # df = df.merge(typology, left_index=True, right_index=True)
-
         for building in self.building_names:
             has_system_heating_flag = has_heating_system(hvac_temperatures.loc[building, 'class_hs'])
             has_system_cooling_flag = has_cooling_system(hvac_temperatures.loc[building, 'class_cs'])
@@ -129,10 +127,6 @@ class BuildingRCModel:
         # area of all surfaces facing the building zone
         df['Atot'] = areas_df['Af'] * LAMBDA_AT
 
-        # if 'Cm_Af' in self.get_overrides_columns():
-        #     # Internal heat capacity is not part of input, calculate [J/K]
-        #     df['Cm'] = self._overrides['Cm_Af'] * df['Af']
-        # else:
         df['Cm'] = envelope['Cm_Af'] * areas_df['Af']
 
         df['Am'] = envelope['Cm_Af'].apply(self.lookup_effective_mass_area_factor) * areas_df['Af']  # Effective mass area in [m2]
