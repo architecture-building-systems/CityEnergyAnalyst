@@ -445,7 +445,7 @@ def calculate_average_multiuse(fields, properties_df, occupant_densities, list_u
                 else:
                     properties_df.loc[building, column] = 0
 
-        elif column in {'Ea_Wm2', 'El_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Ed_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2', 'Occ_m2p'}:
+        elif column in {'Ea_Wm2', 'El_Wm2', 'Epro_Wm2', 'Qcre_Wm2', 'Ed_Wm2', 'Qhpro_Wm2', 'Qcpro_Wm2'}:
             for building in properties_df.index:
                 average = 0.0
                 for use in list_uses:
@@ -454,6 +454,21 @@ def calculate_average_multiuse(fields, properties_df, occupant_densities, list_u
                             average += properties_df[var_value][building] * properties_db[column][use]
 
                 properties_df.loc[building, column] = average
+
+        elif column in {'Occ_m2p'}:
+            # m2 total / p = 1 / sum_x([m2(x)/m2 total] * [p / m2(x)])
+            # Occ_m2p[average] = 1 / sum_x([fraction[x] / Occ_m2p[x])
+            for building in properties_df.index:
+                average_Occ_pm2 = 0.0
+                for use in list_uses:
+                    for var_name, var_value in zip(list_var_names, list_var_values):
+                        if use in [properties_df[var_name][building]]:
+                            if properties_db[column][use] > 0:
+                                average_Occ_pm2 += properties_df[var_value][building] / properties_db[column][use]
+                if average_Occ_pm2 > 0:
+                    properties_df.loc[building, column] = 1 / average_Occ_pm2
+                else:
+                    properties_df.loc[building, column] = 0
 
     return properties_df
 
