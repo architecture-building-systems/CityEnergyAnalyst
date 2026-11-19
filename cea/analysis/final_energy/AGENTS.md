@@ -95,6 +95,20 @@ and `SC_*` are generation (PV / SOLAR); `*_radiation_kWh`, `*_dumped_kWh` and bo
 demand (`Qhs_booster_kWh`) are not carriers. `TOTAL` sums consumption only. A new column
 pattern goes into the classifier (and `test_final_energy_carrier_columns.py`).
 
+### ✅ DO: Take district totals from `final_energy.csv`, never Σ `TOTAL_MWh`
+
+A building's `TOTAL_MWh` includes the DH / DC it buys; a plant's includes the fuel making it.
+Summing rows counts network heat and cold twice. The district `TOTAL_kWh` counts energy
+entering the district: DH / DC is left out where a plant of that network type has results
+(`create_hourly_timeseries_aggregation`), kept where the plant is missing.
+
+### ✅ DO: Compute PV analytics only in `pv_analytics.py`
+
+Generation-to-load, self-consumption and self-sufficiency (PV against GRID, matched hour by
+hour) live in `pv_analytics.py` (pandas/numpy only). The Summary & Analytics tool and the
+Canvas KPI node `kind: pv_analytics` both call `calc_pv_analytics_by_period`; the district
+series is `final_energy.csv` via `district_pv_series`. Don't re-implement them elsewhere.
+
 ### ✅ DO: Read district consumption from thermal-network
 
 ```python

@@ -5,7 +5,20 @@
 # (one row per building or plant, produced by
 # `cea final-energy`). Columns: per-carrier annual MWh for every
 # carrier code (GRID, NATURALGAS, OIL, COAL, WOOD, DH, DC, SOLAR,
-# PV) plus a TOTAL_MWh roll-up.
+# PV) plus a TOTAL_MWh roll-up. The district totals (Total Final
+# Energy, Fossil Fuel Share) and the PV analytics cards read the
+# district hourly file `final_energy.csv` in the same folder instead:
+# summing TOTAL_MWh over buildings and plants counts network heat and
+# cold twice (the buildings' DH / DC and the plant's fuel).
+#
+# Moved / dropped:
+#   - REPLACED `final_energy.solar_share_pct` ("Solar Share of Final
+#     Energy", (PV + SOLAR) ÷ TOTAL) by
+#     `final_energy.pv_generation_to_load_pct`; the old id is an
+#     alias (`KPI_ALIASES` in `cea/kpi/registry.py`) so saved cards
+#     keep working. It added heat and electricity MWh as equals, and
+#     its SOLAR part counts DHW solar heat already inside TOTAL while
+#     PV is not -- for PV it only approximated generation-to-load.
 #
 # `whatif_name` defaults to the empty string — the locator
 # substitutes that into its path (`analysis//final-energy/...`),
@@ -29,18 +42,19 @@ kpis:
     better_direction: lower
     headline: true
     info_note: |
-      Total annual final energy consumption summed across every
-      carrier (electricity, gas, district heating/cooling, etc.)
-      and every building in the district.
+      Total annual final energy entering the district, summed
+      across every carrier (electricity, gas, oil, etc.).
+      Heating and cooling from a district network are counted
+      once, as the plant's fuel and electricity.
 
-      Total = Σ(TOTAL_MWh)
+      Total = Σ(TOTAL_kWh) ÷ 1000
         in [MWh/yr]
     description: >
       Headline metric for energy by carrier. Pair with the per-
       carrier share KPIs to see the mix; drops as the supply
       system shifts away from fossil-driven services.
     source:
-      locator: get_final_energy_buildings_file
+      locator: get_final_energy_file
       locator_args:
         whatif_name: ""
       parameters:
@@ -52,7 +66,8 @@ kpis:
       formula:
         kind: aggregate
         op: sum
-        of: { kind: column, name: TOTAL_MWh }
+        of: { kind: column, name: TOTAL_kWh }
+        scale: 0.001  # kWh -> MWh
 
   - id: final_energy.fossil_share_pct
     label: Fossil Fuel Share
@@ -60,15 +75,15 @@ kpis:
     unit: '%'
     better_direction: lower
     info_note: |
-      Share of total final energy from on-site combustion of
-      natural gas, oil, or coal. The decarbonisation lever:
-      swap heating-fuel boilers for heat pumps / district
-      heating to drive this towards 0.
+      Share of total final energy from burning natural gas, oil
+      or coal, in buildings or in district plants. The
+      decarbonisation lever: swap fuel boilers for heat pumps /
+      district heating to drive this towards 0.
 
-      Share = Σ(NATURALGAS + OIL + COAL) ÷ Σ(TOTAL_MWh) × 100
+      Share = Σ(NATURALGAS + OIL + COAL) ÷ Σ(TOTAL) × 100
         in [%]
     source:
-      locator: get_final_energy_buildings_file
+      locator: get_final_energy_file
       locator_args:
         whatif_name: ""
       parameters:
@@ -84,11 +99,11 @@ kpis:
           op: sum
           of:
             kind: sum_columns
-            columns: [NATURALGAS_MWh, OIL_MWh, COAL_MWh]
+            columns: [NATURALGAS_kWh, OIL_kWh, COAL_kWh]
         whole:
           kind: aggregate
           op: sum
-          of: { kind: column, name: TOTAL_MWh }
+          of: { kind: column, name: TOTAL_kWh }
 
   # ── Solar deployment KPIs ────────────────────────────────────────
   # Per-what-if PV / SC / PVT generation as it actually lands in
@@ -154,21 +169,28 @@ kpis:
         op: sum
         of: { kind: column, name: SOLAR_MWh }
 
-  - id: final_energy.solar_share_pct
-    label: Solar Share of Final Energy
+  # ── PV analytics ─────────────────────────────────────────────────
+  # Read the district hourly file `final_energy.csv` (PV_kWh against
+  # GRID_kWh, plants included) and compute with the Summary &
+  # Analytics code (`cea/analysis/final_energy/pv_analytics.py`), so
+  # each card equals the summary's annual district value.
+
+  - id: final_energy.pv_generation_to_load_pct
+    label: PV Generation-to-Load
     category: energy-by-carrier
     unit: '%'
     better_direction: higher
     info_note: |
-      Combined PV + solar thermal as a share of total final
-      energy. Tracks how much of the district's energy is met
-      by on-site solar under this what-if's configuration.
+      Annual PV electricity (including PVT) as a share of the
+      district's grid electricity use (services, boosters, heat
+      pumps and plants) under this what-if's configuration. Above
+      100% the district generates more than it uses over the year.
 
-      Share = Σ(PV_MWh + SOLAR_MWh) ÷ Σ(TOTAL_MWh) × 100
+      Generation-to-load = Σ(PV) ÷ Σ(Use) × 100
         in [%]
     annotation: installed_pv_by_orientation
     source:
-      locator: get_final_energy_buildings_file
+      locator: get_final_energy_file
       locator_args:
         whatif_name: ""
       parameters:
@@ -178,14 +200,60 @@ kpis:
           default: ""
           description: Which what-if folder to read final-energy outputs from.
       formula:
-        kind: share_of
-        part:
-          kind: aggregate
-          op: sum
-          of:
-            kind: sum_columns
-            columns: [PV_MWh, SOLAR_MWh]
-        whole:
-          kind: aggregate
-          op: sum
-          of: { kind: column, name: TOTAL_MWh }
+        kind: pv_analytics
+        metric: generation_to_load
+
+  - id: final_energy.pv_self_consumption_pct
+    label: PV Self-Consumption
+    category: energy-by-carrier
+    unit: '%'
+    better_direction: higher
+    info_note: |
+      Share of on-site PV electricity (including PVT) used within
+      the district rather than exported to the grid. PV and grid
+      electricity use are matched hour by hour.
+
+      Self-consumption = Σ_hours min(PV, Use) ÷ Σ(PV) × 100
+        in [%]
+    annotation: installed_pv_by_orientation
+    source:
+      locator: get_final_energy_file
+      locator_args:
+        whatif_name: ""
+      parameters:
+        whatif_name:
+          label: What-if scenario
+          options_generator: whatif_names
+          default: ""
+          description: Which what-if folder to read final-energy outputs from.
+      formula:
+        kind: pv_analytics
+        metric: self_consumption
+
+  - id: final_energy.pv_self_sufficiency_pct
+    label: PV Self-Sufficiency
+    category: energy-by-carrier
+    unit: '%'
+    better_direction: higher
+    info_note: |
+      Share of the district's grid electricity use (services,
+      boosters, heat pumps and plants) covered by on-site PV
+      (including PVT) as it is generated. PV and grid electricity
+      use are matched hour by hour.
+
+      Self-sufficiency = Σ_hours min(PV, Use) ÷ Σ(Use) × 100
+        in [%]
+    annotation: installed_pv_by_orientation
+    source:
+      locator: get_final_energy_file
+      locator_args:
+        whatif_name: ""
+      parameters:
+        whatif_name:
+          label: What-if scenario
+          options_generator: whatif_names
+          default: ""
+          description: Which what-if folder to read final-energy outputs from.
+      formula:
+        kind: pv_analytics
+        metric: self_sufficiency

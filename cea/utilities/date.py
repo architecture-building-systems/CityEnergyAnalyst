@@ -5,6 +5,16 @@ import pandas as pd
 
 from calendar import isleap
 
+# Reporting-period labels used by the summary and the KPI cards (meteorological seasons).
+month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+season_names = ['Spring', 'Summer', 'Autumn', 'Winter']
+season_mapping = {
+    3: 'Spring', 4: 'Spring', 5: 'Spring',
+    6: 'Summer', 7: 'Summer', 8: 'Summer',
+    9: 'Autumn', 10: 'Autumn', 11: 'Autumn',
+    12: 'Winter', 1: 'Winter', 2: 'Winter'
+}
+
 
 def get_date_range_hours_from_year(year):
     """

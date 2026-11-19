@@ -118,7 +118,8 @@ def _demand_summary(locator):
 
 
 def _final_energy_summary(locator, whatif_name):
-    """Compute final-energy KPIs from final_energy_buildings.csv."""
+    """Final-energy KPIs: annual MWh per carrier from final_energy_buildings.csv and the district
+    total from final_energy.csv."""
     path = locator.get_final_energy_buildings_file(whatif_name)
     if not os.path.isfile(path):
         raise HTTPException(
@@ -128,16 +129,30 @@ def _final_energy_summary(locator, whatif_name):
 
     df = pd.read_csv(path)
 
-    # Sum all numeric columns except 'name' and 'type'
+    # The district total counts network heat and cold once, at the plant. Summing the rows'
+    # TOTAL_MWh would count it twice (the buildings' DH / DC and the plant's fuel).
     kpis = []
-    # Key columns from final_energy_buildings.csv
-    carrier_cols = [c for c in df.columns if c.endswith("_MWhyr")]
-    for col in carrier_cols:
+    district_path = locator.get_final_energy_file(whatif_name)
+    if os.path.isfile(district_path):
+        total_kWh = float(pd.read_csv(district_path, usecols=["TOTAL_kWh"])["TOTAL_kWh"].sum())
+        kpis.append({
+            "key": "TOTAL_MWh",
+            "label": "Total final energy",
+            "value": round(total_kWh / 1000, 2),
+            "unit": "MWh/yr",
+        })
+
+    # One figure per carrier, summed over buildings and plants. Not the service demand columns
+    # (`*_sys_MWh`): a plant row repeats as demand the heat its buildings already count.
+    for col in df.columns:
+        if not col.endswith("_MWh") or col == "TOTAL_MWh" or col.endswith("_sys_MWh"):
+            continue
         total = float(df[col].sum())
-        label = col.replace("_MWhyr", "").replace("_", " ")
+        if total == 0:
+            continue  # carriers the what-if doesn't use are written as zero
         kpis.append({
             "key": col,
-            "label": label,
+            "label": col[:-len("_MWh")],
             "value": round(total, 2),
             "unit": "MWh/yr",
         })

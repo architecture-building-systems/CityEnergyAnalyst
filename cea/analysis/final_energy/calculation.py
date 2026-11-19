@@ -35,8 +35,8 @@ from cea.scripts import tool_ref
 # Constants
 HOURS_IN_YEAR = 8760
 
-# Carriers `cea/schemas.yml`'s ``get_final_energy_buildings_file``
-# entry declares as `_MWh` columns. The annual-summary loops always
+# Carriers `cea/schemas.yml` declares for ``get_final_energy_buildings_file``
+# (`_MWh`) and ``get_final_energy_file`` (`_kWh`). Both summaries always
 # write these (zero-filled when a scenario's database doesn't
 # include the carrier) so downstream consumers — KPIs, plots,
 # emissions calculator — can read the schema's columns without a
@@ -1385,11 +1385,13 @@ def create_hourly_timeseries_aggregation(
     - E_sys_kWh: total electricity demand
     - NATURALGAS_kWh: total natural gas consumption
     - GRID_kWh: total grid electricity
-    - DH_kWh: total district heating
-    - DC_kWh: total district cooling
+    - DH_kWh: total district heating delivered to buildings
+    - DC_kWh: total district cooling delivered to buildings
     - SOLAR_kWh: total solar thermal generation
     - PV_kWh: total solar electrical generation
-    - TOTAL_kWh: total final energy
+    - TOTAL_kWh: final energy entering the district. Heat / cold a plant supplies (DH / DC) is
+      counted as the plant's fuel and electricity, not again as the buildings' DH / DC; DH / DC
+      with no plant results for that network type stays in, so it is never dropped.
 
     :param building_dfs: Dict of building_name -> final_energy DataFrame (8760 rows each)
     :param plant_dfs: Dict of plant_name -> final_energy DataFrame (8760 rows each)
@@ -1406,9 +1408,15 @@ def create_hourly_timeseries_aggregation(
     demand_columns = ['Qhs_sys_kWh', 'Qww_sys_kWh', 'Qcs_sys_kWh', 'E_sys_kWh']
     for col in demand_columns:
         aggregated[col] = 0.0
+    # Every carrier the schema declares, zero-filled (see `_DECLARED_CARRIER_CODES`)
+    for carrier in sorted(_DECLARED_CARRIER_CODES):
+        aggregated[f'{carrier}_kWh'] = 0.0
 
     # Final energy consumed, hour by hour (on-site generation excluded)
     consumption_kWh = pd.Series(0.0, index=aggregated.index)
+    # DH / DC is a transfer inside the district when a plant of that type supplies it:
+    # plant keys are "<network_type>_<plant_name>".
+    plant_supplied = {plant_key.split('_', 1)[0] for plant_key in plant_dfs}
 
     # Aggregate building data
     for building_name, df in building_dfs.items():
@@ -1428,33 +1436,23 @@ def create_hourly_timeseries_aggregation(
                 aggregated[carrier_col] = 0.0
             hourly = df[col].fillna(0)
             aggregated[carrier_col] += hourly
-            if is_consumption:
+            if is_consumption and carrier not in plant_supplied:
                 consumption_kWh += hourly
 
     # Aggregate plant data
     for plant_name, df in plant_dfs.items():
         # Plants contribute to carrier columns only (no demand columns)
         for col in df.columns:
-            if col.endswith('_kWh') and col != 'date':
-                # Plant columns format: plant_primary_DH_NATURALGAS_kWh, plant_tertiary_DC_GRID_kWh
-                if col.startswith('plant_primary_') or col.startswith('plant_tertiary_'):
-                    parts = col.split('_')
-                    carrier = parts[3] if len(parts) >= 4 else (parts[2] if len(parts) >= 3 else col)
-                elif col.startswith('plant_pumping_'):
-                    parts = col.split('_')
-                    if len(parts) < 3:
-                        continue
-                    carrier = parts[2]
-                else:
-                    continue
-
-                carrier_col = f'{carrier}_kWh'
-                if carrier_col not in aggregated.columns:
-                    aggregated[carrier_col] = 0.0
-
-                hourly = df[col].fillna(0)
-                aggregated[carrier_col] += hourly
-                consumption_kWh += hourly  # plants consume their fuel
+            # plant_{primary|tertiary|pumping}_{NT}_{CARRIER}_kWh, e.g. plant_pumping_DH_GRID_kWh
+            parts = col.split('_')
+            if len(parts) != 5 or parts[0] != 'plant' or parts[4] != 'kWh':
+                continue
+            carrier_col = f"{parts[3]}_kWh"
+            if carrier_col not in aggregated.columns:
+                aggregated[carrier_col] = 0.0
+            hourly = df[col].fillna(0)
+            aggregated[carrier_col] += hourly
+            consumption_kWh += hourly  # plants consume their fuel
 
     # Total final energy consumed (schema: TOTAL_kWh); on-site generation is not added in
     aggregated['TOTAL_kWh'] = consumption_kWh

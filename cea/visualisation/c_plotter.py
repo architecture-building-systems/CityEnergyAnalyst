@@ -292,19 +292,19 @@ class bar_plot:
                 elif self.y_metric_unit == 'MWh' and self.y_normalised_by == 'gross_floor_area':
                     y_label = "PV Electricity Yield per Gross Floor Area (MWh/yr/m2)"
                 elif self.y_metric_unit == 'MWh' and self.y_normalised_by == 'solar_technology_area_installed_for_respective_surface':
-                    y_label = "PV Electricity Yield per Installed Area (MWh/yr/m2)"
+                    y_label = "PV Electricity Yield per Panel Area (MWh/yr/m2)"
                 elif self.y_metric_unit == 'kWh' and self.y_normalised_by == 'no_normalisation':
                     y_label = "PV Electricity Yield (kWh/yr)"
                 elif self.y_metric_unit == 'kWh' and self.y_normalised_by == 'gross_floor_area':
                     y_label = "PV Electricity Yield per Gross Floor Area (kWh/yr/m2)"
                 elif self.y_metric_unit == 'kWh' and self.y_normalised_by == 'solar_technology_area_installed_for_respective_surface':
-                    y_label = "PV Electricity Yield per Installed Area (kWh/yr/m2)"
+                    y_label = "PV Electricity Yield per Panel Area (kWh/yr/m2)"
                 elif self.y_metric_unit == 'Wh' and self.y_normalised_by == 'no_normalisation':
                     y_label = "PV Electricity Yield (Wh/yr)"
                 elif self.y_metric_unit == 'Wh' and self.y_normalised_by == 'gross_floor_area':
                     y_label = "PV Electricity Yield per Gross Floor Area (Wh/yr/m2)"
                 elif self.y_metric_unit == 'Wh' and self.y_normalised_by == 'solar_technology_area_installed_for_respective_surface':
-                    y_label = "PV Electricity Yield per Installed Area (Wh/yr/m2)"
+                    y_label = "PV Electricity Yield per Panel Area (Wh/yr/m2)"
                 else:
                     raise ValueError(f"Invalid y-metric-unit: {self.y_metric_unit}")
 
@@ -314,19 +314,19 @@ class bar_plot:
                 elif self.y_metric_unit == 'MWh' and self.y_normalised_by == 'gross_floor_area':
                     y_label = "PVT Electricity & Heat Yield per Gross Floor Area (MWh/yr/m2)"
                 elif self.y_metric_unit == 'MWh' and self.y_normalised_by == 'solar_technology_area_installed_for_respective_surface':
-                    y_label = "PVT Electricity & Heat Yield per Installed Area (MWh/yr/m2)"
+                    y_label = "PVT Electricity & Heat Yield per Panel Area (MWh/yr/m2)"
                 elif self.y_metric_unit == 'kWh' and self.y_normalised_by == 'no_normalisation':
                     y_label = "PVT Electricity & Heat Yield (kWh/yr)"
                 elif self.y_metric_unit == 'kWh' and self.y_normalised_by == 'gross_floor_area':
                     y_label = "PVT Electricity & Heat Yield per Gross Floor Area (kWh/yr/m2)"
                 elif self.y_metric_unit == 'kWh' and self.y_normalised_by == 'solar_technology_area_installed_for_respective_surface':
-                    y_label = "PVT Electricity & Heat Yield per Installed Area (kWh/yr/m2)"
+                    y_label = "PVT Electricity & Heat Yield per Panel Area (kWh/yr/m2)"
                 elif self.y_metric_unit == 'Wh' and self.y_normalised_by == 'no_normalisation':
                     y_label = "PVT Electricity & Heat Yield (Wh/yr)"
                 elif self.y_metric_unit == 'Wh' and self.y_normalised_by == 'gross_floor_area':
                     y_label = "PVT Electricity & Heat Yield per Gross Floor Area (Wh/yr/m2)"
                 elif self.y_metric_unit == 'Wh' and self.y_normalised_by == 'solar_technology_area_installed_for_respective_surface':
-                    y_label = "PVT Electricity & Heat Yield per Installed Area (Wh/yr/m2)"
+                    y_label = "PVT Electricity & Heat Yield per Panel Area (Wh/yr/m2)"
                 else:
                     raise ValueError(f"Invalid y-metric-unit: {self.y_metric_unit}")
 
@@ -336,19 +336,19 @@ class bar_plot:
                 elif self.y_metric_unit == 'MWh' and self.y_normalised_by == 'gross_floor_area':
                     y_label = "SC Heat Yield per Gross Floor Area (MWh/yr/m2)"
                 elif self.y_metric_unit == 'MWh' and self.y_normalised_by == 'solar_technology_area_installed_for_respective_surface':
-                    y_label = "SC Heat Yield per Installed Area (MWh/yr/m2)"
+                    y_label = "SC Heat Yield per Panel Area (MWh/yr/m2)"
                 elif self.y_metric_unit == 'kWh' and self.y_normalised_by == 'no_normalisation':
                     y_label = "SC Heat Yield (kWh/yr)"
                 elif self.y_metric_unit == 'kWh' and self.y_normalised_by == 'gross_floor_area':
                     y_label = "SC Heat Yield per Gross Floor Area (kWh/yr/m2)"
                 elif self.y_metric_unit == 'kWh' and self.y_normalised_by == 'solar_technology_area_installed_for_respective_surface':
-                    y_label = "SC Heat Yield per Installed Area (kWh/yr/m2)"
+                    y_label = "SC Heat Yield per Panel Area (kWh/yr/m2)"
                 elif self.y_metric_unit == 'Wh' and self.y_normalised_by == 'no_normalisation':
                     y_label = "SC Heat Yield (Wh/yr)"
                 elif self.y_metric_unit == 'Wh' and self.y_normalised_by == 'gross_floor_area':
                     y_label = "SC Heat Yield per Gross Floor Area (Wh/yr/m2)"
                 elif self.y_metric_unit == 'Wh' and self.y_normalised_by == 'solar_technology_area_installed_for_respective_surface':
-                    y_label = "SC Heat Yield per Installed Area (Wh/yr/m2)"
+                    y_label = "SC Heat Yield per Panel Area (Wh/yr/m2)"
                 else:
                     raise ValueError(f"Invalid y-metric-unit: {self.y_metric_unit}")
             

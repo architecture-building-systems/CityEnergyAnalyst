@@ -44,6 +44,13 @@ __status__ = "Production"
 _DEFINITIONS_DIR = Path(__file__).parent / "definitions"
 _SCHEMAS_PATH = Path(__file__).parents[1] / "schemas.yml"
 
+# Retired KPI ids -> the KPI that replaced them, so saved canvas cards keep working. Resolve
+# with ``KPI_ALIASES.get(kpi_id, kpi_id)`` wherever an id is looked up; aliases are not in the
+# registry, so the picker does not list them.
+KPI_ALIASES: dict[str, str] = {
+    "final_energy.solar_share_pct": "final_energy.pv_generation_to_load_pct",
+}
+
 _cached_registry: dict[str, KPIDefinition] | None = None
 _cached_schemas: dict | None = None
 
@@ -100,6 +107,12 @@ def _load() -> dict[str, KPIDefinition]:
                 hash_payload(kpi.model_dump(mode="python")),
             )
             registry[kpi.id] = kpi
+    for alias, target in KPI_ALIASES.items():
+        if alias in registry or target not in registry:
+            raise KPIDefinitionError(
+                f"KPI alias '{alias}' -> '{target}': the alias must be retired "
+                f"and its target defined"
+            )
     return registry
 
 

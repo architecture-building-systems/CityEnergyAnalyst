@@ -269,7 +269,7 @@ Files in this category: **35**
 
 - **Path**: `outputs/data/optimization/decentralized/{building}_{configuration}_cooling.csv`
 - **File type**: `csv`
-- **Created by**: `decentrlized`
+- **Created by**: `decentralized`
 - **Used by**: `optimization`
 
 | Variable | Description | Type | Unit | Values |

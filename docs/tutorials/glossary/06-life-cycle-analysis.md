@@ -265,7 +265,7 @@ Files in this category: **24**
 | `Qww_sys_MWh` | Annual domestic hot water system demand | float | `[MWh/yr]` | {0.0...n} |
 | `scale` | System scale (BUILDING for standalone, DISTRICT for networked) | string | `NA` | {BUILDING, DISTRICT} |
 | `SOLAR_MWh` | Annual solar thermal generation (from SC and PVT panels) | float | `[MWh/yr]` | {0.0...n} |
-| `TOTAL_MWh` | Total annual final energy consumption (sum of all carriers) | float | `[MWh/yr]` | {0.0...n} |
+| `TOTAL_MWh` | Total annual final energy consumption of this building or plant (sum of all carriers, including district heating and cooling bought). Do not sum across buildings and plants -- network heat and cold would be counted twice; use TOTAL_kWh in final_energy.csv | float | `[MWh/yr]` | {0.0...n} |
 | `type` | Entity type (building or plant) | string | `NA` | {building, plant} |
 | `WOOD_MWh` | Annual wood/biomass consumption | float | `[MWh/yr]` | {0.0...n} |
 | `x_coord` | X coordinate of building centroid or plant node location | float | `[m]` | {n...n} |
@@ -295,7 +295,7 @@ Files in this category: **24**
 | `Qhs_sys_kWh` | Hourly space heating system demand (all buildings aggregated) | float | `[kWh]` | {0.0...n} |
 | `Qww_sys_kWh` | Hourly domestic hot water system demand (all buildings aggregated) | float | `[kWh]` | {0.0...n} |
 | `SOLAR_kWh` | Hourly solar thermal generation (from SC and PVT panels) | float | `[kWh]` | {0.0...n} |
-| `TOTAL_kWh` | Hourly total final energy consumption (sum of all carriers) | float | `[kWh]` | {0.0...n} |
+| `TOTAL_kWh` | Hourly final energy entering the district (buildings' carriers plus plants' fuel and electricity; heat and cold a plant supplies are counted once, at the plant) | float | `[kWh]` | {0.0...n} |
 | `WOOD_kWh` | Hourly wood/biomass consumption (buildings + plants) | float | `[kWh]` | {0.0...n} |
 
 ---
@@ -590,7 +590,7 @@ Files in this category: **24**
 
 - **Path**: `outputs/data/emissions/timeline/{building}_operational_hourly.csv`
 - **File type**: `csv`
-- **Created by**: `emission_time_dependent`
+- **Created by**: `emissions`
 - **Used by**: _(none)_
 
 | Variable | Description | Type | Unit | Values |
