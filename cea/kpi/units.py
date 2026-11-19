@@ -2,10 +2,10 @@
 Display units a KPI value can be converted to.
 
 A KPI is defined (and cached) in one base unit — the yml's ``unit``. When
-that unit belongs to a family below, the canvas KPI picker offers the
-family's other units as a "Unit" dropdown, and the value endpoint converts
-the cached base value on the way out. KPIs outside every family (``%``,
-``USD``, ``m²``…) offer no choice.
+that unit belongs to a family below, the registry lists the family's units
+(as factors from the base unit) in ``display_units`` and the GUI converts;
+the value endpoint always returns the base unit. KPIs outside every family
+(``%``, ``USD``, ``m²``…) offer no choice.
 
 Factors are relative to the family's first unit.
 """
@@ -22,10 +22,6 @@ __version__ = "0.1"
 __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
-
-# Parameter name the canvas uses for the chosen display unit. Reserved:
-# no KPI may declare a `source.parameters` entry with this name.
-UNIT_PARAMETER = "unit"
 
 UNIT_FAMILIES = (
     {"kWh/yr": 1.0, "MWh/yr": 1e-3, "GWh/yr": 1e-6},
